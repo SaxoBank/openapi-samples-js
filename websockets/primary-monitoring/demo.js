@@ -124,7 +124,7 @@ function becomePrimary() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -152,7 +152,7 @@ function becomePrimaryAgain() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 

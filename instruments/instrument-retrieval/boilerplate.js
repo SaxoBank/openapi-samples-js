@@ -9,28 +9,33 @@ var accountKey = "";
  * @return {void}
  */
 function processError(errorObject) {
-    var textToDisplay;
-    if (errorObject.hasOwnProperty("status") && errorObject.hasOwnProperty("statusText")) {
-        textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
-        console.error(textToDisplay + " " + errorObject.url);
-        // Some errors have a JSON-response, containing explanation of what went wrong.
-        errorObject.json().then(function (errorObjectJson) {
-            if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
-                // Order error object is wrapped in ErrorInfo
-                errorObjectJson = errorObjectJson.ErrorInfo;
-            }
-            // Order preview error object not..
-            if (errorObjectJson.hasOwnProperty("ErrorCode")) {
-                textToDisplay += " - " + errorObjectJson.ErrorCode + " (" + errorObjectJson.Message + ")";
-            }
-            document.getElementById("idResponse").innerText = textToDisplay;
-        }).catch(function () {
-            // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
-            document.getElementById("idResponse").innerText = textToDisplay;
-        });
-    } else {
-        document.getElementById("idResponse").innerText = errorObject;
-    }
+    var textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
+    console.error(textToDisplay + " " + errorObject.url);
+    // Some errors have a JSON-response, containing explanation of what went wrong.
+    errorObject.json().then(function (errorObjectJson) {
+        if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
+            // Order error object is wrapped in ErrorInfo
+            errorObjectJson = errorObjectJson.ErrorInfo;
+        }
+        // Order preview error object not..
+        if (errorObjectJson.hasOwnProperty("ErrorCode")) {
+            textToDisplay += " - " + errorObjectJson.ErrorCode + " (" + errorObjectJson.Message + ")";
+        }
+        document.getElementById("idResponse").innerText = textToDisplay;
+    }).catch(function () {
+        // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
+        document.getElementById("idResponse").innerText = textToDisplay;
+    });
+}
+
+/**
+ * Shared function to display a network error, without response.
+ * @param {string} error The complete error message.
+ * @return {void}
+ */
+function processNetworkError(error) {
+    console.error(error);
+    document.getElementById("idResponse").innerText = error;
 }
 
 /**

@@ -168,7 +168,7 @@ function extendSubscription() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 

@@ -135,7 +135,7 @@ function runJobFromQueue() {
                 processError(response);
             }
         }).catch(function (error) {
-            processError(error);
+            processNetworkError(error);
         });
         requestCount += 1;
     }

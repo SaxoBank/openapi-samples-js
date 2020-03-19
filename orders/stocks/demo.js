@@ -33,7 +33,7 @@ function selectOrderType() {
                 processError(response);
             }
         }).catch(function (error) {
-            processError(error);
+            processNetworkError(error);
         });
         break;
     case "Market":  // Order is attempted filled at best price in the market.
@@ -131,7 +131,7 @@ function getConditions() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -180,7 +180,7 @@ function preCheckNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -215,7 +215,7 @@ function placeNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -250,7 +250,7 @@ function modifyLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -278,7 +278,7 @@ function cancelLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 

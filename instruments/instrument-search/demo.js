@@ -40,7 +40,7 @@ function getExchanges() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -76,7 +76,7 @@ function findInstrument() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
@@ -103,7 +103,7 @@ function getDetails() {
             processError(response);
         }
     }).catch(function (error) {
-        processError(error);
+        processNetworkError(error);
     });
 }
 
