@@ -91,7 +91,7 @@ function processExchangesResponse(assetType, responseJson) {
  */
 function start() {
     requestQueue.push({
-        "assetType": "Bond",
+        "assetType": "ContractFutures",
         "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/exchanges?$top=1000",
         "callback": processExchangesResponse
     });
