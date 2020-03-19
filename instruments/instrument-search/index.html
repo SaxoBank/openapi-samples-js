@@ -1,0 +1,43 @@
+<label>Paste token from <a href="https://developer.saxobank.com/openapi/token" target="_blank">developer.saxobank.com/openapi/token</a> in the box below:<br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." style="width: 50%" /></label><br />
+<br />
+<label>Instrument name: <input type="text" class="token-field" id="idInstrumentName" value="Danone" placeholder="Enter instrument name.." /></label>
+<label>Exchanges: <select class="selector" id="idCbxExchange">
+  <option value="-">No filter on exchange</option>
+  <option value="-" selected>Press "Get exchanges" to populate</option>
+</select></label>
+<label>AssetType: <select class="selector" id="idCbxAssetType">
+  <option value="Bond">Bond</option>
+  <option value="Cash">Cash - Not tradeable</option>
+  <option value="CfdIndexOption">Cfd Index Option</option>
+  <option value="CfdOnFutures">Cfd on Futures</option>
+  <option value="CfdOnIndex">Cfd on Stock Index</option>
+  <option value="CfdOnStock">Cfd on Stock</option>
+  <option value="ContractFutures">Contract Futures</option>
+  <option value="FuturesOption">Futures Option</option>
+  <option value="FuturesStrategy">Futures Strategy</option>
+  <option value="FxBinaryOption">Forex Binary Option</option>
+  <option value="FxForwards">Forex Forward</option>
+  <option value="FxKnockInOption">Forex Knock In Option</option>
+  <option value="FxKnockOutOption">Forex Knock Out Option</option>
+  <option value="FxNoTouchOption">Forex No Touch Option</option>
+  <option value="FxOneTouchOption">Forex One Touch Option</option>
+  <option value="FxSpot">Forex Spot</option>
+  <option value="FxVanillaOption">Forex Vanilla Option</option>
+  <option value="MutualFund">Mutual Fund</option>
+  <option value="Stock" selected>Stock</option>
+  <option value="StockIndex">Stock Index</option>
+  <option value="StockIndexOption">Stock Index Option</option>
+  <option value="StockOption">Stock Option</option>
+</select></label>
+<br />
+<br />
+<input type="button" class="action-button" value="Get exchanges" id="idBtnGetExchanges" />
+<input type="button" class="action-button" value="Find" id="idBtnFind" />
+<input type="button" class="action-button" value="Get details" id="idBtnGetDetails" />
+<br />
+Response: <div class="response-block" id="idResponse">Click button to launch function</div><br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to launch function</pre>
+
+<script type="text/javascript" src="boilerplate.js" defer></script>
+<script type="text/javascript" src="demo.js" defer></script>
