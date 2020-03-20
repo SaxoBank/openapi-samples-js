@@ -33,7 +33,7 @@ function selectOrderType() {
                 processError(response);
             }
         }).catch(function (error) {
-            processNetworkError(error);
+            processError(error);
         });
         break;
     case "Market":  // Order is attempted filled at best price in the market.
@@ -105,14 +105,15 @@ function populateOrderTypes(orderTypes) {
 }
 
 /**
- * This is an example of getting the trading settings of an instrument.
+ * This is an example of getting the series (option sheet) of an option root.
  * @return {void}
  */
-function getConditions() {
+function getSeries() {
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    var optionRootId = document.getElementById("idInstrumentId").value;
     newOrderObject.AccountKey = accountKey;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(newOrderObject.AccountKey) + "&FieldGroups=OrderSetting",
+        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -123,33 +124,18 @@ function getConditions() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                // Test for SupportedOrderTypes and TickSizeScheme
-                populateOrderTypes(responseJson.Data[0].SupportedOrderTypes);
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson.Data[0]);
+                // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme
+                populateOrderTypes(responseJson.SupportedOrderTypes);
+                newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
+                document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
             });
         } else {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        processError(error);
     });
-}
-
-/**
- * This is an example of getting the costs of this order.
- * @return {void}
- */
-function getOrderCosts() {
-    // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    throw "Order costs are not implemented yet.";
-}
-
-/**
- * This is an example of getting the Key Information Document of this instrument.
- * @return {void}
- */
-function getKid() {
-    throw "KID is not implemented yet.";
 }
 
 /**
@@ -180,7 +166,7 @@ function preCheckNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        processError(error);
     });
 }
 
@@ -215,7 +201,7 @@ function placeNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        processError(error);
     });
 }
 
@@ -250,7 +236,7 @@ function modifyLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        processError(error);
     });
 }
 
@@ -278,37 +264,23 @@ function cancelLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        processError(error);
     });
-}
-
-function instrumentIdChange() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-    newOrderObject.Uic = document.getElementById("idInstrumentId").value;
-    document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
 
 (function () {
     // Format the initial order object exactly the same as done after modifying it when changing settings:
-    instrumentIdChange();
-    document.getElementById("idInstrumentId").addEventListener("change", instrumentIdChange);
     document.getElementById("idCbxOrderType").addEventListener("change", function () {
         run(selectOrderType);
     });
     document.getElementById("idCbxOrderDuration").addEventListener("change", function () {
         run(selectOrderDuration);
     });
-    document.getElementById("idBtnGetConditions").addEventListener("click", function () {
-        run(getConditions);
+    document.getElementById("idBtnGetSeries").addEventListener("click", function () {
+        run(getSeries);
     });
     document.getElementById("idBtnPreCheckOrder").addEventListener("click", function () {
         run(preCheckNewOrder);
-    });
-    document.getElementById("idBtnGetOrderCosts").addEventListener("click", function () {
-        run(getOrderCosts);
-    });
-    document.getElementById("idBtnGetKid").addEventListener("click", function () {
-        run(getKid);
     });
     document.getElementById("idBtnPlaceNewOrder").addEventListener("click", function () {
         run(placeNewOrder);
