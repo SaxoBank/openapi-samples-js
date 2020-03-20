@@ -1,0 +1,49 @@
+.btn-home {
+    width: 55px;
+    display: inline-block;
+    margin: 10px auto;
+    padding: 10px;
+}
+
+body {
+    text-align: center;
+}
+
+.btn-home, .btn-home:hover {
+    color: #fff;
+    text-decoration: none;
+}
+
+.btn {
+    margin-bottom: 10px;
+}
+
+.submit-btn {
+    display: block;
+    margin: 0 auto;
+}
+
+.token-submit {
+    padding-top: 10px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.btn-portal {
+    display: inline-block;
+    padding: 10px;
+}
+
+.btn-portal:hover {
+    text-decoration: none;
+}
+
+.nav-links {
+    margin: 0 auto;
+    width: 22%;
+}
+
+.panel {
+    width: 83.33%;
+    margin: 10px auto;
+}

@@ -1,0 +1,22 @@
+{
+  "name": "jss",
+  "version": "1.0.0",
+  "description": "Javascript samples",
+  "main": "priceSubsription.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack": "webpack"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-static": "^0.7.10"
+  },
+  "devDependencies": {
+    "babel-core": "^6.26.3",
+    "babel-loader": "^7.1.4",
+    "babel-preset-es2015": "^6.24.1",
+    "long": "^4.0.0",
+    "webpack": "^3.0.0"
+  }
+}

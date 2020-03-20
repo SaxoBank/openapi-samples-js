@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="../styles/priceSubscription.css">
+</head>
+<body>
+
+<form class="token-form" onsubmit="subscribePrices.handleTokenSubmit(event)">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Access Token</div>
+        <div class="panel-body">
+            <div class="form-group">
+                <label class="control-label">Context Id</label>
+                <input name="contextId" class="form-control js-ctx-id" placeholder="Enter contextId" >
+            </div>
+                <textarea placeholder="Paste authorization token here" required class="form-group form-control js-auth-token"></textarea>
+            <button type="submit" class="btn btn-primary submit-btn">Submit</button>
+         
+            <div class="token-submit"></div>
+        </div>
+    </div>
+</form>
+
+<button onclick="subscribePrices.handleDisconnection()" class="btn btn-primary submit-btn">Close Connection</button>
+<br>
+<button onclick="subscribePrices.handleReconnection()" class="btn btn-primary submit-btn">Reconnect</button>
+<div class ="resubmit-status"></div>
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        Subscription
+    </div>
+
+    <form class="panel-body" id="subscribe-form">
+        <div class="form-group">
+            <button class="btn btn-primary js-btn-subscribe disabled" type="button" onclick="subscribePrices.handleSubscribePrices()">Subscribe</button>
+        </div>
+        <div class="form-group">
+            <label class="control-label">Endpoint</label>
+            <input name="endpoint" class="form-control" value="trade/v1/prices/subscriptions" readonly>
+        </div>
+        <div class="form-group">
+            <label class="control-label">ReferenceId</label>
+            <input name="refId" class="form-control js-refId" placeholder="Enter ReferenceId" >
+        </div>
+        <div class="form-group">
+            <label class="control-label">Arguments</label>
+        </div>
+    </form>
+
+    <form class="panel-body">
+        <!--<div class="form-group">-->
+            <!--<button class="btn btn-primary js-btn-unSubscribe disabled" type="button" onclick="onUnSubscribePrices(true)">UnSubscribe</button>-->
+        <!--</div>-->
+        <div class="form-group">
+            <label class="control-label">Snapshot (auto updated with message data)</label>
+            <pre><code class="pretty-print js-snapshot"></code></pre>
+        </div>
+    </form>
+    <form class="panel-body">
+        <!--<div class="form-group">-->
+            <!--<button class="btn btn-primary js-btn-unSubscribe disabled" type="button" onclick="onUnSubscribePrices(true)">UnSubscribe</button>-->
+        <!--</div>-->
+        <div class="form-group">
+            <label class="control-label"> Reconnection Snapshot (auto updated with message data)</label>
+            <pre><code class="pretty-print js-snapshot-reconnect"></code></pre>
+        </div>
+    </form>
+    <form class="panel-body">
+        <div class="form-group">
+            <label class="control-label">New Access Token</label>
+            <input  name ="newToken" class="form-control js-newToken" placeholder="Enter New Access Token" >
+        </div>
+        <div class="form-group">
+            <button class="btn btn-primary" type="button" onclick="subscribePrices.authorizeToken()">Authorise New Token</button>
+        </div>
+    </form>
+    <div class ="newToken-status"></div>
+
+<!--</div>-->
+<script src="../build/main.bundle.js"></script>
+</body>
+</html>
