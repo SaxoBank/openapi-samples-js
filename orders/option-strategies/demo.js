@@ -13,28 +13,8 @@ function selectOrderType() {
     delete newOrderObject.TrailingStopStep;
     switch (newOrderObject.OrderType) {
     case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
-        fetch(
-            "https://gateway.saxobank.com/sim/openapi/trade/v1/infoprices?AssetType=StockOption&uic=" + newOrderObject.Uic,
-            {
-                "headers": {
-                    "Content-Type": "application/json; charset=utf-8",
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                },
-                "method": "GET"
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    newOrderObject.OrderPrice = 70;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
-                    document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                    document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
-                });
-            } else {
-                processError(response);
-            }
-        }).catch(function (error) {
-            processNetworkError(error);
-        });
+        newOrderObject.OrderPrice = 70;
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         break;
     case "Market":  // Order is attempted filled at best price in the market.
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
@@ -105,13 +85,57 @@ function populateOrderTypes(orderTypes) {
 }
 
 /**
+ * This is an example of getting a pre-filled strategy for an option root.
+ * @return {void}
+ */
+function getStrategy() {
+    var optionRootId = document.getElementById("idInstrumentId").value;
+    fetch(
+        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + document.getElementById("idCbxOptionStrategy").value,
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+                var i;
+                newOrderObject.AccountKey = accountKey;
+                newOrderObject.OrderDuration = {
+                    "DurationType": document.getElementById("idCbxOrderDuration").value
+                };
+                newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
+                newOrderObject.Legs = responseJson.Legs;
+                for (i = 0; i < newOrderObject.Legs.length; i += 1) {
+                    newOrderObject.Legs[i].ToOpenClose = "ToOpen";
+                }
+                document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+                selectOrderType();
+                selectOrderDuration();
+                selectOrderType();
+                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        processNetworkError(error);
+    });
+}
+
+/**
  * This is an example of getting the series (option sheet) of an option root.
  * @return {void}
  */
 function getSeries() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     var optionRootId = document.getElementById("idInstrumentId").value;
+    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
+    document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
     fetch(
         "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
         {
@@ -126,8 +150,6 @@ function getSeries() {
             response.json().then(function (responseJson) {
                 // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme
                 populateOrderTypes(responseJson.SupportedOrderTypes);
-                newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
-                document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                 document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
             });
         } else {
@@ -147,7 +169,7 @@ function preCheckNewOrder() {
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/precheck",
+        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/precheck",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -178,7 +200,7 @@ function placeNewOrder() {
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
+        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -195,7 +217,7 @@ function placeNewOrder() {
                 // Response must have an OrderId
                 document.getElementById("idResponse").innerText = "Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson);
                 orderSequenceNumber += 1;
-                lastOrderId = responseJson.OrderId;
+                lastOrderId = responseJson.MultiLegOrderId;
             });
         } else {
             processError(response);
@@ -212,10 +234,10 @@ function placeNewOrder() {
 function modifyLastOrder() {
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
-    newOrderObject.OrderId = lastOrderId;
+    newOrderObject.MultiLegOrderId = lastOrderId;
     newOrderObject.Amout = newOrderObject.Amount * 2;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
+        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -246,7 +268,7 @@ function modifyLastOrder() {
  */
 function cancelLastOrder() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
+        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -269,11 +291,17 @@ function cancelLastOrder() {
 }
 
 (function () {
+    document.getElementById("idCbxOptionStrategy").addEventListener("change", function () {
+        run(getStrategy);
+    });
     document.getElementById("idCbxOrderType").addEventListener("change", function () {
         run(selectOrderType);
     });
     document.getElementById("idCbxOrderDuration").addEventListener("change", function () {
         run(selectOrderDuration);
+    });
+    document.getElementById("idBtnGetStrategy").addEventListener("click", function () {
+        run(getStrategy);
     });
     document.getElementById("idBtnGetSeries").addEventListener("click", function () {
         run(getSeries);

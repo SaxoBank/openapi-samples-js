@@ -55,6 +55,9 @@ function findInstrument() {
     if (document.getElementById("idCbxExchange").value !== "-") {
         url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
     }
+    if (document.getElementById("idChkMultiLeg").checked) {
+        url += "&CanParticipateInMultiLegOrder=" + true;
+    }
     fetch(
         url,
         {

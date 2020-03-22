@@ -60,7 +60,7 @@ function selectOrderType() {
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         break;
     default:
-        processError("Unsupported order type " + newOrderObject.OrderType);
+        processNetworkError("Unsupported order type " + newOrderObject.OrderType);
     }
 }
 
