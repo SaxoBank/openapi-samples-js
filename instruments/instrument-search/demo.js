@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError */
+/*global window console accountKey run processError processNetworkError */
 
 var instrumentId;
 

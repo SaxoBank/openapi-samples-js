@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError */
+/*global window console accountKey run processError processNetworkError */
 
 var orderSequenceNumber = 1;
 var lastOrderId = 0;
@@ -110,9 +110,8 @@ function populateOrderTypes(orderTypes) {
  */
 function getConditions() {
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-    newOrderObject.AccountKey = accountKey;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(newOrderObject.AccountKey) + "&FieldGroups=OrderSetting",
+        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -141,7 +140,35 @@ function getConditions() {
  */
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    throw "Order costs are not implemented yet.";
+    // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20cost&endpoint=gettradingconditioncost
+    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    var orderPrice;
+    if (newOrderObject.hasOwnProperty("OrderPrice")) {
+        orderPrice = newOrderObject.OrderPrice;
+    } else {
+        // Just an assumption, prices are not availabe on SIM
+        orderPrice = 70;
+    }
+    fetch(
+        "https://gateway.saxobank.com/sim/openapi/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&Price=" + orderPrice + "&HoldingPeriodInDays=365",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        processNetworkError(error);
+    });
 }
 
 /**

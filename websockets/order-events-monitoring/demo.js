@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console WebSocket accountKey run processError */
+/*global window console WebSocket accountKey run processError processNetworkError */
 
 var connection;
 
@@ -50,6 +50,7 @@ function startListener() {
             case "MyPositionEvent":
                 document.getElementById("idResponse").innerText = "Streaming message received: " + payload;
                 console.log("Position event to be processed:");
+                break;
             case "_heartbeat":
                 break;
             default:
@@ -113,15 +114,25 @@ function subscribeOrders() {
             ]
         }
     };
-    fetch("https://gateway.saxobank.com/sim/openapi/ens/v1/activities/subscriptions", {
-        "method": "POST",
-        "headers": {
-            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-            "Content-Type": "application/json"
-        },
-        "body": JSON.stringify(data)
+    fetch(
+        "https://gateway.saxobank.com/sim/openapi/ens/v1/activities/subscriptions",
+        {
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(data)
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            document.getElementById("idResponse").innerText = "Subscription for order changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        processNetworkError(error);
     });
-    document.getElementById("idResponse").innerText = "Subscription for order changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
 }
 
 /**
@@ -136,15 +147,25 @@ function subscribePositions() {
             "AccountKey": accountKey
         }
     };
-    fetch("https://gateway.saxobank.com/sim/openapi/port/v1/netpositions/subscriptions", {
-        "method": "POST",
-        "headers": {
-            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-            "Content-Type": "application/json"
-        },
-        "body": JSON.stringify(data)
+    fetch(
+        "https://gateway.saxobank.com/sim/openapi/port/v1/netpositions/subscriptions",
+        {
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(data)
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            document.getElementById("idResponse").innerText = "Subscription for position changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        processNetworkError(error);
     });
-    document.getElementById("idResponse").innerText = "Subscription for position changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
 }
 
 /**

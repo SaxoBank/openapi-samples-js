@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console WebSocket accountKey run processError */
+/*global window console WebSocket accountKey run processError processNetworkError */
 
 var connection;
 
@@ -66,7 +66,7 @@ function startListener() {
         console.log("Streaming message received");
         reader.readAsArrayBuffer(event.data);
         reader.onloadend = function () {
-            var beginAt = 0;
+            var beginAt;
             var data = reader.result;
             var parsedMessage;
             do {
@@ -80,7 +80,7 @@ function startListener() {
 }
 
 /**
- * This is an example of getting the trading settings of an instrument.
+ * This is an example of setting the trading settings of an instrument.
  * @return {void}
  */
 function subscribe() {
@@ -89,15 +89,24 @@ function subscribe() {
         "ReferenceId": "MyTradeLevelChangeEvent"
     };
 
-    fetch("https://gateway.saxobank.com/sim/openapi/root/v1/sessions/events/subscriptions", {
-        "method": "POST",
-        "headers": {
-            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-            "Content-Type": "application/json"
-        },
-        "body": JSON.stringify(data)
+    fetch("https://gateway.saxobank.com/sim/openapi/root/v1/sessions/events/subscriptions",
+        {
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(data)
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            document.getElementById("idResponse").innerText = "Subscription created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        processNetworkError(error);
     });
-    document.getElementById("idResponse").innerText = "Subscription created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
 }
 
 /**
