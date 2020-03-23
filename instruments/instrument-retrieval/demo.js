@@ -13,6 +13,7 @@ function processDetailResponse(assetType, responseJson) {
     }
     document.getElementById("idInstruments").value = instrumentIds.join(",");
     console.log("Found in total " + instrumentIds.length + " instruments..");
+    console.log("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ", total " + instrumentIds.length + " instruments..");
 }
 
 function processContractOptionSpace(assetType, responseJson) {
@@ -24,7 +25,7 @@ function processContractOptionSpace(assetType, responseJson) {
         }
     }
     document.getElementById("idInstruments").value = instrumentIds.join(",");
-    console.log("Found in total " + instrumentIds.length + " instruments..");
+    console.log("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ", total " + instrumentIds.length + " instruments..");
 }
 
 function processSearchResponse(assetType, responseJson) {
@@ -52,7 +53,11 @@ function processSearchResponse(assetType, responseJson) {
                 "callback": processContractOptionSpace
             });
         } else {
-            url += (url === "" ? baseUrl : separator) + responseJson.Data[i].Identifier;
+            url += (
+                url === ""
+                ? baseUrl
+                : separator
+            ) + responseJson.Data[i].Identifier;
             if (url.length > 2000) {
                 addToQueue();
                 url = "";

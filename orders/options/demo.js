@@ -172,6 +172,36 @@ function preCheckNewOrder() {
 }
 
 /**
+ * This is an example of getting the costs of this order.
+ * @return {void}
+ */
+function getOrderCosts() {
+    // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
+    // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20contract%20option
+    var optionRootId = document.getElementById("idInstrumentId").value;
+    fetch(
+        "https://gateway.saxobank.com/sim/openapi/cs/v1/tradingconditions/ContractOptionSpaces/" + encodeURIComponent(accountKey) + "/" + optionRootId + "/?FieldGroups=ScheduledTradingConditions",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        processNetworkError(error);
+    });
+}
+
+/**
  * This is an example of placing a single leg order.
  * @return {void}
  */
@@ -281,6 +311,9 @@ function cancelLastOrder() {
     });
     document.getElementById("idBtnPreCheckOrder").addEventListener("click", function () {
         run(preCheckNewOrder);
+    });
+    document.getElementById("idBtnGetOrderCosts").addEventListener("click", function () {
+        run(getOrderCosts);
     });
     document.getElementById("idBtnPlaceNewOrder").addEventListener("click", function () {
         run(placeNewOrder);

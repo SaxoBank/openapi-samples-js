@@ -140,17 +140,10 @@ function getConditions() {
  */
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20cost&endpoint=gettradingconditioncost
+    // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20cost
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-    var orderPrice;
-    if (newOrderObject.hasOwnProperty("OrderPrice")) {
-        orderPrice = newOrderObject.OrderPrice;
-    } else {
-        // Just an assumption, prices are not availabe on SIM
-        orderPrice = 70;
-    }
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&Price=" + orderPrice + "&HoldingPeriodInDays=365",
+        "https://gateway.saxobank.com/sim/openapi/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
