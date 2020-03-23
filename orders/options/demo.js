@@ -151,6 +151,7 @@ function preCheckNewOrder() {
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
+                "X-Request-ID": Math.random(),  // This prevents error 409 (Conflict) from identical previews within 15 seconds
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             },
             "body": JSON.stringify(newOrderObject),

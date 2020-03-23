@@ -166,6 +166,7 @@ function getSeries() {
  */
 function preCheckNewOrder() {
     // Bug: Preview doesnt check for limit outside market hours
+    // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
     fetch(
@@ -173,6 +174,8 @@ function preCheckNewOrder() {
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
+                // https://www.developer.saxo/openapi/learn/rate-limiting
+                "X-Request-ID": Math.random(),  // This prevents error 409 (Conflict) from identical previews within 15 seconds
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             },
             "body": JSON.stringify(newOrderObject),
