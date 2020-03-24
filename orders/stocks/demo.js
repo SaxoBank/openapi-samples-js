@@ -5,8 +5,9 @@ let orderSequenceNumber = 1;
 let lastOrderId = 0;
 
 function selectOrderType() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
+    newOrderObject.AccountKey = accountKey;
     delete newOrderObject.OrderPrice;
     delete newOrderObject.StopLimitPrice;
     delete newOrderObject.TrailingstopDistanceToMarket;
@@ -123,6 +124,7 @@ function getConditions() {
             response.json().then(function (responseJson) {
                 // Test for SupportedOrderTypes and TickSizeScheme
                 populateOrderTypes(responseJson.Data[0].SupportedOrderTypes);
+                selectOrderType();
                 document.getElementById("idResponse").innerText = JSON.stringify(responseJson.Data[0]);
             });
         } else {
@@ -211,6 +213,7 @@ function preCheckNewOrder() {
 function placeNewOrder() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
+    orderSequenceNumber += 1;
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
         {
@@ -228,7 +231,6 @@ function placeNewOrder() {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
                 document.getElementById("idResponse").innerText = "Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson);
-                orderSequenceNumber += 1;
                 lastOrderId = responseJson.OrderId;
             });
         } else {

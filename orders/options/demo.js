@@ -5,8 +5,9 @@ let orderSequenceNumber = 1;
 let lastOrderId = 0;
 
 function selectOrderType() {
-    const  newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
+    newOrderObject.AccountKey = accountKey;
     delete newOrderObject.OrderPrice;
     delete newOrderObject.StopLimitPrice;
     delete newOrderObject.TrailingstopDistanceToMarket;
@@ -110,7 +111,6 @@ function populateOrderTypes(orderTypes) {
 function getSeries() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     const optionRootId = document.getElementById("idInstrumentId").value;
-    newOrderObject.AccountKey = accountKey;
     fetch(
         "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
         {
@@ -126,6 +126,7 @@ function getSeries() {
                 // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme
                 populateOrderTypes(responseJson.SupportedOrderTypes);
                 newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
+                newOrderObject.AccountKey = accountKey;
                 document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                 document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
             });
@@ -207,6 +208,7 @@ function getOrderCosts() {
 function placeNewOrder() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
+    orderSequenceNumber += 1;
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
         {
@@ -224,7 +226,6 @@ function placeNewOrder() {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
                 document.getElementById("idResponse").innerText = "Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson);
-                orderSequenceNumber += 1;
                 lastOrderId = responseJson.OrderId;
             });
         } else {

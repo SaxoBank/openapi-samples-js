@@ -7,6 +7,7 @@ let lastOrderId = 0;
 function selectOrderType() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
+    newOrderObject.AccountKey = accountKey;
     delete newOrderObject.OrderPrice;
     delete newOrderObject.StopLimitPrice;
     delete newOrderObject.TrailingstopDistanceToMarket;
@@ -148,6 +149,7 @@ function getSeries() {
             response.json().then(function (responseJson) {
                 // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme
                 populateOrderTypes(responseJson.SupportedOrderTypes);
+                selectOrderType();
                 document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
             });
         } else {
@@ -200,6 +202,7 @@ function preCheckNewOrder() {
 function placeNewOrder() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
+    orderSequenceNumber += 1;
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg",
         {
@@ -217,7 +220,6 @@ function placeNewOrder() {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
                 document.getElementById("idResponse").innerText = "Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson);
-                orderSequenceNumber += 1;
                 lastOrderId = responseJson.MultiLegOrderId;
             });
         } else {
