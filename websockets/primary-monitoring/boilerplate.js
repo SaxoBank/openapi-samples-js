@@ -1,7 +1,7 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global console */
 
-var accountKey = "";
+let accountKey = "";
 
 /**
  * Shared function to display an unsuccessful response.
@@ -9,7 +9,7 @@ var accountKey = "";
  * @return {void}
  */
 function processError(errorObject) {
-    var textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
+    let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
     console.error(textToDisplay + " " + errorObject.url);
     // Some errors have a JSON-response, containing explanation of what went wrong.
     errorObject.json().then(function (errorObjectJson) {
@@ -88,12 +88,11 @@ function run(functionToRun) {
      * @return {string} Value.
      */
     function getCookie(key) {
-        var name = key + "=";
-        var decodedCookie = decodeURIComponent(document.cookie);
-        var cookieArray = decodedCookie.split(";");
-        var i;
-        var c;
-        for (i = 0; i < cookieArray.length; i += 1) {
+        const name = key + "=";
+        const decodedCookie = decodeURIComponent(document.cookie);
+        const cookieArray = decodedCookie.split(";");
+        let c;
+        for (let i = 0; i < cookieArray.length; i += 1) {
             c = cookieArray[i];
             while (c.charAt(0) === " ") {
                 c = c.substring(1);
@@ -112,19 +111,19 @@ function run(functionToRun) {
      * @return {void}
      */
     function setCookie(key, value) {
-        var expires = new Date();
+        const expires = new Date();
         // Cookie is valid for 360 days.
         expires.setTime(expires.getTime() + 360 * 24 * 60 * 60 * 1000);
         document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
     }
 
     // Show most recent used token:
-    var previouslyUsedToken = getCookie("saxotoken");
+    const previouslyUsedToken = getCookie("saxotoken");
     if (previouslyUsedToken !== "") {
         document.getElementById("idBearerToken").value = previouslyUsedToken;
     }
     window.addEventListener("beforeunload", function () {
-        var token = document.getElementById("idBearerToken").value;
+        const token = document.getElementById("idBearerToken").value;
         if (token.length > 10) {
             // Save the token so it can be reused:
             setCookie("saxotoken", token);

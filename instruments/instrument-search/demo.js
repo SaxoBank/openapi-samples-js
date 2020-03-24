@@ -1,7 +1,7 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global window console accountKey run processError processNetworkError */
 
-var instrumentId;
+let instrumentId;
 
 /**
  * This is an example of getting all exchanges.
@@ -9,10 +9,9 @@ var instrumentId;
  */
 function getExchanges() {
     // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=referencedata&service=exchanges&endpoint=getallexchanges
-    var i;
-    var cbxExchange = document.getElementById("idCbxExchange");
-    var option;
-    for (i = cbxExchange.options.length - 1; i > 0; i -= 1) {
+    const cbxExchange = document.getElementById("idCbxExchange");
+    let option;
+    for (let i = cbxExchange.options.length - 1; i > 0; i -= 1) {
         cbxExchange.remove(i);  // Remove all, except the first
     }
     fetch(
@@ -27,8 +26,7 @@ function getExchanges() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                var j;
-                for (j = 0; j < responseJson.Data.length; j += 1) {
+                for (let j = 0; j < responseJson.Data.length; j += 1) {
                     option = document.createElement("option");
                     option.text = responseJson.Data[j].ExchangeId + " (" + responseJson.Data[j].Name + ")";
                     option.value = responseJson.Data[j].ExchangeId;
@@ -50,8 +48,8 @@ function getExchanges() {
  */
 function findInstrument() {
     // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=referencedata&service=instruments&endpoint=getsummaries
-    var keywords = encodeURIComponent(document.getElementById("idInstrumentName").value);
-    var url = "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
+    const keywords = encodeURIComponent(document.getElementById("idInstrumentName").value);
+    let url = "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
     if (document.getElementById("idCbxExchange").value !== "-") {
         url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
     }

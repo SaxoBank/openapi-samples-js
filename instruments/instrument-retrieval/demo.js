@@ -1,14 +1,13 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global window console accountKey run processError processNetworkError */
 
-var requestCount = 0;
-var requestQueue = [];
-var timer;
-var instrumentIds = [];
+let requestCount = 0;
+let requestQueue = [];
+let timer;
+let instrumentIds = [];
 
 function processDetailResponse(assetType, responseJson) {
-    var i;
-    for (i = 0; i < responseJson.Data.length; i += 1) {
+    for (let i = 0; i < responseJson.Data.length; i += 1) {
         instrumentIds.push(responseJson.Data[i].Uic);
     }
     document.getElementById("idInstruments").value = instrumentIds.join(",");
@@ -17,10 +16,8 @@ function processDetailResponse(assetType, responseJson) {
 }
 
 function processContractOptionSpace(assetType, responseJson) {
-    var i;
-    var j;
-    for (i = 0; i < responseJson.OptionSpace.length; i += 1) {
-        for (j = 0; j < responseJson.OptionSpace[i].SpecificOptions.length; j += 1) {
+    for (let i = 0; i < responseJson.OptionSpace.length; i += 1) {
+        for (let j = 0; j < responseJson.OptionSpace[i].SpecificOptions.length; j += 1) {
             instrumentIds.push(responseJson.OptionSpace[i].SpecificOptions[j].Uic);
         }
     }
@@ -29,10 +26,9 @@ function processContractOptionSpace(assetType, responseJson) {
 }
 
 function processSearchResponse(assetType, responseJson) {
-    var i;
-    var baseUrl = "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?AccountKey=" + encodeURIComponent(accountKey) + "&$top=1000&AssetTypes=" + assetType + "&Uics=";
-    var url = "";
-    var separator = encodeURIComponent(",");
+    const baseUrl = "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?AccountKey=" + encodeURIComponent(accountKey) + "&$top=1000&AssetTypes=" + assetType + "&Uics=";
+    const separator = encodeURIComponent(",");
+    let url = "";
 
     function addToQueue() {
         requestQueue.push({
@@ -44,7 +40,7 @@ function processSearchResponse(assetType, responseJson) {
 
     console.log("Found " + responseJson.Data.length + " instruments on this exchange");
     // We have the Uic - collect the details
-    for (i = 0; i < responseJson.Data.length; i += 1) {
+    for (let i = 0; i < responseJson.Data.length; i += 1) {
         if (assetType === "StockOption" || assetType === "StockIndexOption") {
             // We found an OptionRoot - this must be converted to Uic
             requestQueue.push({
@@ -79,9 +75,8 @@ function processSearchResponse(assetType, responseJson) {
 }
 
 function processExchangesResponse(assetType, responseJson) {
-    var i;
     console.log("Found " + responseJson.Data.length + " exchanges, starting to collect instrument ids");
-    for (i = 0; i < responseJson.Data.length; i += 1) {
+    for (let i = 0; i < responseJson.Data.length; i += 1) {
         requestQueue.push({
             "assetType": assetType,
             "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments?ExchangeId=" + encodeURIComponent(responseJson.Data[i].ExchangeId) + "&AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(accountKey),
@@ -118,7 +113,7 @@ function start() {
 }
 
 function runJobFromQueue() {
-    var job;
+    let job;
     if (requestQueue.length > 0) {
         job = requestQueue.shift();
         document.getElementById("idResponse").innerText = "Processing job for AssetType " + job.assetType + ":\r\n" + job.url + "\r\nRequests: " + requestCount + "\r\nJobs in queue: " + requestQueue.length;
@@ -147,7 +142,7 @@ function runJobFromQueue() {
 }
 
 (function () {
-    var refLimitPerMinute = 60;
+    const refLimitPerMinute = 60;
     timer = setInterval(runJobFromQueue, (refLimitPerMinute / 60 * 1000) + 25);  // A little more, to prevent risk of 429 TooManyRequests
 
     document.getElementById("idBtnStart").addEventListener("click", function () {

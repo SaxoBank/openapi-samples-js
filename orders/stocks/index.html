@@ -18,13 +18,15 @@
 POST body containing order parameters:<br />
 <textarea class="json-input" id="idNewOrderObject" rows="13" style="width: 100%">
 {
-  "AccountKey": "(added on first request)",
-  "OrderType": "Market",
-  "AssetType": "Stock",
-  "BuySell": "Buy",
-  "Amount": 100,
-  "Uic": 0,
-  "OrderDuration": { "DurationType": "DayOrder" }
+    "AccountKey": "(added on first request)",
+    "OrderType": "Market",
+    "AssetType": "Stock",
+    "BuySell": "Buy",
+    "Amount": 100,
+    "Uic": 0,
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    }
 }
 </textarea><br />
 <input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />

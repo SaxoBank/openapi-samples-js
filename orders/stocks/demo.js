@@ -1,8 +1,8 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global window console accountKey run processError processNetworkError */
 
-var orderSequenceNumber = 1;
-var lastOrderId = 0;
+let orderSequenceNumber = 1;
+let lastOrderId = 0;
 
 function selectOrderType() {
     var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
@@ -65,8 +65,8 @@ function selectOrderType() {
 }
 
 function selectOrderDuration() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-    var now;
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    let now;
     newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
     switch (newOrderObject.OrderDuration.DurationType) {
     case "DayOrder":
@@ -90,16 +90,15 @@ function selectOrderDuration() {
 }
 
 function populateOrderTypes(orderTypes) {
-    var i;
-    var cbxOrderType = document.getElementById("idCbxOrderType");
-    var option;
-    for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
+    const cbxOrderType = document.getElementById("idCbxOrderType");
+    let option;
+    for (let i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
         cbxOrderType.remove(i);
     }
-    for (i = 0; i < orderTypes.length; i += 1) {
+    for (let j = 0; j < orderTypes.length; j += 1) {
         option = document.createElement("option");
-        option.text = orderTypes[i];
-        option.value = orderTypes[i];
+        option.text = orderTypes[j];
+        option.value = orderTypes[j];
         cbxOrderType.add(option);
     }
 }
@@ -109,7 +108,7 @@ function populateOrderTypes(orderTypes) {
  * @return {void}
  */
 function getConditions() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     fetch(
         "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
         {
@@ -141,7 +140,7 @@ function getConditions() {
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
     // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20cost
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     fetch(
         "https://gateway.saxobank.com/sim/openapi/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
@@ -177,8 +176,8 @@ function getKid() {
  * @return {void}
  */
 function preCheckNewOrder() {
-    // Bug: Preview doesnt check for limit outside market hours
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    // Bug: Preview doesn't check for limit outside market hours
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/precheck",
@@ -210,7 +209,7 @@ function preCheckNewOrder() {
  * @return {void}
  */
 function placeNewOrder() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
@@ -245,7 +244,7 @@ function placeNewOrder() {
  * @return {void}
  */
 function modifyLastOrder() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
     newOrderObject.OrderId = lastOrderId;
     newOrderObject.Amout = newOrderObject.Amount * 2;
@@ -304,7 +303,7 @@ function cancelLastOrder() {
 }
 
 function instrumentIdChange() {
-    var newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.Uic = document.getElementById("idInstrumentId").value;
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }

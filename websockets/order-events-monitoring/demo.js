@@ -1,16 +1,16 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global window console WebSocket accountKey run processError processNetworkError */
 
-var connection;
+let connection;
 
 /**
  * This is an example of getting the trading settings of an instrument.
  * @return {void}
  */
 function createConnection() {
-    var accessToken = document.getElementById("idBearerToken").value;
-    var contextId = encodeURIComponent(document.getElementById("idContextId").value);
-    var streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+    const accessToken = document.getElementById("idBearerToken").value;
+    const contextId = encodeURIComponent(document.getElementById("idContextId").value);
+    const streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
     if (contextId !== document.getElementById("idContextId").value) {
         throw "Invalid characters in Context ID.";
     }
@@ -28,17 +28,17 @@ function startListener() {
 
     function parseStreamingMessage(data) {
         try {
-            var message = new DataView(data);
-            var bytes = new Uint8Array(data);
-            var messageId = message.getInt8();
-            var refBeginIndex = 10;
-            var refIdLength = message.getInt8(refBeginIndex);
-            var refId = String.fromCharCode.apply(String, bytes.slice(refBeginIndex + 1, refBeginIndex + 1 + refIdLength));
-            var payloadBeginIndex = refBeginIndex + 1 + refIdLength;
-            var payloadLength = message.getUint32(payloadBeginIndex + 1, true);
-            var segmentEnd = payloadBeginIndex + 5 + payloadLength;
-            var payload = String.fromCharCode.apply(String, bytes.slice(payloadBeginIndex + 5, segmentEnd));
-            var block = JSON.parse(payload);
+            const message = new DataView(data);
+            const bytes = new Uint8Array(data);
+            const messageId = message.getInt8();
+            const refBeginIndex = 10;
+            const refIdLength = message.getInt8(refBeginIndex);
+            const refId = String.fromCharCode.apply(String, bytes.slice(refBeginIndex + 1, refBeginIndex + 1 + refIdLength));
+            const payloadBeginIndex = refBeginIndex + 1 + refIdLength;
+            const payloadLength = message.getUint32(payloadBeginIndex + 1, true);
+            const segmentEnd = payloadBeginIndex + 5 + payloadLength;
+            const payload = String.fromCharCode.apply(String, bytes.slice(payloadBeginIndex + 5, segmentEnd));
+            const block = JSON.parse(payload);
             console.log("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
             block.ReferenceId = refId;
             block.MessageID = messageId;
@@ -77,13 +77,13 @@ function startListener() {
     };
     connection.onmessage = function (event) {
         // Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
-        var reader = new FileReader();
+        const reader = new FileReader();
         console.log("Streaming message received");
         reader.readAsArrayBuffer(event.data);
         reader.onloadend = function () {
-            var beginAt;
-            var data = reader.result;
-            var parsedMessage;
+            let beginAt;
+            let data = reader.result;
+            let parsedMessage;
             do {
                 parsedMessage = parseStreamingMessage(data);
                 beginAt = parsedMessage.segmentEnd;
@@ -99,7 +99,7 @@ function startListener() {
  * @return {void}
  */
 function subscribeOrders() {
-    var data = {
+    const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyOrderEvent",
         "Arguments": {
@@ -140,7 +140,7 @@ function subscribeOrders() {
  * @return {void}
  */
 function subscribePositions() {
-    var data = {
+    const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPositionEvent",
         "Arguments": {
