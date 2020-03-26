@@ -1,0 +1,37 @@
+body {
+    font-family: Helvetica Neue, Helvetica, sans-serif;
+}
+
+.text-input-field {
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    background-color: #f6f6f6;
+}
+
+.action-button {
+    background-color: #4CAF50;
+    width: 100px;
+    border: none;
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    margin: 4px 2px;
+}
+
+.action-buttontton:disabled,
+.action-button[disabled] {
+    background-color: rgb(144, 175, 141);
+}
+
+select {
+    padding: 8px;
+    border: none;
+    background-color: #f6f6f6;
+}
+
+pre {
+    background-color: #f6f6f6;
+    display: inline-block;
+    padding: 8px;
+}
