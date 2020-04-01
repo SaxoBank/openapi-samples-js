@@ -169,6 +169,7 @@ function preCheckNewOrder() {
     // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
+    newOrderObject.FieldGroups = [ "Costs", "MarginImpactBuySell" ];
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/precheck",
         {
