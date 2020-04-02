@@ -4,6 +4,14 @@
 let accountKey = "";
 
 /**
+ * Determine if the token edit exists.
+ * @return {boolean} True if the field exists.
+ */
+function tokenInputFieldExists() {
+    return document.getElementById("idBearerToken") !== null;
+}
+
+/**
  * Shared function to display an unsuccessful response.
  * @param {Object} errorObject The complete error object.
  * @return {void}
@@ -47,7 +55,7 @@ function run(functionToRun) {
     // Display source used for demonstration:
     document.getElementById("idJavaScript").innerText = functionToRun.toString();
     document.getElementById("idResponse").innerText = "Started function " + functionToRun.name + "()";
-    if (document.getElementById("idBearerToken") !== null) {
+    if (tokenInputFieldExists()) {
         if (document.getElementById("idBearerToken").value === "") {
             document.getElementById("idResponse").innerText = "Bearer token is required to do requests.";
         } else {
@@ -85,7 +93,6 @@ function run(functionToRun) {
 }
 
 (function () {
-
     /**
      * Read a cookie.
      * @param {string} key Name of the cookie.
@@ -96,7 +103,8 @@ function run(functionToRun) {
         const decodedCookie = decodeURIComponent(document.cookie);
         const cookieArray = decodedCookie.split(";");
         let c;
-        for (let i = 0; i < cookieArray.length; i += 1) {
+        let i;
+        for (i = 0; i < cookieArray.length; i += 1) {
             c = cookieArray[i];
             while (c.charAt(0) === " ") {
                 c = c.substring(1);
@@ -127,9 +135,8 @@ function run(functionToRun) {
         document.getElementById("idBearerToken").value = previouslyUsedToken;
     }
     window.addEventListener("beforeunload", function () {
-        const tokenElm = document.getElementById("idBearerToken");
         let token;
-        if (tokenElm !== null) {
+        if (tokenInputFieldExists()) {
             token = document.getElementById("idBearerToken").value;
             if (token.length > 10) {
                 // Save the token so it can be reused:
