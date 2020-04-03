@@ -52,6 +52,55 @@ function processNetworkError(error) {
  * @return {void}
  */
 function run(functionToRun) {
+
+    function getAllAccounts(header) {
+        fetch("https://gateway.saxobank.com/sim/openapi/port/v1/accounts/me", header).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const cbxAccount = document.getElementById("idCbxAccount");
+                    let i;
+                    let option;
+                    cbxAccount.remove(0);
+                    for (i = 0; i < responseJson.Data.length; i += 1) {
+                        option = document.createElement("option");
+                        option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].AccountKey + ")";
+                        option.value = responseJson.Data[i].AccountKey;
+                        if (option.value === accountKey) {
+                            option.setAttribute("selected", true);
+                        }
+                        cbxAccount.add(option);
+                    }
+                    cbxAccount.addEventListener("change", function () {
+                        accountKey = cbxAccount.value;
+                        document.getElementById("idResponse").innerText = "Using account " + accountKey;
+                    });
+                    functionToRun();
+                });
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            processError(error);
+        });
+    }
+
+    function getDefaultAccount(header) {
+        fetch("https://gateway.saxobank.com/sim/openapi/port/v1/clients/me", header).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    accountKey = responseJson.DefaultAccountKey;  // Remember the default account
+                    console.log("Using accountKey: " + accountKey);
+                    document.getElementById("idResponse").innerText = "The token is valid - hello " + responseJson.Name;
+                    getAllAccounts(header);
+                });
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            processError(error);
+        });
+    }
+
     // Display source used for demonstration:
     document.getElementById("idJavaScript").innerText = functionToRun.toString();
     document.getElementById("idResponse").innerText = "Started function " + functionToRun.name + "()";
@@ -61,27 +110,12 @@ function run(functionToRun) {
         } else {
             if (accountKey === "") {
                 // Retrieve the account key first
-                fetch(
-                    "https://gateway.saxobank.com/sim/openapi/port/v1/accounts/me",
-                    {
-                        "headers": {
-                            "Content-Type": "application/json; charset=utf-8",
-                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                        },
-                        "method": "GET"
-                    }
-                ).then(function (response) {
-                    if (response.ok) {
-                        response.json().then(function (responseJson) {
-                            accountKey = responseJson.Data[0].AccountKey;  // Just get the first account
-                            console.log("Using accountKey: " + accountKey);
-                            functionToRun();
-                        });
-                    } else {
-                        processError(response);
-                    }
-                }).catch(function (error) {
-                    processError(error);
+                getDefaultAccount({
+                    "headers": {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    },
+                    "method": "GET"
                 });
             } else {
                 functionToRun();
@@ -144,4 +178,12 @@ function run(functionToRun) {
             }
         }
     });
+    if (tokenInputFieldExists()) {
+        document.getElementById("idBtnValidate").addEventListener("click", function () {
+            run(function () {
+                console.log("Valid!");
+            });
+        });
+    }
+
 }());
