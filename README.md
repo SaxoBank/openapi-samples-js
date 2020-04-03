@@ -1,6 +1,6 @@
-# Saxo OpenAPI JavaScript Sample Repository
+# [Saxo OpenAPI JavaScript Sample Repository](https://saxobank.github.io/openapi-samples-js/)
 
-This is a repository to demo common patterns on using the Saxo OpenApi is JavaScript.
+This repository contains sample files demonstrating OpenApi interactions in JavaScript.
 
 Plain JavaScript is used. No libraries, free of depencencies, to simplify the code. Reuse of code is not done, so the code behind every button is more or less complete.
 
