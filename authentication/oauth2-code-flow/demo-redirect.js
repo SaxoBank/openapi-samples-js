@@ -68,6 +68,27 @@ function getToken() {
 }
 
 /**
+ * After a successful authentication, the state entered before authentication is passed as query parameter.
+ * @return {void}
+ */
+function getState() {
+    // https://auth0.com/docs/protocols/oauth2/oauth-state
+    const name = "state";
+    const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+    const results = regex.exec(window.location.href);
+    const stateString = (
+        results === null
+        ? ""
+        : window.atob(results[1].replace(/\+/g, " "))
+    );
+    try {
+        document.getElementById("idResponse").innerText = "Found state: " + JSON.stringify(JSON.parse(stateString), null, 4);
+    } catch (ignore) {
+        processNetworkError("State returned in the URL parameter is invalid.");
+    }
+}
+
+/**
  * To prevent expiration of the token, request a new one before "refresh_token_expires_in".
  * @return {void}
  */
@@ -107,6 +128,9 @@ function refreshToken() {
     });
     document.getElementById("idBtnGetToken").addEventListener("click", function () {
         run(getToken);
+    });
+    document.getElementById("idBtnGetState").addEventListener("click", function () {
+        run(getState);
     });
     document.getElementById("idBtnRefreshToken").addEventListener("click", function () {
         run(refreshToken);
