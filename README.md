@@ -14,6 +14,6 @@ Samples run against Saxo's simulation environment and require an **access token*
 
 1. Authentication
 2. Instruments
-    - [Instrument search](instruments/search/)
+    - [Instrument search](instruments/search)
     - Instrument Details
 3. Order Placement 
