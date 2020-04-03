@@ -10,11 +10,18 @@ const appObject = {
     ]
   }
 
-document.getElementById('logInBtn').onclick = startLoginFlow;
+document.getElementById('logInBtn').onclick = startLoginFlow
 
 
-function startLoginFlow() {
+async function startLoginFlow() {
     const authUrl = appObject.AuthorizationEndpoint + `?response_type=token&client_id=${appObject.AppKey}&state=123&redirect_uri=${appObject.RedirectUrls[0]}`
     const loginwindow = window.open(authUrl)
     
+    await waitForLogin()
+
+    loginwindow.close()
+}
+
+function waitForLogin() {
+    return localStorage.getItem('access_token') ? true : setTimeout(waitForLogin, 200)
 }
