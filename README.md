@@ -1,4 +1,4 @@
-# [Saxo OpenAPI JavaScript Sample Repository](https://saxobank.github.io/openapi-samples-js/)
+# [OpenAPI JavaScript Sample Repository](https://saxobank.github.io/openapi-samples-js/)
 
 This repository contains sample files demonstrating OpenAPI interactions in JavaScript that can be run in the browser. Each of the included samples is designed as standalone HTML with pure JS using minimal dependecies.
 
