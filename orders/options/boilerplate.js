@@ -63,7 +63,7 @@ function run(functionToRun) {
                     cbxAccount.remove(0);
                     for (i = 0; i < responseJson.Data.length; i += 1) {
                         option = document.createElement("option");
-                        option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].AccountKey + ")";
+                        option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
                         option.value = responseJson.Data[i].AccountKey;
                         if (option.value === accountKey) {
                             option.setAttribute("selected", true);
@@ -178,10 +178,12 @@ function run(functionToRun) {
             }
         }
     });
-    document.getElementById("idBtnValidate").addEventListener("click", function () {
-        run(function () {
-            console.log("Valid!");
+    if (tokenInputFieldExists()) {
+        document.getElementById("idBtnValidate").addEventListener("click", function () {
+            run(function () {
+                console.log("Valid!");
+            });
         });
-    });
+    }
 
 }());
