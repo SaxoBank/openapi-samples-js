@@ -6,7 +6,7 @@ const appObject = {
     "GrantType": "Implicit",
     "OpenApiBaseUrl": "https://gateway.saxobank.com/sim/openapi/",
     "RedirectUrls": [
-      "https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/redirect"
+      "https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/redirect.html"
     ]
   }
 
