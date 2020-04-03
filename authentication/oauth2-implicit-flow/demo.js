@@ -20,8 +20,21 @@ async function startLoginFlow() {
     await waitForLogin()
 
     loginwindow.close()
+
+    
 }
 
-function waitForLogin() {
-    return localStorage.getItem('access_token') ? true : setTimeout(waitForLogin, 200)
+
+async function waitForLogin() {
+    let token
+    while(!token) {
+      token = localStorage.getItem('access_token')
+      await sleep(200)
+    }
+    return token
+  }
+
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
