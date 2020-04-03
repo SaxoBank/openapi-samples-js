@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -9,7 +9,14 @@
 </head>
 <body>
 <label>Paste token from <a href="https://www.developer.saxo/openapi/token" target="_blank">www.developer.saxo/openapi/token</a> in the box below:<br />
-<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." style="width: 50%" /></label><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." style="width: 50%" /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+<br />
 <br />
 <label>Option root ID (InstrumentId, not Uic): <input type="text" class="token-field" id="idInstrumentId" value="1" placeholder="Paste instrument id.." /></label>
 (Find one using the <a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/instruments/instrument-search" target="_blank">search functionality</a>)
