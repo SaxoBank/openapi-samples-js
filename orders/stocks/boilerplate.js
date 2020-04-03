@@ -4,6 +4,14 @@
 let accountKey = "";
 
 /**
+ * Determine if the token edit exists.
+ * @return {boolean} True if the field exists.
+ */
+function tokenInputFieldExists() {
+    return document.getElementById("idBearerToken") !== null;
+}
+
+/**
  * Shared function to display an unsuccessful response.
  * @param {Object} errorObject The complete error object.
  * @return {void}
@@ -47,41 +55,44 @@ function run(functionToRun) {
     // Display source used for demonstration:
     document.getElementById("idJavaScript").innerText = functionToRun.toString();
     document.getElementById("idResponse").innerText = "Started function " + functionToRun.name + "()";
-    if (document.getElementById("idBearerToken").value === "") {
-        document.getElementById("idResponse").innerText = "Bearer token is required to do requests.";
-    } else {
-        if (accountKey === "") {
-            // Retrieve the account key first
-            fetch(
-                "https://gateway.saxobank.com/sim/openapi/port/v1/accounts/me",
-                {
-                    "headers": {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                    },
-                    "method": "GET"
-                }
-            ).then(function (response) {
-                if (response.ok) {
-                    response.json().then(function (responseJson) {
-                        accountKey = responseJson.Data[0].AccountKey;  // Just get the first account
-                        console.log("Using accountKey: " + accountKey);
-                        functionToRun();
-                    });
-                } else {
-                    processError(response);
-                }
-            }).catch(function (error) {
-                processError(error);
-            });
+    if (tokenInputFieldExists()) {
+        if (document.getElementById("idBearerToken").value === "") {
+            document.getElementById("idResponse").innerText = "Bearer token is required to do requests.";
         } else {
-            functionToRun();
+            if (accountKey === "") {
+                // Retrieve the account key first
+                fetch(
+                    "https://gateway.saxobank.com/sim/openapi/port/v1/accounts/me",
+                    {
+                        "headers": {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                        },
+                        "method": "GET"
+                    }
+                ).then(function (response) {
+                    if (response.ok) {
+                        response.json().then(function (responseJson) {
+                            accountKey = responseJson.Data[0].AccountKey;  // Just get the first account
+                            console.log("Using accountKey: " + accountKey);
+                            functionToRun();
+                        });
+                    } else {
+                        processError(response);
+                    }
+                }).catch(function (error) {
+                    processError(error);
+                });
+            } else {
+                functionToRun();
+            }
         }
+    } else {
+        functionToRun();
     }
 }
 
 (function () {
-
     /**
      * Read a cookie.
      * @param {string} key Name of the cookie.
@@ -92,7 +103,8 @@ function run(functionToRun) {
         const decodedCookie = decodeURIComponent(document.cookie);
         const cookieArray = decodedCookie.split(";");
         let c;
-        for (let i = 0; i < cookieArray.length; i += 1) {
+        let i;
+        for (i = 0; i < cookieArray.length; i += 1) {
             c = cookieArray[i];
             while (c.charAt(0) === " ") {
                 c = c.substring(1);
@@ -123,10 +135,13 @@ function run(functionToRun) {
         document.getElementById("idBearerToken").value = previouslyUsedToken;
     }
     window.addEventListener("beforeunload", function () {
-        const token = document.getElementById("idBearerToken").value;
-        if (token.length > 10) {
-            // Save the token so it can be reused:
-            setCookie("saxotoken", token);
+        let token;
+        if (tokenInputFieldExists()) {
+            token = document.getElementById("idBearerToken").value;
+            if (token.length > 10) {
+                // Save the token so it can be reused:
+                setCookie("saxotoken", token);
+            }
         }
     });
 }());

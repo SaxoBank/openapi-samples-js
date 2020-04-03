@@ -181,6 +181,7 @@ function preCheckNewOrder() {
     // Bug: Preview doesn't check for limit outside market hours
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
+    newOrderObject.FieldGroups = [ "Costs", "MarginImpactBuySell" ];
     fetch(
         "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/precheck",
         {
