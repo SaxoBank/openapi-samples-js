@@ -7,7 +7,7 @@ To try these samples yourself, download/clone this repo and load the HTML files 
 
 ## Requirements
 
-Samples run against Saxo's simulation environment and require an `access token` in order to function. Saxo provides 24-hour tokens on the [Developer Portal](https://www.developer.saxo/openapi/token/), which is the easiest way to get started with the samples provided here. An account is required to generate a token, which can be created for free.
+Samples run against Saxo's simulation environment and require an **access token** in order to function. Saxo provides 24-hour tokens on the [Developer Portal](https://www.developer.saxo/openapi/token/), which is the easiest way to get started with the samples provided here. An account is required to generate a token, which can be created for free.
 
 
 ## Table of Contents
