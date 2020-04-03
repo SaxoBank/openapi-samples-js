@@ -5,6 +5,6 @@ This repository contains sample files demonstrating OpenAPI interactions in Java
 ## Table of Contents
 1. Authentication
 2. Instruments
-    - Instrument Lookup
+    - [Instrument search](/instruments/search)
     - Instrument Details
 3. Order Placement 
