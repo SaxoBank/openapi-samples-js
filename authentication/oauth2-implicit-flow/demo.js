@@ -6,9 +6,13 @@ const appObject = {
     "GrantType": "Implicit",
     "OpenApiBaseUrl": "https://gateway.saxobank.com/sim/openapi/",
     "RedirectUrls": [
-      "https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/redirect.html"
+        "https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/redirect.html"
     ]
-  }
+}
+
+// localStorage.removeItem("access_token")
+localStorage.removeItem("expires_in")
+localStorage.removeItem("state")
 
 document.getElementById('logInBtn').onclick = startLoginFlow
 
@@ -20,21 +24,37 @@ async function startLoginFlow() {
     await waitForLogin()
 
     loginwindow.close()
-
-    
+    getUserData()
 }
 
 
 async function waitForLogin() {
     let token
     while(!token) {
-      token = localStorage.getItem('access_token')
-      await sleep(200)
+      token = localStorage.getItem("access_token")
+      await sleep(50)
     }
     return token
-  }
+}
 
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getUserData() {
+    const token = localStorage.getItem("access_token")
+    const response = await fetch(
+        "https://gateway.saxobank.com/sim/openapi/port/v1/users/me",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + token
+            },
+            "method": "GET"
+        }
+    ).then(response => response.json())
+    
+    console.log(response)
+
 }
