@@ -15,6 +15,6 @@ document.getElementById('logInBtn').onclick = startLoginFlow;
 
 function startLoginFlow() {
     const authUrl = appObject.AuthorizationEndpoint + `?response_type=token&client_id=${appObject.AppKey}&state=123&redirect_uri=${appObject.RedirectUrls[0]}`
+    const loginwindow = window.open(authUrl)
     
-    console.log(authUrl)
 }
