@@ -1,7 +1,9 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global console */
 
+const responseElm = document.getElementById("idResponse");
 let accountKey = "";
+let clientKey = "";
 
 /**
  * Determine if the token edit exists.
@@ -29,10 +31,10 @@ function processError(errorObject) {
         if (errorObjectJson.hasOwnProperty("ErrorCode")) {
             textToDisplay += " - " + errorObjectJson.ErrorCode + " (" + errorObjectJson.Message + ")";
         }
-        document.getElementById("idResponse").innerText = textToDisplay;
+        processNetworkError(textToDisplay);
     }).catch(function () {
         // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
-        document.getElementById("idResponse").innerText = textToDisplay;
+        processNetworkError(textToDisplay);
     });
 }
 
@@ -43,7 +45,8 @@ function processError(errorObject) {
  */
 function processNetworkError(error) {
     console.error(error);
-    document.getElementById("idResponse").innerText = error;
+    responseElm.setAttribute("style", "background-color: #e10c02; color: #ffffff;");
+    responseElm.innerText = error;
 }
 
 /**
@@ -72,7 +75,7 @@ function run(functionToRun) {
                     }
                     cbxAccount.addEventListener("change", function () {
                         accountKey = cbxAccount.value;
-                        document.getElementById("idResponse").innerText = "Using account " + accountKey;
+                        responseElm.innerText = "Using account " + accountKey;
                     });
                     functionToRun();
                 });
@@ -90,7 +93,7 @@ function run(functionToRun) {
                 response.json().then(function (responseJson) {
                     accountKey = responseJson.DefaultAccountKey;  // Remember the default account
                     console.log("Using accountKey: " + accountKey);
-                    document.getElementById("idResponse").innerText = "The token is valid - hello " + responseJson.Name;
+                    responseElm.innerText = "The token is valid - hello " + responseJson.Name;
                     getAllAccounts(header);
                 });
             } else {
@@ -101,12 +104,13 @@ function run(functionToRun) {
         });
     }
 
-    // Display source used for demonstration:
+    // Display source of function, for demonstration:
     document.getElementById("idJavaScript").innerText = functionToRun.toString();
-    document.getElementById("idResponse").innerText = "Started function " + functionToRun.name + "()";
+    responseElm.removeAttribute("style");
+    responseElm.innerText = "Started function " + functionToRun.name + "()..";
     if (tokenInputFieldExists()) {
         if (document.getElementById("idBearerToken").value === "") {
-            document.getElementById("idResponse").innerText = "Bearer token is required to do requests.";
+            responseElm.innerText = "Bearer token is required to do requests.";
         } else {
             if (accountKey === "") {
                 // Retrieve the account key first
