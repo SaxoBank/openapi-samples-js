@@ -1,14 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Get a token using the implicit flow</title>
 </head>
-
 <body>
-    <section class="main-content">
-        <h1>JS Implicit Flow Sample</h1>
-        <p>NOTE: This authentication flow should only be used if Ouath2 Code or PKCE flows are not an option for your application. Generally speaking this flow is only applicable for single-page applications that need to connect to Saxo's OpenAPI without a back-end server.</p>
-        <input type="button" value="Log in" id="logInBtn" />
-
-    </section>
+<section class="main-content">
+This is a demo on how to get a token using the implicit flow.<br />
+<br />
+This page redirects you to the login website, to authenticate and retrieve a code.<br />
+<br />
+<br />
+<label>App Key: <input type="text" class="token-field" id="idEdtAppKey" value="e081be34791f4c7eac479b769b96d623" placeholder="Paste App Key.." /></label> (Find your App Key <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">here</a>)<br />
+<label>Redirect URL: <input type="text" class="token-field" id="idEdtRedirectUrl" value="https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/redirect.html" placeholder="Paste redirect URL.." /></label><br />
+<label>Optional text to use after login: <input type="text" class="token-field" id="idEdtState" value="This might be an account type, or ID" /></label><br />
+<label>
+    Culture of login page: <select class="selector" id="idCbxCulture">
+        <option value="-">Default</option>
+        <option value="nl">Dutch</option>
+        <option value="nl-BE">Flemish</option>
+        <option value="fr-FR">Walloon</option>
+        <option value="fr">French</option>
+        <option value="it">Italian</option>
+    </select>
+</label>
+<br />
+<br />
+<input type="button" class="action-button" value="Generate link" id="idBtnGenerateLink" />
+<br />
+<br />
+<br />
+Response: <div class="highlight" id="idResponse">Click button to launch function</div><br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to launch function</pre>
+</section>
 </body>
-
-<script type="text/javascript" src="demo.js" defer></script>
+</html>
