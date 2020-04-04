@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError processNetworkError */
+/*global window console accountKey run processError */
 
 let requestCount = 0;
 let requestQueue = [];
@@ -26,7 +26,7 @@ function processContractOptionSpace(assetType, responseJson) {
 }
 
 function processSearchResponse(assetType, responseJson) {
-    const baseUrl = "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?AccountKey=" + encodeURIComponent(accountKey) + "&$top=1000&AssetTypes=" + assetType + "&Uics=";
+    const baseUrl = apiUrl + "/ref/v1/instruments/details?AccountKey=" + encodeURIComponent(accountKey) + "&$top=1000&AssetTypes=" + assetType + "&Uics=";
     const separator = encodeURIComponent(",");
     let url = "";
 
@@ -45,7 +45,7 @@ function processSearchResponse(assetType, responseJson) {
             // We found an OptionRoot - this must be converted to Uic
             requestQueue.push({
                 "assetType": assetType,
-                "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/contractoptionspaces/" + responseJson.Data[i].Identifier + "?OptionSpaceSegment=AllDates",
+                "url": apiUrl + "/ref/v1/instruments/contractoptionspaces/" + responseJson.Data[i].Identifier + "?OptionSpaceSegment=AllDates",
                 "callback": processContractOptionSpace
             });
         } else {
@@ -79,7 +79,7 @@ function processExchangesResponse(assetType, responseJson) {
     for (let i = 0; i < responseJson.Data.length; i += 1) {
         requestQueue.push({
             "assetType": assetType,
-            "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments?ExchangeId=" + encodeURIComponent(responseJson.Data[i].ExchangeId) + "&AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(accountKey),
+            "url": apiUrl + "/ref/v1/instruments?ExchangeId=" + encodeURIComponent(responseJson.Data[i].ExchangeId) + "&AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(accountKey),
             "callback": processSearchResponse
         });
     }
@@ -92,22 +92,22 @@ function processExchangesResponse(assetType, responseJson) {
 function start() {
     requestQueue.push({
         "assetType": "ContractFutures",
-        "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/exchanges?$top=1000",
+        "url": apiUrl + "/ref/v1/exchanges?$top=1000",
         "callback": processExchangesResponse
     });
     requestQueue.push({
         "assetType": "Stock",
-        "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/exchanges?$top=1000",
+        "url": apiUrl + "/ref/v1/exchanges?$top=1000",
         "callback": processExchangesResponse
     });
     requestQueue.push({
         "assetType": "StockOption",
-        "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/exchanges?$top=1000",
+        "url": apiUrl + "/ref/v1/exchanges?$top=1000",
         "callback": processExchangesResponse
     });
     requestQueue.push({
         "assetType": "StockIndexOption",
-        "url": "https://gateway.saxobank.com/sim/openapi/ref/v1/exchanges?$top=1000",
+        "url": apiUrl + "/ref/v1/exchanges?$top=1000",
         "callback": processExchangesResponse
     });
 }
@@ -135,7 +135,7 @@ function runJobFromQueue() {
                 processError(response);
             }
         }).catch(function (error) {
-            processNetworkError(error);
+            console.error(error);
         });
         requestCount += 1;
     }

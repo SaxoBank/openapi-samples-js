@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console WebSocket accountKey run processError processNetworkError */
+/*global window console WebSocket accountKey run processError */
 
 let connection;
 
@@ -12,6 +12,7 @@ function createConnection() {
     const contextId = encodeURIComponent(document.getElementById("idContextId").value);
     const streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
     if (contextId !== document.getElementById("idContextId").value) {
+        console.error("Invalid characters in Context ID.");
         throw "Invalid characters in Context ID.";
     }
     connection = new WebSocket(streamerUrl);
@@ -89,7 +90,8 @@ function subscribe() {
         "ReferenceId": "MyTradeLevelChangeEvent"
     };
 
-    fetch("https://gateway.saxobank.com/sim/openapi/root/v1/sessions/events/subscriptions",
+    fetch(
+        apiUrl + "/root/v1/sessions/events/subscriptions",
         {
             "method": "POST",
             "headers": {
@@ -105,7 +107,7 @@ function subscribe() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -115,7 +117,7 @@ function subscribe() {
  */
 function becomePrimary() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/root/v1/sessions/capabilities",
+        apiUrl + "/root/v1/sessions/capabilities",
         {
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
@@ -133,7 +135,7 @@ function becomePrimary() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -143,7 +145,7 @@ function becomePrimary() {
  */
 function becomePrimaryAgain() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/root/v1/sessions/capabilities",
+        apiUrl + "/root/v1/sessions/capabilities",
         {
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
@@ -161,7 +163,7 @@ function becomePrimaryAgain() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 

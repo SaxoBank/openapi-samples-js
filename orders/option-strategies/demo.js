@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError processNetworkError */
+/*global window console accountKey run processError */
 
 let orderSequenceNumber = 1;
 let lastOrderId = 0;
@@ -41,7 +41,7 @@ function selectOrderType() {
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         break;
     default:
-        processNetworkError("Unsupported order type " + newOrderObject.OrderType);
+        console.error("Unsupported order type " + newOrderObject.OrderType);
     }
 }
 
@@ -91,7 +91,7 @@ function populateOrderTypes(orderTypes) {
 function getStrategy() {
     const optionRootId = document.getElementById("idInstrumentId").value;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + document.getElementById("idCbxOptionStrategy").value,
+        apiUrl + "/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + document.getElementById("idCbxOptionStrategy").value,
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -122,7 +122,7 @@ function getStrategy() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -136,7 +136,7 @@ function getSeries() {
     newOrderObject.AccountKey = accountKey;
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
+        apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -156,7 +156,7 @@ function getSeries() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -171,7 +171,7 @@ function preCheckNewOrder() {
     newOrderObject.AccountKey = accountKey;
     newOrderObject.FieldGroups = [ "Costs", "MarginImpactBuySell" ];
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/precheck",
+        apiUrl + "/trade/v2/orders/multileg/precheck",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -192,7 +192,7 @@ function preCheckNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -205,7 +205,7 @@ function placeNewOrder() {
     newOrderObject.AccountKey = accountKey;
     orderSequenceNumber += 1;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg",
+        apiUrl + "/trade/v2/orders/multileg",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -227,7 +227,7 @@ function placeNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -241,7 +241,7 @@ function modifyLastOrder() {
     newOrderObject.MultiLegOrderId = lastOrderId;
     newOrderObject.Amout = newOrderObject.Amount * 2;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg",
+        apiUrl + "/trade/v2/orders/multileg",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -262,7 +262,7 @@ function modifyLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -272,7 +272,7 @@ function modifyLastOrder() {
  */
 function cancelLastOrder() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/multileg/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/trade/v2/orders/multileg/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -290,7 +290,7 @@ function cancelLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 

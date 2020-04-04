@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console WebSocket accountKey run processError processNetworkError */
+/*global window console WebSocket accountKey clientKey run processError */
 
 let connection;
 
@@ -12,6 +12,7 @@ function createConnection() {
     const contextId = encodeURIComponent(document.getElementById("idContextId").value);
     const streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
     if (contextId !== document.getElementById("idContextId").value) {
+        console.error("Invalid characters in Context ID.");
         throw "Invalid characters in Context ID.";
     }
     connection = new WebSocket(streamerUrl);
@@ -115,7 +116,7 @@ function subscribeOrders() {
         }
     };
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ens/v1/activities/subscriptions",
+        apiUrl + "/ens/v1/activities/subscriptions",
         {
             "method": "POST",
             "headers": {
@@ -131,7 +132,7 @@ function subscribeOrders() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -144,11 +145,12 @@ function subscribePositions() {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPositionEvent",
         "Arguments": {
-            "AccountKey": accountKey
+            "AccountKey": accountKey,
+            "ClientKey": clientKey
         }
     };
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/port/v1/netpositions/subscriptions",
+        apiUrl + "/port/v1/netpositions/subscriptions",
         {
             "method": "POST",
             "headers": {
@@ -164,7 +166,7 @@ function subscribePositions() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -174,12 +176,12 @@ function subscribePositions() {
  */
 function extendSubscription() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+        apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
         {
             "method": "PUT",
             "headers": {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + accessToken
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             }
         }
     ).then(function (response) {
@@ -189,7 +191,7 @@ function extendSubscription() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 

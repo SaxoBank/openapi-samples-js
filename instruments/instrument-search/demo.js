@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError processNetworkError */
+/*global window console accountKey run processError */
 
 let instrumentId;
 
@@ -15,7 +15,7 @@ function getExchanges() {
         cbxExchange.remove(i);  // Remove all, except the first
     }
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ref/v1/exchanges?$top=1000",
+        apiUrl + "/ref/v1/exchanges?$top=1000",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -38,7 +38,7 @@ function getExchanges() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -49,7 +49,7 @@ function getExchanges() {
 function findInstrument() {
     // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=referencedata&service=instruments&endpoint=getsummaries
     const keywords = encodeURIComponent(document.getElementById("idInstrumentName").value);
-    let url = "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
+    let url = apiUrl + "/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
     if (document.getElementById("idCbxExchange").value !== "-") {
         url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
     }
@@ -77,7 +77,7 @@ function findInstrument() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -87,7 +87,7 @@ function findInstrument() {
  */
 function getDetails() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?Uics=" + instrumentId + "&AssetTypes=" + document.getElementById("idCbxAssetType").value + "&AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/ref/v1/instruments/details?Uics=" + instrumentId + "&AssetTypes=" + document.getElementById("idCbxAssetType").value + "&AccountKey=" + encodeURIComponent(accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -104,7 +104,7 @@ function getDetails() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 

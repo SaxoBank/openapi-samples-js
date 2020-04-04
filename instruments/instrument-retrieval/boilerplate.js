@@ -1,9 +1,10 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global console */
 
-const responseElm = document.getElementById("idResponse");
+const apiUrl = "https://gateway.saxobank.com/sim/openapi";
 let accountKey = "";
 let clientKey = "";
+const responseElm = document.getElementById("idResponse");
 
 /**
  * Determine if the token edit exists.
@@ -31,22 +32,11 @@ function processError(errorObject) {
         if (errorObjectJson.hasOwnProperty("ErrorCode")) {
             textToDisplay += " - " + errorObjectJson.ErrorCode + " (" + errorObjectJson.Message + ")";
         }
-        processNetworkError(textToDisplay);
+        console.error(textToDisplay);
     }).catch(function () {
         // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
-        processNetworkError(textToDisplay);
+        console.error(textToDisplay);
     });
-}
-
-/**
- * Shared function to display a network error, without response.
- * @param {string} error The complete error message.
- * @return {void}
- */
-function processNetworkError(error) {
-    console.error(error);
-    responseElm.setAttribute("style", "background-color: #e10c02; color: #ffffff;");
-    responseElm.innerText = error;
 }
 
 /**
@@ -57,7 +47,7 @@ function processNetworkError(error) {
 function run(functionToRun) {
 
     function getAllAccounts(header) {
-        fetch("https://gateway.saxobank.com/sim/openapi/port/v1/accounts/me", header).then(function (response) {
+        fetch(apiUrl + "/port/v1/accounts/me", header).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const cbxAccount = document.getElementById("idCbxAccount");
@@ -88,11 +78,12 @@ function run(functionToRun) {
     }
 
     function getDefaultAccount(header) {
-        fetch("https://gateway.saxobank.com/sim/openapi/port/v1/clients/me", header).then(function (response) {
+        fetch(apiUrl + "/port/v1/clients/me", header).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     accountKey = responseJson.DefaultAccountKey;  // Remember the default account
-                    console.log("Using accountKey: " + accountKey);
+                    clientKey = responseJson.ClientKey;
+                    console.log("Using accountKey " + accountKey + " of clientKey " + clientKey);
                     responseElm.innerText = "The token is valid - hello " + responseJson.Name;
                     getAllAccounts(header);
                 });
@@ -131,6 +122,20 @@ function run(functionToRun) {
 }
 
 (function () {
+
+    /**
+     * When an error is logged to the console, show it in the Response-box as well.
+     * @return {void}
+     */
+    function mirrorConsoleError() {
+        console.errorCopy = console.error.bind(console);
+        console.error = function (data) {
+            responseElm.setAttribute("style", "background-color: #e10c02; color: #ffffff;");
+            responseElm.innerText = data;
+            this.errorCopy(data);
+        };
+    }
+
     /**
      * Read a cookie.
      * @param {string} key Name of the cookie.
@@ -166,6 +171,8 @@ function run(functionToRun) {
         expires.setTime(expires.getTime() + 360 * 24 * 60 * 60 * 1000);
         document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
     }
+
+    mirrorConsoleError();
 
     // Show most recent used token:
     const previouslyUsedToken = getCookie("saxotoken");

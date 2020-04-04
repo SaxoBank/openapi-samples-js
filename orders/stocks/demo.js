@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError processNetworkError */
+/*global window console accountKey run processError */
 
 let orderSequenceNumber = 1;
 let lastOrderId = 0;
@@ -15,7 +15,7 @@ function selectOrderType() {
     switch (newOrderObject.OrderType) {
     case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
         fetch(
-            "https://gateway.saxobank.com/sim/openapi/trade/v1/infoprices?AssetType=Stock&uic=" + newOrderObject.Uic,
+            apiUrl + "/trade/v1/infoprices?AssetType=Stock&uic=" + newOrderObject.Uic,
             {
                 "headers": {
                     "Content-Type": "application/json; charset=utf-8",
@@ -34,7 +34,7 @@ function selectOrderType() {
                 processError(response);
             }
         }).catch(function (error) {
-            processNetworkError(error);
+            console.error(error);
         });
         break;
     case "Market":  // Order is attempted filled at best price in the market.
@@ -61,7 +61,7 @@ function selectOrderType() {
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         break;
     default:
-        processNetworkError("Unsupported order type " + newOrderObject.OrderType);
+        console.error("Unsupported order type " + newOrderObject.OrderType);
     }
 }
 
@@ -111,7 +111,7 @@ function populateOrderTypes(orderTypes) {
 function getConditions() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
+        apiUrl + "/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -131,7 +131,7 @@ function getConditions() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -144,7 +144,7 @@ function getOrderCosts() {
     // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20cost
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
+        apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -161,7 +161,7 @@ function getOrderCosts() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -183,7 +183,7 @@ function preCheckNewOrder() {
     newOrderObject.AccountKey = accountKey;
     newOrderObject.FieldGroups = [ "Costs", "MarginImpactBuySell" ];
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/precheck",
+        apiUrl + "/trade/v2/orders/precheck",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -203,7 +203,7 @@ function preCheckNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -216,7 +216,7 @@ function placeNewOrder() {
     newOrderObject.AccountKey = accountKey;
     orderSequenceNumber += 1;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
+        apiUrl + "/trade/v2/orders",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -238,7 +238,7 @@ function placeNewOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -252,7 +252,7 @@ function modifyLastOrder() {
     newOrderObject.OrderId = lastOrderId;
     newOrderObject.Amout = newOrderObject.Amount * 2;
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders",
+        apiUrl + "/trade/v2/orders",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -273,7 +273,7 @@ function modifyLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -283,7 +283,7 @@ function modifyLastOrder() {
  */
 function cancelLastOrder() {
     fetch(
-        "https://gateway.saxobank.com/sim/openapi/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -301,7 +301,7 @@ function cancelLastOrder() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 

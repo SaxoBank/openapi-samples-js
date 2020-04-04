@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console run processError processNetworkError */
+/*global window console run processError */
 
 let code;
 let tokenObject;
@@ -63,7 +63,7 @@ function getToken() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
@@ -84,7 +84,7 @@ function getState() {
     try {
         document.getElementById("idResponse").innerText = "Found state: " + JSON.stringify(JSON.parse(stateString), null, 4);
     } catch (ignore) {
-        processNetworkError("State returned in the URL parameter is invalid.");
+        console.error("State returned in the URL parameter is invalid.");
     }
 }
 
@@ -115,7 +115,7 @@ function refreshToken() {
             processError(response);
         }
     }).catch(function (error) {
-        processNetworkError(error);
+        console.error(error);
     });
 }
 
