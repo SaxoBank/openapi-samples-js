@@ -9,14 +9,12 @@ let tokenObject;
  * @return {void}
  */
 function checkErrors() {
-    const name = "error";
-    const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-    const results = regex.exec(window.location.href);
-    if (results === null) {
+    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const error = urlParams.get("error");
+    if (error === null) {
         document.getElementById("idResponse").innerText = "No error found";
     } else {
-        document.getElementById("idResponse").innerText = "Found error: " + decodeURIComponent(results[1].replace(/\+/g, " "));
-        // Get "error_description" to see what the problem was.
+        console.error("Found error: " + error + " (" + urlParams.get("error_description") + ")");
     }
 }
 
@@ -25,15 +23,9 @@ function checkErrors() {
  * @return {void}
  */
 function getCode() {
-    const name = "code";
-    const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-    const results = regex.exec(window.location.href);
-    code = (
-        results === null
-        ? ""
-        : decodeURIComponent(results[1].replace(/\+/g, " "))
-    );
-    document.getElementById("idResponse").innerText = "Found code: " + code;
+    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    code = urlParams.get("code");
+    document.getElementById("idResponse").innerText = "Found code: " + decodeURIComponent(code);
 }
 
 /**
@@ -73,18 +65,18 @@ function getToken() {
  */
 function getState() {
     // https://auth0.com/docs/protocols/oauth2/oauth-state
-    const name = "state";
-    const regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-    const results = regex.exec(window.location.href);
-    const stateString = (
-        results === null
-        ? ""
-        : window.atob(results[1].replace(/\+/g, " "))
-    );
-    try {
-        document.getElementById("idResponse").innerText = "Found state: " + JSON.stringify(JSON.parse(stateString), null, 4);
-    } catch (ignore) {
-        console.error("State returned in the URL parameter is invalid.");
+    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const state = urlParams.get("state");
+    let stateUnencoded;
+    if (state === null) {
+        document.getElementById("idResponse").innerText = "No state found";
+    } else {
+        stateUnencoded = window.atob(state);
+        try {
+            document.getElementById("idResponse").innerText = "Found state: " + JSON.stringify(JSON.parse(stateUnencoded), null, 4);
+        } catch (ignore) {
+            console.error("State returned in the URL parameter is invalid.");
+        }
     }
 }
 
