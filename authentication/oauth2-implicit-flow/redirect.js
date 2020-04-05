@@ -48,6 +48,10 @@ function getState() {
     }
 }
 
+/**
+ * Demonstrate a basic request to the Api, to show the token is valid.
+ * @return {void}
+ */
 function getUserData() {
     fetch(
         apiUrl + "/port/v1/users/me",

@@ -9,7 +9,7 @@ let tokenObject;
  * @return {void}
  */
 function checkErrors() {
-    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get("error");
     if (error === null) {
         document.getElementById("idResponse").innerText = "No error found";
@@ -23,9 +23,13 @@ function checkErrors() {
  * @return {void}
  */
 function getCode() {
-    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const urlParams = new URLSearchParams(window.location.search);
     code = urlParams.get("code");
-    document.getElementById("idResponse").innerText = "Found code: " + decodeURIComponent(code);
+    if (code === null) {
+        console.error("No code found!");
+    } else {
+        document.getElementById("idResponse").innerText = "Found code: " + decodeURIComponent(code);
+    }
 }
 
 /**
@@ -65,7 +69,7 @@ function getToken() {
  */
 function getState() {
     // https://auth0.com/docs/protocols/oauth2/oauth-state
-    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const urlParams = new URLSearchParams(window.location.search);
     const state = urlParams.get("state");
     let stateUnencoded;
     if (state === null) {
@@ -78,6 +82,33 @@ function getState() {
             console.error("State returned in the URL parameter is invalid.");
         }
     }
+}
+
+/**
+ * Demonstrate a basic request to the Api, to show the token is valid.
+ * @return {void}
+ */
+function getUserData() {
+    fetch(
+        apiUrl + "/port/v1/users/me",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + tokenObject.access_token
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                document.getElementById("idResponse").innerText = "Connection to API created, hello " + responseJson.Name;
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
 }
 
 /**
@@ -123,6 +154,9 @@ function refreshToken() {
     });
     document.getElementById("idBtnGetState").addEventListener("click", function () {
         run(getState);
+    });
+    document.getElementById("idBtnGetUserData").addEventListener("click", function () {
+        run(getUserData);
     });
     document.getElementById("idBtnRefreshToken").addEventListener("click", function () {
         run(refreshToken);
