@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console run processError */
+/*global window console URLSearchParams run processError apiUrl */
 
 let code;
 let tokenObject;

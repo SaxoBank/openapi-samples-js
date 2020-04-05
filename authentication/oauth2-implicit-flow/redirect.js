@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console run */
+/*global window console URLSearchParams run processError apiUrl */
 
 let accessToken;
 const accessTokenExpirationTime = new Date();
@@ -25,9 +25,9 @@ function checkErrors() {
 function getToken() {
     const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
     const expiresInSeconds = urlParams.get("expires_in");
-    access_token = urlParams.get("access_token");
+    accessToken = urlParams.get("access_token");
     accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + expiresInSeconds);
-    document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + decodeURIComponent(access_token);
+    document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + decodeURIComponent(accessToken);
 }
 
 /**
@@ -61,7 +61,7 @@ function getUserData() {
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
-                "Authorization": "Bearer " + access_token
+                "Authorization": "Bearer " + accessToken
             },
             "method": "GET"
         }
