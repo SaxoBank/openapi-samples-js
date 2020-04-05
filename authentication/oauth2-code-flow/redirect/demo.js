@@ -33,37 +33,6 @@ function getCode() {
 }
 
 /**
- * After a successful authentication, the code can be exchanged for a token.
- * @return {void}
- */
-function getToken() {
-    fetch(
-        "server-get-token.php",
-        {
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                "Accept": "application/json; charset=utf-8"
-            },
-            "method": "POST",
-            "body": JSON.stringify({
-                "code": code
-            })
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                tokenObject = responseJson;
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
-
-/**
  * After a successful authentication, the state entered before authentication is passed as query parameter.
  * @return {void}
  */
@@ -82,6 +51,39 @@ function getState() {
             console.error("State returned in the URL parameter is invalid.");
         }
     }
+}
+
+/**
+ * After a successful authentication, the code can be exchanged for a token.
+ * @return {void}
+ */
+function getToken() {
+    fetch(
+        "server-get-token.php",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Accept": "application/json; charset=utf-8"
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                "code": code
+            })
+        }
+    ).then(function (response) {
+        const accessTokenExpirationTime = new Date();
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                tokenObject = responseJson;
+                accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
+                document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4);
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
 }
 
 /**
@@ -129,10 +131,12 @@ function refreshToken() {
             })
         }
     ).then(function (response) {
+        const accessTokenExpirationTime = new Date();
         if (response.ok) {
             response.json().then(function (responseJson) {
                 tokenObject = responseJson;
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
+                document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4);
             });
         } else {
             processError(response);

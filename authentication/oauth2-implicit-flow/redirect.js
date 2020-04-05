@@ -2,6 +2,7 @@
 /*global window console run */
 
 let accessToken;
+const accessTokenExpirationTime = new Date();
 
 /**
  * If login failed, the error can be found as a query parameter.
@@ -23,8 +24,10 @@ function checkErrors() {
  */
 function getToken() {
     const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const expiresInSeconds = urlParams.get("expires_in");
     access_token = urlParams.get("access_token");
-    document.getElementById("idResponse").innerText = "Found access_token: " + decodeURIComponent(access_token);
+    accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + expiresInSeconds);
+    document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + decodeURIComponent(access_token);
 }
 
 /**
