@@ -10,6 +10,7 @@
 </head>
 <body>
 <section class="main-content">
+<h1>JS PKCE Flow Sample</h1>
 This is a demo on how to get a token using the PKCE flow.<br />
 <br />
 This page redirects you to the login website, to authenticate and retrieve a code.<br />
@@ -24,7 +25,7 @@ Steps:<ol>
 <br />
 <label>App Key: <input type="text" class="token-field" id="idEdtAppKey" value="51cf2a12e7c048328158b0b1f171f9a7" placeholder="Paste App Key.." /></label> (Find your App Key <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">here</a>)<br />
 <label>Redirect URL: <input type="text" class="token-field" id="idEdtRedirectUrl" value="https://saxobank.github.io/openapi-samples-js/authentication/oauth2-pkce-flow/redirect.html" placeholder="Paste redirect URL.." /></label><br />
-<label>Optional text to use after login: <input type="text" class="token-field" id="idEdtState" value="Hello" /></label><br />
+<label>Optional data to use after login: <input type="text" class="token-field" id="idEdtState" value="This data field might be used for pre-selected account type or language" /></label><br />
 <label>
     Culture of login page: <select class="selector" id="idCbxCulture">
         <option value="-">Default</option>

@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global console */
+/*global console URLSearchParams */
 
 const apiUrl = "https://gateway.saxobank.com/sim/openapi";
 let accountKey = "";
@@ -172,29 +172,41 @@ function run(functionToRun) {
         document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
     }
 
-    mirrorConsoleError();
-
-    // Show most recent used token:
-    const previouslyUsedToken = getCookie("saxotoken");
-    if (previouslyUsedToken !== "") {
-        document.getElementById("idBearerToken").value = previouslyUsedToken;
-    }
-    window.addEventListener("beforeunload", function () {
-        let token;
-        if (tokenInputFieldExists()) {
-            token = document.getElementById("idBearerToken").value;
-            if (token.length > 10) {
-                // Save the token so it can be reused:
-                setCookie("saxotoken", token);
-            }
+    /**
+     * Try to hunt down a previously used access_token, so a page refresh is less a hassle.
+     * @return {void}
+     */
+    function tryToGetToken() {
+        // First, maybe the token is supplied in the URL?
+        const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+        const urlWithoutParams = location.protocol + "//" + location.host + location.pathname;
+        let newAccessToken = urlParams.get("access_token");
+        if (newAccessToken === null) {
+            // Second, maybe the token is stored in a cookie?
+            newAccessToken = getCookie("saxotoken");
         }
-    });
-    if (tokenInputFieldExists()) {
+        document.getElementById("idBearerToken").value = newAccessToken;
+        window.addEventListener("beforeunload", function () {
+            let accessTokenToSave = document.getElementById("idBearerToken").value;
+            if (accessTokenToSave.length > 10) {
+                // Save the token so it can be reused:
+                setCookie("saxotoken", accessTokenToSave);
+            }
+        });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
             run(function () {
                 console.log("Valid!");
             });
         });
+        if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
+            // We can probably use the Implicit Grant to get a token
+            document.getElementById("idHrefRetrieveToken").href = "https://sim.logonvalidation.net/authorize?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
+        }
+    }
+
+    mirrorConsoleError();
+    if (tokenInputFieldExists()) {
+        tryToGetToken();
     }
 
 }());
