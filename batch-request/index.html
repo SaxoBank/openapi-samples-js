@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demonstration of a batch request</title>
+</head>
+<body>
+<section class="main-content">
+<label>Paste token from <a href="https://www.developer.saxo/openapi/token" target="_blank">www.developer.saxo/openapi/token</a> in the box below:<br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." style="width: 50%" autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+<br />
+<h1>Group requests into a batch</h1>
+More info: <a href="https://www.developer.saxo/openapi/learn/batching-requests" target="_blank">https://www.developer.saxo/openapi/learn/batching-requests</a>
+<br />
+<br />
+POST body containing requests:
+<br />
+<textarea class="json-input" id="idRequestBody" rows="10" wrap="off" style="width: 100%">
+Click 'Compose request' to group some basic requests which are generally done when launching your application.
+</textarea>
+<br />
+<input type="button" class="action-button" value="Compose request" id="idBtnGetRequest" />
+<input type="button" class="action-button" value="Do batch request" id="idBtnGetResponse" />
+<br />
+Response: <div class="highlight" id="idResponse">Click button to launch function</div>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to launch function</pre>
+</section>
+</body>
+</html>

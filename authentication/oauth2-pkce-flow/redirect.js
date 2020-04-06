@@ -58,17 +58,16 @@ function getState() {
  * @return {void}
  */
 function getToken() {
+    alert("This flow is for desktop apps and only here for demonstration purposes..\n\nTurn on F12 tools. Whatch the token being send over the network (tab: Network).\nHowever, due to CORS the tokken cannot be read via JavaScript.");
     fetch(
-        "server-get-token.php",
+        "https://sim.logonvalidation.net/token",
         {
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
+                "Content-Type": "application/x-www-form-urlencoded",
                 "Accept": "application/json; charset=utf-8"
             },
             "method": "POST",
-            "body": JSON.stringify({
-                "code": code
-            })
+            "body": new URLSearchParams("grant_type=authorization_code&client_id=51cf2a12e7c048328158b0b1f171f9a7&code_verifier=" + document.getElementById("idCodeVerifier").value + "&code=" + code + "&redirect_uri=" + location.protocol + "//" + location.host + location.pathname)
         }
     ).then(function (response) {
         const accessTokenExpirationTime = new Date();
@@ -82,67 +81,7 @@ function getToken() {
             processError(response);
         }
     }).catch(function (error) {
-        console.error(error);
-    });
-}
-
-/**
- * Demonstrate a basic request to the Api, to show the token is valid.
- * @return {void}
- */
-function getUserData() {
-    fetch(
-        apiUrl + "/port/v1/users/me",
-        {
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                "Authorization": "Bearer " + tokenObject.access_token
-            },
-            "method": "GET"
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                document.getElementById("idResponse").innerText = "Connection to API created, hello " + responseJson.Name;
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
-
-/**
- * To prevent expiration of the token, request a new one before "refresh_token_expires_in".
- * @return {void}
- */
-function refreshToken() {
-    fetch(
-        "server-refresh-token.php",
-        {
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                "Accept": "application/json; charset=utf-8"
-            },
-            "method": "POST",
-            "body": JSON.stringify({
-                "refresh_token": tokenObject.refresh_token
-            })
-        }
-    ).then(function (response) {
-        const accessTokenExpirationTime = new Date();
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                tokenObject = responseJson;
-                accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
-                document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4);
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
+        console.error("Due to CORS the response cannot be read with JavaScript. This flow is for desktop apps.");
     });
 }
 
@@ -153,16 +92,10 @@ function refreshToken() {
     document.getElementById("idBtnGetCode").addEventListener("click", function () {
         run(getCode);
     });
-    document.getElementById("idBtnGetToken").addEventListener("click", function () {
-        run(getToken);
-    });
     document.getElementById("idBtnGetState").addEventListener("click", function () {
         run(getState);
     });
-    document.getElementById("idBtnGetUserData").addEventListener("click", function () {
-        run(getUserData);
-    });
-    document.getElementById("idBtnRefreshToken").addEventListener("click", function () {
-        run(refreshToken);
+    document.getElementById("idBtnGetToken").addEventListener("click", function () {
+        run(getToken);
     });
 }());
