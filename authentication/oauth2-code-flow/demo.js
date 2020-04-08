@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console run */
+/*global window run */
 
 /**
  * If login failed, the error can be found as a query parameter.

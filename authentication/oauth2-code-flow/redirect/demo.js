@@ -12,7 +12,7 @@ function checkErrors() {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get("error");
     if (error === null) {
-        document.getElementById("idResponse").innerText = "No error found";
+        console.log("No error found");
     } else {
         console.error("Found error: " + error + " (" + urlParams.get("error_description") + ")");
     }
@@ -28,7 +28,7 @@ function getCode() {
     if (code === null) {
         console.error("No code found!");
     } else {
-        document.getElementById("idResponse").innerText = "Found code: " + decodeURIComponent(code);
+        console.log("Found code: " + decodeURIComponent(code));
     }
 }
 
@@ -42,11 +42,11 @@ function getState() {
     const state = urlParams.get("state");
     let stateUnencoded;
     if (state === null) {
-        document.getElementById("idResponse").innerText = "No state found";
+        console.log("No state found");
     } else {
         stateUnencoded = window.atob(state);
         try {
-            document.getElementById("idResponse").innerText = "Found state: " + JSON.stringify(JSON.parse(stateUnencoded), null, 4);
+            console.log("Found state: " + JSON.stringify(JSON.parse(stateUnencoded), null, 4));
         } catch (ignore) {
             console.error("State returned in the URL parameter is invalid.");
         }
@@ -76,7 +76,7 @@ function getToken() {
             response.json().then(function (responseJson) {
                 tokenObject = responseJson;
                 accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
-                document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4);
+                console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
@@ -103,7 +103,7 @@ function getUserData() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                document.getElementById("idResponse").innerText = "Connection to API created, hello " + responseJson.Name;
+                console.log("Connection to API created, hello " + responseJson.Name);
             });
         } else {
             processError(response);
@@ -136,7 +136,7 @@ function refreshToken() {
             response.json().then(function (responseJson) {
                 tokenObject = responseJson;
                 accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
-                document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4);
+                console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);

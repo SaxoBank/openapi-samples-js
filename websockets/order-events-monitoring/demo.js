@@ -16,7 +16,7 @@ function createConnection() {
         throw "Invalid characters in Context ID.";
     }
     connection = new WebSocket(streamerUrl);
-    document.getElementById("idResponse").innerText = "Connection created. ReadyState: " + connection.readyState;
+    console.log("Connection created. ReadyState: " + connection.readyState);
     // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
     // 0 = CONNECTING, 1 = OPEN
 }
@@ -40,22 +40,21 @@ function startListener() {
             const segmentEnd = payloadBeginIndex + 5 + payloadLength;
             const payload = String.fromCharCode.apply(String, bytes.slice(payloadBeginIndex + 5, segmentEnd));
             const block = JSON.parse(payload);
-            console.log("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
+            console.debug("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
             block.ReferenceId = refId;
             block.MessageID = messageId;
             switch (refId) {
             case "MyOrderEvent":
-                document.getElementById("idResponse").innerText = "Streaming message received: " + payload;
-                console.log("Order event to be processed:");
+                console.log("Streaming message received: " + payload);
                 break;
             case "MyPositionEvent":
-                document.getElementById("idResponse").innerText = "Streaming message received: " + payload;
-                console.log("Position event to be processed:");
+                console.log("Streaming message received: " + payload);
+                console.debug("Position event to be processed:");
                 break;
             case "_heartbeat":
                 break;
             default:
-                console.log("No processing implemented for message with reference " + refId);
+                console.debug("No processing implemented for message with reference " + refId);
             }
             return {
                 "segmentEnd": segmentEnd,
@@ -79,7 +78,7 @@ function startListener() {
     connection.onmessage = function (event) {
         // Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
         const reader = new FileReader();
-        console.log("Streaming message received");
+        console.debug("Streaming message received");
         reader.readAsArrayBuffer(event.data);
         reader.onloadend = function () {
             let beginAt;
@@ -92,7 +91,7 @@ function startListener() {
             } while (data.byteLength > 0);
         };
     };
-    document.getElementById("idResponse").innerText = "Connection subscribed to events. ReadyState: " + connection.readyState;
+    console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
 }
 
 /**
@@ -127,7 +126,7 @@ function subscribeOrders() {
         }
     ).then(function (response) {
         if (response.ok) {
-            document.getElementById("idResponse").innerText = "Subscription for order changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
+            console.log("Subscription for order changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState);
         } else {
             processError(response);
         }
@@ -161,7 +160,7 @@ function subscribePositions() {
         }
     ).then(function (response) {
         if (response.ok) {
-            document.getElementById("idResponse").innerText = "Subscription for position changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState;
+            console.log("Subscription for position changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState);
         } else {
             processError(response);
         }
@@ -186,7 +185,7 @@ function extendSubscription() {
         }
     ).then(function (response) {
         if (response.ok) {
-            document.getElementById("idResponse").innerText = "Subscription extended";
+            console.log("Subscription extended");
         } else {
             processError(response);
         }

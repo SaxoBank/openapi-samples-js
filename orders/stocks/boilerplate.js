@@ -5,13 +5,14 @@ const apiUrl = "https://gateway.saxobank.com/sim/openapi";
 let accountKey = "";
 let clientKey = "";
 const responseElm = document.getElementById("idResponse");
+const accessTokenElm = document.getElementById("idBearerToken");
 
 /**
  * Determine if the token edit exists.
  * @return {boolean} True if the field exists.
  */
 function tokenInputFieldExists() {
-    return document.getElementById("idBearerToken") !== null;
+    return accessTokenElm !== null;
 }
 
 /**
@@ -21,7 +22,6 @@ function tokenInputFieldExists() {
  */
 function processError(errorObject) {
     let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
-    console.error(textToDisplay + " " + errorObject.url);
     // Some errors have a JSON-response, containing explanation of what went wrong.
     errorObject.json().then(function (errorObjectJson) {
         if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
@@ -53,7 +53,9 @@ function run(functionToRun) {
                     const cbxAccount = document.getElementById("idCbxAccount");
                     let i;
                     let option;
-                    cbxAccount.remove(0);
+                    for (i = cbxAccount.options.length - 1; i >= 0; i -= 1) {
+                        cbxAccount.remove(i);
+                    }
                     for (i = 0; i < responseJson.Data.length; i += 1) {
                         option = document.createElement("option");
                         option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
@@ -73,25 +75,27 @@ function run(functionToRun) {
                 processError(response);
             }
         }).catch(function (error) {
-            processError(error);
+            console.error(error);
         });
     }
 
     function getDefaultAccount(header) {
         fetch(apiUrl + "/port/v1/clients/me", header).then(function (response) {
             if (response.ok) {
+                accessTokenElm.setCustomValidity("");
                 response.json().then(function (responseJson) {
                     accountKey = responseJson.DefaultAccountKey;  // Remember the default account
                     clientKey = responseJson.ClientKey;
-                    console.log("Using accountKey " + accountKey + " of clientKey " + clientKey);
-                    responseElm.innerText = "The token is valid - hello " + responseJson.Name;
+                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + clientKey;
                     getAllAccounts(header);
                 });
             } else {
+                accessTokenElm.setCustomValidity("Invalid access_token.");
                 processError(response);
             }
         }).catch(function (error) {
-            processError(error);
+            accessTokenElm.setCustomValidity("Invalid access_token.");
+            console.error(error);
         });
     }
 
@@ -100,15 +104,16 @@ function run(functionToRun) {
     responseElm.removeAttribute("style");
     responseElm.innerText = "Started function " + functionToRun.name + "()..";
     if (tokenInputFieldExists()) {
-        if (document.getElementById("idBearerToken").value === "") {
-            responseElm.innerText = "Bearer token is required to do requests.";
+        if (accessTokenElm.value.length < 10) {
+            accessTokenElm.setCustomValidity("Bearer token is required for requests.");
+            console.error("Bearer token is required for requests.");
         } else {
             if (accountKey === "") {
                 // Retrieve the account key first
                 getDefaultAccount({
                     "headers": {
                         "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                        "Authorization": "Bearer " + accessTokenElm.value
                     },
                     "method": "GET"
                 });
@@ -137,6 +142,18 @@ function run(functionToRun) {
     }
 
     /**
+     * When something is logged to the console, show it in the Response-box as well.
+     * @return {void}
+     */
+    function mirrorConsoleLog() {
+        console.logCopy = console.log.bind(console);
+        console.log = function (data) {
+            responseElm.innerText = data;
+            this.logCopy(data);
+        };
+    }
+
+    /**
      * Read a cookie.
      * @param {string} key Name of the cookie.
      * @return {string} Value.
@@ -160,19 +177,6 @@ function run(functionToRun) {
     }
 
     /**
-     * Insert a cookie. In order to delete it, make value empty.
-     * @param {string} key Name of the cookie.
-     * @param {string} value Value to store.
-     * @return {void}
-     */
-    function setCookie(key, value) {
-        const expires = new Date();
-        // Cookie is valid for 360 days.
-        expires.setTime(expires.getTime() + 360 * 24 * 60 * 60 * 1000);
-        document.cookie = key + "=" + value + ";expires=" + expires.toUTCString();
-    }
-
-    /**
      * Try to hunt down a previously used access_token, so a page refresh is less a hassle.
      * @return {void}
      */
@@ -185,17 +189,18 @@ function run(functionToRun) {
             // Second, maybe the token is stored in a cookie?
             newAccessToken = getCookie("saxotoken");
         }
-        document.getElementById("idBearerToken").value = newAccessToken;
+        accessTokenElm.value = newAccessToken;
         window.addEventListener("beforeunload", function () {
-            let accessTokenToSave = document.getElementById("idBearerToken").value;
+            let accessTokenToSave = accessTokenElm.value;
             if (accessTokenToSave.length > 10) {
-                // Save the token so it can be reused:
-                setCookie("saxotoken", accessTokenToSave);
+                // Save the token as session cookie, so it can be reused:
+                document.cookie = "saxotoken=" + accessTokenToSave;
             }
         });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
+            accountKey = "";
             run(function () {
-                console.log("Valid!");
+                // Token is valid!
             });
         });
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
@@ -203,7 +208,7 @@ function run(functionToRun) {
             document.getElementById("idHrefRetrieveToken").href = "https://sim.logonvalidation.net/authorize?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
         }
     }
-
+    mirrorConsoleLog();
     mirrorConsoleError();
     if (tokenInputFieldExists()) {
         tryToGetToken();

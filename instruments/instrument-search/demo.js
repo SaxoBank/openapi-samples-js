@@ -32,7 +32,7 @@ function getExchanges() {
                     option.value = responseJson.Data[j].ExchangeId;
                     cbxExchange.add(option);
                 }
-                document.getElementById("idResponse").innerText = "Found " + responseJson.Data.length + " exchanges";
+                console.log("Found " + responseJson.Data.length + " exchanges");
             });
         } else {
             processError(response);
@@ -71,7 +71,7 @@ function findInstrument() {
                 if (responseJson.Data.length > 0) {
                     instrumentId = responseJson.Data[0].PrimaryListing;
                 }
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                console.log(JSON.stringify(responseJson));
             });
         } else {
             processError(response);
@@ -98,7 +98,7 @@ function getDetails() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson.Data[0]);
+                console.log(JSON.stringify(responseJson.Data[0]));
             });
         } else {
             processError(response);

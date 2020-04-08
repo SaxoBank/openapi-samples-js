@@ -12,7 +12,7 @@ function checkErrors() {
     const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
     const error = urlParams.get("error");
     if (error === null) {
-        document.getElementById("idResponse").innerText = "No error found";
+        console.log("No error found");
     } else {
         console.error("Found error: " + error + " (" + urlParams.get("error_description") + ")");
     }
@@ -28,7 +28,7 @@ function getToken() {
     const accessTokenExpirationTime = new Date();
     accessToken = urlParams.get("access_token");
     accessTokenExpirationTime.setSeconds(pageShowTime.getSeconds() + expiresInSeconds);
-    document.getElementById("idResponse").innerText = "Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + decodeURIComponent(accessToken);
+    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + decodeURIComponent(accessToken));
 }
 
 /**
@@ -41,11 +41,11 @@ function getState() {
     const state = urlParams.get("state");
     let stateUnencoded;
     if (state === null) {
-        document.getElementById("idResponse").innerText = "No state found";
+        console.log("No state found");
     } else {
         stateUnencoded = window.atob(state);
         try {
-            document.getElementById("idResponse").innerText = "Found state: " + JSON.stringify(JSON.parse(stateUnencoded), null, 4);
+            console.log("Found state: " + JSON.stringify(JSON.parse(stateUnencoded), null, 4));
         } catch (ignore) {
             console.error("State returned in the URL parameter is invalid.");
         }
@@ -69,7 +69,7 @@ function getUserData() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                document.getElementById("idResponse").innerText = "Connection to API created, hello " + responseJson.Name;
+                console.log("Connection to API created, hello " + responseJson.Name);
             });
         } else {
             processError(response);

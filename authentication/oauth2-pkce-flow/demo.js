@@ -21,7 +21,7 @@ function generateCodeVerifier() {
     }
     codeVerifier = base64URLEncode(codeVerifier);
     codeChallenge = base64URLEncode(CryptoJS.SHA256(codeVerifier));
-    document.getElementById("idResponse").innerText = "Verifier: " + codeVerifier + "\r\nChallenge: " + codeChallenge;
+    console.log("Verifier: " + codeVerifier + "\r\nChallenge: " + codeChallenge);
 }
 
 /**

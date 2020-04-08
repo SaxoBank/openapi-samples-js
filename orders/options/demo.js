@@ -1,7 +1,8 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global window console accountKey run processError */
 
-let orderSequenceNumber = 1;
+let orderInsertSequenceNumber = 1;
+let orderUpdateSequenceNumber = 1;
 let lastOrderId = 0;
 
 function selectOrderType() {
@@ -28,7 +29,7 @@ function selectOrderType() {
                 response.json().then(function (responseJson) {
                     newOrderObject.OrderPrice = 70;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                    document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                    console.log(JSON.stringify(responseJson));
                 });
             } else {
                 processError(response);
@@ -128,7 +129,7 @@ function getSeries() {
                 newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
                 newOrderObject.AccountKey = accountKey;
                 document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                console.log(JSON.stringify(responseJson));
             });
         } else {
             processError(response);
@@ -162,7 +163,7 @@ function preCheckNewOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have PreCheckResult property being "Ok"
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                console.log(JSON.stringify(responseJson));
             });
         } else {
             processError(response);
@@ -192,7 +193,7 @@ function getOrderCosts() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                console.log(JSON.stringify(responseJson));
             });
         } else {
             processError(response);
@@ -209,14 +210,13 @@ function getOrderCosts() {
 function placeNewOrder() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
-    orderSequenceNumber += 1;
     fetch(
         apiUrl + "/trade/v2/orders",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
                 // https://www.developer.saxo/openapi/learn/rate-limiting
-                "X-Request-ID": "Reference_Insert_" + orderSequenceNumber,  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
+                "X-Request-ID": "Reference_Insert_" + orderInsertSequenceNumber,  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             },
             "body": JSON.stringify(newOrderObject),
@@ -226,8 +226,9 @@ function placeNewOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
-                document.getElementById("idResponse").innerText = "Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson);
+                console.log("Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson));
                 lastOrderId = responseJson.OrderId;
+                orderInsertSequenceNumber += 1;
             });
         } else {
             processError(response);
@@ -251,7 +252,7 @@ function modifyLastOrder() {
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
-                "X-Request-ID": "Reference_Update_" + orderSequenceNumber,  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
+                "X-Request-ID": "Reference_Update_" + orderUpdateSequenceNumber,  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             },
             "body": JSON.stringify(newOrderObject),
@@ -261,8 +262,8 @@ function modifyLastOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
-                document.getElementById("idResponse").innerText = "Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson);
-                orderSequenceNumber += 1;
+                console.log("Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson));
+                orderUpdateSequenceNumber += 1;
             });
         } else {
             processError(response);
@@ -290,7 +291,7 @@ function cancelLastOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
-                document.getElementById("idResponse").innerText = JSON.stringify(responseJson);
+                console.log(JSON.stringify(responseJson));
             });
         } else {
             processError(response);

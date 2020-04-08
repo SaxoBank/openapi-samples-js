@@ -11,8 +11,8 @@ function processDetailResponse(assetType, responseJson) {
         instrumentIds.push(responseJson.Data[i].Uic);
     }
     document.getElementById("idInstruments").value = instrumentIds.join(",");
-    console.log("Found in total " + instrumentIds.length + " instruments..");
-    console.log("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ", total " + instrumentIds.length + " instruments..");
+    console.debug("Found in total " + instrumentIds.length + " instruments..");
+    console.debug("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ", total " + instrumentIds.length + " instruments..");
 }
 
 function processContractOptionSpace(assetType, responseJson) {
@@ -22,7 +22,7 @@ function processContractOptionSpace(assetType, responseJson) {
         }
     }
     document.getElementById("idInstruments").value = instrumentIds.join(",");
-    console.log("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ", total " + instrumentIds.length + " instruments..");
+    console.debug("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ", total " + instrumentIds.length + " instruments..");
 }
 
 function processSearchResponse(assetType, responseJson) {
@@ -38,7 +38,7 @@ function processSearchResponse(assetType, responseJson) {
         });
     }
 
-    console.log("Found " + responseJson.Data.length + " instruments on this exchange");
+    console.debug("Found " + responseJson.Data.length + " instruments on this exchange");
     // We have the Uic - collect the details
     for (let i = 0; i < responseJson.Data.length; i += 1) {
         if (assetType === "StockOption" || assetType === "StockIndexOption") {
@@ -65,7 +65,7 @@ function processSearchResponse(assetType, responseJson) {
     }
     if (responseJson.hasOwnProperty("__next")) {
         // Recursively get next bulk
-        console.log("Found '__next': " + responseJson.__next);
+        console.debug("Found '__next': " + responseJson.__next);
         requestQueue.push({
             "assetType": assetType,
             "url": responseJson.__next,
@@ -75,7 +75,7 @@ function processSearchResponse(assetType, responseJson) {
 }
 
 function processExchangesResponse(assetType, responseJson) {
-    console.log("Found " + responseJson.Data.length + " exchanges, starting to collect instrument ids");
+    console.debug("Found " + responseJson.Data.length + " exchanges, starting to collect instrument ids");
     for (let i = 0; i < responseJson.Data.length; i += 1) {
         requestQueue.push({
             "assetType": assetType,
@@ -116,7 +116,7 @@ function runJobFromQueue() {
     let job;
     if (requestQueue.length > 0) {
         job = requestQueue.shift();
-        document.getElementById("idResponse").innerText = "Processing job for AssetType " + job.assetType + ":\r\n" + job.url + "\r\nRequests: " + requestCount + "\r\nJobs in queue: " + requestQueue.length;
+        console.log("Processing job for AssetType " + job.assetType + ":\r\n" + job.url + "\r\nRequests: " + requestCount + "\r\nJobs in queue: " + requestQueue.length);
         fetch(
             job.url,
             {
