@@ -22,7 +22,6 @@ function tokenInputFieldExists() {
  */
 function processError(errorObject) {
     let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
-    console.error(textToDisplay + " " + errorObject.url);
     // Some errors have a JSON-response, containing explanation of what went wrong.
     errorObject.json().then(function (errorObjectJson) {
         if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
@@ -105,7 +104,7 @@ function run(functionToRun) {
     responseElm.removeAttribute("style");
     responseElm.innerText = "Started function " + functionToRun.name + "()..";
     if (tokenInputFieldExists()) {
-        if (accessTokenElm.value === "") {
+        if (accessTokenElm.value.length < 10) {
             accessTokenElm.setCustomValidity("Bearer token is required for requests.");
             console.error("Bearer token is required for requests.");
         } else {
@@ -139,6 +138,18 @@ function run(functionToRun) {
             responseElm.setAttribute("style", "background-color: #e10c02; color: #ffffff;");
             responseElm.innerText = data;
             this.errorCopy(data);
+        };
+    }
+
+    /**
+     * When something is logged to the console, show it in the Response-box as well.
+     * @return {void}
+     */
+    function mirrorConsoleLog() {
+        console.logCopy = console.log.bind(console);
+        console.log = function (data) {
+            responseElm.innerText = data;
+            this.logCopy(data);
         };
     }
 
@@ -189,7 +200,7 @@ function run(functionToRun) {
         document.getElementById("idBtnValidate").addEventListener("click", function () {
             accountKey = "";
             run(function () {
-                console.log("Valid!");
+                // Token is valid!
             });
         });
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
@@ -197,7 +208,7 @@ function run(functionToRun) {
             document.getElementById("idHrefRetrieveToken").href = "https://sim.logonvalidation.net/authorize?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
         }
     }
-
+    mirrorConsoleLog();
     mirrorConsoleError();
     if (tokenInputFieldExists()) {
         tryToGetToken();

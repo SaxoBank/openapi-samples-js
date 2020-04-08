@@ -23,7 +23,7 @@ function composeBatchRequest() {
     addToBatch("/port/v1/netpositions/me");
     postData += "--+--\r\n";  // Add the end tag
     document.getElementById("idRequestBody").value = postData;
-    document.getElementById("idResponse").innerText = requestId + " requests waiting in the batch.";
+    console.log(requestId + " requests waiting in the batch.");
 }
 
 /**
@@ -57,7 +57,7 @@ function doBatchRequest() {
                     if (line.charAt(0) === "{") {
                         try {
                             responseJson = JSON.parse(line);
-                            console.log(responseJson);
+                            console.debug(responseJson);
                             responseCount += 1;
                         } catch (error) {
                             console.error(error);
@@ -65,7 +65,7 @@ function doBatchRequest() {
                     }
                 }
                 document.getElementById("idRequestBody").value = responseText;
-                document.getElementById("idResponse").innerText = "Found " + responseCount + " responses.";
+                console.log("Found " + responseCount + " responses.");
             });
         } else {
             processError(response);
