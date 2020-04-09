@@ -1,8 +1,6 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError */
+/*global window console accountKey run processError apiUrl */
 
-let orderInsertSequenceNumber = 1;
-let orderUpdateSequenceNumber = 1;
 let lastOrderId = 0;
 
 function selectOrderType() {
@@ -74,13 +72,14 @@ function selectOrderDuration() {
 function populateOrderTypes(orderTypes) {
     const cbxOrderType = document.getElementById("idCbxOrderType");
     let option;
-    for (let i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
+    let i;
+    for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
         cbxOrderType.remove(i);
     }
-    for (let j = 0; j < orderTypes.length; j += 1) {
+    for (i = 0; i < orderTypes.length; i += 1) {
         option = document.createElement("option");
-        option.text = orderTypes[j];
-        option.value = orderTypes[j];
+        option.text = orderTypes[i];
+        option.value = orderTypes[i];
         cbxOrderType.add(option);
     }
 }
@@ -104,13 +103,14 @@ function getStrategy() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+                let i;
                 newOrderObject.AccountKey = accountKey;
                 newOrderObject.OrderDuration = {
                     "DurationType": document.getElementById("idCbxOrderDuration").value
                 };
                 newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
                 newOrderObject.Legs = responseJson.Legs;
-                for (let i = 0; i < newOrderObject.Legs.length; i += 1) {
+                for (i = 0; i < newOrderObject.Legs.length; i += 1) {
                     newOrderObject.Legs[i].ToOpenClose = "ToOpen";
                 }
                 document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
@@ -170,7 +170,7 @@ function preCheckNewOrder() {
     // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     newOrderObject.AccountKey = accountKey;
-    newOrderObject.FieldGroups = [ "Costs", "MarginImpactBuySell" ];
+    newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
     fetch(
         apiUrl + "/trade/v2/orders/multileg/precheck",
         {
@@ -203,26 +203,31 @@ function preCheckNewOrder() {
  */
 function placeNewOrder() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const headersObject = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+    };
     newOrderObject.AccountKey = accountKey;
+    if (document.getElementById("idChkRequestIdHeader").checked) {
+        headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
+    }
     fetch(
         apiUrl + "/trade/v2/orders/multileg",
         {
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                // https://www.developer.saxo/openapi/learn/rate-limiting
-                "X-Request-ID": "Reference_Insert_" + orderInsertSequenceNumber,  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
+            "headers": headersObject,
             "body": JSON.stringify(newOrderObject),
             "method": "POST"
         }
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                // Response must have an OrderId
-                console.log("Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson));
-                lastOrderId = responseJson.MultiLegOrderId;
-                orderInsertSequenceNumber += 1;
+                const xRequestId = response.headers.get("X-Request-ID");
+                console.log("Successful request:\n" + JSON.stringify(responseJson) + (
+                    xRequestId === null
+                    ? ""
+                    : "\nX-Request-ID response header: " + xRequestId
+                ));
+                lastOrderId = responseJson.OrderId;
             });
         } else {
             processError(response);
@@ -238,26 +243,31 @@ function placeNewOrder() {
  */
 function modifyLastOrder() {
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const headersObject = {
+        "Content-Type": "application/json; charset=utf-8",
+        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+    };
     newOrderObject.AccountKey = accountKey;
     newOrderObject.MultiLegOrderId = lastOrderId;
-    newOrderObject.Amout = newOrderObject.Amount * 2;
+    if (document.getElementById("idChkRequestIdHeader").checked) {
+        headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
+    }
     fetch(
         apiUrl + "/trade/v2/orders/multileg",
         {
-            "headers": {
-                "Content-Type": "application/json; charset=utf-8",
-                "X-Request-ID": "Reference_Update_" + orderUpdateSequenceNumber,  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
+            "headers": headersObject,
             "body": JSON.stringify(newOrderObject),
             "method": "PATCH"
         }
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                // Response must have an OrderId
-                console.log("Successful request with sequence " + response.headers.get("X-Request-ID") + ":\n" + JSON.stringify(responseJson));
-                orderUpdateSequenceNumber += 1;
+                const xRequestId = response.headers.get("X-Request-ID");
+                console.log("Successful request:\n" + JSON.stringify(responseJson) + (
+                    xRequestId === null
+                    ? ""
+                    : "\nX-Request-ID response header: " + xRequestId
+                ));
             });
         } else {
             processError(response);

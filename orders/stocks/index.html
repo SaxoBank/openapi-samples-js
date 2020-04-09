@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -26,16 +26,21 @@ This example shows how place an order for Stocks.
 (Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">search</a>)
 <br />
 <br />
-<label>Order type: <select class="selector" id="idCbxOrderType">
-  <option value="-" selected>Press "Check conditions" to populate</option>
-</select></label>
-<label>Order duration: <select class="selector" id="idCbxOrderDuration">
-  <option value="DayOrder" selected>DayOrder</option>
-  <option value="FillOrKill">FillOrKill</option>
-  <option value="GoodTillCancel">GoodTillCancel</option>
-  <option value="GoodTillDate">GoodTillDate</option>
-  <option value="ImmediateOrCancel">ImmediateOrCancel</option>
-</select></label><br />
+<label>
+  Order type: <select class="selector" id="idCbxOrderType">
+    <option value="-" selected>Press "Check conditions" to populate</option>
+  </select></label>
+<label>
+  Order duration: <select class="selector" id="idCbxOrderDuration">
+    <option value="DayOrder" selected>DayOrder</option>
+    <option value="FillOrKill">FillOrKill</option>
+    <option value="GoodTillCancel">GoodTillCancel</option>
+    <option value="GoodTillDate">GoodTillDate</option>
+    <option value="ImmediateOrCancel">ImmediateOrCancel</option>
+  </select></label>
+<br />
+<br />
+<label><input type="checkbox" id="idChkRequestIdHeader" value="RequestIdHeader"> Add ExternalReference as X-Request-ID header (<a href="https://www.developer.saxo/openapi/learn/rate-limiting" target="_blank">info</a>)</label>
 <br />
 POST body containing order parameters:<br />
 <textarea class="json-input" id="idNewOrderObject" rows="13" style="width: 100%">
@@ -46,6 +51,7 @@ POST body containing order parameters:<br />
     "BuySell": "Buy",
     "Amount": 100,
     "Uic": 0,
+    "ExternalReference": "MyCorrelationId",
     "OrderDuration": {
         "DurationType": "DayOrder"
     }

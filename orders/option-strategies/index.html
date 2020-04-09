@@ -58,12 +58,15 @@ This example shows how place multi-leg option order.
 </label>
 <br />
 <br />
+<label><input type="checkbox" id="idChkRequestIdHeader" value="RequestIdHeader"> Add ExternalReference as X-Request-ID header (<a href="https://www.developer.saxo/openapi/learn/rate-limiting" target="_blank">info</a>)</label>
+<br />
 POST body containing order parameters:
 <br />
 <textarea class="json-input" id="idNewOrderObject" rows="13" style="width: 100%">
 {
     "AccountKey": "(added on first request)",
     "OrderType": "Market",
+    "ExternalReference": "MyCorrelationId",
     "OrderDuration": {
         "DurationType": "DayOrder"
     }
