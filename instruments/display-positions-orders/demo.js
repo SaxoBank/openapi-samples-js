@@ -22,7 +22,9 @@ function getPortfolio() {
 
     function displayAndFormatValue(displayAndFormat, value) {
         let result;
-        if (value === undefined) {
+        let integerPart;
+        let fractionPart;
+        if (value === undefined || value === null) {
             return "(not available)";
         }
         switch (displayAndFormat.Format) {
@@ -36,11 +38,16 @@ function getPortfolio() {
             result = formatCurrency(displayAndFormat) + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + value.toFixed(displayAndFormat.Decimals + 1).slice(-1);
             break;
         case "Fractions":  // Display as regular fraction i.e. 3 1/4.
+            integerPart = parseInt(value);
+            fractionPart = value - integerPart;
+            result = integerPart + " " + parseInt(fractionPart * Math.pow(2, displayAndFormat.Decimals)) + "/" + Math.pow(2, displayAndFormat.Decimals);
             break;
         case "ModernFractions":  // Special US Bonds futures fractional format (1/32s or 1/128s without nominator). If PriceDecimals = -5 then the nominator is 32, else 128.
+            throw "Not implemented";
             break;
         default:
             console.error("Unsupported format: " + displayAndFormat.Format);
+            throw "Unsupported format";
         }
         return result;
     }
@@ -62,7 +69,7 @@ function getPortfolio() {
                 let i;
                 for (i = 0; i < responseJson.Data.length; i += 1) {
                     position = responseJson.Data[i];
-                    list += position.NetPositionView.PositionCount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + "\n";
+                    list += position.NetPositionView.PositionCount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.AverageOpenPrice) + "\n";
                 }
                 console.log(list);
             });
