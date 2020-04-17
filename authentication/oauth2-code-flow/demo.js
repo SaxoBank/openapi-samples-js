@@ -2,6 +2,32 @@
 /*global window run */
 
 /**
+ * This can be used to validate your configuration. Because the API won't be down..
+ * @return {void}
+ */
+function isApiAlive() {
+    // This is just an example on how to check if your config is correct.
+    // Token/json is not required - this GET request can be done in a browser window as well.
+    // The isalive endpoint is available for all service groups (like port, trade).
+    fetch(
+        apiUrl + "/ref/isalive",
+        {
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.text().then(function (responseText) {
+                console.log(responseText);
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
  * If login failed, the error can be found as a query parameter.
  * @return {void}
  */
@@ -26,6 +52,9 @@ function generateLink() {
 }
 
 (function () {
+    document.getElementById("idBtnIsApiAlive").addEventListener("click", function () {
+        run(isApiAlive);
+    });
     document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
         run(generateLink);
     });
