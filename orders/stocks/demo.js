@@ -84,7 +84,7 @@ function selectOrderDuration() {
         newOrderObject.OrderDuration.ExpirationDateContainsTime = true;
         break;
     default:
-        processError("Unsupported order duration " + newOrderObject.OrderDuration.DurationType);
+        console.error("Unsupported order duration " + newOrderObject.OrderDuration.DurationType);
     }
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
@@ -141,7 +141,6 @@ function getConditions() {
  */
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20cost
     const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     fetch(
         apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",

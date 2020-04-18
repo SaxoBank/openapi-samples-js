@@ -84,7 +84,7 @@ function selectOrderDuration() {
         newOrderObject.OrderDuration.ExpirationDateContainsTime = true;
         break;
     default:
-        processError("Unsupported order duration " + newOrderObject.OrderDuration.DurationType);
+        console.error("Unsupported order duration " + newOrderObject.OrderDuration.DurationType);
     }
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }

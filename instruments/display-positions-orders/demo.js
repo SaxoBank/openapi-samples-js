@@ -6,6 +6,7 @@ function displayAndFormatValue(displayAndFormat, value) {
     let integerPart;
     let fractionPart;
     let numerator;
+    console.log("DisplayFormat " + displayAndFormat.Format);
     if (value === undefined || value === null) {
         return "(not available)";
     }

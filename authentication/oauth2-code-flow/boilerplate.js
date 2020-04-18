@@ -37,6 +37,8 @@ function processError(errorObject) {
         // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
         console.error(textToDisplay);
     });
+    // Always log the correlation header, so Saxo can trace this id in the logging.
+    console.warn("X-Correlation (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation"));
 }
 
 /**
