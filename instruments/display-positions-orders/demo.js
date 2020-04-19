@@ -74,7 +74,6 @@ function getPortfolio() {
                     ? "No instruments found on this account."
                     : list
                 );
-                document.getElementById("idJavaScript").innerText = displayAndFormatValue.toString() + "\n\n" + document.getElementById("idJavaScript").innerText;
             });
         } else {
             processError(response);
@@ -117,7 +116,6 @@ function getOrders() {
                     ? "No orders found on this account."
                     : list
                 );
-                document.getElementById("idJavaScript").innerText = displayAndFormatValue.toString() + "\n\n" + document.getElementById("idJavaScript").innerText;
             });
         } else {
             processError(response);
@@ -129,9 +127,9 @@ function getOrders() {
 
 (function () {
     document.getElementById("idBtnGetPortfolio").addEventListener("click", function () {
-        run(getPortfolio);
+        run(getPortfolio, displayAndFormatValue);
     });
     document.getElementById("idBtnGetOrders").addEventListener("click", function () {
-        run(getOrders);
+        run(getOrders, displayAndFormatValue);
     });
 }());

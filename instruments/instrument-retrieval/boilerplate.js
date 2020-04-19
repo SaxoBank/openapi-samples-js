@@ -24,29 +24,33 @@ function processError(errorObject) {
     let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
     // Some errors have a JSON-response, containing explanation of what went wrong.
     errorObject.json().then(function (errorObjectJson) {
-        if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
-            // Order error object is wrapped in ErrorInfo
-            errorObjectJson = errorObjectJson.ErrorInfo;
-        }
-        // Order preview error object not..
         if (errorObjectJson.hasOwnProperty("ErrorCode")) {
-            textToDisplay += " - " + errorObjectJson.ErrorCode + " (" + errorObjectJson.Message + ")";
+            textToDisplay += "\n" + errorObjectJson.ErrorCode + ": " + errorObjectJson.Message;
+            if (errorObjectJson.hasOwnProperty("ModelState")) {
+                // Not all ErrorCodes contain a ModelState. See for the list:
+                // https://www.developer.saxo/openapi/learn/openapi-request-response
+                Object.keys(errorObjectJson.ModelState).forEach(function (key) {
+                    textToDisplay += "\n" + key + ":\n - " + errorObjectJson.ModelState[key].join("\n - ");
+                });
+            }
         }
+        // Always log the correlation header, so Saxo can trace this id in the logging.
+        textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
         console.error(textToDisplay);
     }).catch(function () {
+        textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
         // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
         console.error(textToDisplay);
     });
-    // Always log the correlation header, so Saxo can trace this id in the logging.
-    console.warn("X-Correlation (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation"));
 }
 
 /**
  * Show a function and run it.
  * @param {Function} functionToRun The function in scope.
+ * @param {Function=} secondFunctionToDisplay An optional function to display besides the functionToRun.
  * @return {void}
  */
-function run(functionToRun) {
+function run(functionToRun, secondFunctionToDisplay) {
 
     function getAllAccounts(header) {
         fetch(apiUrl + "/port/v1/accounts/me", header).then(function (response) {
@@ -102,7 +106,11 @@ function run(functionToRun) {
     }
 
     // Display source of function, for demonstration:
-    document.getElementById("idJavaScript").innerText = functionToRun.toString();
+    let source = functionToRun.toString();
+    if (secondFunctionToDisplay !== undefined) {
+        source = secondFunctionToDisplay.toString() + "\n\n" + source;
+    }
+    document.getElementById("idJavaScript").innerText = source;
     responseElm.removeAttribute("style");
     responseElm.innerText = "Started function " + functionToRun.name + "()..";
     if (tokenInputFieldExists()) {
@@ -202,7 +210,7 @@ function run(functionToRun) {
         document.getElementById("idBtnValidate").addEventListener("click", function () {
             accountKey = "";
             run(function () {
-                // Token is valid!
+                console.info("Token is valid!");
             });
         });
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
