@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demonstration on error handling</title>
+</head>
+<body>
+<section class="main-content">
+<label>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here(?)</a> to the box below:<br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus style="width: 50%" /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+<br />
+<h1>Common errors and how to deal with them</h1>
+More info: <a href="https://www.developer.saxo/openapi/learn/requesting-support" target="_blank">https://www.developer.saxo/openapi/learn/requesting-support</a> and <a href="https://www.developer.saxo/openapi/learn/openapi-request-response" target="_blank">https://www.developer.saxo/openapi/learn/openapi-request-response</a>
+<br />
+<br />
+<input type="button" class="action-button" value="404 NotFound" id="idBtnGet404NotFound" />
+<input type="button" class="action-button" value="401 Unauthorized" id="idBtnGet401Unauthorized" />
+<input type="button" class="action-button" value="400 BadRequest" id="idBtnGet400BadRequest" />
+<input type="button" class="action-button" value="429 TooManyRequests" id="idBtnGet429TooManyRequests" />
+<br />
+Response: <div class="highlight" id="idResponse">Click button to launch function</div>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+<hr><div id="idFooter"></div>
+</section>
+</body>
+</html>

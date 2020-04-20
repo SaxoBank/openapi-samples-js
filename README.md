@@ -19,13 +19,13 @@ Samples run against Saxo's simulation environment and require an **access token*
     - [Display Positions and Order List](instruments/display-positions-orders)
     - [Retrieve Universe](instruments/instrument-retrieval)
 3. Order Placement
-    - [Stock order example]
-    - [Option order]
-    - [Option Strategy]
-4. Batch Requests
-    - [Batch Request example](batch-request)
-5. Using websockets
+    - [Stock order example](orders/stocks)
+    - [Option order](orders/options)
+    - [Option Strategy](orders/option-strategies)
+4. Using websockets
     - [Retrieving order events](websockets/order-events-monitoring)
     - [Monitoring primary status](websockets/primary-monitoring)
+5. Batch Requests
+    - [Batch Request example](batch-request)
 6. Error handling
     - [Error handling](error-handling)
