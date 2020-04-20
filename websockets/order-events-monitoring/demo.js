@@ -45,10 +45,10 @@ function startListener() {
             block.MessageID = messageId;
             switch (refId) {
             case "MyOrderEvent":
-                console.log("Streaming message received: " + payload);
+                console.log("Streaming message received: " + JSON.stringify(block, null, 4));
                 break;
             case "MyPositionEvent":
-                console.log("Streaming message received: " + payload);
+                console.log("Streaming message received: " + JSON.stringify(block, null, 4));
                 console.debug("Position event to be processed:");
                 break;
             case "_heartbeat":
@@ -126,7 +126,7 @@ function subscribeOrders() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription for order changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState);
+            console.log("Subscription for order changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
         } else {
             processError(response);
         }
@@ -160,7 +160,7 @@ function subscribePositions() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription for position changes created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState);
+            console.log("Subscription for position changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
         } else {
             processError(response);
         }
