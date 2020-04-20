@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console WebSocket accountKey run processError */
+/*global window console WebSocket accountKey run processError apiUrl displayVersion */
 
 let connection;
 
@@ -41,17 +41,17 @@ function startListener() {
             const payload = String.fromCharCode.apply(String, bytes.slice(payloadBeginIndex + 5, segmentEnd));
             const block = JSON.parse(payload);
             console.debug("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
-            block.ReferenceId = refId;
-            block.MessageID = messageId;
             switch (refId) {
             case "MyTradeLevelChangeEvent":
-                console.log("Streaming message received: " + payload);
+                console.log("Streaming message received: " + JSON.stringify(block, null, 4));
                 break;
             case "_heartbeat":
                 break;
             default:
                 console.debug("No processing implemented for message with reference " + refId);
             }
+            block.ReferenceId = refId;
+            block.MessageID = messageId;
             return {
                 "segmentEnd": segmentEnd,
                 "messages": block
@@ -102,7 +102,7 @@ function subscribe() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription created with data '" + JSON.stringify(data) + "'. ReadyState: " + connection.readyState);
+            console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
         } else {
             processError(response);
         }

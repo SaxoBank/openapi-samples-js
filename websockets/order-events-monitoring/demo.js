@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console WebSocket accountKey clientKey run processError */
+/*global window console WebSocket accountKey clientKey run processError apiUrl displayVersion */
 
 let connection;
 
@@ -41,8 +41,6 @@ function startListener() {
             const payload = String.fromCharCode.apply(String, bytes.slice(payloadBeginIndex + 5, segmentEnd));
             const block = JSON.parse(payload);
             console.debug("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
-            block.ReferenceId = refId;
-            block.MessageID = messageId;
             switch (refId) {
             case "MyOrderEvent":
                 console.log("Streaming message received: " + JSON.stringify(block, null, 4));
@@ -56,13 +54,14 @@ function startListener() {
             default:
                 console.debug("No processing implemented for message with reference " + refId);
             }
+            block.ReferenceId = refId;
+            block.MessageID = messageId;
             return {
                 "segmentEnd": segmentEnd,
                 "messages": block
             };
         } catch (error) {
             console.error("Parse message failed: " + error);
-            throw error;
         }
     }
 

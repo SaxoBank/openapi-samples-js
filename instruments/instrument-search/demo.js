@@ -71,7 +71,7 @@ function findInstrument() {
                 if (responseJson.Data.length > 0) {
                     instrumentId = responseJson.Data[0].PrimaryListing;
                 }
-                console.log(JSON.stringify(responseJson));
+                console.log(JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
@@ -98,7 +98,7 @@ function getDetails() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                console.log(JSON.stringify(responseJson.Data[0]));
+                console.log(JSON.stringify(responseJson.Data, null, 4));
             });
         } else {
             processError(response);
