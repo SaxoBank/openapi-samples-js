@@ -118,4 +118,5 @@ function getDetails() {
     document.getElementById("idBtnGetDetails").addEventListener("click", function () {
         run(getDetails);
     });
+    displayVersion("ref");
 }());

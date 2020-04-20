@@ -136,6 +136,16 @@ function run(functionToRun, secondFunctionToDisplay) {
     }
 }
 
+function displayVersion(serviceGroup) {
+    fetch(apiUrl + "/" + serviceGroup + "/Isalive", {}).then(function (response) {
+        if (response.ok) {
+            response.text().then(function (responseText) {
+                document.getElementById("idFooter").innerText = responseText;
+            });
+        }
+    });
+}
+
 (function () {
 
     /**
@@ -223,5 +233,4 @@ function run(functionToRun, secondFunctionToDisplay) {
     if (tokenInputFieldExists()) {
         tryToGetToken();
     }
-
 }());

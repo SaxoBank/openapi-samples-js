@@ -98,4 +98,5 @@ function getToken() {
     document.getElementById("idBtnGetToken").addEventListener("click", function () {
         run(getToken);
     });
+    displayVersion("cs");
 }());

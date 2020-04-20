@@ -351,4 +351,5 @@ function instrumentIdChange() {
     document.getElementById("idBtnCancelLastOrder").addEventListener("click", function () {
         run(cancelLastOrder);
     });
+    displayVersion("trade");
 }());

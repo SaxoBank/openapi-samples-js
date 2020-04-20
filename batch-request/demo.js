@@ -82,4 +82,5 @@ function doBatchRequest() {
     document.getElementById("idBtnGetResponse").addEventListener("click", function () {
         run(doBatchRequest);
     });
+    displayVersion("port");
 }());

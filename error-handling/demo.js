@@ -123,4 +123,5 @@ function trigger429TooManyRequests() {
     document.getElementById("idBtnGet429TooManyRequests").addEventListener("click", function () {
         run(trigger429TooManyRequests, processError);
     });
+    displayVersion("ref");
 }());

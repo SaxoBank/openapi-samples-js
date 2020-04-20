@@ -222,4 +222,5 @@ function disconnect() {
     document.getElementById("idBtnDisconnect").addEventListener("click", function () {
         run(disconnect);
     });
+    displayVersion("ens");
 }());

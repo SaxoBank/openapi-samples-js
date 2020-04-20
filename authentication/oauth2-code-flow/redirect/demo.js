@@ -165,4 +165,5 @@ function refreshToken() {
     document.getElementById("idBtnRefreshToken").addEventListener("click", function () {
         run(refreshToken);
     });
+    displayVersion("cs");
 }());

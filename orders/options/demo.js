@@ -335,4 +335,5 @@ function cancelLastOrder() {
     document.getElementById("idBtnCancelLastOrder").addEventListener("click", function () {
         run(cancelLastOrder);
     });
+    displayVersion("trade");
 }());

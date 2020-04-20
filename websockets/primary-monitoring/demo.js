@@ -184,4 +184,5 @@ function becomePrimaryAgain() {
     document.getElementById("idBtnBecomePrimaryAgain").addEventListener("click", function () {
         run(becomePrimaryAgain);
     });
+    displayVersion("root");
 }());

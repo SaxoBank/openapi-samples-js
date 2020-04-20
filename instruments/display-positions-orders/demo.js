@@ -132,4 +132,5 @@ function getOrders() {
     document.getElementById("idBtnGetOrders").addEventListener("click", function () {
         run(getOrders, displayAndFormatValue);
     });
+    displayVersion("port");
 }());

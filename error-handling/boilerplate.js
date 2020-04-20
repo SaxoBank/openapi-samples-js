@@ -233,5 +233,4 @@ function displayVersion(serviceGroup) {
     if (tokenInputFieldExists()) {
         tryToGetToken();
     }
-    displayVersion("ref");
 }());

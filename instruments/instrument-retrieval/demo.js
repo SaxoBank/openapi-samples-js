@@ -148,4 +148,5 @@ function runJobFromQueue() {
     document.getElementById("idBtnStart").addEventListener("click", function () {
         run(start);
     });
+    displayVersion("ref");
 }());

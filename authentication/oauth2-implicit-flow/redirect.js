@@ -92,4 +92,5 @@ function getUserData() {
     document.getElementById("idBtnGetUserData").addEventListener("click", function () {
         run(getUserData);
     });
+    displayVersion("cs");
 }());
