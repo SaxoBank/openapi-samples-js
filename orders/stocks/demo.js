@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl */
+/*global window console accountKey run processError apiUrl displayVersion */
 
 let lastOrderId = 0;
 
@@ -125,7 +125,7 @@ function getConditions() {
                 // Test for SupportedOrderTypes and TickSizeScheme
                 populateOrderTypes(responseJson.Data[0].SupportedOrderTypes);
                 selectOrderType();
-                console.log(JSON.stringify(responseJson.Data[0]));
+                console.log(JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
@@ -154,7 +154,7 @@ function getOrderCosts() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                console.log(JSON.stringify(responseJson));
+                console.log(JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
@@ -196,7 +196,11 @@ function preCheckNewOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have PreCheckResult property being "Ok"
-                console.log(JSON.stringify(responseJson));
+                if (responseJson.PreCheckResult === "Ok") {
+                    console.log(JSON.stringify(responseJson, null, 4));
+                } else {
+                    console.error(JSON.stringify(responseJson, null, 4));
+                }
             });
         } else {
             processError(response);
@@ -231,7 +235,7 @@ function placeNewOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 const xRequestId = response.headers.get("X-Request-ID");
-                console.log("Successful request:\n" + JSON.stringify(responseJson) + (
+                console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
                     xRequestId === null
                     ? ""
                     : "\nX-Request-ID response header: " + xRequestId
@@ -272,7 +276,7 @@ function modifyLastOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 const xRequestId = response.headers.get("X-Request-ID");
-                console.log("Successful request:\n" + JSON.stringify(responseJson) + (
+                console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
                     xRequestId === null
                     ? ""
                     : "\nX-Request-ID response header: " + xRequestId
@@ -304,7 +308,7 @@ function cancelLastOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
-                console.log(JSON.stringify(responseJson));
+                console.log(JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);

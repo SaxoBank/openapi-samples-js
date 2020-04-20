@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl */
+/*global window console accountKey run processError apiUrl displayVersion */
 
 let lastOrderId = 0;
 
@@ -90,8 +90,9 @@ function populateOrderTypes(orderTypes) {
  */
 function getStrategy() {
     const optionRootId = document.getElementById("idInstrumentId").value;
+    const optionStrategyType = document.getElementById("idCbxOptionStrategy").value;
     fetch(
-        apiUrl + "/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + document.getElementById("idCbxOptionStrategy").value,
+        apiUrl + "/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + optionStrategyType,
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -117,7 +118,7 @@ function getStrategy() {
                 selectOrderType();
                 selectOrderDuration();
                 selectOrderType();
-                console.log(JSON.stringify(responseJson));
+                console.log("The strategy has been updated to " + optionStrategyType + ".");
             });
         } else {
             processError(response);
@@ -151,7 +152,7 @@ function getSeries() {
                 // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme
                 populateOrderTypes(responseJson.SupportedOrderTypes);
                 selectOrderType();
-                console.log(JSON.stringify(responseJson));
+                console.log(JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
@@ -187,7 +188,11 @@ function preCheckNewOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have PreCheckResult property being "Ok"
-                console.log(JSON.stringify(responseJson));
+                if (responseJson.PreCheckResult === "Ok") {
+                    console.log(JSON.stringify(responseJson, null, 4));
+                } else {
+                    console.error(JSON.stringify(responseJson, null, 4));
+                }
             });
         } else {
             processError(response);
@@ -222,12 +227,12 @@ function placeNewOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 const xRequestId = response.headers.get("X-Request-ID");
-                console.log("Successful request:\n" + JSON.stringify(responseJson) + (
+                console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
                     xRequestId === null
                     ? ""
                     : "\nX-Request-ID response header: " + xRequestId
                 ));
-                lastOrderId = responseJson.OrderId;
+                lastOrderId = responseJson.MultiLegOrderId;
             });
         } else {
             processError(response);
@@ -263,7 +268,7 @@ function modifyLastOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 const xRequestId = response.headers.get("X-Request-ID");
-                console.log("Successful request:\n" + JSON.stringify(responseJson) + (
+                console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
                     xRequestId === null
                     ? ""
                     : "\nX-Request-ID response header: " + xRequestId
@@ -295,7 +300,7 @@ function cancelLastOrder() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // Response must have an OrderId
-                console.log(JSON.stringify(responseJson));
+                console.log(JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
