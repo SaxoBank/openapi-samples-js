@@ -25,3 +25,16 @@
     background-image: url(https://www.home.saxo/-/media/global/logos/logo_vector_color-svg.svg?la=da-DK&hash=4D764EF4BF5FD260749C904CAEF5CCD0);
     margin-right: 1rem;
 }
+
+.action-button {
+    background-color: white;
+    border-color: black;
+    border-style: solid;
+    border-width: 1px;
+    border-radius: 0.3rem;
+    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+}
+
+.action-button:hover {
+    background-color: grey;
+}
