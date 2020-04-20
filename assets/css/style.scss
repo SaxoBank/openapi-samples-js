@@ -40,11 +40,9 @@
 }
 
 .main-content label {
-  display:inline-block;
+  display: inline-block;
   margin-top: 0.2rem;
   margin-bottom: 0.2rem;
+  width: 100%;
 }
 
-.token-field {
-  width: 100% !important;
-}
