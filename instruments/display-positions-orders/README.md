@@ -1,5 +1,5 @@
-# Client-side Sample for displaying the instruments in the portfolio
+# Client-side Sample for displaying instrument prices
 
-This is a demonstration on how to format numbers in the portfolio.
+This is a demonstration on how to format prices in the portfolio and order list, using the DisplayAndFormat object.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/portfolio/
+Live demo: https://saxobank.github.io/openapi-samples-js/instruments/display-positions-orders
