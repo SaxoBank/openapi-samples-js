@@ -9,6 +9,7 @@
 </head>
 <body>
 <section class="main-content">
+<div class="highlight">
 <label>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:<br />
 <input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
 <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
@@ -17,7 +18,7 @@
         <option value="-">Click Validate to populate</option>
     </select>
 </label>
-<br />
+</div>
 <h1>Buy option strategy</h1>
 This example shows how place multi-leg option order.
 <br />
@@ -83,7 +84,7 @@ POST body containing order parameters:
 Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
 <br />
 JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
-<hr><div id="idFooter"></div>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
 </section>
 </body>
 </html>
