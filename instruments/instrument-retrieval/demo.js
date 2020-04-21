@@ -146,7 +146,7 @@ function runJobFromQueue() {
     timer = setInterval(runJobFromQueue, (refLimitPerMinute / 60 * 1000) + 25);  // A little more, to prevent risk of 429 TooManyRequests
 
     document.getElementById("idBtnStart").addEventListener("click", function () {
-        run(start);
+        run(start, runJobFromQueue);
     });
     displayVersion("ref");
 }());
