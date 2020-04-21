@@ -13,10 +13,6 @@
   color: #042eab;
 }
 
-#idFooter {
-  font-size: 0.9rem;
-}
-
 .project-name:before {
     display: inline-block;
     width: 77px;
@@ -46,8 +42,15 @@
   width: 100%;
 }
 
+.main-content .highlight label {
+    display: inline;
+    margin-top: 0.2rem;
+    margin-bottom: 0.2rem;
+    width: 100%
+}
+
 .token-field {
-  width: 100%;
+  width: 80%;
   font-family: monospace;
 }
 

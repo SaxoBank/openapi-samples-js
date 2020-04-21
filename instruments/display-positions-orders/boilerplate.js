@@ -24,6 +24,10 @@ function processError(errorObject) {
     let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
     // Some errors have a JSON-response, containing explanation of what went wrong.
     errorObject.json().then(function (errorObjectJson) {
+        if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
+            // The 400 for orders might be wrapped in an ErrorInfo object (test an order placement without ManualOrder property)
+            errorObjectJson = errorObjectJson.ErrorInfo;
+        }
         if (errorObjectJson.hasOwnProperty("ErrorCode")) {
             textToDisplay += "\n" + errorObjectJson.ErrorCode + ": " + errorObjectJson.Message;
             if (errorObjectJson.hasOwnProperty("ModelState")) {
@@ -136,6 +140,11 @@ function run(functionToRun, secondFunctionToDisplay) {
     }
 }
 
+/**
+ * Call the IsAlive endpoint without authentication, to show the API is up and which version is running.
+ * @param {string} serviceGroup Specify service group, because every group has its own versioning.
+ * @return {void}
+ */
 function displayVersion(serviceGroup) {
     fetch(apiUrl + "/" + serviceGroup + "/Isalive", {}).then(function (response) {
         if (response.ok) {
