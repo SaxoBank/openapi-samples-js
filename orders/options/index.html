@@ -28,6 +28,8 @@
 <h1>Buy options</h1>
 This example shows how place an option order.
 <br />
+More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
+<br />
 <br />
 <label>Option root ID (InstrumentId, not Uic): <input type="text" class="text-field" id="idInstrumentId" value="1" placeholder="Paste instrument id.." /></label>
 (Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">search</a>)
@@ -63,7 +65,8 @@ POST body containing order parameters:
     "ToOpenClose": "ToOpen",
     "Amount": 100,
     "Uic": 11221488,
-    "ExternalReference": "MyCorrelationId",
+    "ExternalReference": "MyOptionOrderCorrelationId",
+    "ManualOrder": true,
     "OrderDuration": {
         "DurationType": "DayOrder"
     }
