@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
 /*global window console WebSocket accountKey run processError apiUrl displayVersion */
 
 let connection;
@@ -27,11 +27,28 @@ function createConnection() {
  */
 function startListener() {
 
+    /**
+     * Creates a Long from its little endian byte representation (function is part of long.js - https://github.com/dcodeIO/long.js).
+     * @param {!Array.<number>} bytes Little endian byte representation
+     * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
+     * @returns {number} The corresponding Long value
+     */
+    function fromBytesLE(bytes, unsigned) {
+        const low = bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24;
+        const high = bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24;
+        const TWO_PWR_16_DBL = 1 << 16;
+        const TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
+        if (unsigned) {
+            return ((high >>> 0) * TWO_PWR_32_DBL) + (low >>> 0);
+        }
+        return high * TWO_PWR_32_DBL + (low >>> 0);
+    }
+
     function parseStreamingMessage(data) {
         try {
             const message = new DataView(data);
             const bytes = new Uint8Array(data);
-            const messageId = message.getInt8();
+            const messageId = fromBytesLE(new Uint8Array(data, 0, 8));
             const refBeginIndex = 10;
             const refIdLength = message.getInt8(refBeginIndex);
             const refId = String.fromCharCode.apply(String, bytes.slice(refBeginIndex + 1, refBeginIndex + 1 + refIdLength));
@@ -43,7 +60,7 @@ function startListener() {
             console.debug("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
             switch (refId) {
             case "MyTradeLevelChangeEvent":
-                console.log("Streaming message received: " + JSON.stringify(block, null, 4));
+                console.log("Streaming trade level change event " + messageId + " received: " + JSON.stringify(block, null, 4));
                 break;
             case "_heartbeat":
                 break;
