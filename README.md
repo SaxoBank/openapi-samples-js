@@ -11,9 +11,9 @@ Samples run against Saxo's simulation environment and require an **access token*
 ## Table of Contents
 
 1. Authentication
+    - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
     - [OAuth2 Code Flow example](authentication/oauth2-code-flow)
     - [OAuth2 Implicit Flow example](authentication/oauth2-implicit-flow)
-    - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
 2. Instruments
     - [Instrument Search example](instruments/instrument-search)
     - [Display Positions and Order List](instruments/display-positions-orders)
