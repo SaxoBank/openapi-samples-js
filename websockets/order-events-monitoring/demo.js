@@ -46,7 +46,7 @@ function startListener() {
                 console.log("Streaming message received: " + JSON.stringify(block, null, 4));
                 break;
             case "MyPositionEvent":
-                console.log("Streaming message received: " + JSON.stringify(block, null, 4));
+                console.log("Streaming message " + messageId + " received: " + JSON.stringify(block, null, 4));
                 console.debug("Position event to be processed:");
                 break;
             case "_heartbeat":
