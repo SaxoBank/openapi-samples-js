@@ -44,54 +44,60 @@ function startListener() {
         return high * TWO_PWR_32_DBL + (low >>> 0);
     }
 
-    function parseStreamingMessage(data) {
-        try {
+    /**
+     * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
+     * @param {Object} data The received stream message
+     * @returns {void}
+     */
+    function parseMessages(data) {
+        let index = 0;
+        while (index < data.byteLength) {
             const message = new DataView(data);
-            const bytes = new Uint8Array(data);
-            const messageId = fromBytesLE(new Uint8Array(data, 0, 8));
-            const refBeginIndex = 10;
-            const refIdLength = message.getInt8(refBeginIndex);
-            const refId = String.fromCharCode.apply(String, bytes.slice(refBeginIndex + 1, refBeginIndex + 1 + refIdLength));
-            const payloadBeginIndex = refBeginIndex + 1 + refIdLength;
-            const payloadLength = message.getUint32(payloadBeginIndex + 1, true);
-            const segmentEnd = payloadBeginIndex + 5 + payloadLength;
-            const payload = String.fromCharCode.apply(String, bytes.slice(payloadBeginIndex + 5, segmentEnd));
-            const block = JSON.parse(payload);
-            console.debug("Message " + messageId + " parsed with referenceId " + refId + " and payload: " + payload);
-            switch (refId) {
-            case "MyTradeLevelChangeEvent":
-                console.log("Streaming trade level change event " + messageId + " received: " + JSON.stringify(block, null, 4));
-                break;
-            case "_heartbeat":
-                break;
-            default:
-                console.debug("No processing implemented for message with reference " + refId);
+            // First 8 bytes make up the message id, which is a 64 bit integer
+            const messageId = fromBytesLE(new Uint8Array(data, index, 8));
+            index += 8;
+            // 2 bytes make up the reserved field. This field (message.getInt16(index)) is reserved for future use and can be ignored by the client
+            index += 2;
+            // 1 byte makes up the reference id length as an 8 bit integer - the reference id has a max length of 50 chars
+            const referenceIdSize = message.getInt8(index);
+            index += 1;
+            // n bytes make up the reference id, which is an ASCII string
+            const referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
+            const referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
+            index += referenceIdSize;
+            // 1 byte makes up the payload format. The value 0 indicates that the payload format is Json
+            const payloadFormat = message.getUint8(index);
+            index += 1;
+            // 4 bytes make up the payload length as a 32 bit integer
+            const payloadSize = message.getUint32(index, true);
+            index += 4;
+            // n bytes make up the actual payload - in the case of the payload format being Json, this is a UTF8 encoded string
+            let payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
+            let payload;
+            if (payloadFormat === 0) {
+                payload = String.fromCharCode.apply(String, payloadBuffer);
+                switch (referenceId) {
+                case "MyTradeLevelChangeEvent":
+                    console.log("Streaming trade level change event " + messageId + " received: " + JSON.stringify(JSON.parse(payload), null, 4));
+                    break;
+                case "_heartbeat":
+                    console.log("Heartbeat event " + messageId + " received: " + JSON.stringify(JSON.parse(payload), null, 4));
+                    break;
+                default:
+                    console.error("No processing implemented for message with reference " + referenceId);
+                }
+            } else {
+                console.error("Unsupported payloadFormat: " + payloadFormat);
             }
-            block.ReferenceId = refId;
-            block.MessageID = messageId;
-            return {
-                "segmentEnd": segmentEnd,
-                "messages": block
-            };
-        } catch (error) {
-            console.error("Parse message failed: " + error);
+            index += payloadSize;
         }
     }
 
     connection.onmessage = function (event) {
-        // Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
         const reader = new FileReader();
-        console.debug("Streaming message received");
         reader.readAsArrayBuffer(event.data);
         reader.onloadend = function () {
-            let beginAt;
-            let data = reader.result;
-            let parsedMessage;
-            do {
-                parsedMessage = parseStreamingMessage(data);
-                beginAt = parsedMessage.segmentEnd;
-                data = data.slice(beginAt);
-            } while (data.byteLength > 0);
+            parseMessages(reader.result);
         };
     };
     console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
