@@ -35,8 +35,8 @@ function startListener() {
      * @returns {number} The corresponding Long value
      */
     function fromBytesLE(bytes, unsigned) {
-        const low = bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24;
-        const high = bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24;
+        const low = (bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24) | 0;
+        const high = (bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24) | 0;
         const TWO_PWR_16_DBL = 1 << 16;
         const TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
         if (unsigned) {
@@ -48,52 +48,69 @@ function startListener() {
     /**
      * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
      * @param {Object} data The received stream message
-     * @returns {void}
+     * @returns {Array[Object]}
      */
     function parseMessageFrame(data) {
+        let parsedMessages = [];
         let index = 0;
         while (index < data.byteLength) {
             const message = new DataView(data);
-            // First 8 bytes make up the message id, which is a 64 bit integer
+            /* Message identifier (8 bytes)
+             * 64-bit little-endian unsigned integer identifying the message.
+             * The message identifier is used by clients when reconnecting. It may not be a sequence number and no interpretation
+             * of its meaning should be attempted at the client.
+             */
             const messageId = fromBytesLE(new Uint8Array(data, index, 8));
             index += 8;
-            // 2 bytes make up the reserved field. This field (message.getInt16(index)) is reserved for future use and can be ignored by the client
+            /* Reserved (2 bytes)
+             * This field is reserved for future use and it can be ignored by the application.
+             * Get it using message.getInt16(index).
+             */
             index += 2;
-            // 1 byte makes up the reference id length as an 8 bit integer - the reference id has a max length of 50 chars
+            /* Reference id size 'Srefid' (1 byte)
+             * The number of characters/bytes in the reference id that follows.
+             */
             const referenceIdSize = message.getInt8(index);
             index += 1;
-            // n bytes make up the reference id, which is an ASCII string
+            /* Reference id (Srefid bytes)
+             * ASCII encoded reference id for identifying the subscription associated with the message.
+             * The reference id identifies the source subscription, or type of control message (like '_heartbeat').
+             */
             const referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
             const referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
             index += referenceIdSize;
-            // 1 byte makes up the payload format. The value 0 indicates that the payload format is Json
+            /* Payload format (1 byte)
+             * 8-bit unsigned integer identifying the format of the message payload. Currently the following formats are defined:
+             *  0: The payload is a UTF-8 encoded text string containing JSON.
+             *  1: The payload is a binary protobuffer message.
+             * The format is selected when the client sets up a streaming subscription so the streaming connection may deliver a mixture of message format.
+             * Control messages such as subscription resets are not bound to a specific subscription and are always sent in JSON format.
+             */
             const payloadFormat = message.getUint8(index);
             index += 1;
-            // 4 bytes make up the payload length as a 32 bit integer
+            /* Payload size 'Spayload' (4 bytes)
+             * 64-bit little-endian unsigned integer indicating the size of the message payload.
+             */
             const payloadSize = message.getUint32(index, true);
             index += 4;
-            // n bytes make up the actual payload - in the case of the payload format being Json, this is a UTF8 encoded string
+            /* Payload (Spayload bytes)
+             * Binary message payload with the size indicated by the payload size field.
+             * The interpretation of the payload depends on the message format field.
+             */
             const payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
             if (payloadFormat === 0) {
                 const payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
-                switch (referenceId) {
-                case "MyOrderEvent":
-                    console.log("Streaming order event " + messageId + " received: " + JSON.stringify(payload, null, 4));
-                    break;
-                case "MyPositionEvent":
-                    console.log("Streaming position event " + messageId + " received: " + JSON.stringify(payload, null, 4));
-                    break;
-                case "_heartbeat":
-                    console.debug("Heartbeat event " + messageId + " received: " + JSON.stringify(payload, null, 4));
-                    break;
-                default:
-                    console.error("No processing implemented for message with reference " + referenceId);
-                }
+                parsedMessages.push({
+                    "messageId": messageId,
+                    "referenceId": referenceId,
+                    "payload": payload
+                });
             } else {
                 console.error("Unsupported payloadFormat: " + payloadFormat);
             }
             index += payloadSize;
         }
+        return parsedMessages;
     }
 
     connection.onopen = function () {
@@ -106,7 +123,22 @@ function startListener() {
         console.error(evt);
     };
     connection.onmessage = function (messageFrame) {
-        parseMessageFrame(messageFrame.data);
+        const messages = parseMessageFrame(messageFrame.data);
+        messages.forEach(function (message) {
+            switch (message.referenceId) {
+            case "MyOrderEvent":
+                console.log("Streaming order event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                break;
+            case "MyPositionEvent":
+                console.log("Streaming position event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                break;
+            case "_heartbeat":
+                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                break;
+            default:
+                console.error("No processing implemented for message with reference " + message.referenceId);
+            }
+        });
     };
     console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
 }
