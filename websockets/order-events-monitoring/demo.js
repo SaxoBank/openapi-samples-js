@@ -16,7 +16,8 @@ function createConnection() {
         throw "Invalid characters in Context ID.";
     }
     connection = new WebSocket(streamerUrl);
-    console.log("Connection created. ReadyState: " + connection.readyState);
+    connection.binaryType = "arraybuffer";
+    console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState);
     // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
     // 0 = CONNECTING, 1 = OPEN
 }
@@ -49,7 +50,7 @@ function startListener() {
      * @param {Object} data The received stream message
      * @returns {void}
      */
-    function parseMessages(data) {
+    function parseMessageFrame(data) {
         let index = 0;
         while (index < data.byteLength) {
             const message = new DataView(data);
@@ -105,12 +106,8 @@ function startListener() {
     connection.onerror = function (evt) {
         console.error(evt);
     };
-    connection.onmessage = function (event) {
-        const reader = new FileReader();
-        reader.readAsArrayBuffer(event.data);
-        reader.onloadend = function () {
-            parseMessages(reader.result);
-        };
+    connection.onmessage = function (messageFrame) {
+        parseMessageFrame(messageFrame.data);
     };
     console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
 }
