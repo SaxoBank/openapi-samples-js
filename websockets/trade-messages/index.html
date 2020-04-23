@@ -5,12 +5,12 @@
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Demo for Monitoring the Order Events</title>
+    <title>Demo for Monitoring Trade Messages</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Monitor Orders and Positions</h1>
-<h2 class="project-tagline">Subscribe to Order and Position Events</h2>
+<h1 class="project-name">Monitor Trade Messages</h1>
+<h2 class="project-tagline">Subscribe to Messages</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
 </section>
@@ -25,8 +25,8 @@
     </select>
 </label>
 </div>
-<h1>Monitor order updates</h1>
-This example shows how to setup real time monitoring for order events and position changes using websockets.
+<h1>Monitor Trade Messages</h1>
+This example shows how to get the unread messages and subscribes for new ones.
 <br />
 <br />
 <label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
@@ -34,11 +34,9 @@ This example shows how to setup real time monitoring for order events and positi
 <br />
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" />
-<input type="button" class="action-button" value="Subscribe to order events" id="idBtnSubscribeOrders" />
-<input type="button" class="action-button" value="Subscribe to position events" id="idBtnSubscribePositions" />
-Place an order with <a href="https://www.saxotrader.com/sim" target="_blank">SaxoTraderGO</a>
-<input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" />
-<input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
+<input type="button" class="action-button" value="Get snapshot and updates" id="idBtnSubscribe" />
+<input type="button" class="action-button" value="Mark message as read" id="idBtnMarkAsRead" />
+<input type="button" class="action-button" value="Cancel updates" id="idBtnUnsubscribe" />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
 <br />

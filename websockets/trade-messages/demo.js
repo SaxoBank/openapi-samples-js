@@ -1,7 +1,8 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
-/*global window console WebSocket accountKey clientKey run processError apiUrl displayVersion */
+/*global window console WebSocket accountKey run processError apiUrl displayVersion */
 
 let connection;
+let lastTradeMessageId;
 
 /**
  * This is an example of getting the trading settings of an instrument.
@@ -23,7 +24,7 @@ function createConnection() {
 }
 
 /**
- * This is an example of parsing event messages.
+ * This is an example of getting the trading settings of an instrument.
  * @return {void}
  */
 function startListener() {
@@ -77,11 +78,9 @@ function startListener() {
             if (payloadFormat === 0) {
                 const payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
                 switch (referenceId) {
-                case "MyOrderEvent":
-                    console.log("Streaming order event " + messageId + " received: " + JSON.stringify(payload, null, 4));
-                    break;
-                case "MyPositionEvent":
-                    console.log("Streaming position event " + messageId + " received: " + JSON.stringify(payload, null, 4));
+                case "MyTradeMessageEvent":
+                    lastTradeMessageId = payload[0].MessageId;
+                    console.log("Streaming trade message event " + messageId + " received: " + JSON.stringify(payload, null, 4));
                     break;
                 case "_heartbeat":
                     console.debug("Heartbeat event " + messageId + " received: " + JSON.stringify(payload, null, 4));
@@ -112,27 +111,18 @@ function startListener() {
 }
 
 /**
- * This is an example of subscribing to changes in active orders.
+ * This is an example of setting the trading settings of an instrument.
  * @return {void}
  */
-function subscribeOrders() {
+function subscribe() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
-        "ReferenceId": "MyOrderEvent",
-        "Arguments": {
-            "AccountKey": accountKey,
-            "Activities": [
-                "AccountFundings",
-                "Orders"
-            ],
-            "FieldGroups": [
-                "DisplayAndFormat",
-                "ExchangeInfo"
-            ]
-        }
+        "ReferenceId": "MyTradeMessageEvent",
+        "Format": "application/json",
     };
+
     fetch(
-        apiUrl + "/ens/v1/activities/subscriptions",
+        apiUrl + "/trade/v1/messages/subscriptions",
         {
             "method": "POST",
             "headers": {
@@ -143,7 +133,7 @@ function subscribeOrders() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription for order changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+            console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
         } else {
             processError(response);
         }
@@ -152,57 +142,19 @@ function subscribeOrders() {
     });
 }
 
-/**
- * This is an example of subscribing to changes in net positions.
- * @return {void}
- */
-function subscribePositions() {
-    const data = {
-        "ContextId": document.getElementById("idContextId").value,
-        "ReferenceId": "MyPositionEvent",
-        "Arguments": {
-            "AccountKey": accountKey,
-            "ClientKey": clientKey
-        }
-    };
+function markAsRead() {
     fetch(
-        apiUrl + "/port/v1/netpositions/subscriptions",
-        {
-            "method": "POST",
-            "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
-            },
-            "body": JSON.stringify(data)
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            console.log("Subscription for position changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
-
-/**
- * This is an example of extending the websocket session, when a token refresh took place.
- * @return {void}
- */
-function extendSubscription() {
-    fetch(
-        apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+        apiUrl + "/trade/v1/messages/seen/" + lastTradeMessageId,
         {
             "method": "PUT",
             "headers": {
-                "Content-Type": "application/json",
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
             }
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription extended");
+            console.log("Message " + lastTradeMessageId + " marked as 'read'.");
         } else {
             processError(response);
         }
@@ -211,13 +163,25 @@ function extendSubscription() {
     });
 }
 
-/**
- * This is an example of disconnecting.
- * @return {void}
- */
-function disconnect() {
-    connection.close();
-}
+function unsubscribe() {
+    fetch(
+        apiUrl + "/trade/v1/messages/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value) + "/MyTradeMessageEvent",
+        {
+            "method": "DELETE",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            }
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            console.log("Unsubscribed. You can subscribe for updates again.");
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });}
 
 (function () {
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
@@ -227,17 +191,14 @@ function disconnect() {
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
         run(startListener);
     });
-    document.getElementById("idBtnSubscribeOrders").addEventListener("click", function () {
-        run(subscribeOrders);
+    document.getElementById("idBtnSubscribe").addEventListener("click", function () {
+        run(subscribe);
     });
-    document.getElementById("idBtnSubscribePositions").addEventListener("click", function () {
-        run(subscribePositions);
+    document.getElementById("idBtnMarkAsRead").addEventListener("click", function () {
+        run(markAsRead);
     });
-    document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        run(extendSubscription);
+    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
+        run(unsubscribe);
     });
-    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        run(disconnect);
-    });
-    displayVersion("ens");
+    displayVersion("trade");
 }());

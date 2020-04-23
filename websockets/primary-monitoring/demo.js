@@ -73,16 +73,15 @@ function startListener() {
             const payloadSize = message.getUint32(index, true);
             index += 4;
             // n bytes make up the actual payload - in the case of the payload format being Json, this is a UTF8 encoded string
-            let payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
-            let payload;
+            const payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
             if (payloadFormat === 0) {
-                payload = String.fromCharCode.apply(String, payloadBuffer);
+                const payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
                 switch (referenceId) {
                 case "MyTradeLevelChangeEvent":
-                    console.log("Streaming trade level change event " + messageId + " received: " + JSON.stringify(JSON.parse(payload), null, 4));
+                    console.log("Streaming trade level change event " + messageId + " received: " + JSON.stringify(payload, null, 4));
                     break;
                 case "_heartbeat":
-                    console.log("Heartbeat event " + messageId + " received: " + JSON.stringify(JSON.parse(payload), null, 4));
+                    console.debug("Heartbeat event " + messageId + " received: " + JSON.stringify(payload, null, 4));
                     break;
                 default:
                     console.error("No processing implemented for message with reference " + referenceId);
