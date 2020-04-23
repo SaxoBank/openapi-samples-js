@@ -11,20 +11,21 @@ Samples run against Saxo's simulation environment and require an **access token*
 ## Table of Contents
 
 1. Authentication
-    - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
     - [OAuth2 Code Flow example](authentication/oauth2-code-flow)
     - [OAuth2 Implicit Flow example](authentication/oauth2-implicit-flow)
+    - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
 2. Instruments
     - [Instrument Search example](instruments/instrument-search)
     - [Display Positions and Order List](instruments/display-positions-orders)
     - [Retrieve Universe](instruments/instrument-retrieval)
 3. Order Placement
-    - [Stock order example](orders/stocks)
-    - [Option order](orders/options)
-    - [Option Strategy](orders/option-strategies)
+    - [Stock Order example](orders/stocks)
+    - [Option Order](orders/options)
+    - [Option Strategy Order](orders/option-strategies)
 4. Using websockets
-    - [Retrieving order events](websockets/order-events-monitoring)
-    - [Monitoring primary status](websockets/primary-monitoring)
+    - [Retrieving Order Events](websockets/order-events-monitoring)
+    - [Trade Messages](websockets/trade-messages)
+    - [Monitoring Primary Status](websockets/primary-monitoring)
 5. Batch Requests
     - [Batch Request example](batch-request)
 6. Error handling
