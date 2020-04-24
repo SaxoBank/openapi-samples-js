@@ -165,7 +165,13 @@ function subscribe() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+            response.json().then(function (responseJson) {
+                const messageCount = responseJson.Snapshot.Data.length;
+                if (messageCount > 0) {
+                    lastTradeMessageId = responseJson.Snapshot.Data[messageCount - 1].MessageId;
+                }
+                console.log("Subscription created with readyState " + connection.readyState + ". Snapshot contains " + messageCount + " messages: " + JSON.stringify(responseJson, null, 4) + ".");
+            });
         } else {
             processError(response);
         }
@@ -186,7 +192,7 @@ function markAsRead() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Message " + lastTradeMessageId + " marked as 'read'.");
+            console.log("Message " + lastTradeMessageId + " marked as 'read'. This was the most recent message.");
         } else {
             processError(response);
         }
