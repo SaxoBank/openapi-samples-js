@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console URLSearchParams run processError apiUrl */
+/*global window console URLSearchParams run processError displayVersion apiUrl */
 
 let code;
 let tokenObject;
@@ -58,7 +58,7 @@ function getState() {
  * @return {void}
  */
 function getToken() {
-    alert("This flow is for desktop apps and only here for demonstration purposes..\n\nTurn on F12 tools. Whatch the token being send over the network (tab: Network).\nHowever, due to CORS the tokken cannot be read via JavaScript.");
+    alert("This flow is for desktop apps and only here for demonstration purposes..\n\nTurn on F12 tools. Watch the token being send over the network (tab: Network).\nHowever, due to CORS the tokken cannot be read via JavaScript.");
     fetch(
         "https://sim.logonvalidation.net/token",
         {

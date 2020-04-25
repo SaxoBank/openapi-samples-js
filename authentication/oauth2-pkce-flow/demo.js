@@ -5,6 +5,25 @@ let codeVerifier = "";
 let codeChallenge;
 
 /**
+ * This can be used to validate your redirect configuration.
+ * @return {void}
+ */
+function testRedirectUrl() {
+    const redirectUrl = document.getElementById("idEdtRedirectUrl").value;
+    fetch(
+        redirectUrl, {
+            "method": "GET",
+            "mode": "no-cors",
+            "cache": "reload"
+        }
+    ).then(function (response) {
+        console.log("Nice! The redirect page " + redirectUrl + " is available.");
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
  * Generate a verifier.
  * @return {void}
  */
@@ -47,10 +66,13 @@ function generateLink() {
     if (document.getElementById("idCbxCulture").value !== "-") {
         url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
     }
-    document.getElementById("idResponse").innerHTML = '<a href="' + url + '" target="_blank">' + url + "</a><br /><br />Remember the verifier: " + codeVerifier;
+    document.getElementById("idResponse").innerHTML = '<h2>Follow this link to continue with step 2:</h2><a href="' + url + '" target="_blank">' + url + "</a><br /><br />Remember the verifier: " + codeVerifier;
 }
 
 (function () {
+    document.getElementById("idBtnTestRedirectUrl").addEventListener("click", function () {
+        run(testRedirectUrl);
+    });
     document.getElementById("idBtnGenerateCodeVerifier").addEventListener("click", function () {
         run(generateCodeVerifier);
     });

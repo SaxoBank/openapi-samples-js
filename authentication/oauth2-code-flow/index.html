@@ -17,14 +17,15 @@
 <section class="main-content">
 <h1>OAuth2 Code Flow Sample</h1>
 This is a demo on how to get a token using the authorization code flow.<br />
+The code flow is the preferred flow, because it allows refreshing the token, so your app can use the API for a long time.
 <br />
 This page redirects you to the login website, to authenticate and retrieve a code.<br />
 <br />
 Steps:<ol>
-<li>Setup a webserver running PHP.</li>
+<li>Setup a web server running PHP.</li>
 <li>Copy files from <a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/oauth2-code-flow/redirect" target="_blank">Github</a> to "http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/".</li>
 <li>Optional: Create <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">your own app</a> with the redirect URL of your choice.</li>
-<li>Optional: If you've created your own app: modify server-config.php so it contains the correct key, secret and redirect URL.</li>
+<li>Optional: If you've created your own app: modify server-config.php, so it contains the correct app key, secret and redirect URL.</li>
 </ol>
 <br />
 <br />

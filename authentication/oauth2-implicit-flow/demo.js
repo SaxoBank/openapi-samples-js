@@ -18,7 +18,7 @@ function generateLoginLink() {
     if (document.getElementById("idCbxCulture").value !== "-") {
         url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
     }
-    document.getElementById("idResponse").innerHTML = '<a href="' + url + '">' + url + "</a>";
+    document.getElementById("idResponse").innerHTML = '<h2>Follow this link to continue with step 2:</h2><a href="' + url + '">' + url + "</a>";
 }
 
 (function () {

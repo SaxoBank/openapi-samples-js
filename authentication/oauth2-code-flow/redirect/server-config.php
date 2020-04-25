@@ -7,7 +7,7 @@
  *
  * appKey: The client identification of your app, supplied by Saxo (Client ID)
  * clientSecret: The secret which gives access to the API (Client Secret)
- * redirectUrl: The URL of your app, which is used to redirect after both a successful or unsuccessful login
+ * tokenEndpoint: The URL of the authentication provider (https://www.developer.saxo/openapi/learn/environments)
  *
  */
 
