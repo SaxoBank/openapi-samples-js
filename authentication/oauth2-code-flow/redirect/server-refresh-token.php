@@ -1,5 +1,14 @@
 <?php
 
+/*
+ *
+ * This is the file server-refresh-token.php, used to refresh a token for using the API.
+ *
+ */
+
+// Load the file with the app settings:
+require "server-config.php";
+
 // Set your return content type
 header('Content-Type: application/json; charset=utf-8');
 
@@ -8,14 +17,12 @@ header('Content-Type: application/json; charset=utf-8');
  * @param string $message The message to return in the JSON response.
  */
 function handleErrorAndDie($message) {
-    http_response_code(500);
+    http_response_code(401);
     die(
         json_encode(
             array(
-                'developerMessage' => $message,
-                'endUserMessage' => '',
-                'errorCode' => 'Forbidden',
-                'errorId' => 405
+                'Message' => $message,
+                'ErrorCode' => 'Unauthorized'
             )
         )
     );
@@ -26,14 +33,10 @@ function handleErrorAndDie($message) {
  * @param string $refreshToken This argument must contain the refresh_token.
  */
 function getToken($refreshToken) {
-    $appKey = 'faf2acbb48754413a043676b9c2c2bd5';
-    $secret = 'ENTER_YOUR_SECRET';
-    if ($secret == 'ENTER_YOUR_SECRET') {
-        handleErrorAndDie("Add your appKey and secret to the PHP!");  // After doing this, remove this check as well!
-    }
+    global $configuration;
     $data = array(
-        'client_id' => $appKey,
-        'client_secret' => $secret,
+        'client_id' => $configuration->appKey,
+        'client_secret' => $configuration->appSecret,
         'grant_type' => 'refresh_token',
         'refresh_token' => $refreshToken);
     $options = array(
@@ -53,7 +56,7 @@ function getToken($refreshToken) {
         )
     );
     $context  = stream_context_create($options);
-    $result = @file_get_contents('https://sim.logonvalidation.net/token', false, $context);
+    $result = @file_get_contents($configuration->tokenEndpoint, false, $context);
     if (!$result) {
         handleErrorAndDie(error_get_last()['message']);
     }

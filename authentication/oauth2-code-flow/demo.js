@@ -2,10 +2,29 @@
 /*global window run */
 
 /**
+ * This can be used to validate your redirect configuration.
+ * @return {void}
+ */
+function testRedirectUrl() {
+    const redirectUrl = document.getElementById("idEdtRedirectUrl").value;
+    fetch(
+        redirectUrl, {
+            "method": "GET",
+            "mode": "no-cors",
+            "cache": "reload"
+        }
+    ).then(function (response) {
+        console.log("Nice! The redirect page " + redirectUrl + " is available.");
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
  * This can be used to validate your configuration. Because the API won't be down..
  * @return {void}
  */
-function isApiAlive() {
+function testOpenApi() {
     // This is just an example on how to check if your config is correct.
     // Token/json is not required - this GET request can be done in a browser window as well.
     // The isalive endpoint is available for all service groups (like port, trade).
@@ -17,7 +36,7 @@ function isApiAlive() {
     ).then(function (response) {
         if (response.ok) {
             response.text().then(function (responseText) {
-                console.log(responseText);
+                console.log("The Api is available with message:\n" + responseText);
             });
         } else {
             processError(response);
@@ -48,12 +67,15 @@ function generateLink() {
     if (document.getElementById("idCbxCulture").value !== "-") {
         url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
     }
-    document.getElementById("idResponse").innerHTML = '<a href="' + url + '">' + url + "</a>";
+    document.getElementById("idResponse").innerHTML = '<h2>Follow this link to continue with step 2:</h2><a href="' + url + '">' + url + "</a>";
 }
 
 (function () {
-    document.getElementById("idBtnIsApiAlive").addEventListener("click", function () {
-        run(isApiAlive);
+    document.getElementById("idBtnTestRedirectUrl").addEventListener("click", function () {
+        run(testRedirectUrl);
+    });
+    document.getElementById("idBtnTestOpenApi").addEventListener("click", function () {
+        run(testOpenApi);
     });
     document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
         run(generateLink);

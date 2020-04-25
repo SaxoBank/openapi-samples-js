@@ -12,7 +12,7 @@ function checkErrors() {
     const urlParams = new URLSearchParams(window.location.search);
     const error = urlParams.get("error");
     if (error === null) {
-        console.log("No error found");
+        console.log("No error found.");
     } else {
         console.error("Found error: " + error + " (" + urlParams.get("error_description") + ")");
     }

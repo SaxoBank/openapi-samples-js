@@ -161,7 +161,7 @@ function subscribe() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+            console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'");
         } else {
             processError(response);
         }

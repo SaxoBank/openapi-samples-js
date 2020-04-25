@@ -243,7 +243,7 @@ class priceSubscription {
         {
             let message = new DataView(data);
             // First 8 bytes make up the message id. A 64 bit integer.
-            let messageId = long.fromBytesLE(new Uint8Array(data, 0, 8)).toString();
+            let messageId = long.fromBytesLE(new Uint8Array(data, index, 8)).toString();
             index += 8;
             // 2 bytes make up the reserved field.This field is reserved for future use and it should be ignored by the client.
             let reservedField = message.getInt16(index);
