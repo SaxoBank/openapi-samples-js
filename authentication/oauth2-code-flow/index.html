@@ -21,15 +21,26 @@ The code flow is the preferred flow, because it allows refreshing the token, so 
 <br />
 This page redirects you to the login website, to authenticate and retrieve a code.<br />
 <br />
-Steps:<ol>
+<h3>Steps for PHP</h3>
+<ol>
 <li>Setup a web server running PHP.</li>
-<li>Copy files from <a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/oauth2-code-flow/redirect" target="_blank">Github</a> to "http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/".</li>
+<li>Copy files from <a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/oauth2-code-flow/redirect/" target="_blank">Github</a> to "http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/".</li>
+<li>The redirect URL is now "http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/". Add this as redirect below.</li>
 <li>Optional: Create <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">your own app</a> with the redirect URL of your choice.</li>
 <li>Optional: If you've created your own app: modify server-config.php, so it contains the correct app key, secret and redirect URL.</li>
 </ol>
+<h3>Steps for NodeJs</h3>
+<ol>
+<li>Clone <a href="https://github.com/SaxoBank/openapi-samples-js" target="_blank">this repository</a> and navigate to \openapi-samples-js\authentication\oauth2-code-flow\redirect\backend-js\</li>
+<li>Get the required modules using "npm install".</li>
+<li>Launch the express web server with "node server.js".</li>
+<li>The redirect URL is now "http://localhost:1337/". Add this as redirect below.</li>
+<li>Optional: Create <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">your own app</a> with the redirect URL of your choice.</li>
+<li>Optional: If you've created your own app: modify server.js, so it contains the correct app key, secret and redirect URL.</li>
+</ol>
 <br />
 <br />
-<label>App Key: <input type="text" class="text-field" id="idEdtAppKey" value="faf2acbb48754413a043676b9c2c2bd5" placeholder="Paste App Key.." /></label> (Find your App Key <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">here</a>)<br />
+<label>App Key: <input type="text" class="text-field" id="idEdtAppKey" value="faf2acbb48754413a043676b9c2c2bd5" placeholder="Paste App Key.." /> (Find your App Key <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">here</a>)</label><br />
 <label>Redirect URL: <input type="text" class="text-field" id="idEdtRedirectUrl" value="http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/" placeholder="Paste redirect URL.." /></label><br />
 <label>Optional data to use after login: <input type="text" class="text-field" id="idEdtState" value="This data is communicated via the 'state' parameter" /></label><br />
 <label>

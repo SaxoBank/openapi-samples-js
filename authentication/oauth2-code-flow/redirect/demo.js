@@ -54,12 +54,53 @@ function getState() {
 }
 
 /**
- * After a successful authentication, the code can be exchanged for a token.
+ * After a successful authentication, the code can be exchanged for a token. PHP is used in this example.
  * @return {void}
  */
-function getToken() {
+function getTokenPhp() {
+    if (code === undefined) {
+        console.error("Get a code first..");
+        return;
+    }
     fetch(
-        "server-get-token.php",
+        "backend-php/server-get-token.php",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Accept": "application/json; charset=utf-8"
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                "code": code
+            })
+        }
+    ).then(function (response) {
+        const accessTokenExpirationTime = new Date();
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                tokenObject = responseJson;
+                accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
+                console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * After a successful authentication, the code can be exchanged for a token. Node JS is used in this example.
+ * @return {void}
+ */
+function getTokenNodeJs() {
+    if (code === undefined) {
+        console.error("Get a code first..");
+        return;
+    }
+    fetch(
+        "server",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -114,12 +155,45 @@ function getUserData() {
 }
 
 /**
- * To prevent expiration of the token, request a new one before "refresh_token_expires_in".
+ * To prevent expiration of the token, request a new one before "refresh_token_expires_in". PHP is used in this example.
  * @return {void}
  */
-function refreshToken() {
+function refreshTokenPhp() {
     fetch(
-        "server-refresh-token.php",
+        "backend-php/server-refresh-token.php",
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Accept": "application/json; charset=utf-8"
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                "refresh_token": tokenObject.refresh_token
+            })
+        }
+    ).then(function (response) {
+        const accessTokenExpirationTime = new Date();
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                tokenObject = responseJson;
+                accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
+                console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * To prevent expiration of the token, request a new one before "refresh_token_expires_in". Node JS is used in this example.
+ * @return {void}
+ */
+function refreshTokenNodeJs() {
+    fetch(
+        "server",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -153,17 +227,23 @@ function refreshToken() {
     document.getElementById("idBtnGetCode").addEventListener("click", function () {
         run(getCode);
     });
-    document.getElementById("idBtnGetToken").addEventListener("click", function () {
-        run(getToken);
-    });
     document.getElementById("idBtnGetState").addEventListener("click", function () {
         run(getState);
+    });
+    document.getElementById("idBtnGetTokenPhp").addEventListener("click", function () {
+        run(getTokenPhp);
+    });
+    document.getElementById("idBtnGetTokenNodeJs").addEventListener("click", function () {
+        run(getTokenNodeJs);
     });
     document.getElementById("idBtnGetUserData").addEventListener("click", function () {
         run(getUserData);
     });
-    document.getElementById("idBtnRefreshToken").addEventListener("click", function () {
-        run(refreshToken);
+    document.getElementById("idBtnRefreshTokenPhp").addEventListener("click", function () {
+        run(refreshTokenPhp);
+    });
+    document.getElementById("idBtnRefreshTokenNodeJs").addEventListener("click", function () {
+        run(refreshTokenNodeJs);
     });
     displayVersion("cs");
 }());
