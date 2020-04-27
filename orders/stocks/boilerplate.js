@@ -115,6 +115,7 @@ function run(functionToRun, secondFunctionToDisplay) {
         source = secondFunctionToDisplay.toString() + "\n\n" + source;
     }
     document.getElementById("idJavaScript").innerText = source;
+    responseElm.removeAttribute("style");  // Remove red background, if any.
     responseElm.innerText = "Started function " + functionToRun.name + "()..";
     if (tokenInputFieldExists()) {
         if (accessTokenElm.value.length < 10) {
