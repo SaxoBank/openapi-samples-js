@@ -8,7 +8,6 @@ let instrumentId;
  * @return {void}
  */
 function getExchanges() {
-    // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=referencedata&service=exchanges&endpoint=getallexchanges
     const cbxExchange = document.getElementById("idCbxExchange");
     let option;
     for (let i = cbxExchange.options.length - 1; i > 0; i -= 1) {
@@ -43,21 +42,19 @@ function getExchanges() {
 }
 
 /**
- * This is an example of instrument search.
+ * This function collects all available AssetTypes for the active account, so you don't search for something you won't find because it is not available.
+ * @param {Function=} callback An optional function to run after a successfull request.
  * @return {void}
  */
-function findInstrument() {
-    // https://www.developer.saxo/openapi/referencedocs/endpoint?apiVersion=v1&serviceGroup=referencedata&service=instruments&endpoint=getsummaries
-    const keywords = encodeURIComponent(document.getElementById("idInstrumentName").value);
-    let url = apiUrl + "/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
-    if (document.getElementById("idCbxExchange").value !== "-") {
-        url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
-    }
-    if (document.getElementById("idChkMultiLeg").checked) {
-        url += "&CanParticipateInMultiLegOrder=" + true;
+function getLegalAssetTypes(callback) {
+    const cbxAssetType = document.getElementById("idCbxAssetType");
+    let option;
+    let i;
+    for (i = cbxAssetType.options.length - 1; i >= 0; i -= 1) {
+        cbxAssetType.remove(i);
     }
     fetch(
-        url,
+        apiUrl + "/port/v1/accounts/" + encodeURIComponent(accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -68,10 +65,20 @@ function findInstrument() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                if (responseJson.Data.length > 0) {
-                    instrumentId = responseJson.Data[0].PrimaryListing;
+                let j;
+                for (j = 0; j < responseJson.LegalAssetTypes.length; j += 1) {
+                    option = document.createElement("option");
+                    option.text = responseJson.LegalAssetTypes[j];
+                    option.value = responseJson.LegalAssetTypes[j];
+                    if (option.value === "Stock") {
+                        // Make the most regular type the default one
+                        option.setAttribute("selected", true);
+                    }
+                    cbxAssetType.add(option);
                 }
-                console.log(JSON.stringify(responseJson, null, 4));
+                if (callback !== undefined) {
+                    callback();
+                }
             });
         } else {
             processError(response);
@@ -79,6 +86,56 @@ function findInstrument() {
     }).catch(function (error) {
         console.error(error);
     });
+}
+
+/**
+ * This is an example of instrument search.
+ * @return {void}
+ */
+function findInstrument() {
+    const keywords = encodeURIComponent(document.getElementById("idInstrumentName").value);
+    let url;
+    if (document.getElementById("idCbxAssetType").value === "-") {
+        getLegalAssetTypes(findInstrument);
+    } else {
+        url = url = apiUrl + "/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
+        if (document.getElementById("idCbxExchange").value !== "-") {
+            url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
+        }
+        if (document.getElementById("idChkMultiLeg").checked) {
+            url += "&CanParticipateInMultiLegOrder=" + true;
+        }
+        fetch(
+            url,
+            {
+                "headers": {
+                    "Content-Type": "application/json; charset=utf-8",
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                },
+                "method": "GET"
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson.Data.length > 0) {
+                        // Remember the first Uic for the details request
+                        if (responseJson.Data[0].hasOwnProperty("PrimaryListing")) {
+                            // Stocks might have a primary listing on another market
+                            instrumentId = responseJson.Data[0].PrimaryListing;
+                        } else {
+                            // This is not called "Uic", because is can identify an OptionRoot as well
+                            instrumentId = responseJson.Data[0].Identifier;
+                        }
+                    }
+                    console.log(JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
 }
 
 /**
@@ -109,6 +166,9 @@ function getDetails() {
 }
 
 (function () {
+    document.getElementById("idCbxAccount").addEventListener("change", function () {
+        run(getLegalAssetTypes);
+    });
     document.getElementById("idBtnGetExchanges").addEventListener("click", function () {
         run(getExchanges);
     });

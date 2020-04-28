@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Order Demo for Searching Instruments</title>
+    <title>Demo for Searching Instruments</title>
 </head>
 <body>
 <section class="page-header">
@@ -32,32 +32,10 @@ This example shows how to search for instruments.
 <label>Instrument name: <input type="text" class="text-field" id="idInstrumentName" value="Danone" placeholder="Enter instrument name.." /></label><br />
 <label>Exchanges: <select class="selector" id="idCbxExchange">
   <option value="-">No filter on exchange</option>
-  <option value="-" selected>Press "Get exchanges" to populate</option>
+  <option value="-" selected>Click "Get exchanges" to populate</option>
 </select></label><br />
-<label>AssetType: <select class="selector" id="idCbxAssetType">
-  <option value="Bond">Bond</option>
-  <option value="Cash">Cash - Not tradeable</option>
-  <option value="CfdIndexOption">Cfd Index Option</option>
-  <option value="CfdOnFutures">Cfd on Futures</option>
-  <option value="CfdOnIndex">Cfd on Stock Index</option>
-  <option value="CfdOnStock">Cfd on Stock</option>
-  <option value="ContractFutures">Contract Futures</option>
-  <option value="FuturesOption">Futures Option</option>
-  <option value="FuturesStrategy">Futures Strategy</option>
-  <option value="FxBinaryOption">Forex Binary Option</option>
-  <option value="FxForwards">Forex Forward</option>
-  <option value="FxKnockInOption">Forex Knock In Option</option>
-  <option value="FxKnockOutOption">Forex Knock Out Option</option>
-  <option value="FxNoTouchOption">Forex No Touch Option</option>
-  <option value="FxOneTouchOption">Forex One Touch Option</option>
-  <option value="FxSpot">Forex Spot</option>
-  <option value="FxVanillaOption">Forex Vanilla Option</option>
-  <option value="MutualFund">Mutual Fund</option>
-  <option value="Srd">SRD (Service de Règlement Différé)</option>
-  <option value="Stock" selected>Stock</option>
-  <option value="StockIndex">Stock Index</option>
-  <option value="StockIndexOption">Stock Index Option</option>
-  <option value="StockOption">Stock Option</option>
+<label>Available AssetTypes: <select class="selector" id="idCbxAssetType">
+  <option value="-">Click "Find" to populate</option>
 </select></label>
 <br />
 <br />
