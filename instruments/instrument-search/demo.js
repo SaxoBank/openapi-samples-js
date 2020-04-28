@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError */
+/*global window console accountKey run processError displayVersion apiUrl */
 
 let instrumentId;
 
@@ -10,7 +10,8 @@ let instrumentId;
 function getExchanges() {
     const cbxExchange = document.getElementById("idCbxExchange");
     let option;
-    for (let i = cbxExchange.options.length - 1; i > 0; i -= 1) {
+    let i;
+    for (i = cbxExchange.options.length - 1; i > 0; i -= 1) {
         cbxExchange.remove(i);  // Remove all, except the first
     }
     fetch(
@@ -25,7 +26,8 @@ function getExchanges() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                for (let j = 0; j < responseJson.Data.length; j += 1) {
+                let j;
+                for (j = 0; j < responseJson.Data.length; j += 1) {
                     option = document.createElement("option");
                     option.text = responseJson.Data[j].ExchangeId + " (" + responseJson.Data[j].Name + ")";
                     option.value = responseJson.Data[j].ExchangeId;
@@ -98,7 +100,7 @@ function findInstrument() {
     if (document.getElementById("idCbxAssetType").value === "-") {
         getLegalAssetTypes(findInstrument);
     } else {
-        url = url = apiUrl + "/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
+        url = apiUrl + "/ref/v1/instruments?AssetTypes=" + document.getElementById("idCbxAssetType").value + "&$top=5" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + keywords;
         if (document.getElementById("idCbxExchange").value !== "-") {
             url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
         }
