@@ -145,8 +145,18 @@ function findInstrument() {
  * @return {void}
  */
 function getDetails() {
+    const assetType = document.getElementById("idCbxAssetType").value;
+    let urlPath;
+    let isOptionRoot = false;
+    if (assetType === "StockOption" || assetType === "FuturesOption" || assetType === "StockIndexOption") {
+        // This instrumentId is not a Uic, but an option root. Series can be retrieved.
+        isOptionRoot = true;
+        urlPath = "/ref/v1/instruments/contractoptionspaces/" + instrumentId;
+    } else {
+        urlPath = "/ref/v1/instruments/details?Uics=" + instrumentId + "&AssetTypes=" + assetType + "&AccountKey=" + encodeURIComponent(accountKey);
+    }
     fetch(
-        apiUrl + "/ref/v1/instruments/details?Uics=" + instrumentId + "&AssetTypes=" + document.getElementById("idCbxAssetType").value + "&AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + urlPath,
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -157,7 +167,11 @@ function getDetails() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                console.log(JSON.stringify(responseJson.Data, null, 4));
+                if (isOptionRoot) {
+                    console.log("The search result contained an option root. These are the series with their Uics:\n\n" + JSON.stringify(responseJson, null, 4));
+                } else {
+                    console.log("These are the details of this instrument:\n\n" + JSON.stringify(responseJson.Data, null, 4));
+                }
             });
         } else {
             processError(response);
