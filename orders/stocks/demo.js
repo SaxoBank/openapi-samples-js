@@ -3,8 +3,18 @@
 
 let lastOrderId = 0;
 
+function getOrderObjectFromJson() {
+    let newOrderObject;
+    try {
+        newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    } catch (e) {
+        console.error(e);
+    }
+    return newOrderObject;
+}
+
 function selectOrderType() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
     newOrderObject.AccountKey = accountKey;
     delete newOrderObject.OrderPrice;
@@ -65,7 +75,7 @@ function selectOrderType() {
 }
 
 function selectOrderDuration() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     let now;
     newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
     switch (newOrderObject.OrderDuration.DurationType) {
@@ -89,9 +99,10 @@ function selectOrderDuration() {
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
 
-function populateOrderTypes(orderTypes) {
+function populateAvailableOrderTypes(orderTypes, selectedOrderType) {
     const cbxOrderType = document.getElementById("idCbxOrderType");
     let option;
+    let isSelectedOrderTypeAllowed = false;
     let i;
     for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
         cbxOrderType.remove(i);
@@ -100,8 +111,23 @@ function populateOrderTypes(orderTypes) {
         option = document.createElement("option");
         option.text = orderTypes[i];
         option.value = orderTypes[i];
+        if (orderTypes[i] === selectedOrderType) {
+            option.setAttribute("selected", true);  // Make the selected type the default one
+            isSelectedOrderTypeAllowed = true;
+        }
         cbxOrderType.add(option);
     }
+    if (!isSelectedOrderTypeAllowed) {
+        selectOrderType();  // The current order type is not supported. Change to a different one
+    }
+}
+
+function calculateFactor(tickSize) {
+    let numberOfDecimals = 0;
+    if ((tickSize % 1) !== 0) {
+        numberOfDecimals = tickSize.toString().split(".")[1].length;
+    }
+    return Math.pow(10, numberOfDecimals);
 }
 
 /**
@@ -109,7 +135,40 @@ function populateOrderTypes(orderTypes) {
  * @return {void}
  */
 function getConditions() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+
+    function checkSupportedOrderTypes(orderObject, orderTypes) {
+        if (orderTypes.indexOf(orderObject.OrderType) === -1) {
+            window.alert("The order type " + orderObject.OrderType + " is not supported for this instrument.");
+        }
+    }
+
+    function checkTickSizes(orderObject, tickSizeScheme) {
+        const price = orderObject.OrderPrice;
+        let tickSize = tickSizeScheme.DefaultTickSize;
+        let factor;
+        let i;
+        for (i = 0; i < tickSizeScheme.Elements.length; i += 1) {
+            if (price <= tickSizeScheme.Elements[i].HighPrice) {
+                tickSize = tickSizeScheme.Elements[i].TickSize;  // The price is below a threshold and therefore not the default
+                break;
+            }
+        }
+        factor = calculateFactor(tickSize);  // Modulo doesn't support fractions, so multiply with a factor
+        if (Math.round(price * factor) % Math.round(tickSize * factor) !== 0) {
+            window.alert("The price of " + price + " doesn't match the tick size of " + tickSize);
+        }
+    }
+
+    function checkLotSizes(orderObject, detailsObject) {
+        if (orderObject.Amount < detailsObject.MinimumLotSize) {
+            window.alert("The amount must be at least the minimumLotSize of " + detailsObject.MinimumLotSize);
+        }
+        if (orderObject.Amount % detailsObject.LotSize !== 0) {
+            window.alert("The amount must be the lot size or a multiplication of " + detailsObject.LotSize);
+        }
+    }
+
+    const newOrderObject = getOrderObjectFromJson();
     fetch(
         apiUrl + "/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
         {
@@ -122,10 +181,18 @@ function getConditions() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                // Test for SupportedOrderTypes and TickSizeScheme
-                populateOrderTypes(responseJson.Data[0].SupportedOrderTypes);
-                selectOrderType();
+                populateAvailableOrderTypes(responseJson.Data[0].SupportedOrderTypes, newOrderObject.OrderType);
                 console.log(JSON.stringify(responseJson, null, 4));
+                if (responseJson.Data[0].IsTradable === false) {
+                    window.alert("This instrument is not tradable!");
+                }
+                checkSupportedOrderTypes(newOrderObject, responseJson.Data[0].SupportedOrderTypes);
+                if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn" && newOrderObject.hasOwnProperty("TickSizeScheme")) {
+                    checkTickSizes(newOrderObject, responseJson.Data[0].TickSizeScheme);
+                }
+                if (newOrderObject.LotSizeType !== "NotUsed") {
+                    checkLotSizes(newOrderObject, responseJson.Data[0]);
+                }
             });
         } else {
             processError(response);
@@ -141,7 +208,7 @@ function getConditions() {
  */
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     fetch(
         apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
@@ -178,7 +245,7 @@ function getKid() {
  */
 function preCheckNewOrder() {
     // Bug: Preview doesn't check for limit outside market hours
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.AccountKey = accountKey;
     newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
     fetch(
@@ -215,11 +282,11 @@ function preCheckNewOrder() {
  * @return {void}
  */
 function placeNewOrder() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
     const headersObject = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
     };
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.AccountKey = accountKey;
     if (document.getElementById("idChkRequestIdHeader").checked) {
         headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
@@ -255,7 +322,7 @@ function placeNewOrder() {
  * @return {void}
  */
 function modifyLastOrder() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
@@ -319,7 +386,7 @@ function cancelLastOrder() {
 }
 
 function instrumentIdChange() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.Uic = document.getElementById("idInstrumentId").value;
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
