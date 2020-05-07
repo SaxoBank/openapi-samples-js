@@ -101,6 +101,8 @@ function startListener() {
              * The interpretation of the payload depends on the message format field.
              */
             const payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
+            //const payloadBuffer = new DataView(data.slice(index, index + payloadSize));
+            //const payloadBuffer = new Buffer(data.slice(index, index + payloadSize));
             let payload;
             switch (payloadFormat) {
             case 0:
@@ -113,7 +115,8 @@ function startListener() {
                 //var schemaKey = referenceId + "_" + document.getElementById("idContextId").value;
                 //payload = protobufSchemas[schemaKey].decode(payloadBuffer);
                 //payload = protobufSchemas[schemaName].decode(payloadBuffer);
-                payload = compiledSchema.decode(payloadBuffer);
+                //payload = compiledSchema.decode(payloadBuffer);
+                payload = compiledSchema.decode(String.fromCharCode.apply(String, payloadBuffer));
                 break;
             default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -138,27 +141,31 @@ function startListener() {
         console.error(evt);
     };
     connection.onmessage = function (messageFrame) {
-        const messages = parseMessageFrame(messageFrame.data);
-        messages.forEach(function (message) {
-            switch (message.referenceId) {
-            case "MyPriceEvent":
-                console.log("Price update event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
-                break;
-            case "_heartbeat":
-                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
-                break;
-            case "_resetsubscriptions":
-                // The server is not able to send messages and client needs to reset subscriptions by recreating them.
-                console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
-                break;
-            case "_disconnect":
-                // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
-                console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
-                break;
-            default:
-                console.error("No processing implemented for message with reference " + message.referenceId);
-            }
-        });
+        if (messageFrame.data instanceof ArrayBuffer) {
+            const messages = parseMessageFrame(messageFrame.data);
+            messages.forEach(function (message) {
+                switch (message.referenceId) {
+                case "MyPriceEvent":
+                    console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + ":\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                case "_heartbeat":
+                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    break;
+                case "_resetsubscriptions":
+                    // The server is not able to send messages and client needs to reset subscriptions by recreating them.
+                    console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                case "_disconnect":
+                    // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                    console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                default:
+                    console.error("No processing implemented for message with reference " + message.referenceId);
+                }
+            });
+        } else {
+            console.log("messageFrame.data in wrong format: " + typeof messageFrame.data);
+        }
     };
     console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
 }
@@ -256,5 +263,5 @@ function subscribeProtoBuf() {
     document.getElementById("idBtnSubscribeProtoBuf").addEventListener("click", function () {
         run(subscribeProtoBuf);
     });
-    displayVersion("root");
+    displayVersion("trade");
 }());
