@@ -1,6 +1,9 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
 /*global window console WebSocket accountKey run processError apiUrl displayVersion */
 
+//const parserProtobuf = new ParserProtobuf("default", protobuf);
+let schemaName;
+let compiledSchema;
 let connection;
 
 /**
@@ -98,16 +101,28 @@ function startListener() {
              * The interpretation of the payload depends on the message format field.
              */
             const payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
-            if (payloadFormat === 0) {
-                const payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
-                parsedMessages.push({
-                    "messageId": messageId,
-                    "referenceId": referenceId,
-                    "payload": payload
-                });
-            } else {
+            let payload;
+            switch (payloadFormat) {
+            case 0:
+                // Json
+                //payload = JSON.parse(payloadBuffer.toString("utf8"));
+                payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                break;
+            case 1:
+                // ProtoBuf
+                //var schemaKey = referenceId + "_" + document.getElementById("idContextId").value;
+                //payload = protobufSchemas[schemaKey].decode(payloadBuffer);
+                //payload = protobufSchemas[schemaName].decode(payloadBuffer);
+                payload = compiledSchema.decode(payloadBuffer);
+                break;
+            default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
             }
+            parsedMessages.push({
+                "messageId": messageId,
+                "referenceId": referenceId,
+                "payload": payload
+            });
             index += payloadSize;
         }
         return parsedMessages;
@@ -127,7 +142,7 @@ function startListener() {
         messages.forEach(function (message) {
             switch (message.referenceId) {
             case "MyPriceEvent":
-                console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                console.log("Price update event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                 break;
             case "_heartbeat":
                 console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
@@ -149,14 +164,51 @@ function startListener() {
 }
 
 /**
- * This is an example of setting the trading settings of an instrument.
+ * This is an example of subscribing to price updates, using Json.
  * @return {void}
  */
-function subscribe() {
+function subscribeJson() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
-        //"Format": "application/x-protobuf",
+        "Arguments": {
+            "AccountKey": accountKey,
+            "Uics": document.getElementById("idUics").value,
+            "AssetType": "FxSpot"
+        }
+    };
+    fetch(
+        apiUrl + "/trade/v1/infoprices/subscriptions",
+        {
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(data)
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
+ * @return {void}
+ */
+function subscribeProtoBuf() {
+    const data = {
+        "ContextId": document.getElementById("idContextId").value,
+        "ReferenceId": "MyPriceEvent",
+        "Format": "application/x-protobuf",
         "Arguments": {
             "AccountKey": accountKey,
             "Uics": document.getElementById("idUics").value,
@@ -177,10 +229,10 @@ function subscribe() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 // The schema to use when parsing the messages, is send together with the snapshot.
-                //schemaName = responseJson.SchemaName;
+                schemaName = responseJson.SchemaName;
                 //parserProtobuf.addSchema(responseJson.Schema, schemaName);
-                //console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
-                console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                compiledSchema = createCompiledSchema(responseJson.Schema);
+                console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
             });
         } else {
             processError(response);
@@ -198,8 +250,11 @@ function subscribe() {
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
         run(startListener);
     });
-    document.getElementById("idBtnSubscribe").addEventListener("click", function () {
-        run(subscribe);
+    document.getElementById("idBtnSubscribeJson").addEventListener("click", function () {
+        run(subscribeJson);
+    });
+    document.getElementById("idBtnSubscribeProtoBuf").addEventListener("click", function () {
+        run(subscribeProtoBuf);
     });
     displayVersion("root");
 }());
