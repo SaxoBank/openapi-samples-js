@@ -28,7 +28,7 @@ function getToken() {
     const accessTokenExpirationTime = new Date();
     accessToken = urlParams.get("access_token");
     accessTokenExpirationTime.setSeconds(pageShowTime.getSeconds() + expiresInSeconds);
-    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + decodeURIComponent(accessToken));
+    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "). Only use this token for API requests, don't send it to a backend, for security reasons:\n" + decodeURIComponent(accessToken));
 }
 
 /**
