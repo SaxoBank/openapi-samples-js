@@ -130,7 +130,15 @@ function startListener() {
                 console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                 break;
             case "_heartbeat":
-                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                break;
+            case "_resetsubscriptions":
+                // The server is not able to send messages and client needs to reset subscriptions by recreating them.
+                console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                break;
+            case "_disconnect":
+                // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             default:
                 console.error("No processing implemented for message with reference " + message.referenceId);
