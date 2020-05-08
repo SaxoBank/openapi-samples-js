@@ -26,6 +26,7 @@ Samples run against Saxo's simulation environment and require an **access token*
     - [Retrieving Order Events](websockets/order-events-monitoring)
     - [Trade Messages](websockets/trade-messages)
     - [Monitoring Primary Status](websockets/primary-monitoring)
+    - [Realtime Quotes](websockets/realtime-quotes)
 5. Batch Requests
     - [Batch Request example](batch-request)
 6. Error handling
