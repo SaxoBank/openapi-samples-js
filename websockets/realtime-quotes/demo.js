@@ -51,33 +51,40 @@ function startListener() {
      * @returns {Array[Object]}
      */
     function parseMessageFrame(data) {
+        const message = new DataView(data);
         let parsedMessages = [];
         let index = 0;
+        let messageId;
+        let referenceIdSize;
+        let referenceIdBuffer;
+        let referenceId;
+        let payloadFormat;
+        let payloadSize;
+        let payloadBuffer;
+        let payload;
         while (index < data.byteLength) {
-            const message = new DataView(data);
             /* Message identifier (8 bytes)
              * 64-bit little-endian unsigned integer identifying the message.
              * The message identifier is used by clients when reconnecting. It may not be a sequence number and no interpretation
              * of its meaning should be attempted at the client.
              */
-            const messageId = fromBytesLE(new Uint8Array(data, index, 8));
+            messageId = fromBytesLE(new Uint8Array(data, index, 8));
             index += 8;
-            /* Reserved (2 bytes)
-             * This field is reserved for future use and it can be ignored by the application.
-             * Get it using message.getInt16(index).
+            /* Version number (2 bytes)
+             * Ignored in this example. Get it using 'messageEnvelopeVersion = message.getInt16(index)'.
              */
             index += 2;
             /* Reference id size 'Srefid' (1 byte)
              * The number of characters/bytes in the reference id that follows.
              */
-            const referenceIdSize = message.getInt8(index);
+            referenceIdSize = message.getInt8(index);
             index += 1;
             /* Reference id (Srefid bytes)
              * ASCII encoded reference id for identifying the subscription associated with the message.
              * The reference id identifies the source subscription, or type of control message (like '_heartbeat').
              */
-            const referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
-            const referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
+            referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
+            referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
             index += referenceIdSize;
             /* Payload format (1 byte)
              * 8-bit unsigned integer identifying the format of the message payload. Currently the following formats are defined:
@@ -86,28 +93,31 @@ function startListener() {
              * The format is selected when the client sets up a streaming subscription so the streaming connection may deliver a mixture of message format.
              * Control messages such as subscription resets are not bound to a specific subscription and are always sent in JSON format.
              */
-            const payloadFormat = message.getUint8(index);
+            payloadFormat = message.getUint8(index);
             index += 1;
             /* Payload size 'Spayload' (4 bytes)
              * 64-bit little-endian unsigned integer indicating the size of the message payload.
              */
-            const payloadSize = message.getUint32(index, true);
+            payloadSize = message.getUint32(index, true);
             index += 4;
             /* Payload (Spayload bytes)
              * Binary message payload with the size indicated by the payload size field.
              * The interpretation of the payload depends on the message format field.
              */
-            const payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
-            if (payloadFormat === 0) {
-                const payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
-                parsedMessages.push({
-                    "messageId": messageId,
-                    "referenceId": referenceId,
-                    "payload": payload
-                });
-            } else {
+            payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
+            switch (payloadFormat) {
+            case 0:
+                // Json
+                payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                break;
+            default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
             }
+            parsedMessages.push({
+                "messageId": messageId,
+                "referenceId": referenceId,
+                "payload": payload
+            });
             index += payloadSize;
         }
         return parsedMessages;
@@ -123,40 +133,43 @@ function startListener() {
         console.error(evt);
     };
     connection.onmessage = function (messageFrame) {
-        const messages = parseMessageFrame(messageFrame.data);
-        messages.forEach(function (message) {
-            switch (message.referenceId) {
-            case "MyPriceEvent":
-                console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
-                break;
-            case "_heartbeat":
-                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
-                break;
-            case "_resetsubscriptions":
-                // The server is not able to send messages and client needs to reset subscriptions by recreating them.
-                console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
-                break;
-            case "_disconnect":
-                // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
-                console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
-                break;
-            default:
-                console.error("No processing implemented for message with reference " + message.referenceId);
-            }
-        });
+        if (messageFrame.data instanceof ArrayBuffer) {
+            const messages = parseMessageFrame(messageFrame.data);
+            messages.forEach(function (message) {
+                switch (message.referenceId) {
+                case "MyPriceEvent":
+                    console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + ":\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                case "_heartbeat":
+                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    break;
+                case "_resetsubscriptions":
+                    // The server is not able to send messages and client needs to reset subscriptions by recreating them.
+                    console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                case "_disconnect":
+                    // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                    console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                default:
+                    console.error("No processing implemented for message with reference " + message.referenceId);
+                }
+            });
+        } else {
+            console.log("messageFrame.data in wrong format: " + typeof messageFrame.data);
+        }
     };
     console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
 }
 
 /**
- * This is an example of setting the trading settings of an instrument.
+ * This is an example of subscribing to price updates, using Json.
  * @return {void}
  */
-function subscribe() {
+function subscribeJson() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
-        //"Format": "application/x-protobuf",
         "Arguments": {
             "AccountKey": accountKey,
             "Uics": document.getElementById("idUics").value,
@@ -176,10 +189,6 @@ function subscribe() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                // The schema to use when parsing the messages, is send together with the snapshot.
-                //schemaName = responseJson.SchemaName;
-                //parserProtobuf.addSchema(responseJson.Schema, schemaName);
-                //console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
             });
         } else {
@@ -198,8 +207,8 @@ function subscribe() {
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
         run(startListener);
     });
-    document.getElementById("idBtnSubscribe").addEventListener("click", function () {
-        run(subscribe);
+    document.getElementById("idBtnSubscribeJson").addEventListener("click", function () {
+        run(subscribeJson);
     });
-    displayVersion("root");
+    displayVersion("trade");
 }());
