@@ -151,7 +151,7 @@ function startListener() {
                     break;
                 default:
                     if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
-                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + ":\n" + JSON.stringify(message.payload, null, 4));
+                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
                         console.error("No processing implemented for message with reference " + message.referenceId);
                     }
