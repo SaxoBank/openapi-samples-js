@@ -150,10 +150,8 @@ function startListener() {
         if (messageFrame.data instanceof ArrayBuffer) {
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message) {
+                const priceEventName = "MyPriceEvent";
                 switch (message.referenceId) {
-                case "MyPriceEvent":
-                    console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + ":\n" + JSON.stringify(message.payload, null, 4));
-                    break;
                 case "_heartbeat":
                     console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
                     break;
@@ -166,7 +164,11 @@ function startListener() {
                     console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
                     break;
                 default:
-                    console.error("No processing implemented for message with reference " + message.referenceId);
+                    if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
+                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                    } else {
+                        console.error("No processing implemented for message with reference " + message.referenceId);
+                    }
                 }
             });
         } else {
@@ -177,10 +179,10 @@ function startListener() {
 }
 
 /**
- * This is an example of subscribing to price updates, using Json.
+ * This is an example of subscribing to price updates for multiple instruments, using Json.
  * @return {void}
  */
-function subscribeJson() {
+function subscribeListJson() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
@@ -191,6 +193,9 @@ function subscribeJson() {
         }
     };
     fetch(
+        // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
+        // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
+        // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
         apiUrl + "/trade/v1/infoprices/subscriptions",
         {
             "method": "POST",
@@ -211,6 +216,55 @@ function subscribeJson() {
     }).catch(function (error) {
         console.error(error);
     });
+}
+
+/**
+ * This is an example of subscribing to price updates with higher refreshRate meant for a single instrument, using Json.
+ * @return {void}
+ */
+function subscribeSingleJson() {
+
+    /**
+     * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
+     * @param {number} uic Instrument ID (of type FxSpot, in this example)
+     * @return {void}
+     */
+    function subscribe(uic) {
+        const data = {
+            "ContextId": document.getElementById("idContextId").value,
+            "ReferenceId": "MyPriceEvent" + "_" + uic,
+            "Arguments": {
+                "AccountKey": accountKey,
+                "Uic": uic,
+                "AssetType": "FxSpot",
+                "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading desicions on
+            }
+        };
+        fetch(
+            apiUrl + "/trade/v1/prices/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    const uicList = document.getElementById("idUics").value.split(",");
+    uicList.forEach(subscribe);
 }
 
 /**
@@ -263,8 +317,11 @@ function subscribeProtoBuf() {
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
         run(startListener);
     });
-    document.getElementById("idBtnSubscribeJson").addEventListener("click", function () {
-        run(subscribeJson);
+    document.getElementById("idBtnSubscribeListJson").addEventListener("click", function () {
+        run(subscribeListJson);
+    });
+    document.getElementById("idBtnSubscribeSingleJson").addEventListener("click", function () {
+        run(subscribeSingleJson);
     });
     document.getElementById("idBtnSubscribeProtoBuf").addEventListener("click", function () {
         run(subscribeProtoBuf);
