@@ -225,7 +225,7 @@ function subscribeListJson() {
  * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
  * @return {void}
  */
-function subscribeProtoBuf() {
+function subscribeListProtoBuf() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
@@ -371,8 +371,8 @@ function disconnect() {
     document.getElementById("idBtnSubscribeOrderTicketJson").addEventListener("click", function () {
         run(subscribeSingleJson);
     });
-    document.getElementById("idBtnSubscribeProtoBuf").addEventListener("click", function () {
-        run(subscribeProtoBuf);
+    document.getElementById("idBtnSubscribeListProtoBuf").addEventListener("click", function () {
+        run(subscribeListProtoBuf);
     });
     document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
         run(unsubscribe);
