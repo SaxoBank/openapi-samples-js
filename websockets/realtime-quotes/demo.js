@@ -3,9 +3,7 @@
 
 const parserProtobuf = new ParserProtobuf("default", protobuf);
 let schemaName;
-// let compiledSchema;
 let connection;
-let mode = 'json';
 
 /**
  * This is an example of getting the trading settings of an instrument.
@@ -109,21 +107,14 @@ function startListener() {
              * The interpretation of the payload depends on the message format field.
              */
             payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
-            //payloadBuffer = new DataView(data.slice(index, index + payloadSize));
-            //payloadBuffer = new Buffer(data.slice(index, index + payloadSize));
             switch (payloadFormat) {
             case 0:
                 // Json
-                //payload = JSON.parse(payloadBuffer.toString("utf8"));
                 payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
                 break;
             case 1:
                 // ProtoBuf
-                //var schemaKey = referenceId + "_" + document.getElementById("idContextId").value;
-                //payload = protobufSchemas[schemaKey].decode(payloadBuffer);
-                //payload = protobufSchemas[schemaName].decode(payloadBuffer);
-                //payload = compiledSchema.decode(payloadBuffer);
-                payload = new Uint8Array(payloadBuffer);                
+                payload = parserProtobuf.parse(new Uint8Array(payloadBuffer), schemaName);
                 break;
             default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -168,12 +159,8 @@ function startListener() {
                     if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
                         // Notice that the format of the messages of the two endpoints is different.
                         // The /prices contain no Uic, that must be derived from the referenceId.
-                        // Since /infoprices is about lists, it always contain the Uic.
-                        let data = message.payload;
-                        if (mode === 'protobuf') {
-                            data = parserProtobuf.parse(data, schemaName);
-                        }
-                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(data, null, 4));
+                        // Since /infoprices is about lists, it always contains the Uic.
+                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
                         console.error("No processing implemented for message with reference " + message.referenceId);
                     }
@@ -191,7 +178,6 @@ function startListener() {
  * @return {void}
  */
 function subscribeListJson() {
-    mode = 'json';
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
@@ -232,7 +218,6 @@ function subscribeListJson() {
  * @return {void}
  */
 function subscribeListProtoBuf() {
-    mode = 'protobuf';
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
@@ -259,7 +244,6 @@ function subscribeListProtoBuf() {
                 // The schema to use when parsing the messages, is send together with the snapshot.
                 schemaName = responseJson.SchemaName;
                 parserProtobuf.addSchema(responseJson.Schema, schemaName);
-                // compiledSchema = createCompiledSchema(responseJson.Schema);
                 console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
             });
         } else {
@@ -275,7 +259,7 @@ function subscribeListProtoBuf() {
  * @return {void}
  */
 function subscribeSingleJson() {  
-    mode = 'json';
+
     /**
      * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
      * @param {number} uic Instrument ID (of type FxSpot, in this example)
