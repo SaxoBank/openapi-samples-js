@@ -3,7 +3,7 @@
 
 const parserProtobuf = new ParserProtobuf("default", protobuf);
 let schemaName;
-let compiledSchema;
+// let compiledSchema;
 let connection;
 let mode = 'json';
 
@@ -258,7 +258,7 @@ function subscribeListProtoBuf() {
                 // The schema to use when parsing the messages, is send together with the snapshot.
                 schemaName = responseJson.SchemaName;
                 parserProtobuf.addSchema(responseJson.Schema, schemaName);
-                compiledSchema = createCompiledSchema(responseJson.Schema);
+                // compiledSchema = createCompiledSchema(responseJson.Schema);
                 console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
             });
         } else {
