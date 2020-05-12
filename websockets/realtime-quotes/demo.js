@@ -191,6 +191,7 @@ function startListener() {
  * @return {void}
  */
 function subscribeListJson() {
+    mode = 'json';
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
@@ -273,8 +274,8 @@ function subscribeListProtoBuf() {
  * This is an example of subscribing to price updates with higher refreshRate meant for a single instrument, using Json.
  * @return {void}
  */
-function subscribeSingleJson() {
-
+function subscribeSingleJson() {  
+    mode = 'json';
     /**
      * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
      * @param {number} uic Instrument ID (of type FxSpot, in this example)
