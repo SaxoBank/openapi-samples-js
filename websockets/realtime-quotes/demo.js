@@ -1,10 +1,11 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
 /*global window console WebSocket accountKey run processError apiUrl displayVersion */
 
-//const parserProtobuf = new ParserProtobuf("default", protobuf);
+const parserProtobuf = new ParserProtobuf("default", protobuf);
 let schemaName;
 let compiledSchema;
 let connection;
+let mode = 'json';
 
 /**
  * This is an example of getting the trading settings of an instrument.
@@ -122,7 +123,7 @@ function startListener() {
                 //payload = protobufSchemas[schemaKey].decode(payloadBuffer);
                 //payload = protobufSchemas[schemaName].decode(payloadBuffer);
                 //payload = compiledSchema.decode(payloadBuffer);
-                payload = compiledSchema.decode(String.fromCharCode.apply(String, payloadBuffer));
+                payload = new Uint8Array(payloadBuffer);                
                 break;
             default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -146,7 +147,7 @@ function startListener() {
     connection.onerror = function (evt) {
         console.error(evt);
     };
-    connection.onmessage = function (messageFrame) {
+    connection.onmessage = function (messageFrame) {        
         if (messageFrame.data instanceof ArrayBuffer) {
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message) {
@@ -168,7 +169,11 @@ function startListener() {
                         // Notice that the format of the messages of the two endpoints is different.
                         // The /prices contain no Uic, that must be derived from the referenceId.
                         // Since /infoprices is about lists, it always contain the Uic.
-                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                        let data = message.payload;
+                        if (mode === 'protobuf') {
+                            data = parserProtobuf.parse(data, schemaName);
+                        }
+                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(data, null, 4));
                     } else {
                         console.error("No processing implemented for message with reference " + message.referenceId);
                     }
@@ -226,6 +231,7 @@ function subscribeListJson() {
  * @return {void}
  */
 function subscribeListProtoBuf() {
+    mode = 'protobuf';
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPriceEvent",
@@ -251,7 +257,7 @@ function subscribeListProtoBuf() {
             response.json().then(function (responseJson) {
                 // The schema to use when parsing the messages, is send together with the snapshot.
                 schemaName = responseJson.SchemaName;
-                //parserProtobuf.addSchema(responseJson.Schema, schemaName);
+                parserProtobuf.addSchema(responseJson.Schema, schemaName);
                 compiledSchema = createCompiledSchema(responseJson.Schema);
                 console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
             });
