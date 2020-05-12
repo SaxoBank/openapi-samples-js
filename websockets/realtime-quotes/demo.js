@@ -151,6 +151,9 @@ function startListener() {
                     break;
                 default:
                     if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
+                        // Notice that the format of the messages of the two endpoints is different.
+                        // The /prices contain no Uic, that must be derived from the referenceId.
+                        // Since /infoprices is about lists, it always contain the Uic.
                         console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
                         console.error("No processing implemented for message with reference " + message.referenceId);
@@ -253,6 +256,51 @@ function subscribeSingleJson() {
     uicList.forEach(subscribe);
 }
 
+/**
+ * This is an example of unsubscribing to the events.
+ * @return {void}
+ */
+function unsubscribe() {
+
+    /**
+     * Unsubscribe for the service added to the URL.
+     * @param {number} url The URL pointing to the service to unsubscribe
+     * @return {void}
+     */
+    function removeSubscription(url) {
+        fetch(
+            url,
+            {
+                "method": "DELETE",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json"
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    removeSubscription(apiUrl + "/trade/v1/infoprices/subscriptions/" + document.getElementById("idContextId").value);
+    removeSubscription(apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value);
+    // (By adding a referenceId, the unsubscribe can be done per instrument)
+}
+
+/**
+ * This is an example of disconnecting the socket.
+ * @return {void}
+ */
+function disconnect() {
+    connection.close();
+}
+
 (function () {
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
@@ -264,8 +312,14 @@ function subscribeSingleJson() {
     document.getElementById("idBtnSubscribeListJson").addEventListener("click", function () {
         run(subscribeListJson);
     });
-    document.getElementById("idBtnSubscribeSingleJson").addEventListener("click", function () {
+    document.getElementById("idBtnSubscribeOrderTicketJson").addEventListener("click", function () {
         run(subscribeSingleJson);
+    });
+    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
+        run(unsubscribe);
+    });
+    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
+        run(disconnect);
     });
     displayVersion("trade");
 }());

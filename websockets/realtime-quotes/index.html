@@ -32,13 +32,15 @@ This is an example on retrieving realtime prices. Make sure your application is 
 <label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
 <br />
 <br />
-<label>List of Uics: <input type="text" class="text-field" id="idUics" value="4,12,14,17,18,21,31,38,43" /> (Type FxSpot to have realtime prices for every account)</label>
+<label>List of Uics: <input type="text" class="text-field" id="idUics" value="4,12,14,17,18,21,31,38,43" /> (Use FxSpot type for realtime prices on every account)</label>
 <br />
 <br />
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
-<input type="button" class="action-button" value="Subscribe with list quality (JSON)" id="idBtnSubscribeListJson" />
-<input type="button" class="action-button" value="Subscribe with order quality (JSON)" id="idBtnSubscribeSingleJson" />
+<input type="button" class="action-button" value="Subscribe for list (JSON)" id="idBtnSubscribeListJson" />
+<input type="button" class="action-button" value="Subscribe for order ticket (JSON)" id="idBtnSubscribeOrderTicketJson" /><br />
+<input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
+<input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
 <br />
