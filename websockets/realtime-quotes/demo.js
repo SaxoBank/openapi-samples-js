@@ -165,6 +165,9 @@ function startListener() {
                     break;
                 default:
                     if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
+                        // Notice that the format of the messages of the two endpoints is different.
+                        // The /prices contain no Uic, that must be derived from the referenceId.
+                        // Since /infoprices is about lists, it always contain the Uic.
                         console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
                         console.error("No processing implemented for message with reference " + message.referenceId);
@@ -209,6 +212,48 @@ function subscribeListJson() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
+ * @return {void}
+ */
+function subscribeProtoBuf() {
+    const data = {
+        "ContextId": document.getElementById("idContextId").value,
+        "ReferenceId": "MyPriceEvent",
+        "Format": "application/x-protobuf",
+        "Arguments": {
+            "AccountKey": accountKey,
+            "Uics": document.getElementById("idUics").value,
+            "AssetType": "FxSpot"
+        }
+    };
+    fetch(
+        apiUrl + "/trade/v1/infoprices/subscriptions",
+        {
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(data)
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                // The schema to use when parsing the messages, is send together with the snapshot.
+                schemaName = responseJson.SchemaName;
+                //parserProtobuf.addSchema(responseJson.Schema, schemaName);
+                compiledSchema = createCompiledSchema(responseJson.Schema);
+                console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
             });
         } else {
             processError(response);
@@ -268,45 +313,48 @@ function subscribeSingleJson() {
 }
 
 /**
- * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
+ * This is an example of unsubscribing to the events.
  * @return {void}
  */
-function subscribeProtoBuf() {
-    const data = {
-        "ContextId": document.getElementById("idContextId").value,
-        "ReferenceId": "MyPriceEvent",
-        "Format": "application/x-protobuf",
-        "Arguments": {
-            "AccountKey": accountKey,
-            "Uics": document.getElementById("idUics").value,
-            "AssetType": "FxSpot"
-        }
-    };
-    fetch(
-        apiUrl + "/trade/v1/infoprices/subscriptions",
-        {
-            "method": "POST",
-            "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
-            },
-            "body": JSON.stringify(data)
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                // The schema to use when parsing the messages, is send together with the snapshot.
-                schemaName = responseJson.SchemaName;
-                //parserProtobuf.addSchema(responseJson.Schema, schemaName);
-                compiledSchema = createCompiledSchema(responseJson.Schema);
-                console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
+function unsubscribe() {
+
+    /**
+     * Unsubscribe for the service added to the URL.
+     * @param {number} url The URL pointing to the service to unsubscribe
+     * @return {void}
+     */
+    function removeSubscription(url) {
+        fetch(
+            url,
+            {
+                "method": "DELETE",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json"
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    removeSubscription(apiUrl + "/trade/v1/infoprices/subscriptions/" + document.getElementById("idContextId").value);
+    removeSubscription(apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value);
+    // (By adding a referenceId, the unsubscribe can be done per instrument)
+}
+
+/**
+ * This is an example of disconnecting the socket.
+ * @return {void}
+ */
+function disconnect() {
+    connection.close();
 }
 
 (function () {
@@ -320,11 +368,17 @@ function subscribeProtoBuf() {
     document.getElementById("idBtnSubscribeListJson").addEventListener("click", function () {
         run(subscribeListJson);
     });
-    document.getElementById("idBtnSubscribeSingleJson").addEventListener("click", function () {
+    document.getElementById("idBtnSubscribeOrderTicketJson").addEventListener("click", function () {
         run(subscribeSingleJson);
     });
     document.getElementById("idBtnSubscribeProtoBuf").addEventListener("click", function () {
         run(subscribeProtoBuf);
+    });
+    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
+        run(unsubscribe);
+    });
+    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
+        run(disconnect);
     });
     displayVersion("trade");
 }());
