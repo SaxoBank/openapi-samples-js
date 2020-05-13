@@ -170,7 +170,7 @@ function getConditions() {
 
     const newOrderObject = getOrderObjectFromJson();
     fetch(
-        apiUrl + "/ref/v1/instruments/details?Uics=" + newOrderObject.Uic + "&AssetTypes=" + newOrderObject.AssetType + "&AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
+        apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -181,17 +181,24 @@ function getConditions() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                populateAvailableOrderTypes(responseJson.Data[0].SupportedOrderTypes, newOrderObject.OrderType);
+                populateAvailableOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
                 console.log(JSON.stringify(responseJson, null, 4));
-                if (responseJson.Data[0].IsTradable === false) {
+                if (responseJson.IsTradable === false) {
                     window.alert("This instrument is not tradable!");
                 }
-                checkSupportedOrderTypes(newOrderObject, responseJson.Data[0].SupportedOrderTypes);
+                checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
                 if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn" && newOrderObject.hasOwnProperty("TickSizeScheme")) {
-                    checkTickSizes(newOrderObject, responseJson.Data[0].TickSizeScheme);
+                    checkTickSizes(newOrderObject, responseJson.TickSizeScheme);
                 }
-                if (newOrderObject.LotSizeType !== "NotUsed") {
-                    checkLotSizes(newOrderObject, responseJson.Data[0]);
+                if (responseJson.LotSizeType !== "NotUsed") {
+                    checkLotSizes(newOrderObject, responseJson);
+                }
+                if (responseJson.IsComplex) {
+                    // Show a warning before placing an order in a complex product.
+                    window.alert("Your order relates to a complex product or service for which you must have appropriate knowledge and experience. For more information, please see our instructional videos and guides.\nBy validating this order, you acknowledge that you have been informed of the risks of this transaction.");
+                    // In French:
+                    // Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides. 
+                    // En validant cet ordre, vous reconnaissez avoir été informé des risques de cette transaction.
                 }
             });
         } else {
