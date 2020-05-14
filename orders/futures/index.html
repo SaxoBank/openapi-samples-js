@@ -5,12 +5,12 @@
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Order Demo for Options</title>
+    <title>Order Demo for Futures</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Option Orders</h1>
-<h2 class="project-tagline">Example on Option Orders</h2>
+<h1 class="project-name">Future Orders</h1>
+<h2 class="project-tagline">Example on Future Orders</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
 </section>
@@ -25,13 +25,13 @@
     </select>
 </label>
 </div>
-<h1>Buy an option contract</h1>
-This example shows how place an option order.
+<h1>Buy a future</h1>
+This example shows how place a future order.
 <br />
 More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
 <br />
 <br />
-<label>Option root ID (Identifier, not Uic): <input type="text" class="text-field" id="idInstrumentId" value="1" placeholder="Paste option root id.." /></label>
+<label>Futures space ID (Identifier, not Uic): <input type="text" class="text-field" id="idInstrumentId" value="4043" placeholder="Paste futures space id.." /></label>
 (Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">search</a>)
 <br />
 <br />
@@ -59,13 +59,13 @@ POST body containing order parameters:
 {
     "AccountKey": "(added on first request)",
     "OrderType": "Limit",
-    "OrderPrice": 100,
-    "AssetType": "StockIndexOption",
+    "OrderPrice": 50.89,
+    "AssetType": "ContractFutures",
     "BuySell": "Buy",
     "ToOpenClose": "ToOpen",
     "Amount": 100,
-    "Uic": 11221488,
-    "ExternalReference": "MyOptionOrderCorrelationId",
+    "Uic": 17157415,
+    "ExternalReference": "MyFutureOrderCorrelationId",
     "ManualOrder": true,
     "OrderDuration": {
         "DurationType": "DayOrder"
@@ -73,7 +73,7 @@ POST body containing order parameters:
 }
 </textarea>
 <br />
-<input type="button" class="action-button" value="Get option sheet" id="idBtnGetSeries" />
+<input type="button" class="action-button" value="Get futures space" id="idBtnGetFuturesSpace" />
 <input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
 <input type="button" class="action-button" value="Order costs" id="idBtnGetOrderCosts" />
