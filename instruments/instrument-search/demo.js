@@ -16,7 +16,7 @@ function getExchanges() {
         cbxExchange.remove(i);  // Remove all, except the first
     }
     fetch(
-        apiUrl + "/ref/v1/exchanges?$top=1000",
+        apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -74,7 +74,7 @@ function getLegalAssetTypes(callback) {
                     option.text = responseJson.LegalAssetTypes[j];
                     option.value = responseJson.LegalAssetTypes[j];
                     if (option.value === "Stock") {
-                        // Make the most regular type the default one
+                        // Make the most common type the default one
                         option.setAttribute("selected", true);
                     }
                     cbxAssetType.add(option);
@@ -128,18 +128,16 @@ function findInstrument() {
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let isInstrumentTradable;
                     if (responseJson.Data.length > 0) {
                         // Remember the first Uic for the details request
                         if (responseJson.Data[0].hasOwnProperty("PrimaryListing") && assetType === "Stock") {
-                            // Stocks might have a primary listing on another market
+                            // Stocks might have a primary listing on another market - take that one
                             instrumentId = responseJson.Data[0].PrimaryListing;
                         } else {
-                            // This is not called "Uic", because is can identify an OptionRoot as well
+                            // This is not called "Uic", because it can identify an OptionRoot or FuturesSpace as well
                             instrumentId = responseJson.Data[0].Identifier;
                         }
-                        isInstrumentTradable = responseJson.Data[0].hasOwnProperty("TradableAs");
-                        if (!isInstrumentTradable && assetType === "ContractFutures") {
+                        if (assetType === "ContractFutures" && responseJson.Data[0].hasOwnProperty("DisplayHint") && responseJson.Data[0].DisplayHint === "Continuous") {
                             instrumentIdType = "futuresSpace";
                         } else if (assetType === "StockOption" || assetType === "FuturesOption" || assetType === "StockIndexOption") {
                             instrumentIdType = "optionRoot";
@@ -159,21 +157,21 @@ function findInstrument() {
 }
 
 /**
- * This is an example of getting instrument details.
+ * This is an example of getting instrument details, option or future series.
  * @return {void}
  */
 function getDetails() {
     const assetType = document.getElementById("idCbxAssetType").value;
     let urlPath;
     switch (instrumentIdType) {
-    case "optionRoot":  // This identifier is not a Uic, but an option root. Series can be retrieved.
+    case "optionRoot":  // This identifier is not a Uic, but an option root. Contracts can be retrieved.
         urlPath = "/ref/v1/instruments/contractoptionspaces/" + instrumentId;
         break;
     case "futuresSpace":  // This identifier is not a Uic, but a futures space.
         urlPath = "/ref/v1/instruments/futuresspaces/" + instrumentId;
         break;
     default:
-        urlPath = "/ref/v1/instruments/details/" + instrumentId + "/" + assetType + "?AccountKey=" + encodeURIComponent(accountKey);
+        urlPath = "/ref/v1/instruments/details/" + instrumentId + "/" + assetType;
     }
     fetch(
         apiUrl + urlPath,
@@ -189,10 +187,14 @@ function getDetails() {
             response.json().then(function (responseJson) {
                 switch (instrumentIdType) {
                 case "optionRoot":
-                    console.log("The search result contained an option root (# " + instrumentId + "). These are the series with their Uics:\n\n" + JSON.stringify(responseJson, null, 4));
+                    instrumentId = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
+                    instrumentIdType = "uic";
+                    console.log("The search result contained an option root (# " + instrumentId + ").\nThese are the contracts with their Uics (request details again for first contract):\n\n" + JSON.stringify(responseJson, null, 4));
                     break;
                 case "futuresSpace":
-                    console.log("The search result contained a futures space (# " + instrumentId + "). These are the futures in this space, with their Uics:\n\n" + JSON.stringify(responseJson, null, 4));
+                    instrumentId = responseJson.Elements[0].Uic;  // Select first future
+                    instrumentIdType = "uic";
+                    console.log("The search result contained a futures space (# " + instrumentId + ").\nThese are the futures in this space, with their Uics (request details again for first future):\n\n" + JSON.stringify(responseJson, null, 4));
                     break;
                 default:
                     console.log("These are the details of this instrument:\n\n" + JSON.stringify(responseJson, null, 4));
