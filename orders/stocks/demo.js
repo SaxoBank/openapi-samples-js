@@ -24,7 +24,7 @@ function selectOrderType() {
     switch (newOrderObject.OrderType) {
     case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
         fetch(
-            apiUrl + "/trade/v1/infoprices?AssetType=Stock&uic=" + newOrderObject.Uic,
+            apiUrl + "/trade/v1/infoprices?AssetType=" + newOrderObject.AssetType + "&uic=" + newOrderObject.Uic,
             {
                 "headers": {
                     "Content-Type": "application/json; charset=utf-8",
@@ -35,9 +35,9 @@ function selectOrderType() {
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    newOrderObject.OrderPrice = 70;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
+                    newOrderObject.OrderPrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments, otherwise responseJson.Quote.Bid
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                    console.log(JSON.stringify(responseJson));
+                    console.log("Result of price request due to switch to 'Limit':\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 processError(response);
@@ -82,7 +82,7 @@ function selectOrderDuration() {
     case "DayOrder":
     case "GoodTillCancel":
     case "FillOrKill":
-    case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is cancelled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and Cfds.
+    case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and Cfds.
         delete newOrderObject.OrderDuration.ExpirationDateTime;
         delete newOrderObject.OrderDuration.ExpirationDateContainsTime;
         break;
@@ -163,7 +163,7 @@ function getConditions() {
         if (orderObject.Amount < detailsObject.MinimumLotSize) {
             window.alert("The amount must be at least the minimumLotSize of " + detailsObject.MinimumLotSize);
         }
-        if (orderObject.Amount % detailsObject.LotSize !== 0) {
+        if (detailsObject.hasOwnProperty("LotSize") && orderObject.Amount % detailsObject.LotSize !== 0) {
             window.alert("The amount must be the lot size or a multiplication of " + detailsObject.LotSize);
         }
     }

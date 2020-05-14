@@ -72,7 +72,7 @@ function selectOrderDuration() {
     case "DayOrder":
     case "GoodTillCancel":
     case "FillOrKill":
-    case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is cancelled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and Cfds.
+    case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and Cfds.
         delete newOrderObject.OrderDuration.ExpirationDateTime;
         delete newOrderObject.OrderDuration.ExpirationDateContainsTime;
         break;
