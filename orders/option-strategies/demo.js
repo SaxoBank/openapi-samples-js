@@ -3,8 +3,26 @@
 
 let lastOrderId = 0;
 
+/**
+ * Helper function to convert the json string to an object, with error handling.
+ * @return {Object} The newOrderObject from the input field
+ */
+function getOrderObjectFromJson() {
+    let newOrderObject;
+    try {
+        newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    } catch (e) {
+        console.error(e);
+    }
+    return newOrderObject;
+}
+
+/**
+ * Modify the order object so the elements comply to the order type.
+ * @return {void}
+ */
 function selectOrderType() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
     newOrderObject.AccountKey = accountKey;
     delete newOrderObject.OrderPrice;
@@ -45,7 +63,7 @@ function selectOrderType() {
 }
 
 function selectOrderDuration() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     let now;
     newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
     switch (newOrderObject.OrderDuration.DurationType) {
@@ -103,7 +121,7 @@ function getStrategy() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+                const newOrderObject = getOrderObjectFromJson();
                 let i;
                 newOrderObject.AccountKey = accountKey;
                 newOrderObject.OrderDuration = {
@@ -134,7 +152,7 @@ function getStrategy() {
  */
 function getSeries() {
     const optionRootId = document.getElementById("idInstrumentId").value;
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.AccountKey = accountKey;
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
     fetch(
@@ -169,7 +187,7 @@ function getSeries() {
 function preCheckNewOrder() {
     // Bug: Preview doesn't check for limit outside market hours
     // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     newOrderObject.AccountKey = accountKey;
     newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
     fetch(
@@ -207,7 +225,7 @@ function preCheckNewOrder() {
  * @return {void}
  */
 function placeNewOrder() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
@@ -247,7 +265,7 @@ function placeNewOrder() {
  * @return {void}
  */
 function modifyLastOrder() {
-    const newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+    const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value

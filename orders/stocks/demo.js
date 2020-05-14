@@ -3,6 +3,10 @@
 
 let lastOrderId = 0;
 
+/**
+ * Helper function to convert the json string to an object, with error handling.
+ * @return {Object} The newOrderObject from the input field
+ */
 function getOrderObjectFromJson() {
     let newOrderObject;
     try {
@@ -13,6 +17,10 @@ function getOrderObjectFromJson() {
     return newOrderObject;
 }
 
+/**
+ * Modify the order object so the elements comply to the order type.
+ * @return {void}
+ */
 function selectOrderType() {
     const newOrderObject = getOrderObjectFromJson();
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
@@ -99,7 +107,7 @@ function selectOrderDuration() {
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
 
-function populateAvailableOrderTypes(orderTypes, selectedOrderType) {
+function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
     const cbxOrderType = document.getElementById("idCbxOrderType");
     let option;
     let isSelectedOrderTypeAllowed = false;
@@ -122,14 +130,6 @@ function populateAvailableOrderTypes(orderTypes, selectedOrderType) {
     }
 }
 
-function calculateFactor(tickSize) {
-    let numberOfDecimals = 0;
-    if ((tickSize % 1) !== 0) {
-        numberOfDecimals = tickSize.toString().split(".")[1].length;
-    }
-    return Math.pow(10, numberOfDecimals);
-}
-
 /**
  * This is an example of getting the trading settings of an instrument.
  * @return {void}
@@ -140,6 +140,14 @@ function getConditions() {
         if (orderTypes.indexOf(orderObject.OrderType) === -1) {
             window.alert("The order type " + orderObject.OrderType + " is not supported for this instrument.");
         }
+    }
+
+    function calculateFactor(tickSize) {
+        let numberOfDecimals = 0;
+        if ((tickSize % 1) !== 0) {
+            numberOfDecimals = tickSize.toString().split(".")[1].length;
+        }
+        return Math.pow(10, numberOfDecimals);
     }
 
     function checkTickSizes(orderObject, tickSizeScheme) {
@@ -181,7 +189,7 @@ function getConditions() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                populateAvailableOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
+                populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
                 console.log(JSON.stringify(responseJson, null, 4));
                 if (responseJson.IsTradable === false) {
                     window.alert("This instrument is not tradable!");
@@ -197,7 +205,7 @@ function getConditions() {
                     // Show a warning before placing an order in a complex product.
                     window.alert("Your order relates to a complex product or service for which you must have appropriate knowledge and experience. For more information, please see our instructional videos and guides.\nBy validating this order, you acknowledge that you have been informed of the risks of this transaction.");
                     // In French:
-                    // Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides. 
+                    // Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides.
                     // En validant cet ordre, vous reconnaissez avoir été informé des risques de cette transaction.
                 }
             });
@@ -243,7 +251,7 @@ function getOrderCosts() {
  * @return {void}
  */
 function getKid() {
-    throw "KID is not implemented yet.";
+    console.error("KID is not implemented yet.");
 }
 
 /**
