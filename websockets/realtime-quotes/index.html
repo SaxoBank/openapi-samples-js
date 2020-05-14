@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="protobuf-lib/protobuf.js" defer></script>
+    <script type="text/javascript" src="protobuf-lib/protobuf-saxo.js" defer></script>
     <script type="text/javascript" src="boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demo for retrieving realtime quotes</title>
@@ -25,7 +27,7 @@
     </select>
 </label>
 </div>
-<h1>Get realtime quotes for some instruments</h1>
+<h1>Realtime quotes for a group of instruments</h1>
 This is an example on retrieving realtime prices. Make sure your application is the <a href="https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/" target="_blank">primary</a> one, to be entitled for the realtime feed.
 <br />
 <br />
@@ -39,6 +41,7 @@ This is an example on retrieving realtime prices. Make sure your application is 
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
 <input type="button" class="action-button" value="Subscribe for list (JSON)" id="idBtnSubscribeListJson" />
 <input type="button" class="action-button" value="Subscribe for order ticket (JSON)" id="idBtnSubscribeOrderTicketJson" /><br />
+<input type="button" class="action-button" value="Subscribe for list (ProtoBuf)" id="idBtnSubscribeListProtoBuf" /><br />
 <input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
 <input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
 <br />
