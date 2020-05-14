@@ -252,7 +252,9 @@
                 response.json().then(function (responseJson) {
                     // The schema to use when parsing the messages, is send together with the snapshot.
                     schemaName = responseJson.SchemaName;
-                    parserProtobuf.addSchema(responseJson.Schema, schemaName);
+                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                        console.error("Adding schema to protobuf was not successful");
+                    }
                     console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 });
             } else {
