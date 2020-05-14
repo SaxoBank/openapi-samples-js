@@ -400,16 +400,7 @@ function cancelLastOrder() {
     });
 }
 
-function instrumentIdChange() {
-    const newOrderObject = getOrderObjectFromJson();
-    newOrderObject.Uic = document.getElementById("idInstrumentId").value;
-    document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-}
-
 (function () {
-    // Format the initial order object exactly the same as done after modifying it when changing settings:
-    instrumentIdChange();
-    document.getElementById("idInstrumentId").addEventListener("change", instrumentIdChange);
     document.getElementById("idCbxOrderType").addEventListener("change", function () {
         run(selectOrderType);
     });
