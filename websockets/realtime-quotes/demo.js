@@ -120,11 +120,13 @@
                 default:
                     console.error("Unsupported payloadFormat: " + payloadFormat);
                 }
-                parsedMessages.push({
-                    "messageId": messageId,
-                    "referenceId": referenceId,
-                    "payload": payload
-                });
+                if (payload !== null) {
+                    parsedMessages.push({
+                        "messageId": messageId,
+                        "referenceId": referenceId,
+                        "payload": payload
+                    });
+                }
                 index += payloadSize;
             }
             return parsedMessages;
@@ -219,10 +221,16 @@
      * @return {void}
      */
     function subscribeListProtoBuf() {
+        // The Saxo API supports ProtoBuf, which saves some bandwidth.
+        //
+        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
+        //
+        // In order to make the parsing work, parts of the client-lib are used.
+        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
         const data = {
             "ContextId": document.getElementById("idContextId").value,
             "ReferenceId": "MyPriceEvent",
-            "Format": "application/x-protobuf",
+            "Format": "application/x-protobuf",  // This triggers ProtoBuf
             "Arguments": {
                 "AccountKey": accountKey,
                 "Uics": document.getElementById("idUics").value,
@@ -256,7 +264,7 @@
     }
 
     /**
-     * This is an example of subscribing to price updates with higher refreshRate meant for a single instrument, using Json.
+     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Json.
      * @return {void}
      */
     function subscribeSingleJson() {
