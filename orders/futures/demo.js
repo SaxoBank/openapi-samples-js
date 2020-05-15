@@ -182,8 +182,15 @@ function getConditions() {
         return Math.pow(10, numberOfDecimals);
     }
 
-    function checkTickSizes(orderObject, tickSizeScheme) {
+    function checkTickSize(orderObject, tickSize) {
         const price = orderObject.OrderPrice;
+        factor = calculateFactor(tickSize);  // Modulo doesn't support fractions, so multiply with a factor
+        if (Math.round(price * factor) % Math.round(tickSize * factor) !== 0) {
+            window.alert("The price of " + price + " doesn't match the tick size of " + tickSize);
+        }
+    }
+
+    function checkTickSizes(orderObject, tickSizeScheme) {
         let tickSize = tickSizeScheme.DefaultTickSize;
         let factor;
         let i;
@@ -193,10 +200,7 @@ function getConditions() {
                 break;
             }
         }
-        factor = calculateFactor(tickSize);  // Modulo doesn't support fractions, so multiply with a factor
-        if (Math.round(price * factor) % Math.round(tickSize * factor) !== 0) {
-            window.alert("The price of " + price + " doesn't match the tick size of " + tickSize);
-        }
+        checkTickSize(orderObject, tickSize);
     }
 
     function checkLotSizes(orderObject, detailsObject) {
@@ -227,8 +231,12 @@ function getConditions() {
                     window.alert("This instrument is not tradable!");
                 }
                 checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
-                if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn" && newOrderObject.hasOwnProperty("TickSizeScheme")) {
-                    checkTickSizes(newOrderObject, responseJson.TickSizeScheme);
+                if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn") {
+                    if (responseJson.hasOwnProperty("TickSizeScheme")) {
+                        checkTickSizes(newOrderObject, responseJson.TickSizeScheme);
+                    } else if (responseJson.hasOwnProperty("TickSize")) {
+                        checkTickSize(newOrderObject, responseJson.TickSize);
+                    }
                 }
                 if (responseJson.LotSizeType !== "NotUsed") {
                     checkLotSizes(newOrderObject, responseJson);
@@ -293,10 +301,9 @@ function preCheckNewOrder() {
  */
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20contract%20option
-    const optionRootId = document.getElementById("idInstrumentId").value;
+    const newOrderObject = getOrderObjectFromJson();
     fetch(
-        apiUrl + "/cs/v1/tradingconditions/ContractOptionSpaces/" + encodeURIComponent(accountKey) + "/" + optionRootId + "/?FieldGroups=ScheduledTradingConditions",
+        apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
