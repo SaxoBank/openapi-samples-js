@@ -7,7 +7,7 @@
     let connection;
 
     /**
-     * This is an example of getting the trading settings of an instrument.
+     * This is an example of constructing the websocket connection.
      * @return {void}
      */
     function createConnection() {
@@ -26,7 +26,7 @@
     }
 
     /**
-     * This is an example of getting the trading settings of an instrument.
+     * This function initiates the events and contains the processing of new messages.
      * @return {void}
      */
     function startListener() {

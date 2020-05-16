@@ -5,11 +5,11 @@
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Demo for Monitoring the Primary Status</title>
+    <title>Demo for Monitoring the Premium Price Feed Status</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Monitor Primary Status</h1>
+<h1 class="project-name">Monitor Premium Price Feed Status</h1>
 <h2 class="project-tagline">Subscribe to Status Events for Realtime Prices</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
@@ -25,19 +25,20 @@
     </select>
 </label>
 </div>
-<h1>Monitor 'Primary' status</h1>
-Only one application is allowed to show real time quotes. This is the 'Primary' application. This example shows how to become and stay primary.
+<h1>Monitor 'Premium Price Feed' status</h1>
+Only one application is allowed to show real time quotes. This is the 'Primary' application. This example shows how to get and keep this status.
 <br />
 <br />
 <label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
 <br />
 <br />
+<input type="button" class="action-button" value="Get access rights" id="idBtnGetAccessRights" />
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" />
 <input type="button" class="action-button" value="Subscribe to updates" id="idBtnSubscribe" />
-<input type="button" class="action-button" value="Become primary" id="idBtnBecomePrimary" />
+<input type="button" class="action-button" value="Take Price Session" id="idBtnBecomePrimary" />
 Launch <a href="https://www.saxotrader.com/sim" target="_blank">SaxoTraderGO</a> as primary
-<input type="button" class="action-button" value="Become primary again" id="idBtnBecomePrimaryAgain" />
+<input type="button" class="action-button" value="Take Price Session again" id="idBtnBecomePrimaryAgain" />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
 <br />
