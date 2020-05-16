@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl */
+/*global window console clientKey accountKey run processError apiUrl displayVersion */
 
 /**
  * Request the user information.
@@ -16,9 +16,13 @@ function getUser() {
             "method": "GET"
         }
     ).then(function (response) {
+        const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
         if (response.ok) {
             response.json().then(function (responseJson) {
-                console.log("Found user info:\n\n" + JSON.stringify(responseJson, null, 4));
+                // Times are in UTC. Convert them to local time:
+                const lastLoginDate = new Date(responseJson.LastLoginTime).toLocaleString();
+                const rep = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                console.log("Found user with clientKey " + responseJson.ClientKey + " (required for other requests).\nLast login @ " + lastLoginDate + "." + req + rep);
             });
         } else {
             processError(response);
@@ -43,9 +47,48 @@ function getAccounts() {
             "method": "GET"
         }
     ).then(function (response) {
+        const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
         if (response.ok) {
             response.json().then(function (responseJson) {
-                console.log("Found " + responseJson.Data.length + " accounts for clientId " + clientId + ":\n\n" + JSON.stringify(responseJson, null, 4));
+                const rep = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                let accountKeys = [];
+                let i;
+                for (i = 0; i < responseJson.Data.length; i += 1) {
+                    // Loop through the data and collect the accountKeys:
+                    accountKeys.push(responseJson.Data[i].AccountKey);
+                }
+                console.log("Found " + responseJson.Data.length + " account(s) (many requests require accountKey):\n" + accountKeys.join("\n") + req + rep);
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * Request the balance for the selected account.
+ * @return {void}
+ */
+function getBalance() {
+    fetch(
+        apiUrl + "/port/v1/balances?ClientKey=" + encodeURIComponent(clientKey) + "&AccountKey=" + encodeURIComponent(accountKey),
+        {
+            "headers": {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                const rep = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                // Show a value in account currency and decimals:
+                const cash = responseJson.Currency + " " + responseJson.TotalValue.toFixed(responseJson.CurrencyDecimals);
+                console.log("The selected account has a total balance of " + cash + "." + req + rep);
             });
         } else {
             processError(response);
@@ -62,8 +105,8 @@ function getAccounts() {
     document.getElementById("idBtnGetAccounts").addEventListener("click", function () {
         run(getAccounts);
     });
-    document.getElementById("idBtnGetAccount").addEventListener("click", function () {
-        run(getAccounts);
+    document.getElementById("idBtnGetBalance").addEventListener("click", function () {
+        run(getBalance);
     });
     displayVersion("port");
 }());

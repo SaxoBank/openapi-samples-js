@@ -1,17 +1,8 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl */
+/*global window console accountKey run processError apiUrl displayVersion */
 
 const firstUrl = apiUrl + "/ref/v1/exchanges?$top=30";
 let nextUrl = firstUrl;
-
-/**
- * Request the first page of a long Data collection.
- * @return {void}
- */
-function getFirst() {
-    nextUrl = firstUrl;  // Init with 'first' URL
-    getNext();
-}
 
 /**
  * Request the next page of a long Data collection.
@@ -49,6 +40,15 @@ function getNext() {
     }).catch(function (error) {
         console.error(error);
     });
+}
+
+/**
+ * Request the first page of a long Data collection.
+ * @return {void}
+ */
+function getFirst() {
+    nextUrl = firstUrl;  // Init with 'first' URL
+    getNext();
 }
 
 (function () {
