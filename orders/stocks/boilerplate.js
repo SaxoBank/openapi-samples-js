@@ -71,7 +71,7 @@ function processError(errorObject) {
  */
 function run(functionToRun, secondFunctionToDisplay) {
 
-    function populateAccounts(responseJson) {
+    function populateAccountSelection(responseJson) {
         const cbxAccount = document.getElementById("idCbxAccount");
         let i;
         let option;
@@ -96,9 +96,9 @@ function run(functionToRun, secondFunctionToDisplay) {
     function getDataFromApi() {
         const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET /sim/openapi/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
         const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
-        // This function uses a batch request to do three calls in one. Se the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
+        // This function uses a batch request to do three requests in one. See the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
         fetch(
-            apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
+            apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, goes in a different batch.
             {
                 "headers": {
                     "Content-Type": "multipart/mixed; boundary=\"+\"",
@@ -137,7 +137,7 @@ function run(functionToRun, secondFunctionToDisplay) {
                                     responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
                                     break;
                                 case "3":
-                                    populateAccounts(responseJson);
+                                    populateAccountSelection(responseJson);
                                     break;
                                 }
                             } catch (error) {
@@ -148,7 +148,7 @@ function run(functionToRun, secondFunctionToDisplay) {
                     functionToRun();
                 });
             } else {
-                accessTokenElm.setCustomValidity("Invalid access_token.");
+                accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
                 processError(response);
             }
         }).catch(function (error) {
