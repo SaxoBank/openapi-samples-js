@@ -96,6 +96,7 @@ function run(functionToRun, secondFunctionToDisplay) {
     function getDataFromApi() {
         const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET /sim/openapi/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
         const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
+        // This function uses a batch request to do three calls in one. Se the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
         fetch(
             apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
             {
@@ -121,7 +122,6 @@ function run(functionToRun, secondFunctionToDisplay) {
                     for (lineNumber = 0; lineNumber < responseArray.length; lineNumber += 1) {
                         line = responseArray[lineNumber].trim();
                         if (line.substr(0, 13) === "X-Request-Id:") {
-                            alert("[" + line.substr(13) + "]");
                             requestId = line.substr(13).trim();
                         } else if (line.charAt(0) === "{") {
                             try {
