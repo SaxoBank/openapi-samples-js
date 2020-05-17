@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console clientKey accountKey run processError apiUrl displayVersion */
+/*global window console user run processError apiUrl displayVersion */
 
 /**
  * Request the user information.
@@ -55,9 +55,9 @@ function getAccounts() {
                 let i;
                 for (i = 0; i < responseJson.Data.length; i += 1) {
                     // Loop through the data and collect the accountKeys:
-                    accountKeys.push(responseJson.Data[i].AccountKey);
+                    accountKeys.push(responseJson.Data[i].AccountId + " - " + responseJson.Data[i].AccountKey);
                 }
-                console.log("Found " + responseJson.Data.length + " account(s) (many requests require accountKey):\n" + accountKeys.join("\n") + req + rep);
+                console.log("Found " + responseJson.Data.length + " account(s) with accountKey(s):\n" + accountKeys.join("\n") + req + rep);
             });
         } else {
             processError(response);
@@ -73,7 +73,7 @@ function getAccounts() {
  */
 function getBalance() {
     fetch(
-        apiUrl + "/port/v1/balances?ClientKey=" + encodeURIComponent(clientKey) + "&AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/port/v1/balances?ClientKey=" + encodeURIComponent(user.clientKey) + "&AccountKey=" + encodeURIComponent(user.accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
