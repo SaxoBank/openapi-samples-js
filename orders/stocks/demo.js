@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl displayVersion */
+/*global window console user run processError apiUrl displayVersion */
 
 let lastOrderId = 0;
 
@@ -24,7 +24,7 @@ function getOrderObjectFromJson() {
 function selectOrderType() {
     const newOrderObject = getOrderObjectFromJson();
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     delete newOrderObject.OrderPrice;
     delete newOrderObject.StopLimitPrice;
     delete newOrderObject.TrailingstopDistanceToMarket;
@@ -151,19 +151,17 @@ function getConditions() {
     }
 
     function checkTickSize(orderObject, tickSize) {
-        const price = orderObject.OrderPrice;
-        factor = calculateFactor(tickSize);  // Modulo doesn't support fractions, so multiply with a factor
-        if (Math.round(price * factor) % Math.round(tickSize * factor) !== 0) {
-            window.alert("The price of " + price + " doesn't match the tick size of " + tickSize);
+        const factor = calculateFactor(tickSize);  // Modulo doesn't support fractions, so multiply with a factor
+        if (Math.round(orderObject.OrderPrice * factor) % Math.round(tickSize * factor) !== 0) {
+            window.alert("The price of " + orderObject.OrderPrice + " doesn't match the tick size of " + tickSize);
         }
     }
 
     function checkTickSizes(orderObject, tickSizeScheme) {
         let tickSize = tickSizeScheme.DefaultTickSize;
-        let factor;
         let i;
         for (i = 0; i < tickSizeScheme.Elements.length; i += 1) {
-            if (price <= tickSizeScheme.Elements[i].HighPrice) {
+            if (orderObject.OrderPrice <= tickSizeScheme.Elements[i].HighPrice) {
                 tickSize = tickSizeScheme.Elements[i].TickSize;  // The price is below a threshold and therefore not the default
                 break;
             }
@@ -182,7 +180,7 @@ function getConditions() {
 
     const newOrderObject = getOrderObjectFromJson();
     fetch(
-        apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
+        apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(user.accountKey) + "&FieldGroups=OrderSetting",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -211,10 +209,14 @@ function getConditions() {
                 }
                 if (responseJson.IsComplex) {
                     // Show a warning before placing an order in a complex product.
-                    window.alert("Your order relates to a complex product or service for which you must have appropriate knowledge and experience. For more information, please see our instructional videos and guides.\nBy validating this order, you acknowledge that you have been informed of the risks of this transaction.");
-                    // In French:
-                    // Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides.
-                    // En validant cet ordre, vous reconnaissez avoir été informé des risques de cette transaction.
+                    switch (user.culture) {
+                    case "fr-FR":
+                    case "fr-BE":
+                        window.alert("Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides.\nEn validant cet ordre, vous reconnaissez avoir été informé des risques de cette transaction.");
+                        break;
+                    default:
+                        window.alert("Your order relates to a complex product or service for which you must have appropriate knowledge and experience. For more information, please see our instructional videos and guides.\nBy validating this order, you acknowledge that you have been informed of the risks of this transaction.");
+                    }
                 }
             });
         } else {
@@ -233,7 +235,7 @@ function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
     const newOrderObject = getOrderObjectFromJson();
     fetch(
-        apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
+        apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(user.accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -269,7 +271,7 @@ function getKid() {
 function preCheckNewOrder() {
     // Bug: Preview doesn't check for limit outside market hours
     const newOrderObject = getOrderObjectFromJson();
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
     fetch(
         apiUrl + "/trade/v2/orders/precheck",
@@ -310,7 +312,7 @@ function placeNewOrder() {
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
     };
     const newOrderObject = getOrderObjectFromJson();
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     if (document.getElementById("idChkRequestIdHeader").checked) {
         headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
     }
@@ -350,7 +352,7 @@ function modifyLastOrder() {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
     };
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     newOrderObject.OrderId = lastOrderId;
     if (document.getElementById("idChkRequestIdHeader").checked) {
         headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
@@ -386,7 +388,7 @@ function modifyLastOrder() {
  */
 function cancelLastOrder() {
     fetch(
-        apiUrl + "/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(user.accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",

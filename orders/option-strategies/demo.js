@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl displayVersion */
+/*global window console user run processError apiUrl displayVersion */
 
 let lastOrderId = 0;
 
@@ -24,7 +24,7 @@ function getOrderObjectFromJson() {
 function selectOrderType() {
     const newOrderObject = getOrderObjectFromJson();
     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     delete newOrderObject.OrderPrice;
     delete newOrderObject.StopLimitPrice;
     delete newOrderObject.TrailingstopDistanceToMarket;
@@ -110,7 +110,7 @@ function getStrategy() {
     const optionRootId = document.getElementById("idInstrumentId").value;
     const optionStrategyType = document.getElementById("idCbxOptionStrategy").value;
     fetch(
-        apiUrl + "/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + optionStrategyType,
+        apiUrl + "/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(user.accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + optionStrategyType,
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -123,7 +123,7 @@ function getStrategy() {
             response.json().then(function (responseJson) {
                 const newOrderObject = getOrderObjectFromJson();
                 let i;
-                newOrderObject.AccountKey = accountKey;
+                newOrderObject.AccountKey = user.accountKey;
                 newOrderObject.OrderDuration = {
                     "DurationType": document.getElementById("idCbxOrderDuration").value
                 };
@@ -153,7 +153,7 @@ function getStrategy() {
 function getSeries() {
     const optionRootId = document.getElementById("idInstrumentId").value;
     const newOrderObject = getOrderObjectFromJson();
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
     fetch(
         apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
@@ -188,7 +188,7 @@ function preCheckNewOrder() {
     // Bug: Preview doesn't check for limit outside market hours
     // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
     const newOrderObject = getOrderObjectFromJson();
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
     fetch(
         apiUrl + "/trade/v2/orders/multileg/precheck",
@@ -230,7 +230,7 @@ function placeNewOrder() {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
     };
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     if (document.getElementById("idChkRequestIdHeader").checked) {
         headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
     }
@@ -270,7 +270,7 @@ function modifyLastOrder() {
         "Content-Type": "application/json; charset=utf-8",
         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
     };
-    newOrderObject.AccountKey = accountKey;
+    newOrderObject.AccountKey = user.accountKey;
     newOrderObject.MultiLegOrderId = lastOrderId;
     if (document.getElementById("idChkRequestIdHeader").checked) {
         headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
@@ -306,7 +306,7 @@ function modifyLastOrder() {
  */
 function cancelLastOrder() {
     fetch(
-        apiUrl + "/trade/v2/orders/multileg/" + lastOrderId + "?AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/trade/v2/orders/multileg/" + lastOrderId + "?AccountKey=" + encodeURIComponent(user.accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
