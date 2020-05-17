@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl displayVersion */
+/*global window console user run processError apiUrl displayVersion */
 
 const firstUrl = apiUrl + "/ref/v1/exchanges?$top=30";
 let nextUrl = firstUrl;

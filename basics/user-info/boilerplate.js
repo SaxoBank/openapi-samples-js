@@ -7,9 +7,9 @@
  * For demonstration the code that is executed, is shown in the code output.
  * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for more details.
  *
- * A session cookie containing the token is stored to prevent work on page refresh.
+ * The token is stored, so it remains available after a page refresh.
  *
- * boilerplate v1.01
+ * boilerplate v1.02
  */
 
 const apiUrl = "https://gateway.saxobank.com/sim/openapi";
@@ -214,29 +214,6 @@ function displayVersion(serviceGroup) {
     }
 
     /**
-     * Read a cookie.
-     * @param {string} key Name of the cookie.
-     * @return {string} Value.
-     */
-    function getCookie(key) {
-        const name = key + "=";
-        const decodedCookie = decodeURIComponent(document.cookie);
-        const cookieArray = decodedCookie.split(";");
-        let c;
-        let i;
-        for (i = 0; i < cookieArray.length; i += 1) {
-            c = cookieArray[i];
-            while (c.charAt(0) === " ") {
-                c = c.substring(1);
-            }
-            if (c.indexOf(name) === 0) {
-                return c.substring(name.length, c.length);
-            }
-        }
-        return "";
-    }
-
-    /**
      * Try to hunt down a previously used access_token, so a page refresh is less a hassle.
      * @return {void}
      */
@@ -246,15 +223,14 @@ function displayVersion(serviceGroup) {
         const urlWithoutParams = location.protocol + "//" + location.host + location.pathname;
         let newAccessToken = urlParams.get("access_token");
         if (newAccessToken === null) {
-            // Second, maybe the token is stored in a cookie?
-            newAccessToken = getCookie("saxotoken");
+            // Second, maybe the token is stored in an earlier session?
+            newAccessToken = localStorage.getItem("saxotoken");
         }
         accessTokenElm.value = newAccessToken;
-        window.addEventListener("beforeunload", function () {
-            let accessTokenToSave = accessTokenElm.value;
-            if (accessTokenToSave.length > 10) {
-                // Save the token as session cookie, so it can be reused:
-                document.cookie = "saxotoken=" + accessTokenToSave;
+        accessTokenElm.addEventListener("change", function () {
+            if (accessTokenElm.value.length > 20) {
+                // Save the token in local storage, so it can be reused after a page refresh:
+                localStorage.setItem("saxotoken", accessTokenElm.value);
             }
         });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
