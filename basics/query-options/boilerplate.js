@@ -2,14 +2,15 @@
 /*global console URLSearchParams */
 
 /*
- * This is a set of helper functions for validating the token and populating the account selection.
+ * boilerplate v1.02
+ *
+ * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
- * For demonstration the code that is executed, is shown in the code output.
- * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for more details.
+ * For demonstration the code which is executed, is shown in the code output.
+ * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for an explanation.
  *
  * The token is stored, so it remains available after a page refresh.
  *
- * boilerplate v1.02
  */
 
 const apiUrl = "https://gateway.saxobank.com/sim/openapi";
@@ -223,14 +224,18 @@ function displayVersion(serviceGroup) {
         const urlWithoutParams = location.protocol + "//" + location.host + location.pathname;
         let newAccessToken = urlParams.get("access_token");
         if (newAccessToken === null) {
-            // Second, maybe the token is stored in an earlier session?
-            newAccessToken = localStorage.getItem("saxotoken");
+            // Second, maybe the token is stored before a refresh or in a different sample?
+            try {
+                newAccessToken = sessionStorage.getItem("saxosimtoken");
+            } catch (ignore) {
+                console.error("Session storage fails in this browser.");
+            }
         }
         accessTokenElm.value = newAccessToken;
         accessTokenElm.addEventListener("change", function () {
             if (accessTokenElm.value.length > 20) {
-                // Save the token in local storage, so it can be reused after a page refresh:
-                localStorage.setItem("saxotoken", accessTokenElm.value);
+                // Save the token in session storage, so it can be reused after a page refresh:
+                sessionStorage.setItem("saxosimtoken", accessTokenElm.value);
             }
         });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
