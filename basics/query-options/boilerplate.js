@@ -71,64 +71,81 @@ function processError(errorObject) {
  */
 function run(functionToRun, secondFunctionToDisplay) {
 
-    function getCulture(header) {
-        fetch(apiUrl + "/port/v1/users/me", header).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    user.culture = responseJson.Culture;
-                    functionToRun();
-                });
-            } else {
-                processError(response);
+    function populateAccounts(responseJson) {
+        const cbxAccount = document.getElementById("idCbxAccount");
+        let i;
+        let option;
+        for (i = cbxAccount.options.length - 1; i >= 0; i -= 1) {
+            cbxAccount.remove(i);
+        }
+        for (i = 0; i < responseJson.Data.length; i += 1) {
+            option = document.createElement("option");
+            option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
+            option.value = responseJson.Data[i].AccountKey;
+            if (option.value === user.accountKey) {
+                option.setAttribute("selected", true);
             }
-        }).catch(function (error) {
-            console.error(error);
+            cbxAccount.add(option);
+        }
+        cbxAccount.addEventListener("change", function () {
+            user.accountKey = cbxAccount.value;
+            console.log("Using account " + user.accountKey);
         });
     }
 
-    function getAllAccounts(header) {
-        fetch(apiUrl + "/port/v1/accounts/me", header).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    const cbxAccount = document.getElementById("idCbxAccount");
-                    let i;
-                    let option;
-                    for (i = cbxAccount.options.length - 1; i >= 0; i -= 1) {
-                        cbxAccount.remove(i);
-                    }
-                    for (i = 0; i < responseJson.Data.length; i += 1) {
-                        option = document.createElement("option");
-                        option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
-                        option.value = responseJson.Data[i].AccountKey;
-                        if (option.value === user.accountKey) {
-                            option.setAttribute("selected", true);
-                        }
-                        cbxAccount.add(option);
-                    }
-                    cbxAccount.addEventListener("change", function () {
-                        user.accountKey = cbxAccount.value;
-                        console.log("Using account " + user.accountKey);
-                    });
-                    getCulture(header);
-                });
-            } else {
-                processError(response);
+    function getDataFromApi() {
+        const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET /sim/openapi/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
+        const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
+        fetch(
+            apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
+            {
+                "headers": {
+                    "Content-Type": "multipart/mixed; boundary=\"+\"",
+                    "Accept": "*/*",
+                    "Accept-Language": "en, *;q=0.5",
+                    "Authorization": "Bearer " + accessTokenElm.value,
+                    "Cache-Control": "no-cache"
+                },
+                "body": request,
+                "method": "POST"
             }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    function getDefaultAccount(header) {
-        fetch(apiUrl + "/port/v1/clients/me", header).then(function (response) {
+        ).then(function (response) {
             if (response.ok) {
                 accessTokenElm.setCustomValidity("");
-                response.json().then(function (responseJson) {
-                    user.accountKey = responseJson.DefaultAccountKey;  // Remember the default account
-                    user.clientKey = responseJson.ClientKey;
-                    user.culture = responseJson.Culture;
-                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
-                    getAllAccounts(header);
+                response.text().then(function (responseText) {
+                    const responseArray = responseText.split("\n");
+                    let lineNumber;
+                    let line;
+                    let requestId;
+                    let responseJson;
+                    for (lineNumber = 0; lineNumber < responseArray.length; lineNumber += 1) {
+                        line = responseArray[lineNumber].trim();
+                        if (line.substr(0, 13) === "X-Request-Id:") {
+                            alert("[" + line.substr(13) + "]");
+                            requestId = line.substr(13).trim();
+                        } else if (line.charAt(0) === "{") {
+                            try {
+                                responseJson = JSON.parse(line);
+                                switch (requestId) {
+                                case "1":
+                                    user.culture = responseJson.Culture;
+                                    break;
+                                case "2":
+                                    user.accountKey = responseJson.DefaultAccountKey;  // Remember the default account
+                                    user.clientKey = responseJson.ClientKey;
+                                    user.culture = responseJson.Culture;
+                                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
+                                    break;
+                                case "3":
+                                    populateAccounts(responseJson);
+                                    break;
+                                }
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        }
+                    }
+                    functionToRun();
                 });
             } else {
                 accessTokenElm.setCustomValidity("Invalid access_token.");
@@ -154,14 +171,8 @@ function run(functionToRun, secondFunctionToDisplay) {
             console.error("Bearer token is required for requests.");
         } else {
             if (user.accountKey === "") {
-                // Retrieve the account key first
-                getDefaultAccount({
-                    "headers": {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": "Bearer " + accessTokenElm.value
-                    },
-                    "method": "GET"
-                });
+                // Retrieve the account and customer data in a batch
+                getDataFromApi();
             } else {
                 functionToRun();
             }
