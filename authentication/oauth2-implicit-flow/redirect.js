@@ -2,7 +2,7 @@
 /*global window console URLSearchParams run processError apiUrl */
 
 let accessToken;
-const pageShowTime = new Date();
+const pageDisplayTime = new Date();
 
 /**
  * If login failed, the error can be found as a query parameter.
@@ -25,9 +25,8 @@ function checkErrors() {
 function getToken() {
     const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
     const expiresInSeconds = urlParams.get("expires_in");  // Note tat this doesn't work when the page is refreshed. To be sure, use a cookie, or sessionStorage
-    const accessTokenExpirationTime = new Date();
+    const accessTokenExpirationTime = new Date(pageDisplayTime.getTime() + expiresInSeconds * 1000);
     accessToken = urlParams.get("access_token");
-    accessTokenExpirationTime.setSeconds(pageShowTime.getSeconds() + expiresInSeconds);
     console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + ").\nOnly use this token for API requests, don't send it to a backend, for security reasons:\n" + decodeURIComponent(accessToken));
 }
 
