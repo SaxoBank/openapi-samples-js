@@ -26,6 +26,7 @@ Samples run against Saxo's simulation environment and require an **access token*
     - [Stock Order example](orders/stocks)
     - [Option Order](orders/options)
     - [Option Strategy Order](orders/option-strategies)
+    - [Future Order](orders/futures)
 5. Using websockets
     - [Retrieving Order Events](websockets/order-events-monitoring)
     - [Trade Messages](websockets/trade-messages)

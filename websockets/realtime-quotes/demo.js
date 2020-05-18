@@ -183,7 +183,7 @@
     function subscribeListJson() {
         const data = {
             "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyPriceEvent",
+            "ReferenceId": "MyPriceEvent_JSON",
             "Arguments": {
                 "AccountKey": accountKey,
                 "Uics": document.getElementById("idUics").value,
@@ -229,7 +229,7 @@
         // See Github: https://github.com/SaxoBank/openapi-clientlib-js
         const data = {
             "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyPriceEvent",
+            "ReferenceId": "MyPriceEvent_ProtoBuf",
             "Format": "application/x-protobuf",  // This triggers ProtoBuf
             "Arguments": {
                 "AccountKey": accountKey,

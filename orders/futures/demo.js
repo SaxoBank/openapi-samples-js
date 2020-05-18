@@ -131,14 +131,14 @@ function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
 }
 
 /**
- * This is an example of getting the series (option sheet) of an option root.
+ * This is an example of getting the future series.
  * @return {void}
  */
-function getSeries() {
+function getFuturesSpace() {
     const newOrderObject = getOrderObjectFromJson();
-    const optionRootId = document.getElementById("idInstrumentId").value;
+    const futuresSpaceId = document.getElementById("idInstrumentId").value;
     fetch(
-        apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
+        apiUrl + "/ref/v1/instruments/futuresspaces/" + futuresSpaceId,
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -149,9 +149,7 @@ function getSeries() {
     ).then(function (response) {
         if (response.ok) {
             response.json().then(function (responseJson) {
-                // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme. An example can be found in the function getConditions()
-                populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
-                newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
+                newOrderObject.Uic = responseJson.Elements[0].Uic;
                 newOrderObject.AccountKey = user.accountKey;
                 document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                 console.log(JSON.stringify(responseJson, null, 4));
@@ -305,10 +303,9 @@ function preCheckNewOrder() {
  */
 function getOrderCosts() {
     // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
-    // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20contract%20option
-    const optionRootId = document.getElementById("idInstrumentId").value;
+    const newOrderObject = getOrderObjectFromJson();
     fetch(
-        apiUrl + "/cs/v1/tradingconditions/ContractOptionSpaces/" + encodeURIComponent(user.accountKey) + "/" + optionRootId + "/?FieldGroups=ScheduledTradingConditions",
+        apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(user.accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -444,8 +441,8 @@ function cancelLastOrder() {
     document.getElementById("idCbxOrderDuration").addEventListener("change", function () {
         run(selectOrderDuration);
     });
-    document.getElementById("idBtnGetSeries").addEventListener("click", function () {
-        run(getSeries);
+    document.getElementById("idBtnGetFuturesSpace").addEventListener("click", function () {
+        run(getFuturesSpace);
     });
     document.getElementById("idBtnGetConditions").addEventListener("click", function () {
         run(getConditions);
