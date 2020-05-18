@@ -1,9 +1,24 @@
 /*jslint this: true, browser: true, for: true, long: true */
 /*global console URLSearchParams */
 
+/*
+ * boilerplate v1.02
+ *
+ * This script contains a set of helper functions for validating the token and populating the account selection.
+ * Logging to the console is mirrored to the output in the examples.
+ * For demonstration the code which is executed, is shown in the code output.
+ * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for an explanation.
+ *
+ * The token is stored, so it remains available after a page refresh.
+ *
+ */
+
 const apiUrl = "https://gateway.saxobank.com/sim/openapi";
-let accountKey = "";
-let clientKey = "";
+const user = {
+    "clientKey": "",
+    "accountKey": "",
+    "culture": ""
+};
 const responseElm = document.getElementById("idResponse");
 const accessTokenElm = document.getElementById("idBearerToken");
 
@@ -56,51 +71,84 @@ function processError(errorObject) {
  */
 function run(functionToRun, secondFunctionToDisplay) {
 
-    function getAllAccounts(header) {
-        fetch(apiUrl + "/port/v1/accounts/me", header).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    const cbxAccount = document.getElementById("idCbxAccount");
-                    let i;
-                    let option;
-                    for (i = cbxAccount.options.length - 1; i >= 0; i -= 1) {
-                        cbxAccount.remove(i);
-                    }
-                    for (i = 0; i < responseJson.Data.length; i += 1) {
-                        option = document.createElement("option");
-                        option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
-                        option.value = responseJson.Data[i].AccountKey;
-                        if (option.value === accountKey) {
-                            option.setAttribute("selected", true);
-                        }
-                        cbxAccount.add(option);
-                    }
-                    cbxAccount.addEventListener("change", function () {
-                        accountKey = cbxAccount.value;
-                        responseElm.innerText = "Using account " + accountKey;
-                    });
-                    functionToRun();
-                });
-            } else {
-                processError(response);
+    function populateAccountSelection(responseJson) {
+        const cbxAccount = document.getElementById("idCbxAccount");
+        let i;
+        let option;
+        for (i = cbxAccount.options.length - 1; i >= 0; i -= 1) {
+            cbxAccount.remove(i);
+        }
+        for (i = 0; i < responseJson.Data.length; i += 1) {
+            option = document.createElement("option");
+            option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
+            option.value = responseJson.Data[i].AccountKey;
+            if (option.value === user.accountKey) {
+                option.setAttribute("selected", true);
             }
-        }).catch(function (error) {
-            console.error(error);
+            cbxAccount.add(option);
+        }
+        cbxAccount.addEventListener("change", function () {
+            user.accountKey = cbxAccount.value;
+            console.log("Using account " + user.accountKey);
         });
     }
 
-    function getDefaultAccount(header) {
-        fetch(apiUrl + "/port/v1/clients/me", header).then(function (response) {
+    function getDataFromApi() {
+        const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET /sim/openapi/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
+        const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
+        // This function uses a batch request to do three requests in one. See the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
+        fetch(
+            apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, goes in a different batch.
+            {
+                "headers": {
+                    "Content-Type": "multipart/mixed; boundary=\"+\"",
+                    "Accept": "*/*",
+                    "Accept-Language": "en, *;q=0.5",
+                    "Authorization": "Bearer " + accessTokenElm.value,
+                    "Cache-Control": "no-cache"
+                },
+                "body": request,
+                "method": "POST"
+            }
+        ).then(function (response) {
             if (response.ok) {
                 accessTokenElm.setCustomValidity("");
-                response.json().then(function (responseJson) {
-                    accountKey = responseJson.DefaultAccountKey;  // Remember the default account
-                    clientKey = responseJson.ClientKey;
-                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + clientKey;
-                    getAllAccounts(header);
+                response.text().then(function (responseText) {
+                    const responseArray = responseText.split("\n");
+                    let lineNumber;
+                    let line;
+                    let requestId;
+                    let responseJson;
+                    for (lineNumber = 0; lineNumber < responseArray.length; lineNumber += 1) {
+                        line = responseArray[lineNumber].trim();
+                        if (line.substr(0, 13) === "X-Request-Id:") {
+                            requestId = line.substr(13).trim();
+                        } else if (line.charAt(0) === "{") {
+                            try {
+                                responseJson = JSON.parse(line);
+                                switch (requestId) {
+                                case "1":
+                                    user.culture = responseJson.Culture;
+                                    break;
+                                case "2":
+                                    user.accountKey = responseJson.DefaultAccountKey;  // Remember the default account
+                                    user.clientKey = responseJson.ClientKey;
+                                    user.culture = responseJson.Culture;
+                                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
+                                    break;
+                                case "3":
+                                    populateAccountSelection(responseJson);
+                                    break;
+                                }
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        }
+                    }
+                    functionToRun();
                 });
             } else {
-                accessTokenElm.setCustomValidity("Invalid access_token.");
+                accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
                 processError(response);
             }
         }).catch(function (error) {
@@ -122,15 +170,9 @@ function run(functionToRun, secondFunctionToDisplay) {
             accessTokenElm.setCustomValidity("Bearer token is required for requests.");
             console.error("Bearer token is required for requests.");
         } else {
-            if (accountKey === "") {
-                // Retrieve the account key first
-                getDefaultAccount({
-                    "headers": {
-                        "Content-Type": "application/json; charset=utf-8",
-                        "Authorization": "Bearer " + accessTokenElm.value
-                    },
-                    "method": "GET"
-                });
+            if (user.accountKey === "") {
+                // Retrieve the account and customer data in a batch
+                getDataFromApi();
             } else {
                 functionToRun();
             }
@@ -184,29 +226,6 @@ function displayVersion(serviceGroup) {
     }
 
     /**
-     * Read a cookie.
-     * @param {string} key Name of the cookie.
-     * @return {string} Value.
-     */
-    function getCookie(key) {
-        const name = key + "=";
-        const decodedCookie = decodeURIComponent(document.cookie);
-        const cookieArray = decodedCookie.split(";");
-        let c;
-        let i;
-        for (i = 0; i < cookieArray.length; i += 1) {
-            c = cookieArray[i];
-            while (c.charAt(0) === " ") {
-                c = c.substring(1);
-            }
-            if (c.indexOf(name) === 0) {
-                return c.substring(name.length, c.length);
-            }
-        }
-        return "";
-    }
-
-    /**
      * Try to hunt down a previously used access_token, so a page refresh is less a hassle.
      * @return {void}
      */
@@ -216,19 +235,22 @@ function displayVersion(serviceGroup) {
         const urlWithoutParams = location.protocol + "//" + location.host + location.pathname;
         let newAccessToken = urlParams.get("access_token");
         if (newAccessToken === null) {
-            // Second, maybe the token is stored in a cookie?
-            newAccessToken = getCookie("saxotoken");
+            // Second, maybe the token is stored before a refresh or in a different sample?
+            try {
+                newAccessToken = sessionStorage.getItem("saxosimtoken");
+            } catch (ignore) {
+                console.error("Session storage fails in this browser.");
+            }
         }
         accessTokenElm.value = newAccessToken;
-        window.addEventListener("beforeunload", function () {
-            let accessTokenToSave = accessTokenElm.value;
-            if (accessTokenToSave.length > 10) {
-                // Save the token as session cookie, so it can be reused:
-                document.cookie = "saxotoken=" + accessTokenToSave;
+        accessTokenElm.addEventListener("change", function () {
+            if (accessTokenElm.value.length > 20) {
+                // Save the token in session storage, so it can be reused after a page refresh:
+                sessionStorage.setItem("saxosimtoken", accessTokenElm.value);
             }
         });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
-            accountKey = "";
+            user.accountKey = "";
             run(function () {
                 console.info("Token is valid!");
             });

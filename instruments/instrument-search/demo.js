@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError displayVersion apiUrl */
+/*global window console user run processError apiUrl displayVersion */
 
 let instrumentId;
 let instrumentIdType;
@@ -57,7 +57,7 @@ function getLegalAssetTypes(callback) {
         cbxAssetType.remove(i);
     }
     fetch(
-        apiUrl + "/port/v1/accounts/" + encodeURIComponent(accountKey),
+        apiUrl + "/port/v1/accounts/" + encodeURIComponent(user.accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -106,7 +106,7 @@ function findInstrument() {
     if (assetType === "-") {
         getLegalAssetTypes(findInstrument);
     } else {
-        url = apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&$top=10" + "&AccountKey=" + encodeURIComponent(accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+        url = apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&$top=10" + "&AccountKey=" + encodeURIComponent(user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
         if (document.getElementById("idCbxExchange").value !== "-") {
             url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
         }

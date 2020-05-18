@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError */
+/*global window console user run processError apiUrl displayVersion */
 
 let requestCount = 0;
 let requestQueue = [];
@@ -7,7 +7,8 @@ let timer;
 let instrumentIds = [];
 
 function processDetailResponse(assetType, responseJson) {
-    for (let i = 0; i < responseJson.Data.length; i += 1) {
+    let i;
+    for (i = 0; i < responseJson.Data.length; i += 1) {
         instrumentIds.push(responseJson.Data[i].Uic);
     }
     document.getElementById("idInstruments").value = instrumentIds.join(",");
@@ -16,8 +17,10 @@ function processDetailResponse(assetType, responseJson) {
 }
 
 function processContractOptionSpace(assetType, responseJson) {
-    for (let i = 0; i < responseJson.OptionSpace.length; i += 1) {
-        for (let j = 0; j < responseJson.OptionSpace[i].SpecificOptions.length; j += 1) {
+    let i;
+    let j;
+    for (i = 0; i < responseJson.OptionSpace.length; i += 1) {
+        for (j = 0; j < responseJson.OptionSpace[i].SpecificOptions.length; j += 1) {
             instrumentIds.push(responseJson.OptionSpace[i].SpecificOptions[j].Uic);
         }
     }
@@ -26,9 +29,10 @@ function processContractOptionSpace(assetType, responseJson) {
 }
 
 function processSearchResponse(assetType, responseJson) {
-    const baseUrl = apiUrl + "/ref/v1/instruments/details?AccountKey=" + encodeURIComponent(accountKey) + "&$top=1000&AssetTypes=" + assetType + "&Uics=";
+    const baseUrl = apiUrl + "/ref/v1/instruments/details?AccountKey=" + encodeURIComponent(user.accountKey) + "&$top=1000&AssetTypes=" + assetType + "&Uics=";
     const separator = encodeURIComponent(",");
     let url = "";
+    let i;
 
     function addToQueue() {
         requestQueue.push({
@@ -40,7 +44,7 @@ function processSearchResponse(assetType, responseJson) {
 
     console.debug("Found " + responseJson.Data.length + " instruments on this exchange");
     // We have the Uic - collect the details
-    for (let i = 0; i < responseJson.Data.length; i += 1) {
+    for (i = 0; i < responseJson.Data.length; i += 1) {
         if (assetType === "StockOption" || assetType === "StockIndexOption") {
             // We found an OptionRoot - this must be converted to Uic
             requestQueue.push({
@@ -75,11 +79,12 @@ function processSearchResponse(assetType, responseJson) {
 }
 
 function processExchangesResponse(assetType, responseJson) {
+    let i;
     console.debug("Found " + responseJson.Data.length + " exchanges, starting to collect instrument ids");
-    for (let i = 0; i < responseJson.Data.length; i += 1) {
+    for (i = 0; i < responseJson.Data.length; i += 1) {
         requestQueue.push({
             "assetType": assetType,
-            "url": apiUrl + "/ref/v1/instruments?ExchangeId=" + encodeURIComponent(responseJson.Data[i].ExchangeId) + "&AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(accountKey),
+            "url": apiUrl + "/ref/v1/instruments?ExchangeId=" + encodeURIComponent(responseJson.Data[i].ExchangeId) + "&AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(user.accountKey),
             "callback": processSearchResponse
         });
     }

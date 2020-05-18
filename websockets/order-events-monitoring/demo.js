@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
-/*global window console WebSocket accountKey clientKey run processError apiUrl displayVersion */
+/*global window console WebSocket user run processError apiUrl displayVersion */
 
 let connection;
 
@@ -167,7 +167,7 @@ function subscribeOrders() {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyOrderEvent",
         "Arguments": {
-            "AccountKey": accountKey,
+            "AccountKey": user.accountKey,
             "Activities": [
                 "AccountFundings",
                 "Orders"
@@ -208,8 +208,8 @@ function subscribePositions() {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPositionEvent",
         "Arguments": {
-            "AccountKey": accountKey,
-            "ClientKey": clientKey
+            "AccountKey": user.accountKey,
+            "ClientKey": user.clientKey
         }
     };
     fetch(

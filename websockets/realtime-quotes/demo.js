@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
-/*global window console WebSocket accountKey run processError apiUrl displayVersion ParserProtobuf protobuf */
+/*global window console WebSocket user run processError apiUrl displayVersion ParserProtobuf protobuf */
 
 (function () {
     const parserProtobuf = new ParserProtobuf("default", protobuf);
@@ -185,7 +185,7 @@
             "ContextId": document.getElementById("idContextId").value,
             "ReferenceId": "MyPriceEvent_JSON",
             "Arguments": {
-                "AccountKey": accountKey,
+                "AccountKey": user.accountKey,
                 "Uics": document.getElementById("idUics").value,
                 "AssetType": "FxSpot"
             }
@@ -232,7 +232,7 @@
             "ReferenceId": "MyPriceEvent_ProtoBuf",
             "Format": "application/x-protobuf",  // This triggers ProtoBuf
             "Arguments": {
-                "AccountKey": accountKey,
+                "AccountKey": user.accountKey,
                 "Uics": document.getElementById("idUics").value,
                 "AssetType": "FxSpot"
             }
@@ -281,7 +281,7 @@
                 "ContextId": document.getElementById("idContextId").value,
                 "ReferenceId": "MyPriceEvent" + "_" + uic,
                 "Arguments": {
-                    "AccountKey": accountKey,
+                    "AccountKey": user.accountKey,
                     "Uic": uic,
                     "AssetType": "FxSpot",
                     "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on

@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console clientKey accountKey run processError apiUrl */
+/*global window console user run processError apiUrl displayVersion */
 
 function displayAndFormatValue(displayAndFormat, value) {
     let result;
@@ -51,7 +51,7 @@ function displayAndFormatValue(displayAndFormat, value) {
  */
 function getPortfolio() {
     fetch(
-        apiUrl + "/port/v1/netpositions/?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(clientKey) + "&AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/port/v1/netpositions/?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(user.clientKey) + "&AccountKey=" + encodeURIComponent(user.accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
@@ -89,7 +89,7 @@ function getPortfolio() {
  */
 function getOrders() {
     fetch(
-        apiUrl + "/port/v1/orders/?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(clientKey) + "&AccountKey=" + encodeURIComponent(accountKey),
+        apiUrl + "/port/v1/orders/?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(user.clientKey) + "&AccountKey=" + encodeURIComponent(user.accountKey),
         {
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",

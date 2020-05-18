@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
-/*global window console WebSocket accountKey run processError apiUrl displayVersion */
+/*global window console WebSocket user run processError apiUrl displayVersion */
 
 let connection;
 let lastTradeMessageId;

@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console accountKey run processError apiUrl */
+/*global window console user run processError apiUrl displayVersion */
 
 /**
  * Create the POST data for the batch request.
