@@ -4,7 +4,39 @@
 let connection;
 
 /**
- * This is an example of getting the trading settings of an instrument.
+ * This function collects the access rights of the logged in user.
+ * @return {void}
+ */
+function getAccessRights() {
+    fetch(
+        apiUrl + "/root/v1/user",
+        {
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json; charset=utf-8"
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                const result = (
+                    responseJson.AccessRights.CanTakePriceSession
+                    ? "You can take the Price Session!"
+                    : "You are not allowed to take the price session."
+                );
+                console.log(result + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * This is an example of constructing the websocket connection.
  * @return {void}
  */
 function createConnection() {
@@ -23,7 +55,7 @@ function createConnection() {
 }
 
 /**
- * This is an example of getting the trading settings of an instrument.
+ * This function initiates the events and contains the processing of new messages.
  * @return {void}
  */
 function startListener() {
@@ -243,6 +275,9 @@ function becomePrimaryAgain() {
 
 (function () {
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
+    document.getElementById("idBtnGetAccessRights").addEventListener("click", function () {
+        run(getAccessRights);
+    });
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
         run(createConnection);
     });
