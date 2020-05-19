@@ -75,11 +75,11 @@ function getTokenPhp() {
             })
         }
     ).then(function (response) {
-        const accessTokenExpirationTime = new Date();
         if (response.ok) {
             response.json().then(function (responseJson) {
+                const accessTokenExpirationTime = new Date();
                 tokenObject = responseJson;
-                accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
+                accessTokenExpirationTime.setTime(accessTokenExpirationTime.getTime() + tokenObject.expires_in * 1000);
                 console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
             });
         } else {

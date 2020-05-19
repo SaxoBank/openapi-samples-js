@@ -1,0 +1,40 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Diagnose API connection (without a token)</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Diagnose API connection</h1>
+<h2 class="project-tagline">Validate if PUT, PATCH &amp; DELETE methods are available</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<h1>Diagnose API connection</h1>
+The GET and POST requests can be used to validate your connection to the API. A token is not required.<br />
+<br />
+Some tense corporate firewalls, or basic client applications don't support the methods PATCH, PUT &amp; DELETE.<br />
+With diagnostics, your application can test is this is the case.<br />
+In order to keep using the API, you can tunnel your request into a POST and specify the desired method in the <i>X-HTTP-Method-Override</i> header.
+<br />
+<br />
+<input type="button" class="action-button" value="Test GET request" id="idBtnTestGetRequest" />
+<input type="button" class="action-button" value="Test POST request" id="idBtnTestPostRequest" /><br />
+<input type="button" class="action-button" value="Test PUT request" id="idBtnTestPutRequest" />
+<input type="button" class="action-button" value="Test PATCH request" id="idBtnTestPatchRequest" />
+<input type="button" class="action-button" value="Test DELETE request" id="idBtnTestDeleteRequest" />
+<br />
+<br />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

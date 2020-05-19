@@ -18,6 +18,7 @@ Samples run against Saxo's simulation environment and require an **access token*
     - [Get user info](basics/user-info)
     - [Query options $top, $skip and __next](basics/query-options)
     - [Error handling](error-handling)
+    - [Diagnostics and method override](basics/diagnostics)
 3. Instruments
     - [Instrument Search example](instruments/instrument-search)
     - [Display Positions and Order List](instruments/display-positions-orders)
