@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.02
+ * boilerplate v1.03
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -117,7 +117,7 @@ function run(functionToRun, secondFunctionToDisplay) {
                     const responseArray = responseText.split("\n");
                     let lineNumber;
                     let line;
-                    let requestId;
+                    let requestId = "";
                     let responseJson;
                     for (lineNumber = 0; lineNumber < responseArray.length; lineNumber += 1) {
                         line = responseArray[lineNumber].trim();
@@ -131,10 +131,8 @@ function run(functionToRun, secondFunctionToDisplay) {
                                     user.culture = responseJson.Culture;
                                     break;
                                 case "2":
-                                    user.accountKey = responseJson.DefaultAccountKey;  // Remember the default account
+                                    user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                     user.clientKey = responseJson.ClientKey;
-                                    user.culture = responseJson.Culture;
-                                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
                                     break;
                                 case "3":
                                     populateAccountSelection(responseJson);
@@ -145,6 +143,7 @@ function run(functionToRun, secondFunctionToDisplay) {
                             }
                         }
                     }
+                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
                     functionToRun();
                 });
             } else {
@@ -159,7 +158,7 @@ function run(functionToRun, secondFunctionToDisplay) {
 
     // Display source of function, for demonstration:
     let source = functionToRun.toString();
-    if (secondFunctionToDisplay !== undefined) {
+    if (secondFunctionToDisplay !== undefined && secondFunctionToDisplay !== null) {
         source = secondFunctionToDisplay.toString() + "\n\n" + source;
     }
     document.getElementById("idJavaScript").innerText = source;
@@ -198,6 +197,21 @@ function displayVersion(serviceGroup) {
 }
 
 (function () {
+    const tokenKey = "saxosimtoken";
+
+    /**
+     * Remember token for this session, so it can be reused after a page refresh.
+     * @return {void}
+     */
+    function saveToken(token) {
+        if (token.length > 20) {
+            try {
+                sessionStorage.setItem(tokenKey, token);
+            } catch (ignore) {
+                console.error("Unable to remember token (session storage not supported).");
+            }
+        }
+    }
 
     /**
      * When an error is logged to the console, show it in the Response-box as well.
@@ -237,17 +251,16 @@ function displayVersion(serviceGroup) {
         if (newAccessToken === null) {
             // Second, maybe the token is stored before a refresh or in a different sample?
             try {
-                newAccessToken = sessionStorage.getItem("saxosimtoken");
+                newAccessToken = sessionStorage.getItem(tokenKey);
             } catch (ignore) {
                 console.error("Session storage fails in this browser.");
             }
+        } else {
+            saveToken(newAccessToken);
         }
         accessTokenElm.value = newAccessToken;
         accessTokenElm.addEventListener("change", function () {
-            if (accessTokenElm.value.length > 20) {
-                // Save the token in session storage, so it can be reused after a page refresh:
-                sessionStorage.setItem("saxosimtoken", accessTokenElm.value);
-            }
+            saveToken(accessTokenElm.value);
         });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
             user.accountKey = "";

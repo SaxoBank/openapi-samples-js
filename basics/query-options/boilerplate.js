@@ -197,6 +197,21 @@ function displayVersion(serviceGroup) {
 }
 
 (function () {
+    const tokenKey = "saxosimtoken";
+
+    /**
+     * Remember token for this session, so it can be reused after a page refresh.
+     * @return {void}
+     */
+    function saveToken(token) {
+        if (token.length > 20) {
+            try {
+                sessionStorage.setItem(tokenKey, token);
+            } catch (ignore) {
+                console.error("Unable to remember token (session storage not supported).");
+            }
+        }
+    }
 
     /**
      * When an error is logged to the console, show it in the Response-box as well.
@@ -236,17 +251,16 @@ function displayVersion(serviceGroup) {
         if (newAccessToken === null) {
             // Second, maybe the token is stored before a refresh or in a different sample?
             try {
-                newAccessToken = sessionStorage.getItem("saxosimtoken");
+                newAccessToken = sessionStorage.getItem(tokenKey);
             } catch (ignore) {
                 console.error("Session storage fails in this browser.");
             }
+        } else {
+            saveToken(newAccessToken);
         }
         accessTokenElm.value = newAccessToken;
         accessTokenElm.addEventListener("change", function () {
-            if (accessTokenElm.value.length > 20) {
-                // Save the token in session storage, so it can be reused after a page refresh:
-                sessionStorage.setItem("saxosimtoken", accessTokenElm.value);
-            }
+            saveToken(accessTokenElm.value);
         });
         document.getElementById("idBtnValidate").addEventListener("click", function () {
             user.accountKey = "";
