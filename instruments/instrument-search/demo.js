@@ -106,15 +106,12 @@ function findInstrument() {
     if (assetType === "-") {
         getLegalAssetTypes(findInstrument);
     } else {
-        url = apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&$top=10" + "&AccountKey=" + encodeURIComponent(user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+        url = apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=10" + "&AccountKey=" + encodeURIComponent(user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
         if (document.getElementById("idCbxExchange").value !== "-") {
             url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
         }
         if (document.getElementById("idChkMultiLeg").checked) {
-            url += "&CanParticipateInMultiLegOrder=" + true;
-        }
-        if (assetType === "ContractFutures") {
-            url += "&IncludeNonTradable=true";  // This way you'll find the FuturesSpaces, using keyword "continuous"
+            url += "&CanParticipateInMultiLegOrder=true";
         }
         fetch(
             url,

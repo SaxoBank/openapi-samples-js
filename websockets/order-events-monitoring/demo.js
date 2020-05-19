@@ -133,11 +133,15 @@ function startListener() {
         const messages = parseMessageFrame(messageFrame.data);
         messages.forEach(function (message) {
             switch (message.referenceId) {
-            case "MyOrderEvent":
-                console.log("Streaming order event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+            case "MyEnsEvent":
+                // With this event you receive in realtime the changes of portfolio and orders. You also get notified on deposits or withdrawals.
+                console.log("Streaming order/position/fundings event from ENS " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                break;
+            case "MyBalanceEvent":
+                console.log("Streaming balance change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                 break;
             case "MyPositionEvent":
-                console.log("Streaming position event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                console.log("Streaming position change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                 break;
             case "_heartbeat":
                 console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
@@ -159,18 +163,19 @@ function startListener() {
 }
 
 /**
- * This is an example of subscribing to changes in active orders.
+ * This is an example of subscribing to ENS, which notifies about order and position events. And withdrawals and deposits are published on this subscription.
  * @return {void}
  */
-function subscribeOrders() {
+function subscribeEns() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
-        "ReferenceId": "MyOrderEvent",
+        "ReferenceId": "MyEnsEvent",
         "Arguments": {
             "AccountKey": user.accountKey,
             "Activities": [
                 "AccountFundings",
-                "Orders"
+                "Orders",
+                "Positions"
             ],
             "FieldGroups": [
                 "DisplayAndFormat",
@@ -200,13 +205,53 @@ function subscribeOrders() {
 }
 
 /**
+ * This is an example of subscribing to changes in the account balance.
+ * @return {void}
+ */
+function subscribeBalances() {
+    const data = {
+        "ContextId": document.getElementById("idContextId").value,
+        "ReferenceId": "MyBalanceEvent",
+        "RefreshRate": 5000,  // Default is every second, which probably is too chatty
+        "Arguments": {
+            "AccountKey": user.accountKey,
+            "ClientKey": user.clientKey,
+            "FieldGroups": [
+                "MarginOverview"
+            ]
+        }
+    };
+    fetch(
+        apiUrl + "/port/v1/balances/subscriptions",
+        {
+            "method": "POST",
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "body": JSON.stringify(data)
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            console.log("Subscription for balance changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
  * This is an example of subscribing to changes in net positions.
+ * These changes are published in ENS as well, this can be used as a catch up, every minute, because due to price changes is has many updates.
  * @return {void}
  */
 function subscribePositions() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
         "ReferenceId": "MyPositionEvent",
+        "RefreshRate": 60000,  // Default is every second, which probably is too chatty
         "Arguments": {
             "AccountKey": user.accountKey,
             "ClientKey": user.clientKey
@@ -274,8 +319,11 @@ function disconnect() {
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
         run(startListener);
     });
-    document.getElementById("idBtnSubscribeOrders").addEventListener("click", function () {
-        run(subscribeOrders);
+    document.getElementById("idBtnSubscribeEns").addEventListener("click", function () {
+        run(subscribeEns);
+    });
+    document.getElementById("idBtnSubscribeBalances").addEventListener("click", function () {
+        run(subscribeBalances);
     });
     document.getElementById("idBtnSubscribePositions").addEventListener("click", function () {
         run(subscribePositions);
