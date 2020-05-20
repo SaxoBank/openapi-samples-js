@@ -2,14 +2,16 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.03
+ * boilerplate v1.04
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
  * For demonstration the code which is executed, is shown in the code output.
  * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for an explanation.
  *
- * The token is stored, so it remains available after a page refresh.
+ * The token is stored in the session, so it remains available after a page refresh.
+ *
+ * Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
  *
  */
 
@@ -17,7 +19,8 @@ const apiUrl = "https://gateway.saxobank.com/sim/openapi";
 const user = {
     "clientKey": "",
     "accountKey": "",
-    "culture": ""
+    "culture": "",
+    "name": ""
 };
 const responseElm = document.getElementById("idResponse");
 const accessTokenElm = document.getElementById("idBearerToken");
@@ -133,6 +136,7 @@ function run(functionToRun, secondFunctionToDisplay) {
                                 case "2":
                                     user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                     user.clientKey = responseJson.ClientKey;
+                                    user.name = responseJson.Name;
                                     break;
                                 case "3":
                                     populateAccountSelection(responseJson);
@@ -143,7 +147,7 @@ function run(functionToRun, secondFunctionToDisplay) {
                             }
                         }
                     }
-                    responseElm.innerText = "The token is valid - hello " + responseJson.Name + "\nClientKey: " + user.clientKey;
+                    responseElm.innerText = "The token is valid - hello " + user.name + "\nClientKey: " + user.clientKey;
                     functionToRun();
                 });
             } else {

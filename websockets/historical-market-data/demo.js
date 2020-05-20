@@ -2,7 +2,70 @@
 /*global window console WebSocket user run processError apiUrl displayVersion */
 
 let connection;
-let lastTradeMessageId;
+let oldestSampleTime = new Date();
+
+/**
+ * This function does the actual fetch for the historical data for an instrument.
+ * @param {Date=} upToTime If supplied, the data is fetched up to this date and time
+ * @return {void}
+ */
+function fetchHistoricalData(upToTime) {
+    const uic = document.getElementById("idInstrumentId").value;
+    const horizon = document.getElementById("idCbxHorizon").value;
+    let url = apiUrl + "/chart/v1/charts/?Uic=" + uic + "&AssetType=FxSpot&FieldGroups=BlockInfo,ChartInfo,Data,DisplayAndFormat&Horizon=" + horizon;
+    if (upToTime !== undefined && upToTime !== null) {
+        url += "&Mode=UpTo&Time=" + oldestSampleTime.toISOString();
+    }
+    fetch(
+        url,
+        {
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json; charset=utf-8"
+            },
+            "method": "GET"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            response.json().then(function (responseJson) {
+                let i;
+                let foundSampleTime;
+                if (responseJson.Data.length > 0) {
+                    oldestSampleTime = new Date();
+                    for (i = 0; i < responseJson.Data.length; i += 1) {
+                        foundSampleTime = new Date(responseJson.Data[i].Time);
+                        if (foundSampleTime < oldestSampleTime) {
+                            oldestSampleTime = foundSampleTime;
+                        }
+                    }
+                    console.log("Found " + responseJson.Data.length + " samples in response, dating back to " + oldestSampleTime.toLocaleString() + ". Response: " + JSON.stringify(responseJson, null, 4));
+                } else {
+                    console.log("No older samples found. Response: " + JSON.stringify(responseJson, null, 4));
+                }
+            });
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * This function collects the historical data for an instrument.
+ * @return {void}
+ */
+function getHistoricalData() {
+    fetchHistoricalData();
+}
+
+/**
+ * This function collects older historical data for an instrument.
+ * @return {void}
+ */
+function getOlderData() {
+    fetchHistoricalData(oldestSampleTime);
+}
 
 /**
  * This is an example of constructing the websocket connection.
@@ -145,13 +208,19 @@ function startListener() {
         const messages = parseMessageFrame(messageFrame.data);
         messages.forEach(function (message) {
             switch (message.referenceId) {
-            case "MyTradeMessageEvent":
-                // Remember the last message for delete example
-                lastTradeMessageId = message.payload[message.payload.length - 1].MessageId;
-                console.log("Streaming trade message event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+            case "MyChartDataEvent":
+                console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                 break;
             case "_heartbeat":
-                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                break;
+            case "_resetsubscriptions":
+                // The server is not able to send messages and client needs to reset subscriptions by recreating them.
+                console.error("Reset Subscription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                break;
+            case "_disconnect":
+                // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             default:
                 console.error("No processing implemented for message with reference " + message.referenceId);
@@ -168,11 +237,19 @@ function startListener() {
 function subscribe() {
     const data = {
         "ContextId": document.getElementById("idContextId").value,
-        "ReferenceId": "MyTradeMessageEvent",
-        "Format": "application/json"
+        "ReferenceId": "MyChartDataEvent",
+        "Arguments": {
+            "AssetType": "FxSpot",
+            "FieldGroups": [
+                "Data"
+            ],
+            "Horizon": document.getElementById("idCbxHorizon").value,
+            "Count": 10,  // Don't request every 1.200 samples again, but be sure there is no gap
+            "Uic": document.getElementById("idInstrumentId").value
+        }
     };
     fetch(
-        apiUrl + "/trade/v1/messages/subscriptions",
+        apiUrl + "/chart/v1/charts/subscriptions",
         {
             "method": "POST",
             "headers": {
@@ -183,34 +260,7 @@ function subscribe() {
         }
     ).then(function (response) {
         if (response.ok) {
-            response.json().then(function (responseJson) {
-                const messageCount = responseJson.Snapshot.Data.length;
-                if (messageCount > 0) {
-                    lastTradeMessageId = responseJson.Snapshot.Data[messageCount - 1].MessageId;
-                }
-                console.log("Subscription created with readyState " + connection.readyState + ". Snapshot contains " + messageCount + " messages: " + JSON.stringify(responseJson, null, 4) + ".");
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
-
-function markAsRead() {
-    fetch(
-        apiUrl + "/trade/v1/messages/seen/" + lastTradeMessageId,
-        {
-            "method": "PUT",
-            "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
-            }
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            console.log("Message " + lastTradeMessageId + " marked as 'read'. This was the most recent message.");
+            console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'");
         } else {
             processError(response);
         }
@@ -250,7 +300,7 @@ function extendSubscription() {
  */
 function unsubscribe() {
     fetch(
-        apiUrl + "/trade/v1/messages/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value) + "/MyTradeMessageEvent",
+        apiUrl + "/chart/v1/charts/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value),  // Add referenceId for more granular unsubscribe
         {
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
@@ -279,6 +329,12 @@ function disconnect() {
 
 (function () {
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
+    document.getElementById("idBtnGetHistoricalData").addEventListener("click", function () {
+        run(getHistoricalData, fetchHistoricalData);
+    });
+    document.getElementById("idBtnGetOlderData").addEventListener("click", function () {
+        run(getOlderData, fetchHistoricalData);
+    });
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
         run(createConnection);
     });
@@ -287,9 +343,6 @@ function disconnect() {
     });
     document.getElementById("idBtnSubscribe").addEventListener("click", function () {
         run(subscribe);
-    });
-    document.getElementById("idBtnMarkAsRead").addEventListener("click", function () {
-        run(markAsRead);
     });
     document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
         run(extendSubscription);
@@ -300,5 +353,5 @@ function disconnect() {
     document.getElementById("idBtnDisconnect").addEventListener("click", function () {
         run(disconnect);
     });
-    displayVersion("trade");
+    displayVersion("chart");
 }());

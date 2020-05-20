@@ -20,7 +20,7 @@
         }
         connection = new WebSocket(streamerUrl);
         connection.binaryType = "arraybuffer";
-        console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState);
+        console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
         // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
         // 0 = CONNECTING, 1 = OPEN
     }
@@ -133,47 +133,43 @@
         }
 
         connection.onopen = function () {
-            console.log("Streaming connected");
+            console.log("Streaming connected.");
         };
         connection.onclose = function () {
-            console.log("Streaming disconnected");
+            console.log("Streaming disconnected.");
         };
         connection.onerror = function (evt) {
             console.error(evt);
         };
         connection.onmessage = function (messageFrame) {
-            if (messageFrame.data instanceof ArrayBuffer) {
-                const messages = parseMessageFrame(messageFrame.data);
-                messages.forEach(function (message) {
-                    const priceEventName = "MyPriceEvent";
-                    switch (message.referenceId) {
-                    case "_heartbeat":
-                        console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
-                        break;
-                    case "_resetsubscriptions":
-                        // The server is not able to send messages and client needs to reset subscriptions by recreating them.
-                        console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
-                        break;
-                    case "_disconnect":
-                        // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
-                        console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
-                        break;
-                    default:
-                        if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
-                            // Notice that the format of the messages of the two endpoints is different.
-                            // The /prices contain no Uic, that must be derived from the referenceId.
-                            // Since /infoprices is about lists, it always contains the Uic.
-                            console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
-                        } else {
-                            console.error("No processing implemented for message with reference " + message.referenceId);
-                        }
+            const messages = parseMessageFrame(messageFrame.data);
+            messages.forEach(function (message) {
+                const priceEventName = "MyPriceEvent";
+                switch (message.referenceId) {
+                case "_heartbeat":
+                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    break;
+                case "_resetsubscriptions":
+                    // The server is not able to send messages and client needs to reset subscriptions by recreating them.
+                    console.error("Reset Subscription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                case "_disconnect":
+                    // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                    console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
+                    break;
+                default:
+                    if (message.referenceId.substring(0, priceEventName.length) === priceEventName) {
+                        // Notice that the format of the messages of the two endpoints is different.
+                        // The /prices contain no Uic, that must be derived from the referenceId.
+                        // Since /infoprices is about lists, it always contains the Uic.
+                        console.log("Price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                    } else {
+                        console.error("No processing implemented for message with reference " + message.referenceId);
                     }
-                });
-            } else {
-                console.log("messageFrame.data in wrong format: " + typeof messageFrame.data);
-            }
+                }
+            });
         };
-        console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
+        console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
     }
 
     /**
@@ -269,7 +265,7 @@
      * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Json.
      * @return {void}
      */
-    function subscribeSingleJson() {
+    function subscribeOrderTicketJson() {
 
         /**
          * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
@@ -315,6 +311,92 @@
     }
 
     /**
+     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Protocol Buffers.
+     * @return {void}
+     */
+    function subscribeOrderTicketProtoBuf() {
+        // The Saxo API supports ProtoBuf, which saves some bandwidth.
+        //
+        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
+        //
+        // In order to make the parsing work, parts of the client-lib are used.
+        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
+
+        /**
+         * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
+         * @param {number} uic Instrument ID (of type FxSpot, in this example)
+         * @return {void}
+         */
+        function subscribe(uic) {
+            const data = {
+                "ContextId": document.getElementById("idContextId").value,
+                "ReferenceId": "MyPriceEvent" + "_" + uic,
+                "Format": "application/x-protobuf",  // This triggers ProtoBuf
+                "Arguments": {
+                    "AccountKey": user.accountKey,
+                    "Uic": uic,
+                    "AssetType": "FxSpot",
+                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
+                }
+            };
+            fetch(
+                apiUrl + "/trade/v1/prices/subscriptions",
+                {
+                    "method": "POST",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                        "Content-Type": "application/json"
+                    },
+                    "body": JSON.stringify(data)
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        // The schema to use when parsing the messages, is send together with the snapshot.
+                        schemaName = responseJson.SchemaName;
+                        if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                            console.error("Adding schema to protobuf was not successful");
+                        }
+                        console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
+                    });
+                } else {
+                    processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        const uicList = document.getElementById("idUics").value.split(",");
+        uicList.forEach(subscribe);
+    }
+
+    /**
+     * This is an example of extending the websocket session, when a token refresh took place.
+     * @return {void}
+     */
+    function extendSubscription() {
+        fetch(
+            apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+            {
+                "method": "PUT",
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                console.log("Subscription extended.");
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of unsubscribing to the events.
      * @return {void}
      */
@@ -329,11 +411,11 @@
             fetch(
                 url,
                 {
-                    "method": "DELETE",
                     "headers": {
                         "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                         "Content-Type": "application/json"
-                    }
+                    },
+                    "method": "DELETE"
                 }
             ).then(function (response) {
                 if (response.ok) {
@@ -346,8 +428,8 @@
             });
         }
 
-        removeSubscription(apiUrl + "/trade/v1/infoprices/subscriptions/" + document.getElementById("idContextId").value);
-        removeSubscription(apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value);
+        removeSubscription(apiUrl + "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+        removeSubscription(apiUrl + "/trade/v1/prices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
         // (By adding a referenceId, the unsubscribe can be done per instrument)
     }
 
@@ -356,7 +438,7 @@
      * @return {void}
      */
     function disconnect() {
-        connection.close();
+        connection.close();  // This will trigger the onclose event
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
@@ -370,10 +452,16 @@
         run(subscribeListJson);
     });
     document.getElementById("idBtnSubscribeOrderTicketJson").addEventListener("click", function () {
-        run(subscribeSingleJson);
+        run(subscribeOrderTicketJson);
     });
     document.getElementById("idBtnSubscribeListProtoBuf").addEventListener("click", function () {
         run(subscribeListProtoBuf);
+    });
+    document.getElementById("idBtnSubscribeOrderTicketProtoBuf").addEventListener("click", function () {
+        run(subscribeOrderTicketProtoBuf);
+    });
+    document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
+        run(extendSubscription);
     });
     document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
         run(unsubscribe);

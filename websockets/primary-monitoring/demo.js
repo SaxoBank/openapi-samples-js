@@ -49,7 +49,7 @@ function createConnection() {
     }
     connection = new WebSocket(streamerUrl);
     connection.binaryType = "arraybuffer";
-    console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState);
+    console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
     // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
     // 0 = CONNECTING, 1 = OPEN
 }
@@ -137,15 +137,26 @@ function startListener() {
              * The interpretation of the payload depends on the message format field.
              */
             payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
-            if (payloadFormat === 0) {
+            switch (payloadFormat) {
+            case 0:
+                // Json
                 payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                break;
+            case 1:
+                // ProtoBuf is not supported in this example. See the realtime-quotes example for a Protocol Buffers implementation.
+                console.error("Protocol Buffers are not supported in this example.");
+                payload = null;
+                break;
+            default:
+                console.error("Unsupported payloadFormat: " + payloadFormat);
+                payload = null;
+            }
+            if (payload !== null) {
                 parsedMessages.push({
                     "messageId": messageId,
                     "referenceId": referenceId,
                     "payload": payload
                 });
-            } else {
-                console.error("Unsupported payloadFormat: " + payloadFormat);
             }
             index += payloadSize;
         }
@@ -153,10 +164,10 @@ function startListener() {
     }
 
     connection.onopen = function () {
-        console.log("Streaming connected");
+        console.log("Streaming connected.");
     };
     connection.onclose = function () {
-        console.log("Streaming disconnected");
+        console.log("Streaming disconnected.");
     };
     connection.onerror = function (evt) {
         console.error(evt);
@@ -173,7 +184,7 @@ function startListener() {
                 break;
             case "_resetsubscriptions":
                 // The server is not able to send messages and client needs to reset subscriptions by recreating them.
-                console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                console.error("Reset Subscription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             case "_disconnect":
                 // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
@@ -184,7 +195,7 @@ function startListener() {
             }
         });
     };
-    console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
+    console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
 }
 
 /**
@@ -236,7 +247,7 @@ function becomePrimary() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Requested to become primary");
+            console.log("Requested to become primary..");
         } else {
             processError(response);
         }
@@ -264,13 +275,71 @@ function becomePrimaryAgain() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Requested to become primary again (will be granted if app was no longer primary)");
+            console.log("Requested to become primary again (will be granted if app was no longer primary)..");
         } else {
             processError(response);
         }
     }).catch(function (error) {
         console.error(error);
     });
+}
+
+/**
+ * This is an example of extending the websocket session, when a token refresh took place.
+ * @return {void}
+ */
+function extendSubscription() {
+    fetch(
+        apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+        {
+            "method": "PUT",
+            "headers": {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            console.log("Subscription extended.");
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * This is an example of unsubscribing to the events.
+ * @return {void}
+ */
+function unsubscribe() {
+    fetch(
+        apiUrl + "/root/v1/sessions/events/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value) + "/MyTradeLevelChangeEvent",
+        {
+            "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                "Content-Type": "application/json"
+            },
+            "method": "DELETE"
+        }
+    ).then(function (response) {
+        if (response.ok) {
+            console.log("Unsubscribed to " + response.url + ".\nReadyState " + connection.readyState + ".");
+        } else {
+            processError(response);
+        }
+    }).catch(function (error) {
+        console.error(error);
+    });
+}
+
+/**
+ * This is an example of disconnecting the socket.
+ * @return {void}
+ */
+function disconnect() {
+    connection.close();  // This will trigger the onclose event
 }
 
 (function () {
@@ -292,6 +361,15 @@ function becomePrimaryAgain() {
     });
     document.getElementById("idBtnBecomePrimaryAgain").addEventListener("click", function () {
         run(becomePrimaryAgain);
+    });
+    document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
+        run(extendSubscription);
+    });
+    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
+        run(unsubscribe);
+    });
+    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
+        run(disconnect);
     });
     displayVersion("root");
 }());

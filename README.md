@@ -32,6 +32,9 @@ Samples run against Saxo's simulation environment and require an **access token*
     - [Retrieving Order Events](websockets/order-events-monitoring)
     - [Trade Messages](websockets/trade-messages)
     - [Monitoring Primary Status](websockets/primary-monitoring)
-    - [Realtime Quotes](websockets/realtime-quotes)
+    - [Realtime Quotes and Protocol Buffers](websockets/realtime-quotes)
+    - [Historical Market Data](websockets/historical-market-data)
 6. Batch Requests
     - [Batch Request example](batch-request)
+
+Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com

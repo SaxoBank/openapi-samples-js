@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demo for retrieving Historical Market Data</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Historical Market Data</h1>
+<h2 class="project-tagline">Get Historical Prices for Charts and Analysis</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:<br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Get Historical Market Data for Charts and Analysis</h1>
+This is an example on how to get historical Market Data. More info can be found in the <a href="https://www.developer.saxo/openapi/learn/chart" target="_blank">learn section about charts</a>.
+<br />
+When you are doing analysis, beware of corporate actions. They can result in a stock split, for example with a ratio of 1:2 where prices are cut in half. This is indicated by the DataVersion field.
+<br />
+<br />
+<label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
+<br />
+<br />
+<label>Uic (of type FxSpot): <input type="text" class="text-field" id="idInstrumentId" value="4" placeholder="Paste Uic.." />
+(Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">search</a>)</label>
+<label>
+    Interval (horizon): <select class="selector" id="idCbxHorizon">
+        <option value="1">1 minute</option>
+        <option value="5">5 minutes</option>
+        <option value="10">10 minutes</option>
+        <option value="15">15 minutes</option>
+        <option value="30">30 minutes</option>
+        <option value="60">1 hour</option>
+        <option value="120">2 hours</option>
+        <option value="240">4 hours</option>
+        <option value="360">6 hours</option>
+        <option value="480">8 hours</option>
+        <option value="1440" selected>1 day</option>
+        <option value="10080">1 week</option>
+        <option value="43200">1 month (1st of the month)</option>
+    </select>
+</label>
+<br />
+<br />
+<input type="button" class="action-button" value="Get historical data" id="idBtnGetHistoricalData" />
+<input type="button" class="action-button" value="Get older data" id="idBtnGetOlderData" /><br />
+<input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
+<input type="button" class="action-button" value="Start listener" id="idBtnStartListener" />
+<input type="button" class="action-button" value="Subscribe to updates" id="idBtnSubscribe" /><br />
+<input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
+<input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
+<input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

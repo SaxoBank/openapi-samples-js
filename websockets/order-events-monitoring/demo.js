@@ -17,7 +17,7 @@ function createConnection() {
     }
     connection = new WebSocket(streamerUrl);
     connection.binaryType = "arraybuffer";
-    console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState);
+    console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
     // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
     // 0 = CONNECTING, 1 = OPEN
 }
@@ -105,15 +105,26 @@ function startListener() {
              * The interpretation of the payload depends on the message format field.
              */
             payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
-            if (payloadFormat === 0) {
+            switch (payloadFormat) {
+            case 0:
+                // Json
                 payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                break;
+            case 1:
+                // ProtoBuf is not supported in this example. See the realtime-quotes example for a Protocol Buffers implementation.
+                console.error("Protocol Buffers are not supported in this example.");
+                payload = null;
+                break;
+            default:
+                console.error("Unsupported payloadFormat: " + payloadFormat);
+                payload = null;
+            }
+            if (payload !== null) {
                 parsedMessages.push({
                     "messageId": messageId,
                     "referenceId": referenceId,
                     "payload": payload
                 });
-            } else {
-                console.error("Unsupported payloadFormat: " + payloadFormat);
             }
             index += payloadSize;
         }
@@ -121,10 +132,10 @@ function startListener() {
     }
 
     connection.onopen = function () {
-        console.log("Streaming connected");
+        console.log("Streaming connected.");
     };
     connection.onclose = function () {
-        console.log("Streaming disconnected");
+        console.log("Streaming disconnected.");
     };
     connection.onerror = function (evt) {
         console.error(evt);
@@ -148,7 +159,7 @@ function startListener() {
                 break;
             case "_resetsubscriptions":
                 // The server is not able to send messages and client needs to reset subscriptions by recreating them.
-                console.error("Reset Susbcription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
+                console.error("Reset Subscription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             case "_disconnect":
                 // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
@@ -159,7 +170,7 @@ function startListener() {
             }
         });
     };
-    console.log("Connection subscribed to events. ReadyState: " + connection.readyState);
+    console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
 }
 
 /**
@@ -294,13 +305,50 @@ function extendSubscription() {
         }
     ).then(function (response) {
         if (response.ok) {
-            console.log("Subscription extended");
+            console.log("Subscription extended.");
         } else {
             processError(response);
         }
     }).catch(function (error) {
         console.error(error);
     });
+}
+
+/**
+ * This is an example of unsubscribing to the events.
+ * @return {void}
+ */
+function unsubscribe() {
+
+    /**
+     * Unsubscribe for the service added to the URL.
+     * @param {number} url The URL pointing to the service to unsubscribe
+     * @return {void}
+     */
+    function removeSubscription(url) {
+        fetch(
+            url,
+            {
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json"
+                },
+                "method": "DELETE"
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    removeSubscription(apiUrl + "/ens/v1/activities/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+    removeSubscription(apiUrl + "/port/v1/balances/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+    removeSubscription(apiUrl + "/port/v1/netpositions/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
 }
 
 /**
@@ -330,6 +378,9 @@ function disconnect() {
     });
     document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
         run(extendSubscription);
+    });
+    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
+        run(unsubscribe);
     });
     document.getElementById("idBtnDisconnect").addEventListener("click", function () {
         run(disconnect);
