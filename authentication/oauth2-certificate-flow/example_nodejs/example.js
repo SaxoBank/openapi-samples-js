@@ -42,6 +42,7 @@ function createJwt() {
         "audience": authProviderUrl
     };
     // The generated assertion/jwt can be validated using https://jwt.io
+    // More info about using jsonwebtoken: https://github.com/auth0/node-jsonwebtoken
     const assertion = jwt.sign(payload, privateKey, options);
     console.log("Private key used to sign the JWT:\n" + privateKey);
     console.log("Assertion has been created:\n" + assertion);

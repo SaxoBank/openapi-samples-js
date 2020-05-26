@@ -82,9 +82,13 @@ function selectOrderType() {
     }
 }
 
+/**
+ * Adjust the order object in the textarea so the related properties comply with the chosen order duration.
+ * @return {void}
+ */
 function selectOrderDuration() {
     const newOrderObject = getOrderObjectFromJson();
-    let now;
+    const now = new Date();
     newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
     switch (newOrderObject.OrderDuration.DurationType) {
     case "DayOrder":
@@ -95,7 +99,6 @@ function selectOrderDuration() {
         delete newOrderObject.OrderDuration.ExpirationDateContainsTime;
         break;
     case "GoodTillDate":  // Requires an explicit date. Cancellation of the order happens at some point on that date.
-        now = new Date();
         now.setDate(now.getDate() + 3);  // Add 3x24 hours to now
         now.setSeconds(0, 0);
         newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate() + "T" + now.getHours() + ":" + now.getMinutes() + ":00";  // Example: 2020-03-20T14:00:00
@@ -107,6 +110,12 @@ function selectOrderDuration() {
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
 
+/**
+ * Add the order types which are allowed for this account to the combo box. Pre-select the type which was selected before.
+ * @param {Array} orderTypes The order types to be added.
+ * @param {string} selectedOrderType The order type to be selected.
+ * @return {void}
+ */
 function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
     const cbxOrderType = document.getElementById("idCbxOrderType");
     let option;
@@ -115,6 +124,7 @@ function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
     for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
         cbxOrderType.remove(i);
     }
+    orderTypes.sort();
     for (i = 0; i < orderTypes.length; i += 1) {
         option = document.createElement("option");
         option.text = orderTypes[i];

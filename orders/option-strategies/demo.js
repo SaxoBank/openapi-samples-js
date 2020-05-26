@@ -62,6 +62,10 @@ function selectOrderType() {
     }
 }
 
+/**
+ * Adjust the order object in the textarea so the related properties comply with the chosen order duration.
+ * @return {void}
+ */
 function selectOrderDuration() {
     const newOrderObject = getOrderObjectFromJson();
     let now;

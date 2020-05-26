@@ -82,6 +82,10 @@ function selectOrderType() {
     }
 }
 
+/**
+ * Adjust the order object in the textarea so the related properties comply with the chosen order duration.
+ * @return {void}
+ */
 function selectOrderDuration() {
     const newOrderObject = getOrderObjectFromJson();
     let now;
@@ -107,6 +111,12 @@ function selectOrderDuration() {
     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
 }
 
+/**
+ * Add the order types which are allowed for this account to the combo box. Pre-select the type which was selected before.
+ * @param {Array} orderTypes The order types to be added.
+ * @param {string} selectedOrderType The order type to be selected.
+ * @return {void}
+ */
 function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
     const cbxOrderType = document.getElementById("idCbxOrderType");
     let option;
@@ -115,6 +125,7 @@ function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
     for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
         cbxOrderType.remove(i);
     }
+    orderTypes.sort();
     for (i = 0; i < orderTypes.length; i += 1) {
         option = document.createElement("option");
         option.text = orderTypes[i];

@@ -28,13 +28,24 @@ function getExchanges() {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 let j;
+                responseJson.Data.sort(function (a, b) {
+                    const nameA = a.Name.toUpperCase();
+                    const nameB = b.Name.toUpperCase();
+                    if (nameA < nameB) {
+                        return -1;
+                    }
+                    if (nameA > nameB) {
+                        return 1;
+                    }
+                    return 0;
+                });
                 for (j = 0; j < responseJson.Data.length; j += 1) {
                     option = document.createElement("option");
-                    option.text = responseJson.Data[j].ExchangeId + " (" + responseJson.Data[j].Name + ")";
+                    option.text = responseJson.Data[j].Name + " (code " + responseJson.Data[j].ExchangeId + ", mic " + responseJson.Data[j].Mic + ")";
                     option.value = responseJson.Data[j].ExchangeId;
                     cbxExchange.add(option);
                 }
-                console.log("Found " + responseJson.Data.length + " exchanges");
+                console.log("Found " + responseJson.Data.length + " exchanges:\n\n" + JSON.stringify(responseJson, null, 4));
             });
         } else {
             processError(response);
@@ -69,6 +80,7 @@ function getLegalAssetTypes(callback) {
         if (response.ok) {
             response.json().then(function (responseJson) {
                 let j;
+                responseJson.LegalAssetTypes.sort();  // Sort the list for reading purposes
                 for (j = 0; j < responseJson.LegalAssetTypes.length; j += 1) {
                     option = document.createElement("option");
                     option.text = responseJson.LegalAssetTypes[j];
