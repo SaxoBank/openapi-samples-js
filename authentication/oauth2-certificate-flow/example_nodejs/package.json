@@ -1,0 +1,20 @@
+{
+    "name": "certificate-based-auth",
+    "version": "1.0.0",
+    "description": "Retrieve a token using the certificate flow",
+    "main": "example.js",
+    "license": "SEE LICENSE IN https://github.com/SaxoBank/openapi-samples-js/blob/master/LICENSE",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/SaxoBank/openapi-samples-js"
+    },
+    "author": {
+        "name": "various"
+    },
+    "dependencies": {
+        "fs": "0.0.1-security",
+        "jsonwebtoken": "^8.5.1",
+        "node-fetch": "^2.6.0",
+        "npm": "^6.14.5"
+    }
+}
