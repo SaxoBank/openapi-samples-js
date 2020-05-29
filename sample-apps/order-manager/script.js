@@ -3,68 +3,22 @@ const simApp = {
   AppKey: "698b5ebc5f5c4ef0a2de3b59655e187a",
   AuthorizationEndpoint: "https://sim.logonvalidation.net/authorize",
   TokenEndpoint: "https://sim.logonvalidation.net/token",
+  LogoutEndpoint: "https://sim.logonvalidation.net/oidclogout",
   GrantType: "Implicit",
   OpenApiBaseUrl: "https://gateway.saxobank.com/sim/openapi",
   RedirectUrls: ["http://localhost:5000"],
 };
 
-const oAuthApp = simApp;
-
-const getAuthUrl = (state = "123") =>
-  `${oAuthApp.AuthorizationEndpoint}?client_id=${oAuthApp.AppKey}&response_type=token&state=${state}&redirect_uri=${window.location.href}`;
-
-const deleteOrder = (order) => {
-  const url = `${oAuthApp.OpenApiBaseUrl}/trade/v2/orders/${order.OrderId}?AccountKey=${order.AccountKey}`;
-  return axios.delete(url, {
-    headers: {
-      Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-    },
-  });
+const liveApp = {
+  AppName: "Order Manager",
+  AppKey: "29c28bc964d346b69d70f389ca2976c9",
+  AuthorizationEndpoint: "https://live.logonvalidation.net/authorize",
+  TokenEndpoint: "https://live.logonvalidation.net/token",
+  LogoutEndpoint: "https://live.logonvalidation.net/oidclogout",
+  GrantType: "Implicit",
+  OpenApiBaseUrl: "https://gateway.saxobank.com/openapi",
+  RedirectUrls: ["http://localhost:5000/"],
 };
-
-const getOrders = (skip = 0) => {
-  const url = `${oAuthApp.OpenApiBaseUrl}/port/v1/orders/me?$top=1000&$skip=${skip}&FieldGroups=DisplayAndFormat,ExchangeInfo`;
-
-  return axios
-    .get(url, {
-      headers: {
-        Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
-      },
-    })
-    .then((response) => response.data);
-};
-
-const getAllOrders = async () => {
-  let orders = [];
-  let loadNextPage = true;
-  let i = 0;
-
-  while (loadNextPage) {
-    const response = await getOrders(i * 1000);
-    if (response.Data.length > 0) {
-      orders = [...orders, ...response.Data];
-    }
-
-    if (response.__count === 1000) {
-      i++;
-    } else {
-      loadNextPage = false;
-    }
-  }
-
-  return orders;
-};
-
-const refreshToken = () => {
-  const authUrl = getAuthUrl("refresh");
-
-  const iframe = document.getElementById("refreshIFrame");
-  iframe.setAttribute("src", authUrl);
-
-  nextRefresh = window.localStorage.getItem("expiresIn") * 1000 - 300000;
-  setTimeout(refreshToken, nextRefresh);
-};
-
 function removeHash() {
   history.pushState(
     "",
@@ -85,11 +39,17 @@ const parseOrder = (order) => ({
   Amount: order.Amount,
   OpenOrderType: order.OpenOrderType,
   Price: order.Price,
-  Duration: order.Duration.DurationType,
+  Duration:
+    order.Duration.DurationType === "DayOrder"
+      ? "D/O"
+      : order.Duration.DurationType === "GoodTillCancel"
+      ? "GTC"
+      : "GTD",
   Status: order.Status,
   Exchange: order.Exchange.ExchangeId,
   DistanceToMarket: order.DistanceToMarket,
-  ShortTrading: order.ShortTrading === "NotAllowed" ? "NotAllowed" : "Allowed",
+  ShortTrading: order.ShortTrading === "NotAllowed" ? "No" : "Yes",
+  cancelled: false,
 });
 
 const app = new Vue({
@@ -99,11 +59,11 @@ const app = new Vue({
     search: "",
     headers: [
       {
-        text: "AccountId",
+        text: "Account ID",
         value: "AccountId",
       },
       {
-        text: "OrderId",
+        text: "Order ID",
         value: "OrderId",
       },
       {
@@ -111,7 +71,7 @@ const app = new Vue({
         value: "Symbol",
       },
       {
-        text: "Description",
+        text: "Instrument Description",
         value: "Description",
       },
       {
@@ -119,15 +79,15 @@ const app = new Vue({
         value: "Exchange",
       },
       {
-        text: "Currency",
+        text: "$",
         value: "Currency",
       },
       {
-        text: "AssetType",
+        text: "Type",
         value: "AssetType",
       },
       {
-        text: "BuySell",
+        text: "Side",
         value: "BuySell",
       },
       {
@@ -135,15 +95,15 @@ const app = new Vue({
         value: "Amount",
       },
       {
-        text: "OpenOrderType",
+        text: "Type",
         value: "OpenOrderType",
       },
       {
-        text: "Price",
+        text: "Trigger",
         value: "Price",
       },
       {
-        text: "DistanceToMarket",
+        text: "Distance",
         value: "DistanceToMarket",
       },
       {
@@ -155,21 +115,133 @@ const app = new Vue({
         value: "Status",
       },
       {
-        text: "ShortTrading",
+        text: "Shortable",
         value: "ShortTrading",
       },
       {
-        text: "Actions",
+        text: "",
         value: "actions",
+        sortable: false,
       },
     ],
     orders: [],
     loading: false,
-    loggedIn: true,
+    loggedIn: false,
+    environment: null,
     itemsPerPage: 150,
+    snackbar: false,
+    snackbarMessage: "",
+    snackbarMultiLine: false,
   },
-  async created() {
+  methods: {
+    login: function (environment) {
+      window.localStorage.setItem("environment", environment);
+      this.environment = environment;
+      const authUrl = this.getAuthUrl();
+
+      window.location = authUrl;
+    },
+    logout: function (hardLogout = true) {
+      window.localStorage.removeItem("accessToken");
+      window.localStorage.removeItem("expiresIn");
+      this.orders = [];
+      this.loggedIn = false;
+      if (hardLogout) {
+        window.open(this.getSaxoApp().LogoutEndpoint);
+      }
+    },
+    getSaxoApp: function () {
+      const saxoApp = this.environment === "live" ? liveApp : simApp;
+      return saxoApp;
+    },
+    getAuthUrl: function (state = "initial") {
+      const saxoApp = this.getSaxoApp();
+      return `${saxoApp.AuthorizationEndpoint}?client_id=${saxoApp.AppKey}&response_type=token&state=${state}&redirect_uri=${window.location.href}`;
+    },
+    refreshToken: function () {
+      const authUrl = this.getAuthUrl("refresh");
+
+      const iframe = document.getElementById("refreshIFrame");
+      iframe.setAttribute("src", authUrl);
+
+      nextRefresh = window.localStorage.getItem("expiresIn") * 1000 - 300000;
+      setTimeout(this.refreshToken, nextRefresh);
+    },
+    deleteOrder: function (order) {
+      const saxoApp = this.getSaxoApp();
+      const url = `${saxoApp.OpenApiBaseUrl}/trade/v2/orders/${order.OrderId}?AccountKey=${order.AccountKey}`;
+      return axios.delete(url, {
+        headers: {
+          Authorization: "Bearer " + window.localStorage.getItem("accessToken"),
+        },
+      });
+    },
+    getOrdersPage: function (skip = 0) {
+      const saxoApp = this.getSaxoApp();
+      const url = `${saxoApp.OpenApiBaseUrl}/port/v1/orders/me?$top=1000&$skip=${skip}&FieldGroups=DisplayAndFormat,ExchangeInfo`;
+
+      return axios
+        .get(url, {
+          headers: {
+            Authorization:
+              "Bearer " + window.localStorage.getItem("accessToken"),
+          },
+        })
+        .then((response) => response.data);
+    },
+    getAllOrders: async function () {
+      let orders = [];
+      let loadNextPage = true;
+      let i = 0;
+
+      while (loadNextPage) {
+        const response = await this.getOrdersPage(i * 1000);
+        if (response.Data.length > 0) {
+          orders = [...orders, ...response.Data];
+        }
+
+        if (response.__count === 1000) {
+          i++;
+        } else {
+          loadNextPage = false;
+        }
+      }
+
+      return orders;
+    },
+    getOrders: async function () {
+      this.loading = true;
+      this.orders = [];
+      const orders = await this.getAllOrders();
+
+      this.orders = orders.map(parseOrder);
+      this.loading = false;
+    },
+    cancelOrder: async function (order) {
+      const confirmationMessage = `
+Are you sure you want to cancel this order?
+
+  Order ID: ${order.OrderId}
+  Symbol: ${order.Symbol}
+  Order: ${order.BuySell} ${order.Amount} @ ${order.OpenOrderType} ${order.Price}
+  Duration: ${order.Duration}
+`;
+      if (confirm(confirmationMessage)) {
+        await this.deleteOrder(order);
+        this.orders = this.orders.map((tableOrder) =>
+          tableOrder.OrderId === order.OrderId
+            ? { ...tableOrder, cancelled: true }
+            : tableOrder
+        );
+
+        this.snackbarMessage = `Cancelled order ${order.OrderId}`;
+        this.snackbar = true;
+      }
+    },
+  },
+  created: async function () {
     this.$vuetify.theme.dark = true;
+    this.environment = window.localStorage.getItem("environment");
 
     if (window.location.hash.includes("access_token")) {
       const urlParams = new URLSearchParams(
@@ -186,46 +258,22 @@ const app = new Vue({
         return;
       } else {
         // render the iframe and continue normally
+        this.loggedIn = true;
         removeHash();
       }
     }
-
-    try {
-      refreshToken();
-      await this.getOrders();
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        this.logout();
-        this.login();
+    if (window.localStorage.getItem("accessToken")) {
+      try {
+        this.refreshToken();
+        await this.getOrders();
+        this.loggedIn = true;
+      } catch (error) {
+        if (error.response && error.response.status === 401) {
+          this.logout(false);
+        } else {
+          throw error;
+        }
       }
     }
-  },
-  methods: {
-    login: function (event) {
-      const authUrl = getAuthUrl();
-
-      window.location = authUrl;
-    },
-    logout: function (event) {
-      window.localStorage.removeItem("accessToken");
-      window.localStorage.removeItem("expiresIn");
-      location.reload();
-    },
-    getOrders: async function (event) {
-      this.loading = true;
-      this.orders = [];
-      const orders = await getAllOrders();
-
-      this.orders = orders.map(parseOrder);
-      this.loading = false;
-    },
-    cancelOrder: async function (order) {
-      if (confirm("Do you really want to do this?????")) {
-        await deleteOrder(order);
-        this.orders = this.orders.filter(
-          (tableOrder) => tableOrder.OrderId !== order.OrderId
-        );
-      }
-    },
   },
 });

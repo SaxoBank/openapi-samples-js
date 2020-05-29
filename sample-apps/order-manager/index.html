@@ -23,34 +23,69 @@
       #refreshIFrame {
         display: none;
       }
-    </style>
 
+      tbody tr:nth-of-type(even) {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+
+      tr.cancelled {
+        text-decoration: line-through;
+      }
+    </style>
     <title>Saxo Order Manager</title>
   </head>
   <body>
     <div id="app">
       <v-app id="inspire">
         <v-app-bar app clipped-left>
-          <v-toolbar-title>Saxo Order Manager</v-toolbar-title>
+          <img
+          src="https://www.home.saxo/-/media/global/logos/logo_vector_color-svg.svg?la=da-DK&hash=4D764EF4BF5FD260749C904CAEF5CCD0"
+          alt="Saxo Bank Logo" width="77" height="58"
+        ></img>
+        &NonBreakingSpace;
+        &NonBreakingSpace;
+        &NonBreakingSpace;
+          <v-toolbar-title><h2>Saxo Order Manager</h2></v-toolbar-title>
           <v-spacer></v-spacer>
           <v-btn v-if="loggedIn" v-on:click="logout">
             Logout
             <v-icon>mdi-logout</v-icon>
           </v-btn>
-          <v-btn v-else v-on:click="login">
-            Login
-            <v-icon>mdi-login</v-icon>
-          </v-btn>
+          <template v-else>
+            <v-btn v-on:click="login('sim')">
+              Login DEMO
+              <v-icon>mdi-test-tube</v-icon>
+            </v-btn>
+            &NonBreakingSpace;
+            &NonBreakingSpace;
+            &NonBreakingSpace;
+            <v-btn v-on:click="login('live')">
+              Login LIVE
+              <v-icon>mdi-flash</v-icon>
+            </v-btn>
+          </template>
         </v-app-bar>
 
         <v-content>
           <v-container fluid>
             <v-row>
               <v-col>
-                <v-btn v-on:click="getOrders">Refresh</v-btn>
                 <v-card>
                   <v-card-title>
-                    Orders
+                    Open Orders
+                    <v-btn
+                      v-if="loggedIn"
+                      class="ml-3"
+                      outlined
+                      small
+                      color="primary"
+                      v-on:click="getOrders"
+                      >Refresh</v-btn
+                    >
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
                     <v-spacer></v-spacer>
                     <v-text-field
                       v-model="search"
@@ -74,10 +109,25 @@
                     dark
                     dense
                   >
-                    <template v-slot:item.actions="{ item }">
-                      <v-icon small class="mr-2" @click="cancelOrder(item)">
-                        mdi-delete
-                      </v-icon>
+                    <template v-slot:item="{ item, headers }">
+                      <tr :class="item.cancelled ? 'cancelled' : ''">
+                        <td v-for="header in headers">
+                          <v-btn v-if="header.value === 'actions' && !item.cancelled" x-small class="mr-2" @click="cancelOrder(item)" outlined color="warning">
+                            Cancel
+                          </v-btn>
+                          <template v-else>
+                            {{item[header.value]}}
+                          </template>
+                        </td>
+                      </tr>
+                    </template>
+                    <template v-slot:no-data>
+                      <v-alert v-if="loggedIn">
+                        It looks like you have no orders in your portfolio.
+                      </v-alert>
+                      <v-alert v-else>
+                        Log in using the buttons above to load your orders.
+                      </v-alert>
                     </template>
                   </v-data-table>
                 </v-card>
@@ -85,6 +135,12 @@
             </v-row>
           </v-container>
         </v-content>
+        <v-snackbar top timeout=0 v-model="snackbar">
+          {{ snackbarMessage }}
+          <v-btn color="red" text @click="snackbar = false">
+            Close
+          </v-btn>
+        </v-snackbar>
       </v-app>
     </div>
 
