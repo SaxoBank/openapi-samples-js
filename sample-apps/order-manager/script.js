@@ -131,7 +131,7 @@ const app = new Vue({
     itemsPerPage: 150,
     snackbar: false,
     snackbarMessage: "",
-    snackbarMultiLine: false,
+    snackbarTimeout: 0,
   },
   methods: {
     login: function (environment) {
@@ -144,6 +144,7 @@ const app = new Vue({
     logout: function (hardLogout = true) {
       window.localStorage.removeItem("accessToken");
       window.localStorage.removeItem("expiresIn");
+
       this.orders = [];
       this.loggedIn = false;
       if (hardLogout) {
@@ -159,7 +160,7 @@ const app = new Vue({
       return `${saxoApp.AuthorizationEndpoint}?client_id=${saxoApp.AppKey}&response_type=token&state=${state}&redirect_uri=${window.location.href}`;
     },
     refreshToken: function () {
-      const authUrl = this.getAuthUrl("refresh");
+      const authUrl = this.getAuthUrl("refresh") + "&prompt=none";
 
       const iframe = document.getElementById("refreshIFrame");
       iframe.setAttribute("src", authUrl);
@@ -269,6 +270,7 @@ Are you sure you want to cancel this order?
         this.loggedIn = true;
       } catch (error) {
         if (error.response && error.response.status === 401) {
+          this.loading = false;
           this.logout(false);
         } else {
           throw error;

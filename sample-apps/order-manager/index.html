@@ -135,7 +135,7 @@
             </v-row>
           </v-container>
         </v-content>
-        <v-snackbar top timeout=0 v-model="snackbar">
+        <v-snackbar top :timeout="snackbarTimeout" v-model="snackbar">
           {{ snackbarMessage }}
           <v-btn color="red" text @click="snackbar = false">
             Close
