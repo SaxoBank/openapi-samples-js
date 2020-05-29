@@ -1,0 +1,98 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+    />
+    <style>
+      #refreshIFrame {
+        display: none;
+      }
+    </style>
+
+    <title>Saxo Order Manager</title>
+  </head>
+  <body>
+    <div id="app">
+      <v-app id="inspire">
+        <v-app-bar app clipped-left>
+          <v-toolbar-title>Saxo Order Manager</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-btn v-if="loggedIn" v-on:click="logout">
+            Logout
+            <v-icon>mdi-logout</v-icon>
+          </v-btn>
+          <v-btn v-else v-on:click="login">
+            Login
+            <v-icon>mdi-login</v-icon>
+          </v-btn>
+        </v-app-bar>
+
+        <v-content>
+          <v-container fluid>
+            <v-row>
+              <v-col>
+                <v-btn v-on:click="getOrders">Refresh</v-btn>
+                <v-card>
+                  <v-card-title>
+                    Orders
+                    <v-spacer></v-spacer>
+                    <v-text-field
+                      v-model="search"
+                      append-icon="mdi-magnify"
+                      label="Search"
+                      single-line
+                      hide-details
+                    ></v-text-field>
+                  </v-card-title>
+                  <v-data-table
+                    :headers="headers"
+                    :items="orders"
+                    item-key="OrderId"
+                    :search="search"
+                    class="elevation-1"
+                    :loading="loading"
+                    :items-per-page="itemsPerPage"
+                    :footer-props="{
+                        'items-per-page-options': [50, 100, 150, 200]
+                      }"
+                    dark
+                    dense
+                  >
+                    <template v-slot:item.actions="{ item }">
+                      <v-icon small class="mr-2" @click="cancelOrder(item)">
+                        mdi-delete
+                      </v-icon>
+                    </template>
+                  </v-data-table>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-content>
+      </v-app>
+    </div>
+
+    <iframe id="refreshIFrame" src=""></iframe>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script type="text/javascript" src="script.js" defer></script>
+    <script></script>
+  </body>
+</html>
