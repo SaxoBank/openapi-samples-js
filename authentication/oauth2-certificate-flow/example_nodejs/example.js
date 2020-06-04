@@ -14,13 +14,14 @@ const serviceProviderUrl = "Your unique identifier";  // This is the unique iden
 const certThumbPrint = "Fingerprint of your certificate";
 
 const authProviderUrl = "https://sim.logonvalidation.net/token";  // On production, this will be "https://live.logonvalidation.net/token"
+const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production, this is "https://gateway.saxobank.com/openapi"
 
 const fs = require("fs");  // Used to load the certificate file
 const jwt = require("jsonwebtoken");  // A library used for signing the token
 const fetch = require("node-fetch");  // Used to request the token and call the API
 
 // The PEM file is created using OpenSSL:
-// openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes
+// openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
 const privateKey = fs.readFileSync("private-key-with-cert.pem");
 
 /**
@@ -144,7 +145,6 @@ function requestTokenRefresh(tokenObject) {
  * @return {void}
  */
 function requestApiData(tokenObject) {
-    const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production, this is "https://gateway.saxobank.com/openapi"
     fetch(
         // The examples on Github (https://saxobank.github.io/openapi-samples-js/) are intended for individual logins.
         // This flow is intended for maintaining multiple customers, so it is recommended to explicitly specify clientKeys, accountKeys, etc.

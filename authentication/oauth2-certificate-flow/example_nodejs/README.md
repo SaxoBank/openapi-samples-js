@@ -8,10 +8,10 @@ This is the message you see after generation:
 The password is required when generating the PKCS private key, using the command:
 
 ```cmd
-  openssl pkcs12 -in 6B000007CA3413AA65FEA7F1230002000007CA.p12 -out private-key-with-cert.pem -clcerts -nodes
+  openssl pkcs12 -in 6B000007CA3413AA65FEA7F1230002000007CA.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:GdhqABCD
 ```
 
-This file will be the input for the NodeJs example, together with the userId generating this certificate, the appKey and appSecret.
+This PEM file will be the input for the NodeJs example, together with the userId generating this certificate, the appKey and appSecret.
 
 Setup and run:
 1. Download the dependencies with the command 'npm install', from within this folder.
