@@ -7,6 +7,91 @@
     let connection;
 
     /**
+     * This function retrieves the instrument data and does a lookup in the entitlements to see if there is a subscription for realtime prices level 1 or 2.
+     * @return {void}
+     */
+    function retrieveSubscriptionLevels(entitlementsJson, uics, assetType) {
+
+        function getMatch(entitlementsJson, exchangeId, assetType) {
+            const defaultEntitlement = "delayed prices";
+            let i;
+            let j;
+            let entitlement;
+            for (i = 0; i < entitlementsJson.Data.length; i += 1) {
+                if (entitlementsJson.Data[i].ExchangeId === exchangeId) {
+                    for (j = 0; j < entitlementsJson.Data[i].Entitlements.length; j += 1) {
+                        entitlement = entitlementsJson.Data[i].Entitlements[j];
+                        if (entitlement.hasOwnProperty("RealTimeTopOfBook") && entitlement.RealTimeTopOfBook.indexOf(assetType) !== -1) {
+                            return "realtime prices (top of book/level 1)";
+                        }
+                        if (entitlement.hasOwnProperty("RealTimeFullBook") && entitlement.RealTimeFullBook.indexOf(assetType) !== -1) {
+                            return "realtime prices (full book/level 2)";
+                        }
+                    }
+                    return defaultEntitlement;
+                }
+            }
+            return defaultEntitlement;
+        }
+
+        fetch(
+            apiUrl + "/ref/v1/instruments/details?Uics=" + uics + "&AssetTypes=" + assetType + "&AccountKey=" + encodeURIComponent(user.accountKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let result = "";
+                    responseJson.Data.forEach(function (instrument) {
+                        const entitlementDescription = getMatch(entitlementsJson, instrument.Exchange.ExchangeId, assetType);
+                        result += instrument.Uic + ": " + instrument.AssetType + " " + instrument.Description + ": " + entitlementDescription + "\n";
+                    });
+                    console.log(result + "\n\nEntitlements response:\n" + JSON.stringify(entitlementsJson, null, 4));
+
+                });
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This function checks if the user is entitled to have realtime prices for the listed instruments.
+     * @return {void}
+     */
+    function checkEntitlements() {
+        // Step 1. Get the entitlements for this user - entitlements should be cached, since they don't change often
+        // Entitlements can be changed with the Subscriptions tab: https://www.saxotrader.com/d/myAccount (only on live accounts)
+        fetch(
+            apiUrl + "/port/v1/users/me/entitlements",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Entitlements:\n" + JSON.stringify(responseJson, null, 4));
+                    // Step 2. The actual matching with the instruments.
+                    retrieveSubscriptionLevels(responseJson, document.getElementById("idUics").value, "FxSpot");
+                });
+            } else {
+                processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of constructing the websocket connection.
      * @return {void}
      */
@@ -195,7 +280,7 @@
                 "method": "POST",
                 "headers": {
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json; charset=utf-8"
                 },
                 "body": JSON.stringify(data)
             }
@@ -239,7 +324,7 @@
                 "method": "POST",
                 "headers": {
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json; charset=utf-8"
                 },
                 "body": JSON.stringify(data)
             }
@@ -289,7 +374,7 @@
                     "method": "POST",
                     "headers": {
                         "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json; charset=utf-8"
                     },
                     "body": JSON.stringify(data)
                 }
@@ -345,7 +430,7 @@
                     "method": "POST",
                     "headers": {
                         "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                        "Content-Type": "application/json"
+                        "Content-Type": "application/json; charset=utf-8"
                     },
                     "body": JSON.stringify(data)
                 }
@@ -381,7 +466,6 @@
             {
                 "method": "PUT",
                 "headers": {
-                    "Content-Type": "application/json",
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value
                 }
             }
@@ -412,8 +496,7 @@
                 url,
                 {
                     "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                        "Content-Type": "application/json"
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
                     },
                     "method": "DELETE"
                 }
@@ -442,6 +525,9 @@
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
+    document.getElementById("idBtnCheckEntitlements").addEventListener("click", function () {
+        run(checkEntitlements, retrieveSubscriptionLevels);
+    });
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
         run(createConnection);
     });
