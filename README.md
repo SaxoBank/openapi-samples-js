@@ -37,8 +37,4 @@ Samples run against Saxo's simulation environment and require an **access token*
 6. Batch Requests
    - [Batch Request example](batch-request)
 
-## Sample Apps
-
-- [Order Manager](sample-apps/order-manager): Load all your orders into an interactive Vue.js table, perform sorting and searching, and cancel orders with a simple UI.
-
 Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
