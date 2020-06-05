@@ -12,11 +12,10 @@ function getNext() {
     fetch(
         nextUrl,
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {

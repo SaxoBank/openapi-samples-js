@@ -19,11 +19,10 @@ function fetchHistoricalData(upToTime) {
     fetch(
         url,
         {
+            "method": "GET",
             "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json; charset=utf-8"
-            },
-            "method": "GET"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -254,7 +253,7 @@ function subscribe() {
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify(data)
         }
@@ -279,7 +278,6 @@ function extendSubscription() {
         {
             "method": "PUT",
             "headers": {
-                "Content-Type": "application/json",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             }
         }
@@ -302,11 +300,10 @@ function unsubscribe() {
     fetch(
         apiUrl + "/chart/v1/charts/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value),  // Add referenceId for more granular unsubscribe
         {
+            "method": "DELETE",
             "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
-            },
-            "method": "DELETE"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
         }
     ).then(function (response) {
         if (response.ok) {

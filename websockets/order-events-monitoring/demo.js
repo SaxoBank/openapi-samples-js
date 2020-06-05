@@ -200,7 +200,7 @@ function subscribeEns() {
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify(data)
         }
@@ -238,7 +238,7 @@ function subscribeBalances() {
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify(data)
         }
@@ -274,7 +274,7 @@ function subscribePositions() {
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify(data)
         }
@@ -299,7 +299,6 @@ function extendSubscription() {
         {
             "method": "PUT",
             "headers": {
-                "Content-Type": "application/json",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             }
         }
@@ -329,11 +328,10 @@ function unsubscribe() {
         fetch(
             url,
             {
+                "method": "DELETE",
                 "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json"
-                },
-                "method": "DELETE"
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
             }
         ).then(function (response) {
             if (response.ok) {

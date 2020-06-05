@@ -495,10 +495,10 @@
             fetch(
                 url,
                 {
+                    "method": "DELETE",
                     "headers": {
                         "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                    },
-                    "method": "DELETE"
+                    }
                 }
             ).then(function (response) {
                 if (response.ok) {

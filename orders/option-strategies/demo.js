@@ -116,11 +116,10 @@ function getStrategy() {
     fetch(
         apiUrl + "/trade/v2/orders/multileg/defaults?AccountKey=" + encodeURIComponent(user.accountKey) + "&OptionRootId=" + optionRootId + "&OptionsStrategyType=" + optionStrategyType,
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -162,11 +161,10 @@ function getSeries() {
     fetch(
         apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -197,14 +195,14 @@ function preCheckNewOrder() {
     fetch(
         apiUrl + "/trade/v2/orders/multileg/precheck",
         {
+            "method": "POST",
             "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                 "Content-Type": "application/json; charset=utf-8",
                 // https://www.developer.saxo/openapi/learn/rate-limiting
-                "X-Request-ID": Math.random(),  // This prevents error 409 (Conflict) from identical previews within 15 seconds
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                "X-Request-ID": Math.random()  // This prevents error 409 (Conflict) from identical previews within 15 seconds
             },
-            "body": JSON.stringify(newOrderObject),
-            "method": "POST"
+            "body": JSON.stringify(newOrderObject)
         }
     ).then(function (response) {
         if (response.ok) {
@@ -231,8 +229,8 @@ function preCheckNewOrder() {
 function placeNewOrder() {
     const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+        "Content-Type": "application/json; charset=utf-8"
     };
     newOrderObject.AccountKey = user.accountKey;
     if (document.getElementById("idChkRequestIdHeader").checked) {
@@ -241,9 +239,9 @@ function placeNewOrder() {
     fetch(
         apiUrl + "/trade/v2/orders/multileg",
         {
+            "method": "POST",
             "headers": headersObject,
-            "body": JSON.stringify(newOrderObject),
-            "method": "POST"
+            "body": JSON.stringify(newOrderObject)
         }
     ).then(function (response) {
         if (response.ok) {
@@ -271,8 +269,8 @@ function placeNewOrder() {
 function modifyLastOrder() {
     const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+        "Content-Type": "application/json; charset=utf-8"
     };
     newOrderObject.AccountKey = user.accountKey;
     newOrderObject.MultiLegOrderId = lastOrderId;
@@ -282,9 +280,9 @@ function modifyLastOrder() {
     fetch(
         apiUrl + "/trade/v2/orders/multileg",
         {
+            "method": "PATCH",
             "headers": headersObject,
-            "body": JSON.stringify(newOrderObject),
-            "method": "PATCH"
+            "body": JSON.stringify(newOrderObject)
         }
     ).then(function (response) {
         if (response.ok) {
@@ -312,11 +310,10 @@ function cancelLastOrder() {
     fetch(
         apiUrl + "/trade/v2/orders/multileg/" + lastOrderId + "?AccountKey=" + encodeURIComponent(user.accountKey),
         {
+            "method": "DELETE",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "DELETE"
+            }
         }
     ).then(function (response) {
         if (response.ok) {

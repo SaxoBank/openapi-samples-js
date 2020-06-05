@@ -9,10 +9,10 @@ function trigger404NotFound() {
     fetch(
         apiUrl + "/port/invalid",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8"
-            },
-            "method": "GET"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
         }
     ).catch(function (error) {
         // This will end in a CORS issue on the OPTIONS preflight:
@@ -28,11 +28,10 @@ function trigger401Unauthorized() {
     fetch(
         apiUrl + "/port/v1/orders",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer is.invalid.here"
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         let textToDisplay;
@@ -57,11 +56,10 @@ function trigger400BadRequest() {
     fetch(
         apiUrl + "/ref/v1/instruments?SectorId=Vastgoed&IncludeNonTradable=Ja&CanParticipateInMultiLegOrder=Mag+wel&Uics=N.V.T.&AssetTypes=Aandelen&Tags=Vastgoed&AccountKey=IBAN",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (!response.ok) {
@@ -88,11 +86,10 @@ function trigger429TooManyRequests() {
         fetch(
             apiUrl + "/ref/v1/instruments?$top=1&$skip=0&Keywords=aex",
             {
+                "method": "GET",
                 "headers": {
-                    "Content-Type": "application/json; charset=utf-8",
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                },
-                "method": "GET"
+                }
             }
         ).then(function (response) {
             if (response.ok) {

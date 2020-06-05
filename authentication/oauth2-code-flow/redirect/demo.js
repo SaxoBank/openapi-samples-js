@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console URLSearchParams run processError apiUrl */
+/*global window console URLSearchParams run processError apiUrl displayVersion */
 
 let code;
 let tokenObject;
@@ -65,11 +65,11 @@ function getTokenPhp() {
     fetch(
         "backend-php/server-get-token.php",
         {
+            "method": "POST",
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
                 "Accept": "application/json; charset=utf-8"
             },
-            "method": "POST",
             "body": JSON.stringify({
                 "code": code
             })
@@ -102,11 +102,11 @@ function getTokenNodeJs() {
     fetch(
         "server",
         {
+            "method": "POST",
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
                 "Accept": "application/json; charset=utf-8"
             },
-            "method": "POST",
             "body": JSON.stringify({
                 "code": code
             })
@@ -135,11 +135,10 @@ function getUserData() {
     fetch(
         apiUrl + "/port/v1/users/me",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + tokenObject.access_token
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -162,11 +161,11 @@ function refreshTokenPhp() {
     fetch(
         "backend-php/server-refresh-token.php",
         {
+            "method": "POST",
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
                 "Accept": "application/json; charset=utf-8"
             },
-            "method": "POST",
             "body": JSON.stringify({
                 "refresh_token": tokenObject.refresh_token
             })
@@ -195,11 +194,11 @@ function refreshTokenNodeJs() {
     fetch(
         "server",
         {
+            "method": "POST",
             "headers": {
                 "Content-Type": "application/json; charset=utf-8",
                 "Accept": "application/json; charset=utf-8"
             },
-            "method": "POST",
             "body": JSON.stringify({
                 "refresh_token": tokenObject.refresh_token
             })

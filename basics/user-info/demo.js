@@ -9,11 +9,10 @@ function getUser() {
     fetch(
         apiUrl + "/port/v1/users/me",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
@@ -40,11 +39,10 @@ function getAccounts() {
     fetch(
         apiUrl + "/port/v1/accounts/me",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
@@ -75,11 +73,10 @@ function getBalance() {
     fetch(
         apiUrl + "/port/v1/balances?ClientKey=" + encodeURIComponent(user.clientKey) + "&AccountKey=" + encodeURIComponent(user.accountKey),
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;

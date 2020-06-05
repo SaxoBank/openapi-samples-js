@@ -152,7 +152,6 @@ function requestApiData(tokenObject) {
         apiUrl + "/ref/v1/exchanges",
         {
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + tokenObject.access_token
             },
             "method": "GET"

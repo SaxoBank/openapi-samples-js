@@ -177,7 +177,7 @@ function subscribe() {
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify(data)
         }
@@ -204,8 +204,7 @@ function markAsRead() {
         {
             "method": "PUT",
             "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             }
         }
     ).then(function (response) {
@@ -229,7 +228,6 @@ function extendSubscription() {
         {
             "method": "PUT",
             "headers": {
-                "Content-Type": "application/json",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             }
         }
@@ -252,11 +250,10 @@ function unsubscribe() {
     fetch(
         apiUrl + "/trade/v1/messages/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value) + "/MyTradeMessageEvent",
         {
+            "method": "DELETE",
             "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
-            },
-            "method": "DELETE"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
         }
     ).then(function (response) {
         if (response.ok) {

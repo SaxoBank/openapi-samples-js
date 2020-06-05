@@ -11,11 +11,10 @@ function getAccessRights() {
     fetch(
         apiUrl + "/root/v1/user",
         {
+            "method": "GET",
             "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json; charset=utf-8"
-            },
-            "method": "GET"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -213,7 +212,7 @@ function subscribe() {
             "method": "POST",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
+                "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify(data)
         }
@@ -236,14 +235,14 @@ function becomePrimary() {
     fetch(
         apiUrl + "/root/v1/sessions/capabilities",
         {
+            "method": "PUT",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                 "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify({
                 "TradeLevel": "FullTradingAndChat"
-            }),
-            "method": "PUT"
+            })
         }
     ).then(function (response) {
         if (response.ok) {
@@ -264,14 +263,14 @@ function becomePrimaryAgain() {
     fetch(
         apiUrl + "/root/v1/sessions/capabilities",
         {
+            "method": "PATCH",
             "headers": {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                 "Content-Type": "application/json; charset=utf-8"
             },
             "body": JSON.stringify({
                 "TradeLevel": "FullTradingAndChat"
-            }),
-            "method": "PATCH"
+            })
         }
     ).then(function (response) {
         if (response.ok) {
@@ -294,7 +293,6 @@ function extendSubscription() {
         {
             "method": "PUT",
             "headers": {
-                "Content-Type": "application/json",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
             }
         }
@@ -317,11 +315,10 @@ function unsubscribe() {
     fetch(
         apiUrl + "/root/v1/sessions/events/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value) + "/MyTradeLevelChangeEvent",
         {
+            "method": "DELETE",
             "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json"
-            },
-            "method": "DELETE"
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            }
         }
     ).then(function (response) {
         if (response.ok) {

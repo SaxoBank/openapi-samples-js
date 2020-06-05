@@ -34,11 +34,10 @@ function selectOrderType() {
         fetch(
             apiUrl + "/trade/v1/infoprices?AssetType=StockOption&uic=" + newOrderObject.Uic,
             {
+                "method": "GET",
                 "headers": {
-                    "Content-Type": "application/json; charset=utf-8",
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                },
-                "method": "GET"
+                }
             }
         ).then(function (response) {
             if (response.ok) {
@@ -151,11 +150,10 @@ function getSeries() {
     fetch(
         apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -227,11 +225,10 @@ function getConditions() {
     fetch(
         apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(user.accountKey) + "&FieldGroups=OrderSetting",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -284,13 +281,13 @@ function preCheckNewOrder() {
     fetch(
         apiUrl + "/trade/v2/orders/precheck",
         {
+            "method": "POST",
             "headers": {
+                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                 "Content-Type": "application/json; charset=utf-8",
-                "X-Request-ID": Math.random(),  // This prevents error 409 (Conflict) from identical previews within 15 seconds
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                "X-Request-ID": Math.random()  // This prevents error 409 (Conflict) from identical previews within 15 seconds
             },
-            "body": JSON.stringify(newOrderObject),
-            "method": "POST"
+            "body": JSON.stringify(newOrderObject)
         }
     ).then(function (response) {
         if (response.ok) {
@@ -321,11 +318,10 @@ function getOrderCosts() {
     fetch(
         apiUrl + "/cs/v1/tradingconditions/ContractOptionSpaces/" + encodeURIComponent(user.accountKey) + "/" + optionRootId + "/?FieldGroups=ScheduledTradingConditions",
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -347,8 +343,8 @@ function getOrderCosts() {
 function placeNewOrder() {
     const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+        "Content-Type": "application/json; charset=utf-8"
     };
     newOrderObject.AccountKey = user.accountKey;
     if (document.getElementById("idChkRequestIdHeader").checked) {
@@ -357,9 +353,9 @@ function placeNewOrder() {
     fetch(
         apiUrl + "/trade/v2/orders",
         {
+            "method": "POST",
             "headers": headersObject,
-            "body": JSON.stringify(newOrderObject),
-            "method": "POST"
+            "body": JSON.stringify(newOrderObject)
         }
     ).then(function (response) {
         if (response.ok) {
@@ -387,8 +383,8 @@ function placeNewOrder() {
 function modifyLastOrder() {
     const newOrderObject = getOrderObjectFromJson();
     const headersObject = {
-        "Content-Type": "application/json; charset=utf-8",
-        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+        "Content-Type": "application/json; charset=utf-8"
     };
     newOrderObject.AccountKey = user.accountKey;
     newOrderObject.OrderId = lastOrderId;
@@ -398,9 +394,9 @@ function modifyLastOrder() {
     fetch(
         apiUrl + "/trade/v2/orders",
         {
+            "method": "PATCH",
             "headers": headersObject,
-            "body": JSON.stringify(newOrderObject),
-            "method": "PATCH"
+            "body": JSON.stringify(newOrderObject)
         }
     ).then(function (response) {
         if (response.ok) {
@@ -428,11 +424,10 @@ function cancelLastOrder() {
     fetch(
         apiUrl + "/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(user.accountKey),
         {
+            "method": "DELETE",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "DELETE"
+            }
         }
     ).then(function (response) {
         if (response.ok) {

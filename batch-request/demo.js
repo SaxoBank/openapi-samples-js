@@ -34,6 +34,7 @@ function doBatchRequest() {
     fetch(
         apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
         {
+            "method": "POST",
             "headers": {
                 "Content-Type": "multipart/mixed; boundary=\"+\"",
                 "Accept": "*/*",
@@ -41,8 +42,7 @@ function doBatchRequest() {
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                 "Cache-Control": "no-cache"
             },
-            "body": document.getElementById("idRequestBody").value.replace(/\n/g, "\r\n"),
-            "method": "POST"
+            "body": document.getElementById("idRequestBody").value.replace(/\n/g, "\r\n")
         }
     ).then(function (response) {
         if (response.ok) {

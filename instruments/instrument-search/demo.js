@@ -18,11 +18,10 @@ function getExchanges() {
     fetch(
         apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -70,11 +69,10 @@ function getLegalAssetTypes(callback) {
     fetch(
         apiUrl + "/port/v1/accounts/" + encodeURIComponent(user.accountKey),
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -128,11 +126,10 @@ function findInstrument() {
         fetch(
             url,
             {
+                "method": "GET",
                 "headers": {
-                    "Content-Type": "application/json; charset=utf-8",
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                },
-                "method": "GET"
+                }
             }
         ).then(function (response) {
             if (response.ok) {
@@ -185,11 +182,10 @@ function getDetails() {
     fetch(
         apiUrl + urlPath,
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {

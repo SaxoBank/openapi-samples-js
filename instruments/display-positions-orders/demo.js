@@ -53,11 +53,10 @@ function getPortfolio() {
     fetch(
         apiUrl + "/port/v1/netpositions/?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(user.clientKey) + "&AccountKey=" + encodeURIComponent(user.accountKey),
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
@@ -91,11 +90,10 @@ function getOrders() {
     fetch(
         apiUrl + "/port/v1/orders/?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(user.clientKey) + "&AccountKey=" + encodeURIComponent(user.accountKey),
         {
+            "method": "GET",
             "headers": {
-                "Content-Type": "application/json; charset=utf-8",
                 "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            },
-            "method": "GET"
+            }
         }
     ).then(function (response) {
         if (response.ok) {
