@@ -241,10 +241,10 @@
                         }
                     }
                     checkMinimumTradeSize(newOrderObject, responseJson);
-                    if (newOrderObject.AssetType === "Stocks") {
+                    if (newOrderObject.AssetType === "Stock") {
                         checkMinimumOrderValue(newOrderObject, responseJson);
                     }
-                    if (newOrderObject.AssetType === "Stocks" && responseJson.LotSizeType !== "NotUsed") {
+                    if (newOrderObject.AssetType === "Stock" && responseJson.LotSizeType !== "NotUsed") {
                         checkLotSizes(newOrderObject, responseJson);
                     }
                     if (responseJson.IsComplex) {
