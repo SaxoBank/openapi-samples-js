@@ -29,7 +29,7 @@ function demonstrationHelper(settings) {
      * @return {boolean} True if the field exists.
      */
     function tokenInputFieldExists() {
-        return settings.hasOwnAttribute("accessTokenElm") && settings.accessTokenElm !== undefined && settings.accessTokenElm !== null;
+        return settings.hasOwnProperty("accessTokenElm") && settings.accessTokenElm !== undefined && settings.accessTokenElm !== null;
     }
 
     /**
