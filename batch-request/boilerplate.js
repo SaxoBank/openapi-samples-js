@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.06
+ * boilerplate v1.07
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -22,6 +22,7 @@
  */
 function demonstrationHelper(settings) {
     const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production this is https://gateway.saxobank.com/openapi
+    const authUrl = "https://sim.logonvalidation.net/authorize";  // On production this is https://live.logonvalidation.net/authorize
     const user = {};
 
     /**
@@ -76,17 +77,20 @@ function demonstrationHelper(settings) {
         function populateAssetTypeSelection(legalAssetTypes) {
             let i;
             let option;
-            for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
-                settings.assetTypesList.remove(i);
-            }
-            for (i = 0; i < legalAssetTypes.length; i += 1) {
-                option = document.createElement("option");
-                option.text = legalAssetTypes[i];
-                option.value = legalAssetTypes[i];
-                if (option.value === settings.selectedAssetType) {
-                    option.setAttribute("selected", true);
+            if (settings.hasOwnProperty("assetTypesList") && settings.assetTypesList !== null) {
+                // Select the asset types enabled for the default account
+                for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
+                    settings.assetTypesList.remove(i);
                 }
-                settings.assetTypesList.add(option);
+                for (i = 0; i < legalAssetTypes.length; i += 1) {
+                    option = document.createElement("option");
+                    option.text = legalAssetTypes[i];
+                    option.value = legalAssetTypes[i];
+                    if (option.value === settings.selectedAssetType) {
+                        option.setAttribute("selected", true);
+                    }
+                    settings.assetTypesList.add(option);
+                }
             }
         }
 
@@ -102,6 +106,7 @@ function demonstrationHelper(settings) {
                 option.value = responseData[i].AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
+                    populateAssetTypeSelection(responseData[i].legalAssetTypes);
                 }
                 settings.accountsList.add(option);
             }
@@ -148,9 +153,6 @@ function demonstrationHelper(settings) {
                                     case "1":
                                         user.culture = responseJson.Culture;
                                         user.language = responseJson.Language;
-                                        if (settings.hasOwnProperty("assetTypesList") && settings.assetTypesList !== null) {
-                                            populateAssetTypeSelection(responseJson.LegalAssetTypes);
-                                        }
                                         break;
                                     case "2":
                                         user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
@@ -283,7 +285,7 @@ function demonstrationHelper(settings) {
         settings.accessTokenElm.value = newAccessToken;
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
-            settings.retrieveTokenHref.href = "https://sim.logonvalidation.net/authorize?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
+            settings.retrieveTokenHref.href = authUrl + "?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
         }
     }
 
@@ -303,6 +305,7 @@ function demonstrationHelper(settings) {
     }
     return {
         "apiUrl": apiUrl,
+        "authUrl": authUrl,
         "user": user,
         "displayVersion": displayVersion,
         "run": run,

@@ -18,7 +18,7 @@
             "csrfToken": Math.random(),
             "state": document.getElementById("idEdtState").value
         }));
-        let url = "https://sim.logonvalidation.net/authorize" +
+        let url = demo.authUrl +
             "?client_id=" + document.getElementById("idEdtAppKey").value +
             "&response_type=token" +
             "&state=" + stateString +
