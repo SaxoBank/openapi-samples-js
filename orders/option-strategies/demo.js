@@ -2,7 +2,7 @@
 /*global window console demonstrationHelper */
 
 (function () {
-    // Create a helper function to remove some boilerplace code from the example itself.
+    // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
@@ -12,6 +12,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
+    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
     let lastOrderId = 0;
 
     /**
@@ -42,7 +43,7 @@
         delete newOrderObject.TrailingStopStep;
         switch (newOrderObject.OrderType) {
         case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
-            newOrderObject.OrderPrice = 70;
+            newOrderObject.OrderPrice = fictivePrice;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
         case "Market":  // Order is attempted filled at best price in the market.
@@ -51,19 +52,19 @@
         case "StopIfBid":  // A buy order will be executed when the bid price increases to the provided price point; a sell order when the price falls below.
         case "StopIfOffered":  // A buy order will be executed when the ask price increases to the provided price point; a sell order when the price falls below.
         case "StopIfTraded":  // A buy order will be executed when the last price increases to the provided price point; a sell order when the price falls below.
-            newOrderObject.OrderPrice = 70;
+            newOrderObject.OrderPrice = fictivePrice;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
         case "StopLimit":  // A buy StopLimit order will turn in to a regular limit order once the price goes beyond the OrderPrice. The limit order will have a OrderPrice of the StopLimitPrice.
-            newOrderObject.OrderPrice = 70;
-            newOrderObject.StopLimitPrice = 71;
+            newOrderObject.OrderPrice = fictivePrice;
+            newOrderObject.StopLimitPrice = fictivePrice + 1;  // Some other fictivePrice
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
         case "TrailingStop":  // A trailing stop order type is used to guard a position against a potential loss, but the order price follows that of the position when the price goes up. It does so in steps, trying to keep a fixed distance to the current price.
         case "TrailingStopIfBid":
         case "TrailingStopIfOffered":
         case "TrailingStopIfTraded":
-            newOrderObject.OrderPrice = 70;
+            newOrderObject.OrderPrice = fictivePrice;
             newOrderObject.TrailingstopDistanceToMarket = 1;
             newOrderObject.TrailingStopStep = 0.1;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);

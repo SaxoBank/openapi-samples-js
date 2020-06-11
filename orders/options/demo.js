@@ -2,7 +2,7 @@
 /*global window console demonstrationHelper */
 
 (function () {
-    // Create a helper function to remove some boilerplace code from the example itself.
+    // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
@@ -12,6 +12,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
+    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
     let lastOrderId = 0;
 
     /**
@@ -53,7 +54,7 @@
             ).then(function (response) {
                 if (response.ok) {
                     response.json().then(function (responseJson) {
-                        newOrderObject.OrderPrice = 70;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
+                        newOrderObject.OrderPrice = fictivePrice;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                         console.log(JSON.stringify(responseJson));
                     });
@@ -70,19 +71,19 @@
         case "StopIfBid":  // A buy order will be executed when the bid price increases to the provided price point; a sell order when the price falls below.
         case "StopIfOffered":  // A buy order will be executed when the ask price increases to the provided price point; a sell order when the price falls below.
         case "StopIfTraded":  // A buy order will be executed when the last price increases to the provided price point; a sell order when the price falls below.
-            newOrderObject.OrderPrice = 70;
+            newOrderObject.OrderPrice = fictivePrice;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
         case "StopLimit":  // A buy StopLimit order will turn in to a regular limit order once the price goes beyond the OrderPrice. The limit order will have a OrderPrice of the StopLimitPrice.
-            newOrderObject.OrderPrice = 70;
-            newOrderObject.StopLimitPrice = 71;
+            newOrderObject.OrderPrice = fictivePrice;
+            newOrderObject.StopLimitPrice = fictivePrice + 1;  // Some other fictivePrice
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
         case "TrailingStop":  // A trailing stop order type is used to guard a position against a potential loss, but the order price follows that of the position when the price goes up. It does so in steps, trying to keep a fixed distance to the current price.
         case "TrailingStopIfBid":
         case "TrailingStopIfOffered":
         case "TrailingStopIfTraded":
-            newOrderObject.OrderPrice = 70;
+            newOrderObject.OrderPrice = fictivePrice;
             newOrderObject.TrailingstopDistanceToMarket = 1;
             newOrderObject.TrailingStopStep = 0.1;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
@@ -223,6 +224,23 @@
             checkTickSize(orderObject, tickSize);
         }
 
+        function checkMinimumTradeSize(orderObject, detailsObject) {
+            if (orderObject.Amount < detailsObject.MinimumTradeSize) {
+                window.alert("The order amount must be at least the minimumTradeSize of " + detailsObject.MinimumTradeSize);
+            }
+        }
+
+        function checkMinimumOrderValue(orderObject, detailsObject) {
+            const price = (
+                orderObject.hasOwnProperty("OrderPrice")
+                    ? orderObject.OrderPrice
+                : fictivePrice  // SIM doesn't allow calls to price endpoint for most instruments so just take something
+            );
+            if (orderObject.Amount * price < detailsObject.MinimumOrderValue) {
+                window.alert("The order value (amount * price) must be at least the minimumOrderValue of " + detailsObject.MinimumOrderValue);
+            }
+        }
+
         function checkLotSizes(orderObject, detailsObject) {
             if (orderObject.Amount < detailsObject.MinimumLotSize) {
                 window.alert("The amount must be at least the minimumLotSize of " + detailsObject.MinimumLotSize);
@@ -257,14 +275,17 @@
                             checkTickSize(newOrderObject, responseJson.TickSize);
                         }
                     }
-                    if (responseJson.LotSizeType !== "NotUsed") {
+                    checkMinimumTradeSize(newOrderObject, responseJson);
+                    if (newOrderObject.AssetType === "Stock") {
+                        checkMinimumOrderValue(newOrderObject, responseJson);
+                    }
+                    if (newOrderObject.AssetType === "Stock" && responseJson.LotSizeType !== "NotUsed") {
                         checkLotSizes(newOrderObject, responseJson);
                     }
                     if (responseJson.IsComplex) {
                         // Show a warning before placing an order in a complex product.
-                        switch (demo.user.culture) {
-                        case "fr-FR":
-                        case "fr-BE":
+                        switch (demo.user.language) {
+                        case "fr":
                             window.alert("Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides.\nEn validant cet ordre, vous reconnaissez avoir été informé des risques de cette transaction.");
                             break;
                         default:
