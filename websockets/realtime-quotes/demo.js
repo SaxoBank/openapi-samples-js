@@ -1,95 +1,19 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
-/*global window console WebSocket user run processError apiUrl displayVersion ParserProtobuf protobuf */
+/*global window console WebSocket demonstrationHelper ParserProtobuf protobuf */
 
 (function () {
+    const demo = demonstrationHelper({
+        "responseElm": document.getElementById("idResponse"),
+        "javaScriptElm": document.getElementById("idJavaScript"),
+        "accessTokenElm": document.getElementById("idBearerToken"),
+        "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
+        "tokenValidateButton": document.getElementById("idBtnValidate"),
+        "accountsList": document.getElementById("idCbxAccount"),
+        "footerElm": document.getElementById("idFooter")
+    });
     const parserProtobuf = new ParserProtobuf("default", protobuf);
     let schemaName;
     let connection;
-
-    /**
-     * This function retrieves the instrument data and does a lookup in the entitlements to see if there is a subscription for realtime prices level 1 or 2.
-     * @return {void}
-     */
-    function retrieveSubscriptionLevels(entitlementsJson, uics, assetType) {
-
-        function getMatch(entitlementsJson, exchangeId, assetType) {
-            const defaultEntitlement = "delayed prices";
-            let i;
-            let j;
-            let entitlement;
-            for (i = 0; i < entitlementsJson.Data.length; i += 1) {
-                if (entitlementsJson.Data[i].ExchangeId === exchangeId) {
-                    for (j = 0; j < entitlementsJson.Data[i].Entitlements.length; j += 1) {
-                        entitlement = entitlementsJson.Data[i].Entitlements[j];
-                        if (entitlement.hasOwnProperty("RealTimeTopOfBook") && entitlement.RealTimeTopOfBook.indexOf(assetType) !== -1) {
-                            return "realtime prices (top of book/level 1)";
-                        }
-                        if (entitlement.hasOwnProperty("RealTimeFullBook") && entitlement.RealTimeFullBook.indexOf(assetType) !== -1) {
-                            return "realtime prices (full book/level 2)";
-                        }
-                    }
-                    return defaultEntitlement;
-                }
-            }
-            return defaultEntitlement;
-        }
-
-        fetch(
-            apiUrl + "/ref/v1/instruments/details?Uics=" + uics + "&AssetTypes=" + assetType + "&AccountKey=" + encodeURIComponent(user.accountKey),
-            {
-                "method": "GET",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                }
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    let result = "";
-                    responseJson.Data.forEach(function (instrument) {
-                        const entitlementDescription = getMatch(entitlementsJson, instrument.Exchange.ExchangeId, assetType);
-                        result += instrument.Uic + ": " + instrument.AssetType + " " + instrument.Description + ": " + entitlementDescription + "\n";
-                    });
-                    console.log(result + "\n\nEntitlements response:\n" + JSON.stringify(entitlementsJson, null, 4));
-
-                });
-            } else {
-                processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This function checks if the user is entitled to have realtime prices for the listed instruments.
-     * @return {void}
-     */
-    function checkEntitlements() {
-        // Step 1. Get the entitlements for this user - entitlements should be cached, since they don't change often
-        // Entitlements can be changed with the Subscriptions tab: https://www.saxotrader.com/d/myAccount (only on live accounts)
-        fetch(
-            apiUrl + "/port/v1/users/me/entitlements",
-            {
-                "method": "GET",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                }
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    console.log("Entitlements:\n" + JSON.stringify(responseJson, null, 4));
-                    // Step 2. The actual matching with the instruments.
-                    retrieveSubscriptionLevels(responseJson, document.getElementById("idUics").value, "FxSpot");
-                });
-            } else {
-                processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
 
     /**
      * This is an example of constructing the websocket connection.
@@ -266,7 +190,7 @@
             "ContextId": document.getElementById("idContextId").value,
             "ReferenceId": "MyPriceEvent_JSON",
             "Arguments": {
-                "AccountKey": user.accountKey,
+                "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
                 "AssetType": "FxSpot"
             }
@@ -275,7 +199,7 @@
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
             // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
             // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
-            apiUrl + "/trade/v1/infoprices/subscriptions",
+            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
             {
                 "method": "POST",
                 "headers": {
@@ -290,7 +214,7 @@
                     console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
-                processError(response);
+                demo.processError(response);
             }
         }).catch(function (error) {
             console.error(error);
@@ -313,13 +237,13 @@
             "ReferenceId": "MyPriceEvent_ProtoBuf",
             "Format": "application/x-protobuf",  // This triggers ProtoBuf
             "Arguments": {
-                "AccountKey": user.accountKey,
+                "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
                 "AssetType": "FxSpot"
             }
         };
         fetch(
-            apiUrl + "/trade/v1/infoprices/subscriptions",
+            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
             {
                 "method": "POST",
                 "headers": {
@@ -339,7 +263,7 @@
                     console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 });
             } else {
-                processError(response);
+                demo.processError(response);
             }
         }).catch(function (error) {
             console.error(error);
@@ -362,14 +286,14 @@
                 "ContextId": document.getElementById("idContextId").value,
                 "ReferenceId": "MyPriceEvent" + "_" + uic,
                 "Arguments": {
-                    "AccountKey": user.accountKey,
+                    "AccountKey": demo.user.accountKey,
                     "Uic": uic,
                     "AssetType": "FxSpot",
                     "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
                 }
             };
             fetch(
-                apiUrl + "/trade/v1/prices/subscriptions",
+                demo.apiUrl + "/trade/v1/prices/subscriptions",
                 {
                     "method": "POST",
                     "headers": {
@@ -384,7 +308,7 @@
                         console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                     });
                 } else {
-                    processError(response);
+                    demo.processError(response);
                 }
             }).catch(function (error) {
                 console.error(error);
@@ -418,14 +342,14 @@
                 "ReferenceId": "MyPriceEvent" + "_" + uic,
                 "Format": "application/x-protobuf",  // This triggers ProtoBuf
                 "Arguments": {
-                    "AccountKey": user.accountKey,
+                    "AccountKey": demo.user.accountKey,
                     "Uic": uic,
                     "AssetType": "FxSpot",
                     "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
                 }
             };
             fetch(
-                apiUrl + "/trade/v1/prices/subscriptions",
+                demo.apiUrl + "/trade/v1/prices/subscriptions",
                 {
                     "method": "POST",
                     "headers": {
@@ -445,7 +369,7 @@
                         console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                     });
                 } else {
-                    processError(response);
+                    demo.processError(response);
                 }
             }).catch(function (error) {
                 console.error(error);
@@ -462,7 +386,7 @@
      */
     function extendSubscription() {
         fetch(
-            apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+            demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
@@ -473,7 +397,7 @@
             if (response.ok) {
                 console.log("Subscription extended.");
             } else {
-                processError(response);
+                demo.processError(response);
             }
         }).catch(function (error) {
             console.error(error);
@@ -504,15 +428,15 @@
                 if (response.ok) {
                     console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
                 } else {
-                    processError(response);
+                    demo.processError(response);
                 }
             }).catch(function (error) {
                 console.error(error);
             });
         }
 
-        removeSubscription(apiUrl + "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
-        removeSubscription(apiUrl + "/trade/v1/prices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+        removeSubscription(demo.apiUrl + "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+        removeSubscription(demo.apiUrl + "/trade/v1/prices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
         // (By adding a referenceId, the unsubscribe can be done per instrument)
     }
 
@@ -525,35 +449,32 @@
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
-    document.getElementById("idBtnCheckEntitlements").addEventListener("click", function () {
-        run(checkEntitlements, retrieveSubscriptionLevels);
-    });
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
-        run(createConnection);
+        demo.run(createConnection);
     });
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
-        run(startListener);
+        demo.run(startListener);
     });
     document.getElementById("idBtnSubscribeListJson").addEventListener("click", function () {
-        run(subscribeListJson);
+        demo.run(subscribeListJson);
     });
     document.getElementById("idBtnSubscribeOrderTicketJson").addEventListener("click", function () {
-        run(subscribeOrderTicketJson);
+        demo.run(subscribeOrderTicketJson);
     });
     document.getElementById("idBtnSubscribeListProtoBuf").addEventListener("click", function () {
-        run(subscribeListProtoBuf);
+        demo.run(subscribeListProtoBuf);
     });
     document.getElementById("idBtnSubscribeOrderTicketProtoBuf").addEventListener("click", function () {
-        run(subscribeOrderTicketProtoBuf);
+        demo.run(subscribeOrderTicketProtoBuf);
     });
     document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        run(extendSubscription);
+        demo.run(extendSubscription);
     });
     document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
-        run(unsubscribe);
+        demo.run(unsubscribe);
     });
     document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        run(disconnect);
+        demo.run(disconnect);
     });
-    displayVersion("trade");
+    demo.displayVersion("trade");
 }());
