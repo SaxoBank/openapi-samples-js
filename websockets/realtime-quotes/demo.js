@@ -2,6 +2,7 @@
 /*global window console WebSocket demonstrationHelper ParserProtobuf protobuf */
 
 (function () {
+    // Create a helper function to remove some boilerplace code from the example itself.
     const demo = demonstrationHelper({
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
