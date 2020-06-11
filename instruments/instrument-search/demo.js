@@ -1,122 +1,131 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console user run processError apiUrl displayVersion */
+/*global window console demonstrationHelper */
 
-let instrumentId;
-let instrumentIdType;
+(function () {
+    // Create a helper function to remove some boilerplace code from the example itself.
+    const demo = demonstrationHelper({
+        "responseElm": document.getElementById("idResponse"),
+        "javaScriptElm": document.getElementById("idJavaScript"),
+        "accessTokenElm": document.getElementById("idBearerToken"),
+        "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
+        "tokenValidateButton": document.getElementById("idBtnValidate"),
+        "accountsList": document.getElementById("idCbxAccount"),
+        "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
+        "selectedAssetType": "Stock",  // Is required when assetTypesList is available
+        "footerElm": document.getElementById("idFooter")
+    });
+    let instrumentId;
+    let instrumentIdType;
 
-/**
- * This is an example of getting all exchanges.
- * @return {void}
- */
-function getExchanges() {
-    const cbxExchange = document.getElementById("idCbxExchange");
-    let option;
-    let i;
-    for (i = cbxExchange.options.length - 1; i > 0; i -= 1) {
-        cbxExchange.remove(i);  // Remove all, except the first
-    }
-    fetch(
-        apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
-        {
-            "method": "GET",
-            "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            }
+    /**
+     * This is an example of getting all exchanges.
+     * @return {void}
+     */
+    function getExchanges() {
+        const cbxExchange = document.getElementById("idCbxExchange");
+        let option;
+        let i;
+        for (i = cbxExchange.options.length - 1; i > 0; i -= 1) {
+            cbxExchange.remove(i);  // Remove all, except the first
         }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                let j;
-                responseJson.Data.sort(function (a, b) {
-                    const nameA = a.Name.toUpperCase();
-                    const nameB = b.Name.toUpperCase();
-                    if (nameA < nameB) {
-                        return -1;
+        fetch(
+            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let j;
+                    responseJson.Data.sort(function (a, b) {
+                        const nameA = a.Name.toUpperCase();
+                        const nameB = b.Name.toUpperCase();
+                        if (nameA < nameB) {
+                            return -1;
+                        }
+                        if (nameA > nameB) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                    for (j = 0; j < responseJson.Data.length; j += 1) {
+                        option = document.createElement("option");
+                        option.text = responseJson.Data[j].Name + " (code " + responseJson.Data[j].ExchangeId + ", mic " + responseJson.Data[j].Mic + ")";
+                        option.value = responseJson.Data[j].ExchangeId;
+                        cbxExchange.add(option);
                     }
-                    if (nameA > nameB) {
-                        return 1;
-                    }
-                    return 0;
+                    console.log("Found " + responseJson.Data.length + " exchanges:\n\n" + JSON.stringify(responseJson, null, 4));
                 });
-                for (j = 0; j < responseJson.Data.length; j += 1) {
-                    option = document.createElement("option");
-                    option.text = responseJson.Data[j].Name + " (code " + responseJson.Data[j].ExchangeId + ", mic " + responseJson.Data[j].Mic + ")";
-                    option.value = responseJson.Data[j].ExchangeId;
-                    cbxExchange.add(option);
-                }
-                console.log("Found " + responseJson.Data.length + " exchanges:\n\n" + JSON.stringify(responseJson, null, 4));
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
-
-/**
- * This function collects all available AssetTypes for the active account, so you don't search for something you won't find because it is not available.
- * @param {Function=} callback An optional function to run after a successfull request.
- * @return {void}
- */
-function getLegalAssetTypes(callback) {
-    const cbxAssetType = document.getElementById("idCbxAssetType");
-    let option;
-    let i;
-    for (i = cbxAssetType.options.length - 1; i >= 0; i -= 1) {
-        cbxAssetType.remove(i);
-    }
-    fetch(
-        apiUrl + "/port/v1/accounts/" + encodeURIComponent(user.accountKey),
-        {
-            "method": "GET",
-            "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            } else {
+                demo.processError(response);
             }
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                let j;
-                responseJson.LegalAssetTypes.sort();  // Sort the list for reading purposes
-                for (j = 0; j < responseJson.LegalAssetTypes.length; j += 1) {
-                    option = document.createElement("option");
-                    option.text = responseJson.LegalAssetTypes[j];
-                    option.value = responseJson.LegalAssetTypes[j];
-                    if (option.value === "Stock") {
-                        // Make the most common type the default one
-                        option.setAttribute("selected", true);
-                    }
-                    cbxAssetType.add(option);
-                }
-                if (callback !== undefined) {
-                    callback();
-                }
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
 
-/**
- * This is an example of instrument search.
- * @return {void}
- */
-function findInstrument() {
-    const assetType = document.getElementById("idCbxAssetType").value;
-    const keywords = document.getElementById("idInstrumentName").value + (
-        assetType === "ContractFutures"
-        ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
-        : ""
-    );
-    let url;
-    if (assetType === "-") {
-        getLegalAssetTypes(findInstrument);
-    } else {
-        url = apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=10" + "&AccountKey=" + encodeURIComponent(user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+    /**
+     * This function collects all available AssetTypes for the active account, so you don't search for something you won't find because it is not available.
+     * @param {Function=} callback An optional function to run after a successfull request.
+     * @return {void}
+     */
+    function getLegalAssetTypes(callback) {
+        const cbxAssetType = document.getElementById("idCbxAssetType");
+        let option;
+        let i;
+        for (i = cbxAssetType.options.length - 1; i >= 0; i -= 1) {
+            cbxAssetType.remove(i);
+        }
+        fetch(
+            demo.apiUrl + "/port/v1/accounts/" + encodeURIComponent(demo.user.accountKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let j;
+                    responseJson.LegalAssetTypes.sort();  // Sort the list for reading purposes
+                    for (j = 0; j < responseJson.LegalAssetTypes.length; j += 1) {
+                        option = document.createElement("option");
+                        option.text = responseJson.LegalAssetTypes[j];
+                        option.value = responseJson.LegalAssetTypes[j];
+                        if (option.value === "Stock") {
+                            // Make the most common type the default one
+                            option.setAttribute("selected", true);
+                        }
+                        cbxAssetType.add(option);
+                    }
+                    if (callback !== undefined) {
+                        callback();
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of instrument search.
+     * @return {void}
+     */
+    function findInstrument() {
+        const assetType = document.getElementById("idCbxAssetType").value;
+        const keywords = document.getElementById("idInstrumentName").value + (
+            assetType === "ContractFutures"
+            ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
+            : ""
+        );
+        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=10" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
         if (document.getElementById("idCbxExchange").value !== "-") {
             url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
         }
@@ -154,77 +163,75 @@ function findInstrument() {
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
-                processError(response);
+                demo.processError(response);
             }
         }).catch(function (error) {
             console.error(error);
         });
     }
-}
 
-/**
- * This is an example of getting instrument details, option or future series.
- * @return {void}
- */
-function getDetails() {
-    const assetType = document.getElementById("idCbxAssetType").value;
-    let urlPath;
-    switch (instrumentIdType) {
-    case "optionRoot":  // This identifier is not a Uic, but an option root. Contracts can be retrieved.
-        urlPath = "/ref/v1/instruments/contractoptionspaces/" + instrumentId;
-        break;
-    case "futuresSpace":  // This identifier is not a Uic, but a futures space.
-        urlPath = "/ref/v1/instruments/futuresspaces/" + instrumentId;
-        break;
-    default:
-        urlPath = "/ref/v1/instruments/details/" + instrumentId + "/" + assetType;
-    }
-    fetch(
-        apiUrl + urlPath,
-        {
-            "method": "GET",
-            "headers": {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-            }
+    /**
+     * This is an example of getting instrument details, option or future series.
+     * @return {void}
+     */
+    function getDetails() {
+        const assetType = document.getElementById("idCbxAssetType").value;
+        let urlPath;
+        switch (instrumentIdType) {
+        case "optionRoot":  // This identifier is not a Uic, but an option root. Contracts can be retrieved.
+            urlPath = "/ref/v1/instruments/contractoptionspaces/" + instrumentId;
+            break;
+        case "futuresSpace":  // This identifier is not a Uic, but a futures space.
+            urlPath = "/ref/v1/instruments/futuresspaces/" + instrumentId;
+            break;
+        default:
+            urlPath = "/ref/v1/instruments/details/" + instrumentId + "/" + assetType;
         }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                switch (instrumentIdType) {
-                case "optionRoot":
-                    instrumentId = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
-                    instrumentIdType = "uic";
-                    console.log("The search result contained an option root (# " + instrumentId + ").\nThese are the contracts with their Uics (request details again for first contract):\n\n" + JSON.stringify(responseJson, null, 4));
-                    break;
-                case "futuresSpace":
-                    instrumentId = responseJson.Elements[0].Uic;  // Select first future
-                    instrumentIdType = "uic";
-                    console.log("The search result contained a futures space (# " + instrumentId + ").\nThese are the futures in this space, with their Uics (request details again for first future):\n\n" + JSON.stringify(responseJson, null, 4));
-                    break;
-                default:
-                    console.log("These are the details of this instrument:\n\n" + JSON.stringify(responseJson, null, 4));
+        fetch(
+            demo.apiUrl + urlPath,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
                 }
-            });
-        } else {
-            processError(response);
-        }
-    }).catch(function (error) {
-        console.error(error);
-    });
-}
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    switch (instrumentIdType) {
+                    case "optionRoot":
+                        instrumentId = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
+                        instrumentIdType = "uic";
+                        console.log("The search result contained an option root (# " + instrumentId + ").\nThese are the contracts with their Uics (request details again for first contract):\n\n" + JSON.stringify(responseJson, null, 4));
+                        break;
+                    case "futuresSpace":
+                        instrumentId = responseJson.Elements[0].Uic;  // Select first future
+                        instrumentIdType = "uic";
+                        console.log("The search result contained a futures space (# " + instrumentId + ").\nThese are the futures in this space, with their Uics (request details again for first future):\n\n" + JSON.stringify(responseJson, null, 4));
+                        break;
+                    default:
+                        console.log("These are the details of this instrument:\n\n" + JSON.stringify(responseJson, null, 4));
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
 
-(function () {
     document.getElementById("idCbxAccount").addEventListener("change", function () {
-        run(getLegalAssetTypes);
+        demo.run(getLegalAssetTypes);
     });
     document.getElementById("idBtnGetExchanges").addEventListener("click", function () {
-        run(getExchanges);
+        demo.run(getExchanges);
     });
     document.getElementById("idBtnFind").addEventListener("click", function () {
-        run(findInstrument);
+        demo.run(findInstrument);
     });
     document.getElementById("idBtnGetDetails").addEventListener("click", function () {
-        run(getDetails);
+        demo.run(getDetails);
     });
-    displayVersion("ref");
+    demo.displayVersion("ref");
 }());
