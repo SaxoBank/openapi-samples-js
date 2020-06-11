@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.05
+ * boilerplate v1.06
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -73,16 +73,33 @@ function demonstrationHelper(settings) {
      */
     function run(functionToRun, secondFunctionToDisplay) {
 
-        function populateAccountSelection(responseJson) {
+        function populateAssetTypeSelection(legalAssetTypes) {
+            let i;
+            let option;
+            for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
+                settings.assetTypesList.remove(i);
+            }
+            for (i = 0; i < legalAssetTypes.length; i += 1) {
+                option = document.createElement("option");
+                option.text = legalAssetTypes[i];
+                option.value = legalAssetTypes[i];
+                if (option.value === settings.selectedAssetType) {
+                    option.setAttribute("selected", true);
+                }
+                settings.assetTypesList.add(option);
+            }
+        }
+
+        function populateAccountSelection(responseData) {
             let i;
             let option;
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.remove(i);
             }
-            for (i = 0; i < responseJson.Data.length; i += 1) {
+            for (i = 0; i < responseData.length; i += 1) {
                 option = document.createElement("option");
-                option.text = responseJson.Data[i].AccountId + " (" + responseJson.Data[i].AccountType + ", " + responseJson.Data[i].Currency + ")";
-                option.value = responseJson.Data[i].AccountKey;
+                option.text = responseData[i].AccountId + " (" + responseData[i].AccountType + ", " + responseData[i].Currency + ")";
+                option.value = responseData[i].AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
                 }
@@ -131,6 +148,9 @@ function demonstrationHelper(settings) {
                                     case "1":
                                         user.culture = responseJson.Culture;
                                         user.language = responseJson.Language;
+                                        if (settings.hasOwnProperty("assetTypesList") && settings.assetTypesList !== null) {
+                                            populateAssetTypeSelection(responseJson.LegalAssetTypes);
+                                        }
                                         break;
                                     case "2":
                                         user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
@@ -138,7 +158,7 @@ function demonstrationHelper(settings) {
                                         user.name = responseJson.Name;
                                         break;
                                     case "3":
-                                        populateAccountSelection(responseJson);
+                                        populateAccountSelection(responseJson.Data);
                                         break;
                                     }
                                 } catch (error) {
