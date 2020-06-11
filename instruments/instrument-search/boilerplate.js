@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.07
+ * boilerplate v1.08
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -106,7 +106,7 @@ function demonstrationHelper(settings) {
                 option.value = responseData[i].AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
-                    populateAssetTypeSelection(responseData[i].legalAssetTypes);
+                    populateAssetTypeSelection(responseData[i].LegalAssetTypes);
                 }
                 settings.accountsList.add(option);
             }
