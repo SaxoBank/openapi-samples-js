@@ -2,6 +2,7 @@
 /*global window console demonstrationHelper */
 
 (function () {
+    // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
