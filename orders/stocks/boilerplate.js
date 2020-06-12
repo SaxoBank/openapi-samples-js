@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.07
+ * boilerplate v1.08
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -21,7 +21,9 @@
  * @return {Object} Object with config, user object and helper functions.
  */
 function demonstrationHelper(settings) {
-    const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production this is https://gateway.saxobank.com/openapi
+    const apiHost = "gateway.saxobank.com";  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
+    const apiPath = "/sim/openapi";  // On production this is "/openapi"
+    const apiUrl = "https://" + apiHost + apiPath;
     const authUrl = "https://sim.logonvalidation.net/authorize";  // On production this is https://live.logonvalidation.net/authorize
     const user = {};
 
@@ -106,7 +108,7 @@ function demonstrationHelper(settings) {
                 option.value = responseData[i].AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
-                    populateAssetTypeSelection(responseData[i].legalAssetTypes);
+                    populateAssetTypeSelection(responseData[i].LegalAssetTypes);
                 }
                 settings.accountsList.add(option);
             }
@@ -117,7 +119,7 @@ function demonstrationHelper(settings) {
         }
 
         function getDataFromApi() {
-            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET /sim/openapi/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
+            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + apiHost + "\r\n\r\n\r\n";
             const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
             // This function uses a batch request to do three requests in one. See the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
             fetch(
@@ -150,18 +152,18 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                    case "1":
-                                        user.culture = responseJson.Culture;
-                                        user.language = responseJson.Language;
-                                        break;
-                                    case "2":
-                                        user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                        user.clientKey = responseJson.ClientKey;
-                                        user.name = responseJson.Name;
-                                        break;
-                                    case "3":
-                                        populateAccountSelection(responseJson.Data);
-                                        break;
+                                        case "1":
+                                            user.culture = responseJson.Culture;
+                                            user.language = responseJson.Language;
+                                            break;
+                                        case "2":
+                                            user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                            user.clientKey = responseJson.ClientKey;
+                                            user.name = responseJson.Name;
+                                            break;
+                                        case "3":
+                                            populateAccountSelection(responseJson.Data);
+                                            break;
                                     }
                                 } catch (error) {
                                     console.error(error);
