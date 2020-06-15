@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.08
+ * boilerplate v1.09
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -25,6 +25,7 @@ function demonstrationHelper(settings) {
     const apiPath = "/sim/openapi";  // On production this is "/openapi"
     const apiUrl = "https://" + apiHost + apiPath;
     const authUrl = "https://sim.logonvalidation.net/authorize";  // On production this is https://live.logonvalidation.net/authorize
+    const implicitAppKey = "e081be34791f4c7eac479b769b96d623";  // No need to create your own app, unless you want to test on a different environment than SIM
     const user = {};
 
     /**
@@ -38,10 +39,15 @@ function demonstrationHelper(settings) {
     /**
      * Shared function to display an unsuccessful response.
      * @param {Response} errorObject The complete error object.
+     * @param {string=} extraMessageToShow An optional extra message to display.
      * @return {void}
      */
-    function processError(errorObject) {
-        let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
+    function processError(errorObject, extraMessageToShow) {
+        let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
+            extraMessageToShow === undefined
+            ? ""
+            : "\n" + extraMessageToShow
+        );
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
             if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
@@ -302,7 +308,7 @@ function demonstrationHelper(settings) {
         settings.accessTokenElm.value = newAccessToken;
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
-            settings.retrieveTokenHref.href = authUrl + "?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
+            settings.retrieveTokenHref.href = authUrl + "?client_id=" + implicitAppKey + "&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
         }
     }
 

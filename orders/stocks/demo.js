@@ -388,7 +388,15 @@
                     lastOrderId = responseJson.OrderId;
                 });
             } else {
-                demo.processError(response);
+                console.debug(response);
+                if (response.status === 403) {
+                    // Don't add this check to your application, but for learning purposes:
+                    // An HTTP Forbidden indicates that your app is not enabled for trading.
+                    // See https://www.developer.saxo/openapi/appmanagement
+                    demo.processError(response, "Your app might not be enabled for trading.");
+                } else {
+                    demo.processError(response);
+                }
             }
         }).catch(function (error) {
             console.error(error);
