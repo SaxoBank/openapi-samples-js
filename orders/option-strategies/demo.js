@@ -221,8 +221,17 @@
                 response.json().then(function (responseJson) {
                     // Response must have PreCheckResult property being "Ok"
                     if (responseJson.PreCheckResult === "Ok") {
-                        console.log(JSON.stringify(responseJson, null, 4));
+                        // Secondly, you can have a PreCheckResult of "Ok", but still a (functional) error
+                        // Order could be placed if the account had sufficient margin and funding.
+                        // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
+                        if (responseJson.hasOwnProperty("ErrorInfo")) {
+                            console.error(JSON.stringify(responseJson, null, 4));
+                        } else {
+                            // The order can be placed
+                            console.log(JSON.stringify(responseJson, null, 4));
+                        }
                     } else {
+                        // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
                         console.error(JSON.stringify(responseJson, null, 4));
                     }
                 });
