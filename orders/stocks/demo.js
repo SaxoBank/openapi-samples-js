@@ -17,10 +17,10 @@
 
     /**
      * Helper function to convert the json string to an object, with error handling.
-     * @return {Object} The newOrderObject from the input field
+     * @return {Object} The newOrderObject from the input field - null if invalid
      */
     function getOrderObjectFromJson() {
-        let newOrderObject = {};
+        let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
         } catch (e) {
@@ -105,7 +105,7 @@
         case "DayOrder":
         case "GoodTillCancel":
         case "FillOrKill":
-        case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and Cfds.
+        case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and CFDs.
             delete newOrderObject.OrderDuration.ExpirationDateTime;
             delete newOrderObject.OrderDuration.ExpirationDateContainsTime;
             break;

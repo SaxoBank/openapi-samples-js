@@ -46,25 +46,25 @@
          * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
          * @returns {number} The corresponding Long value
          */
-        function fromBytesLE(bytes, unsigned) {
+        function fromBytesLe(bytes, unsigned) {
             const low = (bytes[0] | bytes[1] << 8 | bytes[2] << 16 | bytes[3] << 24) | 0;
             const high = (bytes[4] | bytes[5] << 8 | bytes[6] << 16 | bytes[7] << 24) | 0;
-            const TWO_PWR_16_DBL = 1 << 16;
-            const TWO_PWR_32_DBL = TWO_PWR_16_DBL * TWO_PWR_16_DBL;
+            const twoPwr16Dbl = 1 << 16;
+            const twoPwr32Dbl = twoPwr16Dbl * twoPwr16Dbl;
             if (unsigned) {
-                return ((high >>> 0) * TWO_PWR_32_DBL) + (low >>> 0);
+                return (high >>> 0) * twoPwr32Dbl + (low >>> 0);
             }
-            return high * TWO_PWR_32_DBL + (low >>> 0);
+            return high * twoPwr32Dbl + (low >>> 0);
         }
 
         /**
          * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
          * @param {Object} data The received stream message
-         * @returns {Array[Object]}
+         * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
          */
         function parseMessageFrame(data) {
             const message = new DataView(data);
-            let parsedMessages = [];
+            const parsedMessages = [];
             let index = 0;
             let messageId;
             let referenceIdSize;
@@ -80,7 +80,7 @@
                  * The message identifier is used by clients when reconnecting. It may not be a sequence number and no interpretation
                  * of its meaning should be attempted at the client.
                  */
-                messageId = fromBytesLE(new Uint8Array(data, index, 8));
+                messageId = fromBytesLe(new Uint8Array(data, index, 8));
                 index += 8;
                 /* Version number (2 bytes)
                  * Ignored in this example. Get it using 'messageEnvelopeVersion = message.getInt16(index)'.
@@ -163,6 +163,10 @@
                     break;
                 case "_heartbeat":
                     console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    break;
+                case "_resetsubscriptions":
+                    // The server is not able to send messages and client needs to reset subscriptions by recreating them.
+                    console.error("Reset Subscription Control message received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
                     break;
                 default:
                     console.error("No processing implemented for message with reference " + message.referenceId);

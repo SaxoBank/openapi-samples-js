@@ -69,7 +69,7 @@
 
     /**
      * This function collects all available AssetTypes for the active account, so you don't search for something you won't find because it is not available.
-     * @param {Function=} callback An optional function to run after a successfull request.
+     * @param {Function=} callback An optional function to run after a successful request.
      * @return {void}
      */
     function getLegalAssetTypes(callback) {
