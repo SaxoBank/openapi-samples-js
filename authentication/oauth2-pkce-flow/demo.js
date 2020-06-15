@@ -23,7 +23,7 @@
                 "mode": "no-cors",
                 "cache": "reload"
             }
-        ).then(function (response) {
+        ).then(function () {
             console.log("Nice! The redirect page " + redirectUrl + " is available.");
         }).catch(function (error) {
             console.error(error);
@@ -36,7 +36,7 @@
      */
     function generateCodeVerifier() {
 
-        function base64URLEncode(str) {
+        function base64UrlEncode(str) {
             return str.toString(CryptoJS.enc.Base64).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
         }
 
@@ -45,8 +45,8 @@
         for (i = 0; i < 32; i += 1) {
             codeVerifier += allowedChars.charAt(Math.floor(Math.random() * allowedChars.length));
         }
-        codeVerifier = base64URLEncode(codeVerifier);
-        codeChallenge = base64URLEncode(CryptoJS.SHA256(codeVerifier));
+        codeVerifier = base64UrlEncode(codeVerifier);
+        codeChallenge = base64UrlEncode(CryptoJS.SHA256(codeVerifier));
         console.log("Verifier: " + codeVerifier + "\r\nChallenge: " + codeChallenge);
     }
 

@@ -65,7 +65,7 @@
      * @return {void}
      */
     function getToken() {
-        window.alert("This flow is for desktop apps and only here for demonstration purposes..\n\nTurn on F12 tools. Watch the token being send over the network (tab: Network - Response).\nHowever, due to CORS the tokken cannot be read via JavaScript.");
+        window.alert("This flow is for desktop apps and only here for demonstration purposes..\n\nTurn on F12 tools. Watch the token being send over the network (tab: Network - Response).\nHowever, due to CORS the token cannot be read via JavaScript.");
         fetch(
             "https://sim.logonvalidation.net/token",
             {

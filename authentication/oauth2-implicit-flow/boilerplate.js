@@ -37,7 +37,7 @@ function demonstrationHelper(settings) {
 
     /**
      * Shared function to display an unsuccessful response.
-     * @param {Object} errorObject The complete error object.
+     * @param {Response} errorObject The complete error object.
      * @return {void}
      */
     function processError(errorObject) {
@@ -76,6 +76,11 @@ function demonstrationHelper(settings) {
      */
     function run(functionToRun, secondFunctionToDisplay) {
 
+        /**
+         * Add all allowed asset types for the default account to the selection.
+         * @param {Array} legalAssetTypes The allowed asset types.
+         * @return {void}
+         */
         function populateAssetTypeSelection(legalAssetTypes) {
             let i;
             let option;
@@ -96,19 +101,24 @@ function demonstrationHelper(settings) {
             }
         }
 
-        function populateAccountSelection(responseData) {
+        /**
+         * Add all accounts of this client to the selection and activate an onChange handler.
+         * @param {Array} accountsResponseData The list with accounts.
+         * @return {void}
+         */
+        function populateAccountSelection(accountsResponseData) {
             let i;
             let option;
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.remove(i);
             }
-            for (i = 0; i < responseData.length; i += 1) {
+            for (i = 0; i < accountsResponseData.length; i += 1) {
                 option = document.createElement("option");
-                option.text = responseData[i].AccountId + " (" + responseData[i].AccountType + ", " + responseData[i].Currency + ")";
-                option.value = responseData[i].AccountKey;
+                option.text = accountsResponseData[i].AccountId + " (" + accountsResponseData[i].AccountType + ", " + accountsResponseData[i].Currency + ")";
+                option.value = accountsResponseData[i].AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
-                    populateAssetTypeSelection(responseData[i].LegalAssetTypes);
+                    populateAssetTypeSelection(accountsResponseData[i].LegalAssetTypes);
                 }
                 settings.accountsList.add(option);
             }
@@ -118,6 +128,10 @@ function demonstrationHelper(settings) {
             });
         }
 
+        /**
+         * Request the basic data from the Api using a batch request.
+         * @return {void}
+         */
         function getDataFromApi() {
             const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + apiHost + "\r\n\r\n\r\n";
             const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
@@ -152,18 +166,18 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                        case "1":
-                                            user.culture = responseJson.Culture;
-                                            user.language = responseJson.Language;
-                                            break;
-                                        case "2":
-                                            user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                            user.clientKey = responseJson.ClientKey;
-                                            user.name = responseJson.Name;
-                                            break;
-                                        case "3":
-                                            populateAccountSelection(responseJson.Data);
-                                            break;
+                                    case "1":
+                                        user.culture = responseJson.Culture;
+                                        user.language = responseJson.Language;
+                                        break;
+                                    case "2":
+                                        user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                        user.clientKey = responseJson.ClientKey;
+                                        user.name = responseJson.Name;
+                                        break;
+                                    case "3":
+                                        populateAccountSelection(responseJson.Data);
+                                        break;
                                     }
                                 } catch (error) {
                                     console.error(error);
@@ -227,6 +241,7 @@ function demonstrationHelper(settings) {
 
     /**
      * Remember token for this session, so it can be reused after a page refresh.
+     * @param {string} token The token to be saved.
      * @return {void}
      */
     function saveToken(token) {

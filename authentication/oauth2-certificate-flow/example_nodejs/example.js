@@ -176,5 +176,5 @@ function requestApiData(tokenObject) {
 
 // Create the JWT token:
 const assertion = createJwt();
-// Request the Bearer token and if successfull, use it to call the API:
+// Request the Bearer token and if successful, use it to call the API:
 requestToken(assertion, requestApiData);
