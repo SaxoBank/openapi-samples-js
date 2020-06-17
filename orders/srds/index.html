@@ -1,0 +1,81 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Order Demo for Stocks</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Stock Orders</h1>
+<h2 class="project-tagline">Example on Stock Orders</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:<br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Buy stocks</h1>
+This example shows how place an order for Stocks. Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">the search example</a>.
+<br />
+<br />
+More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
+<br />
+<br />
+<label>
+  Order type: <select class="selector" id="idCbxOrderType">
+    <option value="-" selected>Press "Check conditions" to populate</option>
+  </select></label>
+<label>
+  Order duration: <select class="selector" id="idCbxOrderDuration">
+    <option value="DayOrder" selected>DayOrder</option>
+    <option value="FillOrKill">FillOrKill</option>
+    <option value="GoodTillCancel">GoodTillCancel</option>
+    <option value="GoodTillDate">GoodTillDate</option>
+    <option value="ImmediateOrCancel">ImmediateOrCancel</option>
+  </select></label>
+<br />
+<br />
+<label><input type="checkbox" id="idChkRequestIdHeader" value="RequestIdHeader"> Add ExternalReference as X-Request-ID header (<a href="https://www.developer.saxo/openapi/learn/rate-limiting" target="_blank">info</a>)</label>
+<br />
+POST body containing order parameters:<br />
+<textarea class="json-input" id="idNewOrderObject" rows="13">
+{
+    "AccountKey": "(added on first request)",
+    "Uic": 112809,
+    "OrderType": "Market",
+    "AssetType": "Stock",
+    "BuySell": "Buy",
+    "Amount": 100,
+    "ExternalReference": "MyStockOrderCorrelationId",
+    "ManualOrder": true,
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    }
+}
+</textarea><br />
+<input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
+<input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
+<input type="button" class="action-button" value="Order costs" id="idBtnGetOrderCosts" />
+<input type="button" class="action-button" value="Download KID" id="idBtnGetKid" />
+<input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
+<input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
+<input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>
