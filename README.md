@@ -25,7 +25,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Price subscription levels](instruments/entitlements)
    - [Retrieve Universe](instruments/instrument-retrieval)
 4. Order Placement
-   - [Stock Order example](orders/stocks)
+   - [Basic Order example (stocks, bonds)](orders/stocks)
    - [Option Order](orders/options)
    - [Option Strategy Order](orders/option-strategies)
    - [Future Order](orders/futures)
