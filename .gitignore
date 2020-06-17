@@ -3,3 +3,9 @@
 .vscode/
 node_modules/
 package-lock.json
+/error-handling/demo-1.0.0.min.js
+/swagger
+/minify.bat
+/gepruts
+/authentication/oauth2-code-flow/demo-1.0.0.min.js
+/orders/stocks/demo-1.0.0.min.js
