@@ -95,6 +95,7 @@ function demonstrationHelper(settings) {
                 for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
                     settings.assetTypesList.remove(i);
                 }
+                legalAssetTypes.sort();
                 for (i = 0; i < legalAssetTypes.length; i += 1) {
                     option = document.createElement("option");
                     option.text = legalAssetTypes[i];

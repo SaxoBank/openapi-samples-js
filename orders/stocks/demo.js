@@ -152,6 +152,47 @@
     }
 
     /**
+     * This demo can be used for not only Stocks. You can change the model in the editor to Bond, SrdOnStock, etc.
+     * @param {Object} responseJson The response with the references.
+     * @return {string} A message pointing you at the feature to change the order object.
+     */
+    function getRelatedAssetTypesMessage(responseJson) {
+        let result = "";
+        let i;
+        let relatedInstrument;
+
+        function addAssetTypeToMessage(assetType) {
+            if (relatedInstrument.AssetType === assetType) {
+                result += (
+                    result === ""
+                    ? ""
+                    : "\n\n"
+                ) + "The response below indicates there is a related " + assetType + ".\nYou can change the order object to AssetType '" + assetType + "' and Uic '" + relatedInstrument.Uic + "' to test " + assetType + " orders.";
+            }
+        }
+
+        if (responseJson.hasOwnProperty("RelatedInstruments")) {
+            for (i = 0; i < responseJson.RelatedInstruments.length; i += 1) {
+                relatedInstrument = responseJson.RelatedInstruments[i];
+                addAssetTypeToMessage("Bond");
+                addAssetTypeToMessage("SrdOnStock");
+                // The other way around works as well. Show message for Stock.
+                addAssetTypeToMessage("Stock");
+            }
+        }
+        if (responseJson.hasOwnProperty("RelatedOptionRootsEnhanced")) {
+            // Don't loop. Just take the first, for demo purposes.
+            relatedInstrument = responseJson.RelatedOptionRootsEnhanced[0];
+            result += (
+                result === ""
+                ? ""
+                : "\n\n"
+            ) + "The response below indicates there are related options.\nYou can use OptionRootId '" + relatedInstrument.OptionRootId + "' in the options example.";
+        }
+        return result;
+    }
+
+    /**
      * This is an example of getting the trading settings of an instrument.
      * @return {void}
      */
@@ -199,7 +240,7 @@
         function checkMinimumOrderValue(orderObject, detailsObject) {
             const price = (
                 orderObject.hasOwnProperty("OrderPrice")
-                    ? orderObject.OrderPrice
+                ? orderObject.OrderPrice
                 : fictivePrice  // SIM doesn't allow calls to price endpoint for most instruments so just take something
             );
             if (orderObject.Amount * price < detailsObject.MinimumOrderValue) {
@@ -229,7 +270,7 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
-                    console.log(JSON.stringify(responseJson, null, 4));
+                    console.log(getRelatedAssetTypesMessage(responseJson) + "\n\n" + JSON.stringify(responseJson, null, 4));
                     if (responseJson.IsTradable === false) {
                         window.alert("This instrument is not tradable!");
                     }
