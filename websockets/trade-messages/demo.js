@@ -58,6 +58,28 @@
         }
 
         /**
+         * Divide the buffer in chunks of 1K, to prevent a stack overflow exception for big buffers.
+         * Optimal number is used for chunk size instead of max. callstack size, since logic to get max. callstack size is expensive
+         * and might not work correctly with older browsers, leading to crash.
+         * @param {Object} payloadBuffer The payload buffer
+         * @returns {Object} Returns an array with all incoming messages of the frame
+         */
+        function getJsonPayloadString(payloadBuffer) {
+            const chunkSize = 1000;
+            const chunks = Math.ceil(payloadBuffer.length / chunkSize);
+            let payload = "";
+            let chunkIndex = 0;
+            while (chunkIndex < chunks) {
+                payload += String.fromCharCode.apply(
+                    null,
+                    payloadBuffer.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize)
+                );
+                chunkIndex += 1;
+            }
+            return payload;
+        }
+
+        /**
          * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
          * @param {Object} data The received stream message
          * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
@@ -116,11 +138,16 @@
                  * Binary message payload with the size indicated by the payload size field.
                  * The interpretation of the payload depends on the message format field.
                  */
-                payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
+                payloadBuffer = new Uint8Array(data.slice(index, index + payloadSize));
                 switch (payloadFormat) {
                 case 0:
                     // Json
-                    payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                    try {
+                        payload = JSON.parse(getJsonPayloadString(payloadBuffer));
+                    } catch (e) {
+                        console.error(e);
+                        payload = null;
+                    }
                     break;
                 case 1:
                     // ProtoBuf is not supported in this example. See the realtime-quotes example for a Protocol Buffers implementation.
