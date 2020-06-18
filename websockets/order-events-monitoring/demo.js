@@ -82,7 +82,7 @@
         /**
          * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
          * @param {Object} data The received stream message
-         * @returns {Array.<Object>} Returns an array with all incoming messages of the frame 
+         * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
          */
         function parseMessageFrame(data) {
             const message = new DataView(data);
