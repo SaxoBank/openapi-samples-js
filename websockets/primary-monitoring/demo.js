@@ -57,11 +57,15 @@
             console.error("Invalid characters in Context ID.");
             throw "Invalid characters in Context ID.";
         }
-        connection = new WebSocket(streamerUrl);
-        connection.binaryType = "arraybuffer";
-        console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
-        // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
-        // 0 = CONNECTING, 1 = OPEN
+        try {
+            connection = new WebSocket(streamerUrl);
+            connection.binaryType = "arraybuffer";
+            console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
+            // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
+            // 0 = CONNECTING, 1 = OPEN
+        } catch (error) {
+            console.error("Error creating websocket. " + error);
+        }
     }
 
     /**
@@ -176,8 +180,8 @@
                     // Json
                     try {
                         payload = JSON.parse(getJsonPayloadString(payloadBuffer));
-                    } catch (e) {
-                        console.error(e);
+                    } catch (error) {
+                        console.error(error);
                     }
                     break;
                 case 1:
