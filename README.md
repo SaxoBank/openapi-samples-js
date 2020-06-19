@@ -19,6 +19,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Query options $top, $skip and \_\_next](basics/query-options)
    - [Error handling](error-handling)
    - [Diagnostics and method override](basics/diagnostics)
+   - [Download PDF reports](basics/download-reports)
 3. Instruments
    - [Instrument Search example](instruments/instrument-search)
    - [Display Positions and Order List](instruments/display-positions-orders)
@@ -31,7 +32,6 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Future Order](orders/futures)
 5. Using websockets
    - [Retrieving Order Events](websockets/order-events-monitoring)
-   - [Trade Messages](websockets/trade-messages)
    - [Monitoring Primary Status](websockets/primary-monitoring)
    - [Realtime Quotes and Protocol Buffers](websockets/realtime-quotes)
    - [Historical Market Data](websockets/historical-market-data)
