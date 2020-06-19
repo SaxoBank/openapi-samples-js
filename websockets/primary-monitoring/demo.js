@@ -57,11 +57,15 @@
             console.error("Invalid characters in Context ID.");
             throw "Invalid characters in Context ID.";
         }
-        connection = new WebSocket(streamerUrl);
-        connection.binaryType = "arraybuffer";
-        console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
-        // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
-        // 0 = CONNECTING, 1 = OPEN
+        try {
+            connection = new WebSocket(streamerUrl);
+            connection.binaryType = "arraybuffer";
+            console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
+            // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
+            // 0 = CONNECTING, 1 = OPEN
+        } catch (error) {
+            console.error("Error creating websocket. " + error);
+        }
     }
 
     /**
@@ -89,12 +93,13 @@
 
         /**
          * Divide the buffer in chunks of 1K, to prevent a stack overflow exception for big buffers.
-         * Optimal number is used for chunk size instead of max. callstack size, since logic to get max. callstack size is expensive
-         * and might not work correctly with older browsers, leading to crash.
          * @param {Object} payloadBuffer The payload buffer
          * @returns {Object} Returns an array with all incoming messages of the frame
          */
         function getJsonPayloadString(payloadBuffer) {
+            // Optimal number is used for chunk size instead of max. callstack size, since logic to get max. callstack size is expensive
+            // and might not work correctly with older browsers, leading to crash.
+            // Normally the buffer fits within one chunk
             const chunkSize = 1000;
             const chunks = Math.ceil(payloadBuffer.length / chunkSize);
             let payload = "";
@@ -169,24 +174,22 @@
                  * The interpretation of the payload depends on the message format field.
                  */
                 payloadBuffer = new Uint8Array(data.slice(index, index + payloadSize));
+                payload = null;
                 switch (payloadFormat) {
                 case 0:
                     // Json
                     try {
                         payload = JSON.parse(getJsonPayloadString(payloadBuffer));
-                    } catch (e) {
-                        console.error(e);
-                        payload = null;
+                    } catch (error) {
+                        console.error(error);
                     }
                     break;
                 case 1:
                     // ProtoBuf is not supported in this example. See the realtime-quotes example for a Protocol Buffers implementation.
                     console.error("Protocol Buffers are not supported in this example.");
-                    payload = null;
                     break;
                 default:
                     console.error("Unsupported payloadFormat: " + payloadFormat);
-                    payload = null;
                 }
                 if (payload !== null) {
                     parsedMessages.push({
