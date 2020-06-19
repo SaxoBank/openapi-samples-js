@@ -47,7 +47,11 @@ const parseOrder = (order) => ({
     Status: order.Status,
     Exchange: order.Exchange.ExchangeId,
     DistanceToMarket: order.DistanceToMarket,
-    ShortTrading: order.ShortTrading === "NotAllowed" ? "No" : "Yes",
+    ShortTrading: (
+        order.ShortTrading === "NotAllowed"
+        ? "No"
+        : "Yes"
+    ),
     cancelled: false
 });
 
