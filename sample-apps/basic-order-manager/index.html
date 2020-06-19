@@ -1,0 +1,213 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui"
+    />
+    <style>
+      #refreshIFrame {
+        display: none;
+      }
+
+      tbody tr:nth-of-type(even) {
+        background-color: rgba(0, 0, 0, 0.3);
+      }
+
+      tr.cancelled {
+        text-decoration: line-through;
+      }
+
+      .v-toolbar__title {
+        overflow: visible;
+      }
+
+      .blotterDateSelector {
+        width: 0;
+      }
+    </style>
+    <title>Saxo Order Manager</title>
+  </head>
+  <body>
+    <div id="app">
+      <v-app id="inspire">
+        <v-app-bar app clipped-left>
+          <img
+          src="https://www.home.saxo/-/media/global/logos/logo_vector_color-svg.svg?la=da-DK&hash=4D764EF4BF5FD260749C904CAEF5CCD0"
+          alt="Saxo Bank Logo" width="77" height="58"
+        ></img>
+        &NonBreakingSpace;
+        &NonBreakingSpace;
+        &NonBreakingSpace;
+          <v-toolbar-title><h2>Saxo Order Manager</h2></v-toolbar-title>
+          <v-tabs v-model="page" align-with-title>
+            <v-tab>Open Orders</v-tab>
+            <v-tab>Trade Blotter</v-tab>
+          </v-tabs>
+          <v-btn v-if="loggedIn" v-on:click="logout">
+            Logout
+            <v-icon>mdi-logout</v-icon>
+          </v-btn>
+          <template v-else>
+            <v-btn v-on:click="login('sim')">
+              Login DEMO
+              <v-icon>mdi-test-tube</v-icon>
+            </v-btn>
+            &NonBreakingSpace;
+            &NonBreakingSpace;
+            &NonBreakingSpace;
+            <v-btn v-on:click="login('live')">
+              Login LIVE
+              <v-icon>mdi-flash</v-icon>
+            </v-btn>
+          </template>
+        </v-app-bar>
+
+        <v-content v-if="page === 0">
+          <v-container fluid>
+            <v-row>
+              <v-col>
+                <v-card>
+                  <v-card-title>
+                    Open Orders
+                    <v-btn
+                      v-if="loggedIn"
+                      class="ml-3"
+                      outlined
+                      small
+                      color="primary"
+                      v-on:click="getOrders"
+                      >Refresh</v-btn
+                    >
+                    <v-btn
+                      v-if="this.orders.length > 0"
+                      class="ml-3"
+                      outlined
+                      small
+                      color="success"
+                      v-on:click="downloadOrdersCsv"
+                    >Export CSV</v-btn>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-text-field
+                      v-model="orderSearch"
+                      append-icon="mdi-magnify"
+                      label="Search"
+                      single-line
+                      hide-details
+                    ></v-text-field>
+                  </v-card-title>
+                  <v-data-table
+                    :headers="headers"
+                    :items="orders"
+                    item-key="OrderId"
+                    :search="orderSearch"
+                    class="elevation-1"
+                    :loading="ordersLoading"
+                    :items-per-page="itemsPerPage"
+                    :footer-props="{
+                        'items-per-page-options': [50, 100, 150, 200]
+                      }"
+                    dark
+                    dense
+                  >
+                    <template v-slot:item="{ item, headers }">
+                      <tr :class="item.cancelled ? 'cancelled' : ''">
+                        <td v-for="header in headers">
+                          <v-btn v-if="header.value === 'actions' && !item.cancelled" x-small class="mr-2" @click="cancelOrder(item)" outlined color="warning">
+                            Cancel
+                          </v-btn>
+                          <template v-else>
+                            {{item[header.value]}}
+                          </template>
+                        </td>
+                      </tr>
+                    </template>
+                    <template v-slot:no-data>
+                      <v-alert v-if="loggedIn">
+                        It looks like you have no orders in your portfolio.
+                      </v-alert>
+                      <v-alert v-else>
+                        Log in using the buttons above to load your orders. Note: app credentials should be added to script.js to log into the LIVE environment.
+                      </v-alert>
+                    </template>
+                  </v-data-table>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-content>
+
+        <v-content v-if="page === 1">
+          <v-container fluid>
+            <v-row>
+              <v-col>
+                <v-card>
+                  <v-card-title>
+                    Trade Blotter
+                    <v-select class="blotterDateSelector ml-3 mr-3" :value="blotterDate" :items="blotterDates" @change="updateBlotterDate" label="Date" hide-details dense outlined single-line></v-select>
+                    <v-btn v-if="loggedIn" class="ml-3" outlined small color="primary" v-on:click="getTrades">Refresh</v-btn>
+                    <v-btn v-if="this.trades.length > 0" class="ml-3" outlined small color="success" v-on:click="downloadTradesCsv">
+                      Export CSV</v-btn>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-spacer></v-spacer>
+                    <v-text-field v-model="tradeSearch" append-icon="mdi-magnify" label="Search" single-line hide-details>
+                    </v-text-field>
+                  </v-card-title>
+                  <v-data-table :headers="tradesHeaders" :items="trades" item-key="SequenceId" :search="tradeSearch" class="elevation-1"
+                    :loading="tradesLoading" :items-per-page="itemsPerPage" :footer-props="{
+                                'items-per-page-options': [50, 100, 150, 200]
+                              }" dark dense>
+                    <template v-slot:no-data>
+                      <v-alert v-if="loggedIn">
+                        It looks like you have no trades on {{blotterDate}}.
+                      </v-alert>
+                      <v-alert v-else>
+                        Log in using the buttons above to load your trades. Note: app credentials should be added to script.js to log into the LIVE environment.
+                      </v-alert>
+                    </template>
+                  </v-data-table>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-content>
+
+        <v-snackbar top :timeout="snackbarTimeout" v-model="snackbar">
+          {{ snackbarMessage }}
+          <v-btn color="red" text @click="snackbar = false">
+            Close
+          </v-btn>
+        </v-snackbar>
+      </v-app>
+    </div>
+
+    <iframe id="refreshIFrame" src=""></iframe>
+
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.26.0/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+    <script type="text/javascript" src="script.js" defer></script>
+    <script></script>
+  </body>
+</html>
