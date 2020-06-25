@@ -75,7 +75,7 @@
      * @return {void}
      */
     function getAccountStatementPdf() {
-        const currentYear = (new Date()).getFullYear();
+        const currentYear = new Date().getFullYear();
         getReport(
             demo.apiUrl + "/cr/v1/reports/AccountStatement/" + encodeURIComponent(demo.user.clientKey) + "?FromDate=" + currentYear + "-01-01&ToDate=" + currentYear + "-12-31&AccountKey=" + encodeURIComponent(demo.user.accountKey),
             "AccountStatement-" + currentYear + ".pdf",
@@ -88,7 +88,7 @@
      * @return {void}
      */
     function getAccountStatementExcel() {
-        const currentYear = (new Date()).getFullYear();
+        const currentYear = new Date().getFullYear();
         getReport(
             demo.apiUrl + "/cr/v1/reports/AccountStatement/" + encodeURIComponent(demo.user.clientKey) + "?FromDate=" + currentYear + "-01-01&ToDate=" + currentYear + "-12-31&AccountKey=" + encodeURIComponent(demo.user.accountKey),
             "AccountStatement-" + currentYear + ".xlsx",
