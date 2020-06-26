@@ -68,17 +68,17 @@
          * @returns {Object} Returns an array with all incoming messages of the frame
          */
         function getJsonPayloadString(payloadBuffer) {
-            // Optimal number is used for chunk size instead of max. callstack size, since logic to get max. callstack size is expensive
+            // Optimal number is used for chunk size instead of max. call stack size, since logic to get max. call stack size is expensive
             // and might not work correctly with older browsers, leading to crash.
             // Normally the buffer fits within one chunk
             const chunkSize = 1000;
-            const chunks = Math.ceil(payloadBuffer.length / chunkSize);
+            const chunks = Math.ceil(payloadBuffer.byteLength / chunkSize);
             let payload = "";
             let chunkIndex = 0;
             while (chunkIndex < chunks) {
                 payload += String.fromCharCode.apply(
                     null,
-                    payloadBuffer.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize)
+                    new Uint8Array(payloadBuffer.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize))
                 );
                 chunkIndex += 1;
             }
@@ -144,7 +144,7 @@
                  * Binary message payload with the size indicated by the payload size field.
                  * The interpretation of the payload depends on the message format field.
                  */
-                payloadBuffer = new Uint8Array(data.slice(index, index + payloadSize));
+                payloadBuffer = data.slice(index, index + payloadSize);
                 payload = null;
                 switch (payloadFormat) {
                 case 0:
