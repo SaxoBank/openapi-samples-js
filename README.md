@@ -24,6 +24,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Instrument Search example](instruments/instrument-search)
    - [Display Positions and Order List](instruments/display-positions-orders)
    - [Price subscription levels](instruments/entitlements)
+   - [Extended AssetTypes](instruments/extended-assettypes)
    - [Retrieve Universe](instruments/instrument-retrieval)
 4. Order Placement
    - [Basic Order example (stocks, bonds)](orders/stocks)
