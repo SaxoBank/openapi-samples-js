@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.08
+ * boilerplate v1.10
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -25,6 +25,7 @@ function demonstrationHelper(settings) {
     const apiPath = "/sim/openapi";  // On production this is "/openapi"
     const apiUrl = "https://" + apiHost + apiPath;
     const authUrl = "https://sim.logonvalidation.net/authorize";  // On production this is https://live.logonvalidation.net/authorize
+    const implicitAppKey = "e081be34791f4c7eac479b769b96d623";  // No need to create your own app, unless you want to test on a different environment than SIM
     const user = {};
 
     /**
@@ -38,10 +39,15 @@ function demonstrationHelper(settings) {
     /**
      * Shared function to display an unsuccessful response.
      * @param {Response} errorObject The complete error object.
+     * @param {string=} extraMessageToShow An optional extra message to display.
      * @return {void}
      */
-    function processError(errorObject) {
-        let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText;
+    function processError(errorObject, extraMessageToShow) {
+        let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
+            extraMessageToShow === undefined
+            ? ""
+            : "\n" + extraMessageToShow
+        );
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
             if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
@@ -89,6 +95,7 @@ function demonstrationHelper(settings) {
                 for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
                     settings.assetTypesList.remove(i);
                 }
+                legalAssetTypes.sort();
                 for (i = 0; i < legalAssetTypes.length; i += 1) {
                     option = document.createElement("option");
                     option.text = legalAssetTypes[i];
@@ -108,19 +115,26 @@ function demonstrationHelper(settings) {
          */
         function populateAccountSelection(accountsResponseData) {
             let i;
+            let account;
             let option;
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.remove(i);
             }
+            user.accountGroupKeys = [];
             for (i = 0; i < accountsResponseData.length; i += 1) {
+                account = accountsResponseData[i];
                 option = document.createElement("option");
-                option.text = accountsResponseData[i].AccountId + " (" + accountsResponseData[i].AccountType + ", " + accountsResponseData[i].Currency + ")";
-                option.value = accountsResponseData[i].AccountKey;
+                option.text = account.AccountId + " (" + account.AccountType + ", " + account.Currency + ")";
+                option.value = account.AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
-                    populateAssetTypeSelection(accountsResponseData[i].LegalAssetTypes);
+                    populateAssetTypeSelection(account.LegalAssetTypes);
                 }
                 settings.accountsList.add(option);
+                // Populate the account groups array as well
+                if (user.accountGroupKeys.indexOf(account.AccountGroupKey) === -1) {
+                    user.accountGroupKeys.push(account.AccountGroupKey);
+                }
             }
             settings.accountsList.addEventListener("change", function () {
                 user.accountKey = settings.accountsList.value;
@@ -166,16 +180,16 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                    case "1":
+                                    case "1":  // Response of GET /users/me
                                         user.culture = responseJson.Culture;
                                         user.language = responseJson.Language;
                                         break;
-                                    case "2":
+                                    case "2":  // Response of GET /clients/me
                                         user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                         user.clientKey = responseJson.ClientKey;
                                         user.name = responseJson.Name;
                                         break;
-                                    case "3":
+                                    case "3":  // Response of GET /accounts/me
                                         populateAccountSelection(responseJson.Data);
                                         break;
                                     }
@@ -302,7 +316,7 @@ function demonstrationHelper(settings) {
         settings.accessTokenElm.value = newAccessToken;
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
-            settings.retrieveTokenHref.href = authUrl + "?client_id=e081be34791f4c7eac479b769b96d623&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
+            settings.retrieveTokenHref.href = authUrl + "?client_id=" + implicitAppKey + "&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
         }
     }
 

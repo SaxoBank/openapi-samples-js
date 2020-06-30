@@ -357,7 +357,7 @@
         // https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=clientservices&service=trading%20conditions%20-%20contract%20option
         const optionRootId = document.getElementById("idInstrumentId").value;
         fetch(
-            demo.apiUrl + "/cs/v1/tradingconditions/ContractOptionSpaces/" + encodeURIComponent(demo.user.accountKey) + "/" + optionRootId + "/?FieldGroups=ScheduledTradingConditions",
+            demo.apiUrl + "/cs/v1/tradingconditions/ContractOptionSpaces/" + encodeURIComponent(demo.user.accountKey) + "/" + optionRootId + "?FieldGroups=ScheduledTradingConditions",
             {
                 "method": "GET",
                 "headers": {

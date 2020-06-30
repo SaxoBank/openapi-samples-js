@@ -59,11 +59,13 @@
 
     /**
      * Example of formatting positions in a portfolio.
+     * @param {string} url The URL to use for the request.
+     * @param {string} msg Text to display as comment, followed by the positions.
      * @return {void}
      */
-    function getPortfolio() {
+    function getPortfolio(url, msg) {
         fetch(
-            demo.apiUrl + "/port/v1/netpositions/?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            url,
             {
                 "method": "GET",
                 "headers": {
@@ -80,11 +82,11 @@
                         position = responseJson.Data[i];
                         list += position.NetPositionView.PositionCount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.AverageOpenPrice) + "\n";
                     }
-                    console.log(
+                    console.log(msg + "\n\n" + (
                         list === ""
-                        ? "No instruments found on this account."
+                        ? "No positions found."
                         : list
-                    );
+                    ));
                 });
             } else {
                 demo.processError(response);
@@ -95,12 +97,52 @@
     }
 
     /**
-     * Example of formatting pending orders.
+     * Example of getting all formatted positions for the your clientKey.
      * @return {void}
      */
-    function getOrders() {
+    function getPortfolioClient() {
+        getPortfolio(
+            demo.apiUrl + "/port/v1/netpositions?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey),
+            "All (netted) positions for client '" + demo.user.clientKey + "'"
+        );
+    }
+
+    /**
+     * Example of getting all formatted positions for your accountGroupKey.
+     * @return {void}
+     */
+    function getPortfolioAccountGroup() {
+        if (demo.user.accountGroupKeys[0] === demo.user.clientKey) {
+            console.error("AccountGroups are not enabled for this client.");
+        } else {
+            getPortfolio(
+                demo.apiUrl + "/port/v1/netpositions?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKeys[0]),
+                "All (netted) positions for your account group '" + demo.user.accountGroupKeys[0] + "'"
+            );
+        }
+    }
+
+    /**
+     * Example of getting all formatted positions for the selected account.
+     * @return {void}
+     */
+    function getPortfolioAccount() {
+        getPortfolio(
+            demo.apiUrl + "/port/v1/netpositions?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            "All (netted) positions for your account '" + demo.user.accountKey + "'"
+        );
+    }
+
+    /**
+     * Example of formatting pending orders.
+     * @param {string} url The URL to use for the request.
+     * @param {string} msg Text to display as comment, followed by the orders.
+     * @return {void}
+     */
+    function getOrders(url, msg) {
+        // Only open orders will be shown.
         fetch(
-            demo.apiUrl + "/port/v1/orders/?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            url,
             {
                 "method": "GET",
                 "headers": {
@@ -121,11 +163,11 @@
                             : ""
                         ) + "\n";
                     }
-                    console.log(
+                    console.log(msg + "\n\n" + (
                         list === ""
-                        ? "No orders found on this account."
+                        ? "No orders found."
                         : list
-                    );
+                    ));
                 });
             } else {
                 demo.processError(response);
@@ -135,11 +177,60 @@
         });
     }
 
-    document.getElementById("idBtnGetPortfolio").addEventListener("click", function () {
-        demo.run(getPortfolio, displayAndFormatValue);
+    /**
+     * Example of getting all formatted open orders for the your clientKey.
+     * @return {void}
+     */
+    function getOrdersClient() {
+        getOrders(
+            demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey),
+            "All open orders for client '" + demo.user.clientKey + "'"
+        );
+    }
+
+    /**
+     * Example of getting all formatted open orders for your accountGroupKey.
+     * @return {void}
+     */
+    function getOrdersAccountGroup() {
+        if (demo.user.accountGroupKeys[0] === demo.user.clientKey) {
+            console.error("AccountGroups are not enabled for this client.");
+        } else {
+            getOrders(
+                demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKeys[0]),
+                "All open orders for your account group '" + demo.user.accountGroupKeys[0] + "'"
+            );
+        }
+    }
+
+    /**
+     * Example of getting all formatted open orders for the selected account.
+     * @return {void}
+     */
+    function getOrdersAccount() {
+        getOrders(
+            demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            "All open orders for your account '" + demo.user.accountKey + "'"
+        );
+    }
+
+    document.getElementById("idBtnGetPortfolioClient").addEventListener("click", function () {
+        demo.run(getPortfolioClient, displayAndFormatValue);
     });
-    document.getElementById("idBtnGetOrders").addEventListener("click", function () {
-        demo.run(getOrders, displayAndFormatValue);
+    document.getElementById("idBtnGetPortfolioAccountGroup").addEventListener("click", function () {
+        demo.run(getPortfolioAccountGroup, displayAndFormatValue);
+    });
+    document.getElementById("idBtnGetPortfolioAccount").addEventListener("click", function () {
+        demo.run(getPortfolioAccount, displayAndFormatValue);
+    });
+    document.getElementById("idBtnGetOrdersClient").addEventListener("click", function () {
+        demo.run(getOrdersClient, displayAndFormatValue);
+    });
+    document.getElementById("idBtnGetOrdersAccountGroup").addEventListener("click", function () {
+        demo.run(getOrdersAccountGroup, displayAndFormatValue);
+    });
+    document.getElementById("idBtnGetOrdersAccount").addEventListener("click", function () {
+        demo.run(getOrdersAccount, displayAndFormatValue);
     });
     demo.displayVersion("port");
 }());

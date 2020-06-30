@@ -180,16 +180,16 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                    case "1":
+                                    case "1":  // Response of GET /users/me
                                         user.culture = responseJson.Culture;
                                         user.language = responseJson.Language;
                                         break;
-                                    case "2":
+                                    case "2":  // Response of GET /clients/me
                                         user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                         user.clientKey = responseJson.ClientKey;
                                         user.name = responseJson.Name;
                                         break;
-                                    case "3":
+                                    case "3":  // Response of GET /accounts/me
                                         populateAccountSelection(responseJson.Data);
                                         break;
                                     }

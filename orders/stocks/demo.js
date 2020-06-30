@@ -321,7 +321,7 @@
             : fictivePrice  // SIM doesn't allow calls to price endpoint for most instruments so just take something
         );
         fetch(
-            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/?Amount=" + newOrderObject.Amount + "&Price=" + price + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
+            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?Amount=" + newOrderObject.Amount + "&Price=" + price + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
             {
                 "method": "GET",
                 "headers": {
