@@ -153,14 +153,15 @@
     }
 
     /**
-     * This is an example of getting the series (option sheet) of an option root.
+     * This is an example of getting the series (option sheet, or option space) of an option root.
      * @return {void}
      */
     function getSeries() {
         const newOrderObject = getOrderObjectFromJson();
         const optionRootId = document.getElementById("idInstrumentId").value;
         fetch(
-            demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
+            // Don't filter on parameter "TradingStatus=Tradable", because many series have status "NotDefined"
+            demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates",
             {
                 "method": "GET",
                 "headers": {
@@ -172,10 +173,16 @@
                 response.json().then(function (responseJson) {
                     // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme. An example can be found in the function getConditions()
                     populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
-                    newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
-                    newOrderObject.AccountKey = demo.user.accountKey;
-                    document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                    console.log(JSON.stringify(responseJson, null, 4));
+                    if (responseJson.hasOwnProperty("OptionSpace")) {
+                        newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
+                        newOrderObject.AssetType = responseJson.AssetType;  // Can differ (StockOption, StockIndexOption)
+                        newOrderObject.AccountKey = demo.user.accountKey;
+                        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+                        console.log(JSON.stringify(responseJson, null, 4));
+                    } else {
+                        // This can happen when the filter is too strict!
+                        console.error("No option series found for this root. Are you filtering the results using TradingStatus?\n\n" + JSON.stringify(responseJson, null, 4));
+                    }
                 });
             } else {
                 demo.processError(response);
@@ -337,7 +344,7 @@
                         }
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
-                        console.error(JSON.stringify(responseJson, null, 4));
+                        console.error(JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
                     }
                 });
             } else {

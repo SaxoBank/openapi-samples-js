@@ -335,7 +335,7 @@
                         }
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
-                        console.error(JSON.stringify(responseJson, null, 4));
+                        console.error(JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
                     }
                 });
             } else {
