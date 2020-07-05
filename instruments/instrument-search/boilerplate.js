@@ -2,14 +2,14 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.09
+ * boilerplate v1.11
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
  * For demonstration the code which is executed, is shown in the code output.
  * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for an explanation.
  *
- * The token is stored in the session, so it remains available after a page refresh.
+ * The token is stored in the localeStorage, so it remains available after a page refresh.
  *
  * Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
  *
@@ -115,19 +115,26 @@ function demonstrationHelper(settings) {
          */
         function populateAccountSelection(accountsResponseData) {
             let i;
+            let account;
             let option;
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.remove(i);
             }
+            user.accountGroupKeys = [];
             for (i = 0; i < accountsResponseData.length; i += 1) {
+                account = accountsResponseData[i];
                 option = document.createElement("option");
-                option.text = accountsResponseData[i].AccountId + " (" + accountsResponseData[i].AccountType + ", " + accountsResponseData[i].Currency + ")";
-                option.value = accountsResponseData[i].AccountKey;
+                option.text = account.AccountId + " (" + account.AccountType + ", " + account.Currency + ")";
+                option.value = account.AccountKey;
                 if (option.value === user.accountKey) {
                     option.setAttribute("selected", true);
-                    populateAssetTypeSelection(accountsResponseData[i].LegalAssetTypes);
+                    populateAssetTypeSelection(account.LegalAssetTypes);
                 }
                 settings.accountsList.add(option);
+                // Populate the account groups array as well
+                if (user.accountGroupKeys.indexOf(account.AccountGroupKey) === -1) {
+                    user.accountGroupKeys.push(account.AccountGroupKey);
+                }
             }
             settings.accountsList.addEventListener("change", function () {
                 user.accountKey = settings.accountsList.value;
@@ -173,16 +180,16 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                    case "1":
+                                    case "1":  // Response of GET /users/me
                                         user.culture = responseJson.Culture;
                                         user.language = responseJson.Language;
                                         break;
-                                    case "2":
+                                    case "2":  // Response of GET /clients/me
                                         user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                         user.clientKey = responseJson.ClientKey;
                                         user.name = responseJson.Name;
                                         break;
-                                    case "3":
+                                    case "3":  // Response of GET /accounts/me
                                         populateAccountSelection(responseJson.Data);
                                         break;
                                     }
@@ -244,19 +251,33 @@ function demonstrationHelper(settings) {
         });
     }
 
-    const tokenKey = "saxosimtoken";
+    const tokenKey = "saxoBearerToken";
+
+    function getSecondsUntilExpiry(token) {
+        const now = new Date();
+        let payload;
+        try {
+            // The JWT contains an header, payload and checksum
+            // Payload is a base64 encoded JSON string
+            payload = JSON.parse(window.atob(token.split(".")[1]));
+            // An example about the different claims can be found here: authentication/token-explained/
+            return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
+        } catch (ignore) {
+            return 0;
+        }
+    }
 
     /**
-     * Remember token for this session, so it can be reused after a page refresh.
+     * Remember token, so it can be reused after a page refresh.
      * @param {string} token The token to be saved.
      * @return {void}
      */
     function saveToken(token) {
-        if (token.length > 20) {
+        if (getSecondsUntilExpiry(token) > 0) {
             try {
-                window.sessionStorage.setItem(tokenKey, token);
+                window.localStorage.setItem(tokenKey, token);
             } catch (ignore) {
-                console.error("Unable to remember token (session storage not supported).");
+                console.error("Unable to remember token (locale storage not supported).");
             }
         }
     }
@@ -296,17 +317,22 @@ function demonstrationHelper(settings) {
         const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
         const urlWithoutParams = location.protocol + "//" + location.host + location.pathname;
         let newAccessToken = urlParams.get("access_token");
+        let secondsUntilExpiry;
         if (newAccessToken === null) {
-            // Second, maybe the token is stored before a refresh or in a different sample?
+            // Second, maybe the token is stored before a refresh, or in a different sample?
             try {
-                newAccessToken = window.sessionStorage.getItem(tokenKey);
+                newAccessToken = window.localStorage.getItem(tokenKey);
             } catch (ignore) {
-                console.error("Session storage fails in this browser.");
+                console.error("Locale storage (used to remember the token) fails in this browser.");
             }
         } else {
             saveToken(newAccessToken);
         }
-        settings.accessTokenElm.value = newAccessToken;
+        secondsUntilExpiry = getSecondsUntilExpiry(newAccessToken);
+        if (secondsUntilExpiry > 0) {
+            settings.accessTokenElm.value = newAccessToken;
+            console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
+        }
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
             settings.retrieveTokenHref.href = authUrl + "?client_id=" + implicitAppKey + "&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
