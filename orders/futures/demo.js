@@ -402,7 +402,7 @@
         }
 
         function getAssumptions(assumptions) {
-            let result = "Assumptions:";
+            let result = "Assumption(s):";
             let i;
             for (i = 0; i < assumptions.length; i += 1) {
                 switch (assumptions[i]) {
