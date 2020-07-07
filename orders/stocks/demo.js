@@ -322,7 +322,7 @@
             return Math.round(Math.abs((targetDate - currentDate) / milliSecondsInOneDay));
         }
 
-        function getCostsForLeg(costs) {
+        function getCostsForLeg(holdingPeriodInDays, costs) {
             let result = "";
             let i;
             let item;
@@ -330,35 +330,62 @@
                 if (costs.TradingCost.hasOwnProperty("Commissions")) {
                     for (i = 0; i < costs.TradingCost.Commissions.length; i += 1) {
                         item = costs.TradingCost.Commissions[i];
-                        result += "\nCommission: " + item.Rule.Currency + " " + item.Value;
+                        result += "\nCommission: " + item.Rule.Currency + " " + item.Value + " (" + item.Pct + "%)";
                     }
                 }
                 if (costs.TradingCost.hasOwnProperty("Spread")) {  // FxSpot
-                    result += "\nSpread: " + costs.Currency + " " + costs.TradingCost.Spread.Value;  // TODO: What is this?
+                    result += "\nSpread: " + costs.Currency + " " + costs.TradingCost.Spread.Value + " (" + costs.TradingCost.Spread.Pct + "%)";
                 }
                 if (costs.TradingCost.hasOwnProperty("ExchangeFee")) {  // Futures
-                    result += "\nExchange fee: " + costs.TradingCost.ExchangeFee.Value;
+                    result += "\nExchange fee: " + costs.TradingCost.ExchangeFee.Value + " (" + costs.TradingCost.ExchangeFee.Pct + "%)";
                 }
             }
             if (costs.hasOwnProperty("FundCost")) {  // ETFs
                 if (costs.FundCost.hasOwnProperty("OnGoingCost")) {
-                    result += "\nOngoing costs: " + costs.Currency + " " + costs.FundCost.OnGoingCost.Value;
+                    result += "\nOngoing costs: " + costs.Currency + " " + costs.FundCost.OnGoingCost.Value + " (" + costs.FundCost.OnGoingCost.Pct + "%)";
                 }
             }
             if (costs.hasOwnProperty("HoldingCost")) {
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
                     for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
                         item = costs.HoldingCost.Tax[i];
-                        result += "\n" + item.Rule.Description + ": " + item.Value;  // TODO: Is this in the language of the customer?
+                        result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";  // TODO: Is this in the language of the customer?
                     }
                 }
                 if (costs.HoldingCost.hasOwnProperty("TomNext")) {
-                    result += "\nTom Next: " + costs.HoldingCost.TomNext.Value;  // TODO: What is this?
+                    result += "\nTom Next: " + costs.HoldingCost.TomNext.Value + " (" + costs.HoldingCost.TomNext.Pct + "%)";  // TODO: What is this?
                 }
             }
             if (costs.hasOwnProperty("TrailingCommission")) {
-                result += "\nTrailing Commission: " + costs.TrailingCommission.Value;  // TODO: What is this?
+                result += "\nTrailing Commission: " + costs.TrailingCommission.Value + " (" + costs.TrailingCommission.Pct + "%)";  // TODO: What is this?
             }
+            result += "\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + " (" + costs.TotalCostPct + "%)";
+            return result;
+        }
+
+        function getAssumptions(assumptions) {
+            let result = "Assumptions:";
+            let i;
+            for (i = 0; i < assumptions.length; i += 1) {
+                switch (assumptions[i]) {
+                    case "IncludesOpenAndCloseCost":
+                        result += "\n* Includes both open and close costs.";
+                        break;
+                    case "EquivalentOpenAndClosePrice":
+                        result += "\n* Open and close price are the same (P/L=0).";
+                        break;
+                    case "BasisOnLastClosePrice":
+                        result += "\n* Based on last close price.";
+                        break;
+                    case "InterbankChargesExcluded":
+                        result += "\n* Excludes interbank charges.";
+                        break;
+                    default:
+                        console.debug("Unsupported assumption code: " + assumptions[i]);
+                }
+            }
+            // Add generic assumption:
+            result += "\n* Any third party payments, investment service costs or financial instrument costs not listed above are 0 (0%). These can include one-off charges, ongoing charges, costs related to transactions, charges that are related to ancillary services and incidental costs.";
             return result;
         }
 
@@ -382,15 +409,16 @@
                 response.json().then(function (responseJson) {
                     let description = "";
                     if (responseJson.Cost.hasOwnProperty("Long")) {
-                        description += "Long costs:\n" + getCostsForLeg(responseJson.Cost.Long);
+                        description += "Long costs:" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Long);
                     }
                     if (responseJson.Cost.hasOwnProperty("Short")) {
                         if (description !== "") {
                             description += "\n\n";
                         }
-                        description += "Short costs:\n" + getCostsForLeg(responseJson.Cost.Short);
+                        description += "Short costs:" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Short);
                     }
-                    console.log("Costs for creating the position and close after one year:\n\n" + description + "\n\nReponse: " + JSON.stringify(responseJson, null, 4));
+                    description += "\n\n" + getAssumptions(responseJson.CostCalculationAssumptions);
+                    console.log(description + "\n\nReponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
