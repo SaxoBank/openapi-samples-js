@@ -375,7 +375,10 @@
                         result += "\n* Open and close price are the same (P/L=0).";
                         break;
                     case "BasisOnLastClosePrice":
-                        result += "\n* Based on last close price.";
+                        result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
+                        break;
+                    case "ConversionCostNotIncluded":
+                        result += "\n* Conversion costs are excluded.";
                         break;
                     case "InterbankChargesExcluded":
                         result += "\n* Excludes interbank charges.";
