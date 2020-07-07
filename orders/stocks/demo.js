@@ -313,6 +313,85 @@
      * @return {void}
      */
     function getOrderCosts() {
+
+        function getHoldingPeriod(yearsToHold) {
+            const currentDate = new Date();
+            const targetDate = new Date();
+            const millisecondsInOneDay = 1000 * 60 * 60 * 24;
+            targetDate.setFullYear(targetDate.getFullYear() + yearsToHold);
+            return Math.round(Math.abs((targetDate - currentDate) / millisecondsInOneDay));
+        }
+
+        function getCostsForLeg(holdingPeriodInDays, costs) {
+            let result = "";
+            let i;
+            let item;
+            if (costs.hasOwnProperty("TradingCost")) {
+                if (costs.TradingCost.hasOwnProperty("Commissions")) {
+                    for (i = 0; i < costs.TradingCost.Commissions.length; i += 1) {
+                        item = costs.TradingCost.Commissions[i];
+                        result += "\nCommission: " + item.Rule.Currency + " " + item.Value + " (" + item.Pct + "%)";
+                    }
+                }
+                if (costs.TradingCost.hasOwnProperty("Spread")) {  // FxSpot
+                    result += "\nSpread: " + costs.Currency + " " + costs.TradingCost.Spread.Value + " (" + costs.TradingCost.Spread.Pct + "%)";
+                }
+                if (costs.TradingCost.hasOwnProperty("ExchangeFee")) {  // Futures
+                    result += "\nExchange fee: " + costs.TradingCost.ExchangeFee.Value + " (" + costs.TradingCost.ExchangeFee.Pct + "%)";
+                }
+            }
+            if (costs.hasOwnProperty("FundCost")) {  // ETFs
+                if (costs.FundCost.hasOwnProperty("OnGoingCost")) {
+                    result += "\nOngoing costs: " + costs.Currency + " " + costs.FundCost.OnGoingCost.Value + " (" + costs.FundCost.OnGoingCost.Pct + "%)";
+                }
+            }
+            if (costs.hasOwnProperty("HoldingCost")) {
+                if (costs.HoldingCost.hasOwnProperty("Tax")) {
+                    for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
+                        item = costs.HoldingCost.Tax[i];
+                        result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";
+                    }
+                }
+                if (costs.HoldingCost.hasOwnProperty("TomNext")) {
+                    result += "\nTom Next: " + costs.HoldingCost.TomNext.Value + " (" + costs.HoldingCost.TomNext.Pct + "%)";
+                }
+            }
+            if (costs.hasOwnProperty("TrailingCommission")) {
+                result += "\nTrailing Commission: " + costs.TrailingCommission.Value + " (" + costs.TrailingCommission.Pct + "%)";
+            }
+            result += "\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + " (" + costs.TotalCostPct + "%)";
+            return result;
+        }
+
+        function getAssumptions(assumptions) {
+            let result = "Assumptions:";
+            let i;
+            for (i = 0; i < assumptions.length; i += 1) {
+                switch (assumptions[i]) {
+                case "IncludesOpenAndCloseCost":
+                    result += "\n* Includes both open and close costs.";
+                    break;
+                case "EquivalentOpenAndClosePrice":
+                    result += "\n* Open and close price are the same (P/L=0).";
+                    break;
+                case "BasisOnLastClosePrice":
+                    result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
+                    break;
+                case "ConversionCostNotIncluded":
+                    result += "\n* Conversion costs are excluded.";
+                    break;
+                case "InterbankChargesExcluded":
+                    result += "\n* Excludes interbank charges.";
+                    break;
+                default:
+                    console.debug("Unsupported assumption code: " + assumptions[i]);
+                }
+            }
+            // Add generic assumption:
+            result += "\n* Any third party payments, investment service costs or financial instrument costs not listed above are 0 (0%). These can include one-off charges, ongoing charges, costs related to transactions, charges that are related to ancillary services and incidental costs.";
+            return result;
+        }
+
         // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
         const newOrderObject = getOrderObjectFromJson();
         const price = (
@@ -321,7 +400,7 @@
             : fictivePrice  // SIM doesn't allow calls to price endpoint for most instruments so just take something
         );
         fetch(
-            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?Amount=" + newOrderObject.Amount + "&Price=" + price + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=365",
+            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?Amount=" + newOrderObject.Amount + "&Price=" + price + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=" + getHoldingPeriod(1),
             {
                 "method": "GET",
                 "headers": {
@@ -331,7 +410,18 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(JSON.stringify(responseJson, null, 4));
+                    let description = "";
+                    if (responseJson.Cost.hasOwnProperty("Long")) {
+                        description += "Long costs:" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Long);
+                    }
+                    if (responseJson.Cost.hasOwnProperty("Short")) {
+                        if (description !== "") {
+                            description += "\n\n";
+                        }
+                        description += "Short costs:" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Short);
+                    }
+                    description += "\n\n" + getAssumptions(responseJson.CostCalculationAssumptions);
+                    console.log(description + "\n\nReponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
