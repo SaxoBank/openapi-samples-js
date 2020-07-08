@@ -57,13 +57,13 @@
             description = JSON.stringify(payload, null, 4);
             description += "\n\nClaims:\nOpenApi Access: " + payload.oaa;
             description += "\nIssuer: " + payload.iss;
+            description += "\nIssuer is Saxobank App: " + payload.isa;
             description += "\nApplication ID: " + payload.aid;
+            description += "\nDataGroup ID (app type): " + payload.dgi;
             description += "\nUserKey: " + payload.uid;
             description += "\nClientKey: " + payload.cid;
-            description += "\nISA??: " + payload.isa;
-            description += "\nTID??: " + payload.tid;
+            description += "\nTool ID: " + payload.tid;
             description += "\nSession ID: " + payload.sid;
-            description += "\nDGI??: " + payload.dgi;
             time = new Date(payload.exp * 1000);
             secondsUntilExp = getSecondsUntilExpiration(payload.exp);
             description += "\nExpiration Time: " + time.toLocaleDateString() + " " + time.toLocaleTimeString() + " (" + (
