@@ -317,9 +317,9 @@
         function getHoldingPeriod(yearsToHold) {
             const currentDate = new Date();
             const targetDate = new Date();
-            const milliSecondsInOneDay = 1000 * 60 * 60 * 24;
+            const millisecondsInOneDay = 1000 * 60 * 60 * 24;
             targetDate.setFullYear(targetDate.getFullYear() + yearsToHold);
-            return Math.round(Math.abs((targetDate - currentDate) / milliSecondsInOneDay));
+            return Math.round(Math.abs((targetDate - currentDate) / millisecondsInOneDay));
         }
 
         function getCostsForLeg(holdingPeriodInDays, costs) {
@@ -349,42 +349,42 @@
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
                     for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
                         item = costs.HoldingCost.Tax[i];
-                        result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";  // TODO: Is this in the language of the customer?
+                        result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";
                     }
                 }
                 if (costs.HoldingCost.hasOwnProperty("TomNext")) {
-                    result += "\nTom Next: " + costs.HoldingCost.TomNext.Value + " (" + costs.HoldingCost.TomNext.Pct + "%)";  // TODO: What is this?
+                    result += "\nTom Next: " + costs.HoldingCost.TomNext.Value + " (" + costs.HoldingCost.TomNext.Pct + "%)";
                 }
             }
             if (costs.hasOwnProperty("TrailingCommission")) {
-                result += "\nTrailing Commission: " + costs.TrailingCommission.Value + " (" + costs.TrailingCommission.Pct + "%)";  // TODO: What is this?
+                result += "\nTrailing Commission: " + costs.TrailingCommission.Value + " (" + costs.TrailingCommission.Pct + "%)";
             }
             result += "\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + " (" + costs.TotalCostPct + "%)";
             return result;
         }
 
         function getAssumptions(assumptions) {
-            let result = "Assumptions:";
+            let result = "Assumption(s):";
             let i;
             for (i = 0; i < assumptions.length; i += 1) {
                 switch (assumptions[i]) {
-                    case "IncludesOpenAndCloseCost":
-                        result += "\n* Includes both open and close costs.";
-                        break;
-                    case "EquivalentOpenAndClosePrice":
-                        result += "\n* Open and close price are the same (P/L=0).";
-                        break;
-                    case "BasisOnLastClosePrice":
-                        result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
-                        break;
-                    case "ConversionCostNotIncluded":
-                        result += "\n* Conversion costs are excluded.";
-                        break;
-                    case "InterbankChargesExcluded":
-                        result += "\n* Excludes interbank charges.";
-                        break;
-                    default:
-                        console.debug("Unsupported assumption code: " + assumptions[i]);
+                case "IncludesOpenAndCloseCost":
+                    result += "\n* Includes both open and close costs.";
+                    break;
+                case "EquivalentOpenAndClosePrice":
+                    result += "\n* Open and close price are the same (P/L=0).";
+                    break;
+                case "BasisOnLastClosePrice":
+                    result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
+                    break;
+                case "ConversionCostNotIncluded":
+                    result += "\n* Conversion costs are excluded.";
+                    break;
+                case "InterbankChargesExcluded":
+                    result += "\n* Excludes interbank charges.";
+                    break;
+                default:
+                    console.debug("Unsupported assumption code: " + assumptions[i]);
                 }
             }
             // Add generic assumption:
