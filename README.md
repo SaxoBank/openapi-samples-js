@@ -14,6 +14,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [OAuth2 Code Flow example](authentication/oauth2-code-flow)
    - [OAuth2 Implicit Flow example](authentication/oauth2-implicit-flow)
    - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
+   - [Claims in Jwt Token](authentication/token-explained/)
 2. Basics
    - [Get user info](basics/user-info)
    - [Query options $top, $skip and \_\_next](basics/query-options)
