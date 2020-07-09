@@ -83,12 +83,11 @@
      */
     function verify() {
         let jwt;
-        let payload;
+        let description;
         try {
             jwt = document.getElementById("idBearerToken").value.split(".");
-            payload = JSON.parse(window.atob(jwt[2]));
-            alg = payload.alg;
-            console.log(JSON.stringify(payload, null, 4));
+            description = "Verification of the claims is done in the backend. The signature is used to verify the message wasn't changed along the way, and it can also verify that the sender of the JWT is who it says it is.\n\nThe signature is compared with the hash of both header and payload.\ECDSASHA256(" + jwt[0] + "." + jwt[1] + ", publicKey, privateKey)\n==\n" + jwt[2];
+            console.log(description);
         } catch (e) {
             console.error(e);
         }
