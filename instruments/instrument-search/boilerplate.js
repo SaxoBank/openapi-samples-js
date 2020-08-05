@@ -2,7 +2,7 @@
 /*global console URLSearchParams */
 
 /*
- * boilerplate v1.11
+ * boilerplate v1.12
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -25,7 +25,8 @@ function demonstrationHelper(settings) {
     const apiPath = "/sim/openapi";  // On production this is "/openapi"
     const apiUrl = "https://" + apiHost + apiPath;
     const authUrl = "https://sim.logonvalidation.net/authorize";  // On production this is https://live.logonvalidation.net/authorize
-    const implicitAppKey = "e081be34791f4c7eac479b769b96d623";  // No need to create your own app, unless you want to test on a different environment than SIM
+    const implicitAppKeyDefaultAssetTypes = "e081be34791f4c7eac479b769b96d623";  // No need to create your own app, unless you want to test on a different environment than SIM
+    const implicitAppKeyExtendedAssetTypes = "877130df4a954b60860088dc00d56bda";  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
     const user = {};
 
     /**
@@ -315,7 +316,7 @@ function demonstrationHelper(settings) {
     function tryToGetToken() {
         // First, maybe the token is supplied in the URL?
         const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
-        const urlWithoutParams = location.protocol + "//" + location.host + location.pathname;
+        let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
         let newAccessToken = urlParams.get("access_token");
         let secondsUntilExpiry;
         if (newAccessToken === null) {
@@ -335,7 +336,9 @@ function demonstrationHelper(settings) {
         }
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
-            settings.retrieveTokenHref.href = authUrl + "?client_id=" + implicitAppKey + "&response_type=token&redirect_uri=" + encodeURIComponent(urlWithoutParams);
+            // Change the URL, to give the option to use Extended AssetTypes
+            urlWithoutParams = authUrl + "?response_type=token&state=" + window.btoa(window.location.pathname) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            document.getElementById("idLblGetToken").innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyDefaultAssetTypes + "\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyExtendedAssetTypes + "\">app with Extended AssetTypes</a> to the box below:";
         }
     }
 

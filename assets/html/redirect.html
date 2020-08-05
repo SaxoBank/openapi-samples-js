@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <title>Redirect</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Redirecting..</h1>
+<h2 id="idRedirectUrl" class="project-tagline">&nbsp;</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+
+<script type="text/javascript">
+    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+    const redirectPath = window.atob(urlParams.get("state"));  // Get this by using window.location.pathname
+    const newRedirect = window.location.protocol + "//" + window.location.host + redirectPath;
+    document.getElementById("idRedirectUrl").innerText = "..to " + newRedirect;
+    window.location.replace(newRedirect + window.location.hash);
+</script>
+
+</body>
+</html>
