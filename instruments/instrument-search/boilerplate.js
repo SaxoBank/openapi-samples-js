@@ -338,7 +338,12 @@ function demonstrationHelper(settings) {
             // We can probably use the Implicit Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
             urlWithoutParams = authUrl + "?response_type=token&state=" + window.btoa(window.location.pathname) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
-            document.getElementById("idLblGetToken").innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyDefaultAssetTypes + "\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyExtendedAssetTypes + "\">app with Extended AssetTypes</a> to the box below:";
+            if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
+                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyDefaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyExtendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
+            } else {
+                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + implicitAppKeyDefaultAssetTypes;
+                settings.retrieveTokenHref.target = "_self";  // Back to default
+            }
         }
     }
 
