@@ -4,6 +4,7 @@
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
+        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -159,7 +160,11 @@
                         order = responseJson.Data[i];
                         list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price) + " (status " + order.Status + ")" + (
                             order.hasOwnProperty("ExternalReference")
-                            ? " reference=" + order.ExternalReference
+                            ? " reference: " + order.ExternalReference
+                            : ""
+                        ) + (
+                            order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
+                            ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
                     }
