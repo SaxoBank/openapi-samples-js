@@ -433,11 +433,148 @@
     }
 
     /**
-     * This is an example of getting the Key Information Document of this instrument.
+     * This is an example of getting the Key Investor Information Document(s) of this instrument.
      * @return {void}
      */
     function getKid() {
-        console.error("KID is not implemented yet.");
+
+        /**
+         * Sort the documents based on the language. Native over English over others.
+         * @param {Object} a Element a.
+         * @param {Object} b Element b.
+         * @return {void}
+         */
+        function sortDocumentDetails(a, b) {
+            // The language of the user comes first.
+            if (a.LanguageCode === demo.user.language) {
+                return -1;
+            }
+            if (b.LanguageCode === demo.user.language) {
+                return 1;
+            }
+            // Second language is English.
+            if (a.LanguageCode === "en") {
+                return -1;
+            }
+            if (b.LanguageCode === "en") {
+                return 1;
+            }
+            return 0;
+        }
+
+        /**
+         * Download a file and give it a name. Source: https://stackoverflow.com/a/48968694.
+         * @param {Object} blob The downloaded blob from the response.
+         * @param {string} fileName The file name to use.
+         * @return {void}
+         */
+        function saveFile(blob, fileName) {
+            if (window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, fileName);  // IE, Edge
+            } else {
+                const a = document.createElement("a");
+                const downloadUrl = window.URL.createObjectURL(blob);
+                document.body.appendChild(a);
+                a.href = downloadUrl;
+                a.download = fileName;
+                a.click();
+                setTimeout(function () {
+                    window.URL.revokeObjectURL(downloadUrl);  // Release memory
+                    document.body.removeChild(a);
+                }, 100);
+            }
+        }
+
+        /**
+         * If an applicable file exists, download it.
+         * @param {string} uic The Uic if the instrument.
+         * @param {string} assetType The AssetType.
+         * @param {string} documentType The DocumentType.
+         * @param {string} language The language of the KIID.
+         * @return {void}
+         */
+        function downloadDocument(uic, assetType, documentType, language) {
+            if (window.confirm("Do you want to download the Key Information Document of this instrument (" + language + ")?")) {
+                fetch(
+                    demo.apiUrl + "/mkt/v1/instruments/" + uic + "/" + assetType + "/documents/pdf?DocumentType=" + documentType + "&LanguageCode=" + language,
+                    {
+                        "method": "GET",
+                        "headers": {
+                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                        }
+                    }
+                ).then(function (response) {
+                    if (response.ok) {
+                        response.blob().then(function (responseBlob) {
+                            saveFile(responseBlob, "KIID-" + language + ".pdf");
+                        });
+                    } else {
+                        demo.processError(response);
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                });
+            }
+        }
+
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/mkt/v1/instruments/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/documents/recommended?DocumentType=KIIDs,PRIIP_KIDs",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let i;
+                    let isDocumentFoundInLanguageOfUser = false;
+                    let isDocumentFoundInEnglish = false;
+                    let documentType;
+                    console.log(JSON.stringify(responseJson, null, 4));
+                    /*
+                     * On SIM, there are no documents available so request return 404. On production, a typical response for an Etf is this:
+                     *
+                     * {"DocumentDetails":[{"DocumentDateTime":"2020-07-23T13:21:17.000000Z","DocumentRelationId":98491,"DocumentType":"KIIDs","LanguageCode":"fr"}]}
+                     *
+                     */
+                    // Sort the response. KIIDs have priority over PRIIP_KIDs, customer language over English.
+                    responseJson.DocumentDetails.sort(sortDocumentDetails);
+                    // Download the documents
+                    for (i = 0; i < responseJson.DocumentDetails.length; i += 1) {
+                        if (responseJson.DocumentDetails[i].LanguageCode === demo.user.language) {
+                            // It is important to only show documents in the language of the customer
+                            isDocumentFoundInLanguageOfUser = true;
+                            documentType = responseJson.DocumentDetails[i].DocumentType;
+                            break;
+                        }
+                        if (responseJson.DocumentDetails[i].LanguageCode === "en") {
+                            isDocumentFoundInEnglish = true;
+                            documentType = responseJson.DocumentDetails[i].DocumentType;
+                        }
+                    }
+                    if (isDocumentFoundInLanguageOfUser) {
+                        downloadDocument(newOrderObject.Uic, newOrderObject.AssetType, documentType, demo.user.language);
+                    } else if (isDocumentFoundInEnglish) {
+                        downloadDocument(newOrderObject.Uic, newOrderObject.AssetType, documentType, "en");
+                    } else if (responseJson.DocumentDetails.length > 0) {
+                        // Only for testing. Don't show KIIDs in foreign languages to customers.
+                        downloadDocument(newOrderObject.Uic, newOrderObject.AssetType, "KIIDs", responseJson.DocumentDetails[0].LanguageCode);
+                    }
+                });
+            } else {
+                if (response.status === 404) {
+                    // This is not really an error, there is just no document available in the language of the customer
+                    console.log("There is no KID available for this instrument.");
+                } else {
+                    demo.processError(response);
+                }
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**

@@ -23,7 +23,7 @@
     function getReport(url, fileName, acceptHeader) {
 
         /**
-         * Download a file and give it a name. Source: https://stackoverflow.com/a/48968694
+         * Download a file and give it a name. Source: https://stackoverflow.com/a/48968694.
          * @param {Object} blob The downloaded blob from the response.
          * @return {void}
          */
