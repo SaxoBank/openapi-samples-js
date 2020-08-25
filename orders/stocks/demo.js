@@ -511,10 +511,9 @@
                     let fileName;
                     console.log(JSON.stringify(responseJson, null, 4));
                     /*
-                     * On SIM, there are no documents available so request return 404. On production, a typical response for an Etf is this:
-                     *
+                     * On SIM, there are no documents available so request returns a 404. On production, a typical response for an Etf is this:
                      * {"DocumentDetails":[{"DocumentDateTime":"2020-07-23T13:21:17.000000Z","DocumentRelationId":98491,"DocumentType":"KIIDs","LanguageCode":"fr"}]}
-                     *
+                     * Etfs have KIIDs, derivatives PRIIPS_KIIDs.
                      */
                     // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
                     // Give option to download all the documents, if any:
@@ -530,8 +529,8 @@
                 });
             } else {
                 if (response.status === 404) {
-                    // This is not really an error, there is just no document available in the language of the customer
-                    console.log("There is no KID available for this instrument.");
+                    // This is not really an error, there is just no document available in the language of the customer, or for this AssetType.
+                    console.log("There is no KID available for this instrument. Be aware that KIDs are only available on Live.");
                 } else {
                     demo.processError(response);
                 }

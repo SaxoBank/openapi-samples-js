@@ -471,6 +471,114 @@
     }
 
     /**
+     * This is an example of getting the Key Investor Information Document(s) of this instrument.
+     * @return {void}
+     */
+    function getKid() {
+
+        /**
+         * Download a file and give it a name. Source: https://stackoverflow.com/a/48968694.
+         * @param {Object} blob The downloaded blob from the response.
+         * @param {string} fileName The file name to use.
+         * @return {void}
+         */
+        function saveFile(blob, fileName) {
+            if (window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, fileName);  // IE, Edge
+            } else {
+                const a = document.createElement("a");
+                const downloadUrl = window.URL.createObjectURL(blob);
+                document.body.appendChild(a);
+                a.href = downloadUrl;
+                a.download = fileName;
+                a.click();
+                setTimeout(function () {
+                    window.URL.revokeObjectURL(downloadUrl);  // Release memory
+                    document.body.removeChild(a);
+                }, 100);
+            }
+        }
+
+        /**
+         * If an applicable file exists, download it.
+         * @param {string} uic The Uic if the instrument.
+         * @param {string} assetType The AssetType.
+         * @param {string} documentType The DocumentType.
+         * @param {string} language The language of the KIID.
+         * @param {string} fileName The file name to use for the download, including extension.
+         * @return {void}
+         */
+        function downloadDocument(uic, assetType, documentType, language, fileName) {
+            // Workaround. This problem is about to be fixed by Saxo.
+            documentType = documentType.replace(" ", "_");
+            fetch(
+                demo.apiUrl + "/mkt/v1/instruments/" + uic + "/" + assetType + "/documents/pdf?DocumentType=" + documentType + "&LanguageCode=" + language,
+                {
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    }
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.blob().then(function (responseBlob) {
+                        saveFile(responseBlob, fileName);
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/mkt/v1/instruments/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/documents/recommended?DocumentType=" + encodeURIComponent("KIIDs,PRIIP_KIDs"),  // Request both KIIDs and PRIIP KIDs
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let i;
+                    let documentDetail;
+                    let fileName;
+                    console.log(JSON.stringify(responseJson, null, 4));
+                    /*
+                     * On SIM, there are no documents available so request returns a 404. On production, a typical response for an Etf is this:
+                     * {"DocumentDetails":[{"DocumentDateTime":"2020-07-23T13:21:17.000000Z","DocumentRelationId":98491,"DocumentType":"KIIDs","LanguageCode":"fr"}]}
+                     * Etfs have KIIDs, derivatives PRIIPS_KIIDs.
+                     */
+                    // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
+                    // Give option to download all the documents, if any:
+                    for (i = 0; i < responseJson.DocumentDetails.length; i += 1) {
+                        documentDetail = responseJson.DocumentDetails[i];
+                        // Note that DocumentTypes might have different translations, like "EID" in the Netherlands (https://www.afm.nl/nl-nl/consumenten/themas/advies/verplichte-info/eid).
+                        // This means that you might consider a different file name, for example including the instrument name.
+                        fileName = newOrderObject.Uic + "_" + newOrderObject.AssetType + "_" + documentDetail.DocumentType + "_(" + documentDetail.LanguageCode + ").pdf";
+                        if (window.confirm("Do you want to download " + fileName + "?")) {
+                            downloadDocument(newOrderObject.Uic, newOrderObject.AssetType, documentDetail.DocumentType, documentDetail.LanguageCode, fileName);
+                        }
+                    }
+                });
+            } else {
+                if (response.status === 404) {
+                    // This is not really an error, there is just no document available in the language of the customer, or for this AssetType.
+                    console.log("There is no KID available for this instrument. Be aware that KIDs are only available on Live.");
+                } else {
+                    demo.processError(response);
+                }
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of placing a single leg order.
      * @return {void}
      */
@@ -594,6 +702,9 @@
     });
     document.getElementById("idBtnGetOrderCosts").addEventListener("click", function () {
         demo.run(getOrderCosts);
+    });
+    document.getElementById("idBtnGetKid").addEventListener("click", function () {
+        demo.run(getKid);
     });
     document.getElementById("idBtnPlaceNewOrder").addEventListener("click", function () {
         demo.run(placeNewOrder);
