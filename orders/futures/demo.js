@@ -232,7 +232,7 @@
         function checkMinimumOrderValue(orderObject, detailsObject) {
             const price = (
                 orderObject.hasOwnProperty("OrderPrice")
-                    ? orderObject.OrderPrice
+                ? orderObject.OrderPrice
                 : fictivePrice  // SIM doesn't allow calls to price endpoint for most instruments so just take something
             );
             if (orderObject.Amount * price < detailsObject.MinimumOrderValue) {
@@ -353,6 +353,11 @@
      */
     function getOrderCosts() {
 
+        /**
+         * Convert the holding period from years to days.
+         * @param {number} yearsToHold The number of years to keep the investment.
+         * @return {number} The number of days.
+         */
         function getHoldingPeriod(yearsToHold) {
             const currentDate = new Date();
             const targetDate = new Date();
@@ -361,6 +366,12 @@
             return Math.round(Math.abs((targetDate - currentDate) / millisecondsInOneDay));
         }
 
+        /**
+         * Convert the holding period from years to days.
+         * @param {number} holdingPeriodInDays The number of days to keep the investment.
+         * @param {Object} costs The costs part from the response.
+         * @return {string} The text to display.
+         */
         function getCostsForLeg(holdingPeriodInDays, costs) {
             let result = "";
             let i;
@@ -369,14 +380,22 @@
                 if (costs.TradingCost.hasOwnProperty("Commissions")) {
                     for (i = 0; i < costs.TradingCost.Commissions.length; i += 1) {
                         item = costs.TradingCost.Commissions[i];
-                        result += "\nCommission: " + item.Rule.Currency + " " + item.Value + " (" + item.Pct + "%)";
+                        result += "\nCommission: " + item.Rule.Currency + " " + item.Value + (
+                            item.hasOwnProperty("Pct")
+                            ? " (" + item.Pct + "%)"
+                            : ""
+                        );
                     }
                 }
                 if (costs.TradingCost.hasOwnProperty("Spread")) {  // FxSpot
                     result += "\nSpread: " + costs.Currency + " " + costs.TradingCost.Spread.Value + " (" + costs.TradingCost.Spread.Pct + "%)";
                 }
                 if (costs.TradingCost.hasOwnProperty("ExchangeFee")) {  // Futures
-                    result += "\nExchange fee: " + costs.TradingCost.ExchangeFee.Value + " (" + costs.TradingCost.ExchangeFee.Pct + "%)";
+                    result += "\nExchange fee: " + costs.TradingCost.ExchangeFee.Value + (
+                        costs.TradingCost.ExchangeFee.hasOwnProperty("Pct")
+                        ? " (" + costs.TradingCost.ExchangeFee.Pct + "%)"
+                        : ""
+                    );
                 }
             }
             if (costs.hasOwnProperty("FundCost")) {  // ETFs
@@ -398,10 +417,19 @@
             if (costs.hasOwnProperty("TrailingCommission")) {
                 result += "\nTrailing Commission: " + costs.TrailingCommission.Value + " (" + costs.TrailingCommission.Pct + "%)";
             }
-            result += "\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + " (" + costs.TotalCostPct + "%)";
+            result += "\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + (
+                costs.hasOwnProperty("TotalCostPct")
+                ? " (" + costs.TotalCostPct + "%)"
+                : ""
+            );
             return result;
         }
 
+        /**
+         * The costs calculation is based on assumptions. These are part of the response, and must be shown to the customer.
+         * @param {Array<string>} assumptions The assumptions part of the response.
+         * @return {string} The assumptions.
+         */
         function getAssumptions(assumptions) {
             let result = "Assumption(s):";
             let i;
@@ -551,7 +579,7 @@
                     /*
                      * On SIM, there are no documents available so request returns a 404. On production, a typical response for an Etf is this:
                      * {"DocumentDetails":[{"DocumentDateTime":"2020-07-23T13:21:17.000000Z","DocumentRelationId":98491,"DocumentType":"KIIDs","LanguageCode":"fr"}]}
-                     * Etfs have KIIDs, derivatives PRIIPS_KIIDs.
+                     * Etfs have KIIDs, derivatives PRIIP_KIDs.
                      */
                     // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
                     // Give option to download all the documents, if any:
