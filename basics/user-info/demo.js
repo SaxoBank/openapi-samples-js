@@ -45,6 +45,35 @@
     }
 
     /**
+     * Request the client information.
+     * @return {void}
+     */
+    function getClient() {
+        fetch(
+            demo.apiUrl + "/port/v1/clients/me",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const rep = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    // The default account can be used for the initial population of the screen.
+                    console.log("Found client with default accountKey " + responseJson.DefaultAccountKey + "." + req + rep);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * Request the accounts of this user.
      * @return {void}
      */
@@ -110,6 +139,9 @@
 
     document.getElementById("idBtnGetUser").addEventListener("click", function () {
         demo.run(getUser);
+    });
+    document.getElementById("idBtnGetClient").addEventListener("click", function () {
+        demo.run(getClient);
     });
     document.getElementById("idBtnGetAccounts").addEventListener("click", function () {
         demo.run(getAccounts);
