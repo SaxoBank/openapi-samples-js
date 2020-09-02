@@ -9,6 +9,13 @@
  * clientSecret: The secret which gives access to the API (Client Secret)
  * tokenEndpoint: The URL of the authentication provider (https://www.developer.saxo/openapi/learn/environments)
  *
+ * IMPORTANT NOTICE:
+ * The following credentials give access to SIM, if the redirect URL is http://localhost:1337/ (NodeJs example) and
+ * http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/ (PHP example).
+ * If you want to use your own redirect URL, you must create your own Code Flow application:
+ * https://www.developer.saxo/openapi/appmanagement.
+ * And needless to say, when you have an app for Live, don't publish the credentials on Github!
+ *
  */
 
 // Configuration for SIM:
