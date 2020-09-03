@@ -1,5 +1,10 @@
 /*jslint this: true, browser: true, for: true, long: true, bitwise: true */
-/*global window console WebSocket demonstrationHelper ParserProtobuf protobuf */
+/*global window console demonstrationHelper ParserProtobuf protobuf */
+
+/**
+ * Follows WebSocket behaviour defined by spec:
+ * https://html.spec.whatwg.org/multipage/web-sockets.html
+ */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
@@ -17,6 +22,19 @@
     let connection;
 
     /**
+     * Test if the browser supports the features required for websockets.
+     * @return {boolean} True when the features are available.
+     */
+    function isWebSocketsSupportedByBrowser() {
+        return (
+            Boolean(window.WebSocket) &&
+            Boolean(window.Int8Array) &&
+            Boolean(window.Uint8Array) &&
+            Boolean(window.TextDecoder)
+        );
+    }
+
+    /**
      * This is an example of constructing the websocket connection.
      * @return {void}
      */
@@ -24,12 +42,16 @@
         const accessToken = document.getElementById("idBearerToken").value;
         const contextId = encodeURIComponent(document.getElementById("idContextId").value);
         const streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+        if (!isWebSocketsSupportedByBrowser()) {
+            console.error("This browser doesn't support WebSockets.");
+            throw "This browser doesn't support WebSockets.";
+        }
         if (contextId !== document.getElementById("idContextId").value) {
             console.error("Invalid characters in Context ID.");
             throw "Invalid characters in Context ID.";
         }
         try {
-            connection = new WebSocket(streamerUrl);
+            connection = new window.WebSocket(streamerUrl);
             connection.binaryType = "arraybuffer";
             console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
             // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
@@ -44,6 +66,7 @@
      * @return {void}
      */
     function startListener() {
+        const utf8Decoder = new window.TextDecoder();
 
         /**
          * Creates a Long from its little endian byte representation (function is part of long.js - https://github.com/dcodeIO/long.js).
@@ -60,29 +83,6 @@
                 return (high >>> 0) * twoPwr32Dbl + (low >>> 0);
             }
             return high * twoPwr32Dbl + (low >>> 0);
-        }
-
-        /**
-         * Divide the buffer in chunks of 1K, to prevent a stack overflow exception for big buffers.
-         * @param {Object} payloadBuffer The payload buffer
-         * @returns {Object} Returns an array with all incoming messages of the frame
-         */
-        function getJsonPayloadString(payloadBuffer) {
-            // Optimal number is used for chunk size instead of max. call stack size, since logic to get max. call stack size is expensive
-            // and might not work correctly with older browsers, leading to crash.
-            // Normally the buffer fits within one chunk
-            const chunkSize = 1000;
-            const chunks = Math.ceil(payloadBuffer.byteLength / chunkSize);
-            let payload = "";
-            let chunkIndex = 0;
-            while (chunkIndex < chunks) {
-                payload += String.fromCharCode.apply(
-                    null,
-                    new Uint8Array(payloadBuffer.slice(chunkIndex * chunkSize, (chunkIndex + 1) * chunkSize))
-                );
-                chunkIndex += 1;
-            }
-            return payload;
         }
 
         /**
@@ -108,7 +108,7 @@
                  * The message identifier is used by clients when reconnecting. It may not be a sequence number and no interpretation
                  * of its meaning should be attempted at the client.
                  */
-                messageId = fromBytesLe(new Uint8Array(data, index, 8));
+                messageId = fromBytesLe(new window.Uint8Array(data, index, 8));
                 index += 8;
                 /* Version number (2 bytes)
                  * Ignored in this example. Get it using 'messageEnvelopeVersion = message.getInt16(index)'.
@@ -123,7 +123,7 @@
                  * ASCII encoded reference id for identifying the subscription associated with the message.
                  * The reference id identifies the source subscription, or type of control message (like '_heartbeat').
                  */
-                referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
+                referenceIdBuffer = new window.Int8Array(data, index, referenceIdSize);
                 referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
                 index += referenceIdSize;
                 /* Payload format (1 byte)
@@ -144,20 +144,20 @@
                  * Binary message payload with the size indicated by the payload size field.
                  * The interpretation of the payload depends on the message format field.
                  */
-                payloadBuffer = data.slice(index, index + payloadSize);
+                payloadBuffer = new window.Uint8Array(data, index, payloadSize);
                 payload = null;
                 switch (payloadFormat) {
                 case 0:
-                    // Json
+                    // JSON
                     try {
-                        payload = JSON.parse(getJsonPayloadString(payloadBuffer));
+                        payload = JSON.parse(utf8Decoder.decode(payloadBuffer));
                     } catch (error) {
                         console.error(error);
                     }
                     break;
                 case 1:
                     // ProtoBuf
-                    payload = parserProtobuf.parse(new Uint8Array(payloadBuffer), schemaName);
+                    payload = parserProtobuf.parse(payloadBuffer, schemaName);
                     break;
                 default:
                     console.error("Unsupported payloadFormat: " + payloadFormat);
