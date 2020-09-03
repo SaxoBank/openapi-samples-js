@@ -206,8 +206,13 @@
         connection.onopen = function () {
             console.log("Streaming connected.");
         };
-        connection.onclose = function () {
-            console.log("Streaming disconnected.");
+        connection.onclose = function (evt) {
+            // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
+            if (evt.wasClean === true) {
+                console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
+            } else {
+                console.error("Streaming disconnected with code " + evt.code + ".");
+            }
         };
         connection.onerror = function (evt) {
             console.error(evt);
@@ -377,7 +382,8 @@
      * @return {void}
      */
     function disconnect() {
-        connection.close();  // This will trigger the onclose event
+        const NORMAL_CLOSURE = 1000;
+        connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
