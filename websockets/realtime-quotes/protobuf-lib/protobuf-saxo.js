@@ -10,12 +10,18 @@
 /**
  * Parser Base
  * @constructor
+ * @param {string} name The name of the parser, like "default".
+ * @param {Object} engine The implementation engine to use.
  */
-function ParserBase(name, engine = null) {
+function ParserBase(name, engine) {
     // Parser name, used for lookup.
     this.name = name;
     // Optional parsing engine.
-    this.engine = engine;
+    if (engine === undefined) {
+        this.engine = null;
+    } else {
+        this.engine = engine;
+    }
 }
 
 let wrappers = {
@@ -40,7 +46,7 @@ let wrappers = {
 
 /**
  * Create root schema and register custom wrappers to support JS types. ie. casting Google.Timestamp to JS Date.
- * @returns {Root}
+ * @returns {Root} The root schema
  */
 function createRootSchema() {
     let schemas = this.protobuf.Root.fromJSON(
@@ -56,6 +62,8 @@ function createRootSchema() {
 
 /**
  * Protobuf Parser.
+ * @param {string} name The name of the parser, like "default".
+ * @param {Object} engine The implementation engine to use.
  */
 function ParserProtobuf(name, engine) {
     this.name = name;

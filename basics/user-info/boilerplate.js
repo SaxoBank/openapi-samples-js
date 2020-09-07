@@ -1,8 +1,8 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global console URLSearchParams */
+/*global console */
 
 /*
- * boilerplate v1.12
+ * boilerplate v1.14
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -315,7 +315,7 @@ function demonstrationHelper(settings) {
      */
     function tryToGetToken() {
         // First, maybe the token is supplied in the URL?
-        const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
         let newAccessToken = urlParams.get("access_token");
         let secondsUntilExpiry;
@@ -349,7 +349,7 @@ function demonstrationHelper(settings) {
 
     mirrorConsoleLog();
     mirrorConsoleError();
-    if (tokenInputFieldExists()) {
+    if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
         tryToGetToken();
         settings.accessTokenElm.addEventListener("change", function () {
             saveToken(settings.accessTokenElm.value);
@@ -361,12 +361,12 @@ function demonstrationHelper(settings) {
             });
         });
     }
-    return {
-        "apiUrl": apiUrl,
-        "authUrl": authUrl,
-        "user": user,
-        "displayVersion": displayVersion,
-        "run": run,
-        "processError": processError
-    };
+    return Object.freeze({
+        apiUrl,
+        authUrl,
+        user,
+        displayVersion,
+        run,
+        processError
+    });
 }
