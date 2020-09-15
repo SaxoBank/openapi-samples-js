@@ -230,7 +230,10 @@
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
-                "AssetType": "FxSpot"
+                "AssetType": "FxSpot",
+                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                // MarketDepth gives the order book, when available.
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
             }
         };
         fetch(
@@ -277,7 +280,10 @@
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
-                "AssetType": "FxSpot"
+                "AssetType": "FxSpot",
+                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                // MarketDepth gives the order book, when available.
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
             }
         };
         fetch(
@@ -327,6 +333,9 @@
                     "AccountKey": demo.user.accountKey,
                     "Uic": uic,
                     "AssetType": "FxSpot",
+                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                    // MarketDepth gives the order book, when available.
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
                     "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
                 }
             };
@@ -383,6 +392,9 @@
                     "AccountKey": demo.user.accountKey,
                     "Uic": uic,
                     "AssetType": "FxSpot",
+                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                    // MarketDepth gives the order book, when available.
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
                     "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
                 }
             };
