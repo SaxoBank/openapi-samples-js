@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.14
+ * boilerplate v1.15
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -124,17 +124,20 @@ function demonstrationHelper(settings) {
             user.accountGroupKeys = [];
             for (i = 0; i < accountsResponseData.length; i += 1) {
                 account = accountsResponseData[i];
-                option = document.createElement("option");
-                option.text = account.AccountId + " (" + account.AccountType + ", " + account.Currency + ")";
-                option.value = account.AccountKey;
-                if (option.value === user.accountKey) {
-                    option.setAttribute("selected", true);
-                    populateAssetTypeSelection(account.LegalAssetTypes);
-                }
-                settings.accountsList.add(option);
-                // Populate the account groups array as well
-                if (user.accountGroupKeys.indexOf(account.AccountGroupKey) === -1) {
-                    user.accountGroupKeys.push(account.AccountGroupKey);
+                // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
+                if (account.Active) {
+                    option = document.createElement("option");
+                    option.text = account.AccountId + " (" + account.AccountType + ", " + account.Currency + ")";
+                    option.value = account.AccountKey;
+                    if (option.value === user.accountKey) {
+                        option.setAttribute("selected", true);
+                        populateAssetTypeSelection(account.LegalAssetTypes);
+                    }
+                    settings.accountsList.add(option);
+                    // Populate the account groups array as well
+                    if (user.accountGroupKeys.indexOf(account.AccountGroupKey) === -1) {
+                        user.accountGroupKeys.push(account.AccountGroupKey);
+                    }
                 }
             }
             settings.accountsList.addEventListener("change", function () {
