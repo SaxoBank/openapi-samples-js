@@ -1,8 +1,8 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global console URLSearchParams */
+/*global console */
 
 /*
- * boilerplate v1.12
+ * boilerplate v1.15
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -76,6 +76,41 @@ function demonstrationHelper(settings) {
     }
 
     /**
+     * For a good display, the list of accounts must be grouped by type, and sorted by valuta.
+     * @param {Array} accounts The account list from the response.
+     * @return {void}
+     */
+    function groupAndSortAccountList(accounts) {
+        accounts.sort(function (x, y) {
+
+            function getAccountGroupDisplayNameForSorting(account) {
+                let result = (
+                    account.AccountType === "Normal"
+                    ? "1"  // Normal account before special ones like TaxFavoredAccount
+                    : "2"
+                );
+                if (account.hasOwnProperty("AccountGroupName")) {  // Group by AccountGroupName
+                    result += account.AccountGroupName;
+                }
+                if (account.hasOwnProperty("DisplayName")) {  // Sort by DisplayName, or AccountId if DisplayName is not available
+                    result += account.DisplayName + account.Currency;
+                }
+                return result + account.AccountId;  // This one is always there
+            }
+
+            const descX = getAccountGroupDisplayNameForSorting(x);
+            const descY = getAccountGroupDisplayNameForSorting(y);
+            if (descX < descY) {
+                return -1;
+            }
+            if (descX > descY) {
+                return 1;
+            }
+            return 0;
+        });
+    }
+
+    /**
      * Show a function and run it.
      * @param {Function} functionToRun The function in scope.
      * @param {Function=} secondFunctionToDisplay An optional function to display besides the functionToRun.
@@ -115,26 +150,47 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function populateAccountSelection(accountsResponseData) {
+            const existingOptionGroups = settings.accountsList.getElementsByTagName("optgroup");
             let i;
             let account;
             let option;
+            let optionGroup;
+            let currentAccountGroupName = "";
+            for (i = existingOptionGroups.length - 1; i >= 0; i -= 1) {
+                settings.accountsList.removeChild(existingOptionGroups[i]);  // Remove optgroups, if any
+            }
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
-                settings.accountsList.remove(i);
+                settings.accountsList.remove(i);  // Remove options, if any
             }
             user.accountGroupKeys = [];
+            groupAndSortAccountList(accountsResponseData);
             for (i = 0; i < accountsResponseData.length; i += 1) {
                 account = accountsResponseData[i];
-                option = document.createElement("option");
-                option.text = account.AccountId + " (" + account.AccountType + ", " + account.Currency + ")";
-                option.value = account.AccountKey;
-                if (option.value === user.accountKey) {
-                    option.setAttribute("selected", true);
-                    populateAssetTypeSelection(account.LegalAssetTypes);
-                }
-                settings.accountsList.add(option);
-                // Populate the account groups array as well
-                if (user.accountGroupKeys.indexOf(account.AccountGroupKey) === -1) {
-                    user.accountGroupKeys.push(account.AccountGroupKey);
+                // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
+                if (account.Active) {
+                    option = document.createElement("option");
+                    option.text = (
+                        account.hasOwnProperty("DisplayName")
+                        ? account.DisplayName + " "
+                        : ""
+                    ) + account.AccountId + " " + account.Currency;
+                    option.value = account.AccountKey;
+                    if (option.value === user.accountKey) {
+                        option.setAttribute("selected", true);
+                        populateAssetTypeSelection(account.LegalAssetTypes);
+                    }
+                    // If there are account groups, show the accounts in the right group(s)
+                    if (account.hasOwnProperty("AccountGroupName") && account.AccountGroupName !== currentAccountGroupName) {
+                        currentAccountGroupName = account.AccountGroupName;
+                        optionGroup = document.createElement("optgroup");
+                        optionGroup.label = currentAccountGroupName;
+                        settings.accountsList.add(optionGroup);
+                    }
+                    settings.accountsList.add(option);
+                    // Populate the account groups array as well
+                    if (user.accountGroupKeys.indexOf(account.AccountGroupKey) === -1) {
+                        user.accountGroupKeys.push(account.AccountGroupKey);
+                    }
                 }
             }
             settings.accountsList.addEventListener("change", function () {
@@ -315,7 +371,7 @@ function demonstrationHelper(settings) {
      */
     function tryToGetToken() {
         // First, maybe the token is supplied in the URL?
-        const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
         let newAccessToken = urlParams.get("access_token");
         let secondsUntilExpiry;
@@ -349,7 +405,7 @@ function demonstrationHelper(settings) {
 
     mirrorConsoleLog();
     mirrorConsoleError();
-    if (tokenInputFieldExists()) {
+    if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
         tryToGetToken();
         settings.accessTokenElm.addEventListener("change", function () {
             saveToken(settings.accessTokenElm.value);
@@ -361,12 +417,13 @@ function demonstrationHelper(settings) {
             });
         });
     }
-    return {
-        "apiUrl": apiUrl,
-        "authUrl": authUrl,
-        "user": user,
-        "displayVersion": displayVersion,
-        "run": run,
-        "processError": processError
-    };
+    return Object.freeze({
+        apiUrl,
+        authUrl,
+        user,
+        displayVersion,
+        run,
+        processError,
+        groupAndSortAccountList
+    });
 }

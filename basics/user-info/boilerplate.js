@@ -150,13 +150,17 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function populateAccountSelection(accountsResponseData) {
+            const existingOptionGroups = settings.accountsList.getElementsByTagName("optgroup");
             let i;
             let account;
             let option;
             let optionGroup;
             let currentAccountGroupName = "";
+            for (i = existingOptionGroups.length - 1; i >= 0; i -= 1) {
+                settings.accountsList.removeChild(existingOptionGroups[i]);  // Remove optgroups, if any
+            }
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
-                settings.accountsList.remove(i);
+                settings.accountsList.remove(i);  // Remove options, if any
             }
             user.accountGroupKeys = [];
             groupAndSortAccountList(accountsResponseData);
@@ -167,7 +171,7 @@ function demonstrationHelper(settings) {
                     option = document.createElement("option");
                     option.text = (
                         account.hasOwnProperty("DisplayName")
-                        ? account.DisplayName
+                        ? account.DisplayName + " "
                         : ""
                     ) + account.AccountId + " " + account.Currency;
                     option.value = account.AccountKey;
