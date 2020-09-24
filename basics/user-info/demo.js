@@ -74,41 +74,6 @@
     }
 
     /**
-     * For a good display, the list of accounts must be grouped by type, and sorted by valuta.
-     * @param {Array} accounts The account list from the response.
-     * @return {void}
-     */
-    function groupAndSortAccountList(accounts) {
-        accounts.sort(function (x, y) {
-
-            function getAccountGroupDisplayNameForSorting(account) {
-                let result = (
-                    account.AccountType === "Normal"
-                    ? "1"  // Normal account before special ones like TaxFavoredAccount
-                    : "2"
-                );
-                if (account.hasOwnProperty("AccountGroupName")) {  // Group by AccountGroupName
-                    result += account.AccountGroupName;
-                }
-                if (account.hasOwnProperty("DisplayName")) {  // Sort by DisplayName, or AccountId if DisplayName is not available
-                    result += account.DisplayName + account.Currency;
-                }
-                return result + account.AccountId;  // This one is always there
-            }
-
-            const descX = getAccountGroupDisplayNameForSorting(x);
-            const descY = getAccountGroupDisplayNameForSorting(y);
-            if (descX < descY) {
-                return -1;
-            }
-            if (descX > descY) {
-                return 1;
-            }
-            return 0;
-        });
-    }
-
-    /**
      * Request the accounts of this user.
      * @return {void}
      */
@@ -130,7 +95,7 @@
                     let currentAccountGroupName = "";
                     let account;
                     let i;
-                    groupAndSortAccountList(responseJson.Data);
+                    demo.groupAndSortAccountList(responseJson.Data);
                     for (i = 0; i < responseJson.Data.length; i += 1) {
                         account = responseJson.Data[i];
                         // Loop through the data and collect the accountKeys:
@@ -144,11 +109,11 @@
                             : " - "
                         );
                         if (account.hasOwnProperty("DisplayName")) {
-                            textToDisplay += account.DisplayName + " " + account.Currency;
+                            textToDisplay += account.DisplayName + " " + account.AccountId;
                         } else {
                             textToDisplay += account.AccountId;
                         }
-                        textToDisplay += " - " + account.AccountKey + " (" + account.AccountType + ")\n";
+                        textToDisplay += " " + account.Currency + " - " + account.AccountKey + " (" + account.AccountType + ")\n";
                     }
                     console.log("Found " + responseJson.Data.length + " account(s) with accountKey(s):\n" + textToDisplay + req + rep);
                 });
@@ -197,7 +162,7 @@
         demo.run(getClient);
     });
     document.getElementById("idBtnGetAccounts").addEventListener("click", function () {
-        demo.run(getAccounts, groupAndSortAccountList);
+        demo.run(getAccounts, demo.groupAndSortAccountList);
     });
     document.getElementById("idBtnGetBalance").addEventListener("click", function () {
         demo.run(getBalance);

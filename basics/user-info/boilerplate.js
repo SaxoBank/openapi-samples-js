@@ -76,6 +76,41 @@ function demonstrationHelper(settings) {
     }
 
     /**
+     * For a good display, the list of accounts must be grouped by type, and sorted by valuta.
+     * @param {Array} accounts The account list from the response.
+     * @return {void}
+     */
+    function groupAndSortAccountList(accounts) {
+        accounts.sort(function (x, y) {
+
+            function getAccountGroupDisplayNameForSorting(account) {
+                let result = (
+                    account.AccountType === "Normal"
+                    ? "1"  // Normal account before special ones like TaxFavoredAccount
+                    : "2"
+                );
+                if (account.hasOwnProperty("AccountGroupName")) {  // Group by AccountGroupName
+                    result += account.AccountGroupName;
+                }
+                if (account.hasOwnProperty("DisplayName")) {  // Sort by DisplayName, or AccountId if DisplayName is not available
+                    result += account.DisplayName + account.Currency;
+                }
+                return result + account.AccountId;  // This one is always there
+            }
+
+            const descX = getAccountGroupDisplayNameForSorting(x);
+            const descY = getAccountGroupDisplayNameForSorting(y);
+            if (descX < descY) {
+                return -1;
+            }
+            if (descX > descY) {
+                return 1;
+            }
+            return 0;
+        });
+    }
+
+    /**
      * Show a function and run it.
      * @param {Function} functionToRun The function in scope.
      * @param {Function=} secondFunctionToDisplay An optional function to display besides the functionToRun.
@@ -118,20 +153,34 @@ function demonstrationHelper(settings) {
             let i;
             let account;
             let option;
+            let optionGroup;
+            let currentAccountGroupName = "";
             for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.remove(i);
             }
             user.accountGroupKeys = [];
+            groupAndSortAccountList(accountsResponseData);
             for (i = 0; i < accountsResponseData.length; i += 1) {
                 account = accountsResponseData[i];
                 // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
                 if (account.Active) {
                     option = document.createElement("option");
-                    option.text = account.AccountId + " (" + account.AccountType + ", " + account.Currency + ")";
+                    option.text = (
+                        account.hasOwnProperty("DisplayName")
+                        ? account.DisplayName
+                        : ""
+                    ) + account.AccountId + " " + account.Currency;
                     option.value = account.AccountKey;
                     if (option.value === user.accountKey) {
                         option.setAttribute("selected", true);
                         populateAssetTypeSelection(account.LegalAssetTypes);
+                    }
+                    // If there are account groups, show the accounts in the right group(s)
+                    if (account.hasOwnProperty("AccountGroupName") && account.AccountGroupName !== currentAccountGroupName) {
+                        currentAccountGroupName = account.AccountGroupName;
+                        optionGroup = document.createElement("optgroup");
+                        optionGroup.label = currentAccountGroupName;
+                        settings.accountsList.add(optionGroup);
                     }
                     settings.accountsList.add(option);
                     // Populate the account groups array as well
@@ -370,6 +419,7 @@ function demonstrationHelper(settings) {
         user,
         displayVersion,
         run,
-        processError
+        processError,
+        groupAndSortAccountList
     });
 }
