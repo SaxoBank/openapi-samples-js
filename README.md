@@ -23,7 +23,6 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Download PDF reports](basics/download-reports)
 3. Instruments
    - [Instrument Search example](instruments/instrument-search)
-   - [Display Positions and Order List](instruments/display-positions-orders)
    - [Price subscription levels](instruments/entitlements)
    - [Extended AssetTypes](instruments/extended-assettypes)
    - [Retrieve Universe](instruments/instrument-retrieval)
@@ -32,12 +31,15 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Option Order](orders/options)
    - [Option Strategy Order](orders/option-strategies)
    - [Future Order](orders/futures)
-5. Using websockets
+5. Portfolio
+   - [Display Positions and Order List](portfolio/positions-orders)
+   - [Margin calculation](portfolio/margin)
+6. Using websockets
    - [Retrieving Order Events](websockets/order-events-monitoring)
    - [Monitoring Primary Status](websockets/primary-monitoring)
    - [Realtime Quotes and Protocol Buffers](websockets/realtime-quotes)
    - [Historical Market Data](websockets/historical-market-data)
-6. Batch Requests
+7. Batch Requests
    - [Batch Request example](batch-request)
 
 ## Sample Apps
