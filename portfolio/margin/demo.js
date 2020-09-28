@@ -46,8 +46,8 @@
                         });
                         result += "\n\nInitial margin available: " + responseJson.Currency + " " + initialMarginAvailable + " (utilisation " + marginUtilisation + "%)";
                     } else {
-                        // This is not a trading account (probably account.DirectMarketAccess=false).
-                        result += "\n\nNo margin available for trading (object InitialMargin not set in response).";
+                        // This is not a trading account.
+                        result += "\n\nNo margin, this is not a trading account (object InitialMargin not available in response).";
                     }
                     result += "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
                     console.log(result);
