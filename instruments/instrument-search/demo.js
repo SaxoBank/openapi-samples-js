@@ -223,7 +223,10 @@
     }
 
     document.getElementById("idCbxAccount").addEventListener("change", function () {
-        demo.run(getLegalAssetTypes);
+        // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
+        window.setTimeout(function () {
+            demo.run(getLegalAssetTypes);
+        }, 10);
     });
     document.getElementById("idBtnGetExchanges").addEventListener("click", function () {
         demo.run(getExchanges);
