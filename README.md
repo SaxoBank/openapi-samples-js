@@ -34,6 +34,7 @@ Samples run against Saxo's simulation environment and require an **access token*
 5. Portfolio
    - [Display Positions and Order List](portfolio/positions-orders)
    - [Margin calculation](portfolio/margin)
+   - [Cash transfers](portfolio/cash-transfers)
 6. Using websockets
    - [Retrieving Order Events](websockets/order-events-monitoring)
    - [Monitoring Primary Status](websockets/primary-monitoring)
