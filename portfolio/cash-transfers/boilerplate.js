@@ -193,6 +193,7 @@ function demonstrationHelper(settings) {
                     }
                 }
             }
+            settings.accountsList.dispatchEvent(new Event("change"));
             settings.accountsList.addEventListener("change", function () {
                 user.accountKey = settings.accountsList.value;
                 console.log("Using account " + user.accountKey);

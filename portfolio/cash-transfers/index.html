@@ -26,10 +26,27 @@
 </label>
 </div>
 <h1>Demonstrate cash transfers</h1>
-<p>Spoiler: this feature is unavailable for most apps.</p>
+<p>Spoiler: this feature is unavailable for most apps. And another one: when trying this on SIM, the response is static and identical for all accounts.</p>
 <br />
+<br />
+<label>
+  Beneficiary account: <select class="selector" id="idCbxBeneficiaryAccount">
+    <option value="-" selected>Press "GET beneficiary instructions" to populate</option>
+  </select>
+</label>
+<br />
+<label>
+  Amount: <input type="text" id="idEdtAmount" value="10" placeholder="Enter amount here.." /></label>
+</label>
+<label>
+  Currency: <input type="text" id="idEdtCurrency" value="" placeholder="Enter currency here.." /></label>
+</label>
+<br />
+<br />
+<textarea class="json-input" id="idEdtDescription" rows="5">Description of the money transfer..</textarea><br />
 <br />
 <input type="button" class="action-button" value="Get beneficiary instructions" id="idBtnGetBeneficiaryInstructions" />
+<input type="button" class="action-button" value="Transfer money (withdrawal)" id="idBtnTransferMoney" />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
 <br />
