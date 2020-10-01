@@ -373,50 +373,63 @@
          * @return {string} The text to display.
          */
         function getCostsForLeg(holdingPeriodInDays, costs) {
+
+            function getCostComponent(componentName, description, costCategory) {
+                return (
+                    costCategory.hasOwnProperty(componentName)
+                    ? "\n" + description + ": " + costCategory[componentName].Value + (
+                        costCategory[componentName].hasOwnProperty("Pct")
+                        ? " (" + costCategory[componentName].Pct + "%)"
+                        : ""
+                    )
+                    : ""
+                );
+            }
+
             let result = "";
             let i;
             let item;
             if (costs.hasOwnProperty("TradingCost")) {
-                if (costs.TradingCost.hasOwnProperty("Commissions")) {
+                result += getCostComponent("TicketFee", "Ticket Fee", costs.TradingCost);  // Ticket fees are for FX (both spot and options) and applied if below the TicketFeeThreshold
+                result += getCostComponent("ExchangeFee", "Exchange Fee", costs.TradingCost);  // Futures - Exchange fee if applied separately
+                result += getCostComponent("Spread", "Spread", costs.TradingCost);  // The spread used for FX forwards is indicative and depends on how far in the future the value date of the forward is - the different time horizon is called tenors and this collection shows a current snapshot of the spreads for the different tenors
+                if (costs.TradingCost.hasOwnProperty("Commissions")) {  // The commission structure for the selected instrument
                     for (i = 0; i < costs.TradingCost.Commissions.length; i += 1) {
                         item = costs.TradingCost.Commissions[i];
-                        result += "\nCommission: " + item.Rule.Currency + " " + item.Value + (
+                        result += "\nCommission: " + (
+                            item.Rule.Currency === costs.Currency
+                            ? ""
+                            : item.Rule.Currency + " "
+                        ) + item.Value + (
                             item.hasOwnProperty("Pct")
                             ? " (" + item.Pct + "%)"
                             : ""
                         );
                     }
                 }
-                if (costs.TradingCost.hasOwnProperty("Spread")) {  // FxSpot
-                    result += "\nSpread: " + costs.Currency + " " + costs.TradingCost.Spread.Value + " (" + costs.TradingCost.Spread.Pct + "%)";
-                }
-                if (costs.TradingCost.hasOwnProperty("ExchangeFee")) {  // Futures
-                    result += "\nExchange fee: " + costs.TradingCost.ExchangeFee.Value + (
-                        costs.TradingCost.ExchangeFee.hasOwnProperty("Pct")
-                        ? " (" + costs.TradingCost.ExchangeFee.Pct + "%)"
-                        : ""
-                    );
-                }
+                result += getCostComponent("ConversionCost", "Conversion Cost", costs.TradingCost);  // Currency Conversion Cost
+                result += getCostComponent("CustodyFee", "Custody Fee", costs.TradingCost);  // Custody fee per year for holding cash positions
             }
-            if (costs.hasOwnProperty("FundCost")) {  // ETFs
-                if (costs.FundCost.hasOwnProperty("OnGoingCost")) {
-                    result += "\nOngoing costs: " + costs.Currency + " " + costs.FundCost.OnGoingCost.Value + " (" + costs.FundCost.OnGoingCost.Pct + "%)";
-                }
+            if (costs.hasOwnProperty("FundCost")) {  // Fund cost are cost charged by a fund, but not booked by Saxo
+                result += getCostComponent("OnGoingCost", "Ongoing Cost", costs.FundCost);  // Fee paid for holding a position in a fund
+                result += getCostComponent("SwitchCommission", "Switch Commission", costs.FundCost);  // Commission paid for a switch trade between two mutual funds
             }
             if (costs.hasOwnProperty("HoldingCost")) {
+                result += getCostComponent("OvernightFinancing", "Overnight Financing Fee", costs.HoldingCost);  // Financing charge markup
+                result += getCostComponent("BorrowingCost", "Borrowing Cost", costs.HoldingCost);  // The borrowing costs is a percentage per year for holding short positions in single-stock CFDs
+                result += getCostComponent("CarryingCost", "Carrying Cost", costs.HoldingCost);  // For instruments where carrying costs are applied (futures, exchange traded options), the percentage markup on the interbank interest rate applied for holding the position
+                result += getCostComponent("HoldingFee", "Holding Fee", costs.HoldingCost);  // Holding fee if applied
+                result += getCostComponent("TomNext", "Tom Next", costs.HoldingCost);  // Swap interest markup
+                result += getCostComponent("InterestFee", "Interest Fee", costs.HoldingCost);  // Interest per day for for SRDs
+                result += getCostComponent("RolloverFee", "Rollover Fee", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
                     for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
                         item = costs.HoldingCost.Tax[i];
                         result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";
                     }
                 }
-                if (costs.HoldingCost.hasOwnProperty("TomNext")) {
-                    result += "\nTom Next: " + costs.HoldingCost.TomNext.Value + " (" + costs.HoldingCost.TomNext.Pct + "%)";
-                }
             }
-            if (costs.hasOwnProperty("TrailingCommission")) {
-                result += "\nTrailing Commission: " + costs.TrailingCommission.Value + " (" + costs.TrailingCommission.Pct + "%)";
-            }
+            result += getCostComponent("TrailingCommission", "Trailing Commission", costs);  // Commission paid from the fund to Saxo
             result += "\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + (
                 costs.hasOwnProperty("TotalCostPct")
                 ? " (" + costs.TotalCostPct + "%)"
@@ -444,11 +457,26 @@
                 case "BasisOnLastClosePrice":
                     result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
                     break;
-                case "ConversionCostNotIncluded":
-                    result += "\n* Conversion costs are excluded.";
+                case "BasisOnMidPrice":
+                    result += "\n* Based on mid price.";  // Only applicable when Price is not supplied
                     break;
                 case "InterbankChargesExcluded":
                     result += "\n* Excludes interbank charges.";
+                    break;
+                case "DefaultCallOption":
+                    result += "\n* Default call option.";
+                    break;
+                case "AtmStrikePrice":
+                    result += "\n* 'At the money' strike price.";
+                    break;
+                case "ConversionCostNotIncluded":
+                    result += "\n* Conversion costs are excluded.";
+                    break;
+                case "NearDateSpotFarDateAsSpecified":
+                    result += "\n* Near date is spot, far date is as specified.";
+                    break;
+                case "CarryingCostBasedOnMarginOtmDiscount":
+                    result += "\n* Carrying cost estimation is based on 'Margin ex. OTM discount'.";
                     break;
                 default:
                     console.debug("Unsupported assumption code: " + assumptions[i]);
@@ -479,13 +507,13 @@
                 response.json().then(function (responseJson) {
                     let description = "";
                     if (responseJson.Cost.hasOwnProperty("Long")) {
-                        description += "Long costs:" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Long);
+                        description += "Long costs (" + responseJson.Cost.Short.Currency + "):" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Long);
                     }
                     if (responseJson.Cost.hasOwnProperty("Short")) {
                         if (description !== "") {
                             description += "\n\n";
                         }
-                        description += "Short costs:" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Short);
+                        description += "Short costs (" + responseJson.Cost.Short.Currency + "):" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Short);
                     }
                     description += "\n\n" + getAssumptions(responseJson.CostCalculationAssumptions);
                     console.log(description + "\n\nReponse: " + JSON.stringify(responseJson, null, 4));
