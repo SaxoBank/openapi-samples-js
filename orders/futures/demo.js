@@ -379,7 +379,7 @@
              * @param {string} componentName Name of the property object.
              * @param {string} description The description to add.
              * @param {Object} costCategory The parent object.
-             * @return {string} The text to display, if the property exists.
+             * @return {string} The text to display, empty if the property doesn't exists.
              */
             function getCostComponent(componentName, description, costCategory) {
                 return (
