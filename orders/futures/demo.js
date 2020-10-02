@@ -413,25 +413,39 @@
                     }
                 }
                 result += getCostComponent("TicketFee", "Ticket fee", costs.TradingCost);  // Ticket fees are for FX (both spot and options) and applied if below the TicketFeeThreshold
+                // <Text LanguageCode="fr">Frais de ticket</Text>
                 result += getCostComponent("ExchangeFee", "Exchange fee", costs.TradingCost);  // Futures - Exchange fee if applied separately
+                // <Text LanguageCode="fr">Frais de bourse</Text>
                 result += getCostComponent("Spread", "Spread", costs.TradingCost);  // The spread used for FX forwards is indicative and depends on how far in the future the value date of the forward is - the different time horizon is called tenors and this collection shows a current snapshot of the spreads for the different tenors
-                result += getCostComponent("ConversionCost", "Conversion cost", costs.TradingCost);  // Currency Conversion Cost
+                // <Text LanguageCode="fr">Écart</Text>
+                result += getCostComponent("ConversionCost", "Currency conversions", costs.TradingCost);  // Currency Conversion Cost
+                // <Text LanguageCode="fr">Conversions de devise</Text>
                 result += getCostComponent("CustodyFee", "Custody fee", costs.TradingCost);  // Custody fee per year for holding cash positions
+                // <Text LanguageCode="fr">Droits de garde</Text>
             }
             if (costs.hasOwnProperty("FundCost")) {  // Fund cost are cost charged by a fund, but not booked by Saxo
                 result += "\n\nFinancial instrument costs:";
                 result += getCostComponent("OnGoingCost", "Ongoing charges", costs.FundCost);  // Fee paid for holding a position in a fund
+                // <Text LanguageCode="fr">Coûts récurrents</Text>
                 result += getCostComponent("SwitchCommission", "Switch commission", costs.FundCost);  // Commission paid for a switch trade between two mutual funds
+                // <Text LanguageCode="fr">Commission de transfert</Text>
             }
             if (costs.hasOwnProperty("HoldingCost")) {
                 result += "\n\nOngoing charges:";
                 result += getCostComponent("OvernightFinancing", "Overnight financing fee", costs.HoldingCost);  // Financing charge markup
+                // <Text LanguageCode="fr">Frais de financement au jour le jour</Text>
                 result += getCostComponent("BorrowingCost", "Borrowing cost", costs.HoldingCost);  // The borrowing costs is a percentage per year for holding short positions in single-stock CFDs
+                // <Text LanguageCode="fr">Coût d'emprunt</Text>
                 result += getCostComponent("CarryingCost", "Carrying cost", costs.HoldingCost);  // For instruments where carrying costs are applied (futures, exchange traded options), the percentage markup on the interbank interest rate applied for holding the position
+                // <Text LanguageCode="fr">Coût de portage</Text>
                 result += getCostComponent("HoldingFee", "Holding fee", costs.HoldingCost);  // Holding fee if applied
+                // <Text LanguageCode="fr">Frais de détention</Text>
                 result += getCostComponent("TomNext", "Tom/Next", costs.HoldingCost);  // Swap interest markup
-                result += getCostComponent("InterestFee", "Interest fee", costs.HoldingCost);  // Interest per day for for SRDs
-                result += getCostComponent("RolloverFee", "Rollover fee", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
+                // <Text LanguageCode="fr">Tom/Next</Text>
+                result += getCostComponent("InterestFee", "Interest/day", costs.HoldingCost);  // Interest per day for for SRDs
+                // <Text LanguageCode="fr">Intérêts/jour</Text>
+                result += getCostComponent("RolloverFee", "Roll-over of positions", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
+                // <Text LanguageCode="fr">Renouvellement de positions</Text>
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
                     for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
                         item = costs.HoldingCost.Tax[i];
@@ -439,7 +453,8 @@
                     }
                 }
             }
-            result += getCostComponent("TrailingCommission", "Trailing commission", costs);  // Commission paid from the fund to Saxo
+            result += getCostComponent("TrailingCommission", "Trailing Commission", costs);  // Commission paid from the fund to Saxo
+            // <Text LanguageCode="fr">Commission de suivi</Text>
             result += "\n\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + (
                 costs.hasOwnProperty("TotalCostPct")
                 ? " (" + costs.TotalCostPct + "%)"
@@ -460,33 +475,43 @@
                 switch (assumptions[i]) {
                 case "IncludesOpenAndCloseCost":
                     result += "\n* Includes both open and close costs.";
+                    // <Text LanguageCode="fr">Inclut les coûts à l'ouverture et à la clôture.</Text>
                     break;
                 case "EquivalentOpenAndClosePrice":
                     result += "\n* Open and close price are the same (P/L=0).";
+                    // <Text LanguageCode="fr">Le cours à l'ouverture et le cours à la clôture sont identiques (B/P = 0).</Text>
                     break;
                 case "BasisOnLastClosePrice":
                     result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
+                    // <Text LanguageCode="fr">Basé sur le dernier cours de clôture.</Text>
                     break;
                 case "BasisOnMidPrice":
-                    result += "\n* Based on mid price.";  // Only applicable when Price is not supplied
+                    result += "\n* Based on mid-price.";  // Only applicable when Price is not supplied
+                    // <Text LanguageCode="fr">Basé sur le cours moyen.</Text>
                     break;
                 case "InterbankChargesExcluded":
-                    result += "\n* Excludes interbank charges.";
+                    result += "\n* Interbank charges are excluded.";
+                    // <Text LanguageCode="fr">Les frais interbancaires ne sont pas inclus.</Text>
                     break;
                 case "DefaultCallOption":
                     result += "\n* Default call option.";
+                    // <Text LanguageCode="fr">Option d'achat par défaut.</Text>
                     break;
                 case "AtmStrikePrice":
-                    result += "\n* 'At the money' strike price.";
+                    result += "\n* Strike price is assumed to be at the money.";
+                    // <Text LanguageCode="fr">Le prix d'exercice est supposé être à la monnaie.</Text>
                     break;
                 case "ConversionCostNotIncluded":
                     result += "\n* Conversion costs are excluded.";
+                    // <Text LanguageCode="fr">Les coûts de conversion ne sont pas inclus.</Text>
                     break;
                 case "NearDateSpotFarDateAsSpecified":
                     result += "\n* Near date is spot, far date is as specified.";
+                    // <Text LanguageCode="fr">La date proche est le spot. La date éloignée est celle indiquée.</Text>
                     break;
                 case "CarryingCostBasedOnMarginOtmDiscount":
-                    result += "\n* Carrying cost estimation is based on 'Margin ex. OTM discount'.";
+                    result += "\n* Margin excl. OTM discount.";
+                    // <Text LanguageCode="fr">Marge hors remise OTM</Text>
                     break;
                 default:
                     console.debug("Unsupported assumption code: " + assumptions[i]);
@@ -494,6 +519,7 @@
             }
             // Add generic assumption:
             result += "\n* Any third party payments, investment service costs or financial instrument costs not listed above are 0 (0%). These can include one-off charges, ongoing charges, costs related to transactions, charges that are related to ancillary services and incidental costs.";
+            // <Text LanguageCode="fr">Les coûts non décrits ci-avant (y compris forfaits, frais courants, coûts liés aux transactions, frais liés à des services accessoires et coûts indirects) s’élèvent à 0 (0 %).</Text>
             return result;
         }
 
