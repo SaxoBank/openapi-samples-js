@@ -563,10 +563,8 @@
          * @return {void}
          */
         function downloadDocument(uic, assetType, documentType, language, fileName) {
-            // Workaround. This problem is about to be fixed by Saxo.
-            documentType = documentType.replace(" ", "_");
             fetch(
-                demo.apiUrl + "/mkt/v1/instruments/" + uic + "/" + assetType + "/documents/pdf?DocumentType=" + documentType + "&LanguageCode=" + language,
+                demo.apiUrl + "/mkt/v2/instruments/" + uic + "/" + assetType + "/documents/pdf?DocumentType=" + documentType + "&LanguageCode=" + language,
                 {
                     "method": "GET",
                     "headers": {
@@ -588,7 +586,7 @@
 
         const newOrderObject = getOrderObjectFromJson();
         fetch(
-            demo.apiUrl + "/mkt/v1/instruments/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/documents/recommended?DocumentType=" + encodeURIComponent("KIIDs,PRIIP_KIDs"),  // Request both KIIDs and PRIIP KIDs
+            demo.apiUrl + "/mkt/v2/instruments/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "/documents/recommended?DocumentTypes=" + encodeURIComponent("KIIDs,PRIIPKIDs"),  // Request both KIIDs and PRIIP KIDs
             {
                 "method": "GET",
                 "headers": {
@@ -601,31 +599,30 @@
                     let i;
                     let documentDetail;
                     let fileName;
-                    console.log(JSON.stringify(responseJson, null, 4));
-                    /*
-                     * On SIM, there are no documents available so request returns a 404. On production, a typical response for an Etf is this:
-                     * {"DocumentDetails":[{"DocumentDateTime":"2020-07-23T13:21:17.000000Z","DocumentRelationId":98491,"DocumentType":"KIIDs","LanguageCode":"fr"}]}
-                     * Etfs have KIIDs, derivatives PRIIP_KIDs.
-                     */
-                    // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
-                    // Give option to download all the documents, if any:
-                    for (i = 0; i < responseJson.DocumentDetails.length; i += 1) {
-                        documentDetail = responseJson.DocumentDetails[i];
-                        // Note that DocumentTypes might have different translations, like "EID" in the Netherlands (https://www.afm.nl/nl-nl/consumenten/themas/advies/verplichte-info/eid).
-                        // This means that you might consider a different file name, for example including the instrument name.
-                        fileName = newOrderObject.Uic + "_" + newOrderObject.AssetType + "_" + documentDetail.DocumentType + "_(" + documentDetail.LanguageCode + ").pdf";
-                        if (window.confirm("Do you want to download " + fileName + "?")) {
-                            downloadDocument(newOrderObject.Uic, newOrderObject.AssetType, documentDetail.DocumentType, documentDetail.LanguageCode, fileName);
+                    if (responseJson.Data.length === 0) {
+                        console.log("There is no KID available for this instrument. Be aware that KIDs are only available on Live.");
+                    } else {
+                        console.log(JSON.stringify(responseJson, null, 4));
+                        /*
+                         * On SIM, there are no documents available so request returns a 404. On production, a typical response for an Etf is this:
+                         * {"Data":[{"DocumentDateTime":"2020-07-23T13:21:17.000000Z","DocumentType":"KIIDs","LanguageCode":"fr"}]}
+                         * Etfs have KIIDs, derivatives PRIIPKIDs.
+                         */
+                        // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
+                        // Give option to download all the documents, if any:
+                        for (i = 0; i < responseJson.Data.length; i += 1) {
+                            documentDetail = responseJson.Data[i];
+                            // Note that DocumentTypes might have different translations, like "EID" in the Netherlands (https://www.afm.nl/nl-nl/consumenten/themas/advies/verplichte-info/eid).
+                            // This means that you might consider a different file name, for example including the instrument name.
+                            fileName = newOrderObject.Uic + "_" + newOrderObject.AssetType + "_" + documentDetail.DocumentType + "_(" + documentDetail.LanguageCode + ").pdf";
+                            if (window.confirm("Do you want to download " + fileName + "?")) {
+                                downloadDocument(newOrderObject.Uic, newOrderObject.AssetType, documentDetail.DocumentType, documentDetail.LanguageCode, fileName);
+                            }
                         }
                     }
                 });
             } else {
-                if (response.status === 404) {
-                    // This is not really an error, there is just no document available in the language of the customer, or for this AssetType.
-                    console.log("There is no KID available for this instrument. Be aware that KIDs are only available on Live.");
-                } else {
-                    demo.processError(response);
-                }
+                demo.processError(response);
             }
         }).catch(function (error) {
             console.error(error);
