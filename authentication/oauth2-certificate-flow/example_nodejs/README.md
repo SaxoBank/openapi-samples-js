@@ -19,3 +19,5 @@ Setup and run:
 3. Run the sample with 'node example.js'.
 
 This example reads the certificate from a file, but better is to install the certificate on the host itself. There is a [C# example](https://github.com/SaxoBank/openapi-samples-csharp/tree/master/authentication/Authentication_Cba) on that.
+
+> **_NOTE:_** The CBA flow is not available for most apps. You need to contact SaxoBank to apply for approval.
