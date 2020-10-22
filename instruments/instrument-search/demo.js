@@ -144,6 +144,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
+                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                     if (responseJson.Data.length > 0) {
                         // Remember the first Uic for the details request
                         if (responseJson.Data[0].hasOwnProperty("PrimaryListing") && assetType === "Stock") {
@@ -155,7 +156,7 @@
                         }
                         if (assetType === "ContractFutures" && responseJson.Data[0].hasOwnProperty("DisplayHint") && responseJson.Data[0].DisplayHint === "Continuous") {
                             instrumentIdType = "futuresSpace";
-                        } else if (assetType === "StockOption" || assetType === "FuturesOption" || assetType === "StockIndexOption") {
+                        } else if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
                             instrumentIdType = "optionRoot";
                         } else {
                             instrumentIdType = "uic";

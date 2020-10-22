@@ -11,6 +11,8 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
+        "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
+        "selectedAssetType": "Stock",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
     const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
@@ -473,7 +475,7 @@
                     break;
                 case "CarryingCostBasedOnMarginOtmDiscount":
                     result += "\n* Margin excl. OTM discount.";
-                    // <Text LanguageCode="fr">Marge hors remise OTM</Text>
+                    // <Text LanguageCode="fr">Marge hors remise OTM.</Text>
                     break;
                 default:
                     console.debug("Unsupported assumption code: " + assumptions[i]);
@@ -791,6 +793,85 @@
         });
     }
 
+    /**
+     * This sample can be used for other AssetTypes than Stock. After switching, retrieve a valid Asset.
+     * @return {void}
+     */
+    function getAssetType() {
+
+        function convertOptionRootIdToUic(optionRootId) {
+            fetch(
+                demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,
+                {
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    }
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const newOrderObject = getOrderObjectFromJson();
+                        newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
+                        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        const assetType = document.getElementById("idCbxAssetType").value;
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=1" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const newOrderObject = getOrderObjectFromJson();
+                    const options = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    if (responseJson.Data.length === 0) {
+                        console.error("No instrument of type " + assetType + " found.");
+                    } else {
+                        newOrderObject.AssetType = assetType;
+                        newOrderObject.Uic = responseJson.Data[0].Identifier;  // This might only be an OptionRootId!
+                        if (options.indexOf(assetType) === -1) {
+                            delete newOrderObject.ToOpenClose;
+                        } else {
+                            newOrderObject.ToOpenClose = "ToOpen";
+                        }
+                        if (assetType === "MutualFund") {
+                            newOrderObject.AmountType = "Quantity";  // DurationType might be GoodTillCancel
+                        } else {
+                            delete newOrderObject.AmountType;
+                        }
+                        newOrderObject.AccountKey = demo.user.accountKey;
+                        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
+                            convertOptionRootIdToUic(responseJson.Data[0].Identifier);
+                        }
+                        console.log("Changed object to asset of type " + assetType + ".");
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    document.getElementById("idCbxAssetType").addEventListener("change", function () {
+        demo.run(getAssetType);
+    });
     document.getElementById("idCbxOrderType").addEventListener("change", function () {
         demo.run(selectOrderType);
     });
