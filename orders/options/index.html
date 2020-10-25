@@ -27,12 +27,14 @@
 </div>
 <h1>Buy an option contract</h1>
 This example shows how place an option order.
+Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
+<br />
 <br />
 More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
 <br />
 <br />
 <label>Option root ID (Identifier, not Uic): <input type="text" class="text-field" id="idInstrumentId" value="1" placeholder="Paste option root id.." /></label>
-(Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">search</a>)
+(Find one using <a href="../../instruments/instrument-search/" target="_blank">search</a>)
 <br />
 <br />
 <label>
@@ -76,8 +78,6 @@ POST body containing order parameters:
 <input type="button" class="action-button" value="Get option sheet" id="idBtnGetSeries" />
 <input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
-<input type="button" class="action-button" value="Order costs" id="idBtnGetOrderCosts" />
-<input type="button" class="action-button" value="Download KID" id="idBtnGetKid" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
