@@ -27,10 +27,11 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Extended AssetTypes](instruments/extended-assettypes)
    - [Retrieve Universe](instruments/instrument-retrieval)
 4. Order Placement
-   - [Basic Order example (stocks, bonds)](orders/stocks)
+   - [Basic Order example (stocks, bonds, etf, etc.)](orders/stocks)
    - [Option Order](orders/options)
    - [Option Strategy Order](orders/option-strategies)
    - [Future Order](orders/futures)
+   - [Regulatory requirements for order tickets](orders/regulatory-requirements)
 5. Portfolio
    - [Display Positions and Order List](portfolio/positions-orders)
    - [Margin calculation](portfolio/margin)

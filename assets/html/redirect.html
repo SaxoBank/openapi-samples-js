@@ -14,9 +14,13 @@
 </section>
 
 <script type="text/javascript">
-    const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
-    const redirectPath = window.atob(urlParams.get("state"));  // Get this by using window.location.pathname
-    const newRedirect = window.location.protocol + "//" + window.location.host + redirectPath;
+    const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
+    const state = JSON.parse(window.atob(urlParams.get("state")));  // Get this by using window.location.pathname
+    const newRedirect = window.location.protocol + "//" + window.location.host + state.redirect + (
+        state.env === "live"
+        ? "?env=live"
+        : ""
+    );
     document.getElementById("idRedirectUrl").innerText = "..to " + newRedirect;
     window.location.replace(newRedirect + window.location.hash);
 </script>

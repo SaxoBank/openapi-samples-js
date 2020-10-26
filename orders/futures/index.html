@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
-    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Order Demo for Futures</title>
 </head>
@@ -29,11 +29,13 @@
 This example shows how place a future order.<br />
 When you sell a stock position, you can add a PositionId and after execution, both will be netted out. Futures cannot be closed this way. You can "close" it by doing an opposite trade.<br />
 The position will be rolled over automatically.<br />
+Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
+<br />
 More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
 <br />
 <br />
 <label>Futures space ID (Identifier, not Uic): <input type="text" class="text-field" id="idInstrumentId" value="4043" placeholder="Paste futures space id.." />
-(Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">search</a>)</label>
+(Find one using <a href="../../instruments/instrument-search/" target="_blank">search</a>)</label>
 <br />
 <br />
 <label>
@@ -76,8 +78,6 @@ POST body containing order parameters:
 <input type="button" class="action-button" value="Get futures space" id="idBtnGetFuturesSpace" />
 <input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
-<input type="button" class="action-button" value="Order costs" id="idBtnGetOrderCosts" />
-<input type="button" class="action-button" value="Download KID" id="idBtnGetKid" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />

@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console URLSearchParams demonstrationHelper */
+/*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
@@ -16,7 +16,7 @@
      * @return {void}
      */
     function checkErrors() {
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new window.URLSearchParams(window.location.search);
         const error = urlParams.get("error");
         if (error === null) {
             console.log("No error found.");
@@ -30,7 +30,7 @@
      * @return {void}
      */
     function getCode() {
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new window.URLSearchParams(window.location.search);
         code = urlParams.get("code");
         if (code === null) {
             console.error("No code found!");
@@ -45,7 +45,7 @@
      */
     function getState() {
         // https://auth0.com/docs/protocols/oauth2/oauth-state
-        const urlParams = new URLSearchParams(window.location.search);
+        const urlParams = new window.URLSearchParams(window.location.search);
         const state = urlParams.get("state");
         let stateUnencoded;
         if (state === null) {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
-    <script type="text/javascript" src="boilerplate.js" defer></script>
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Order Demo for Stocks</title>
 </head>
@@ -26,10 +26,12 @@
 </label>
 </div>
 <h1>Buy stocks</h1>
-This example shows how place an order for Stocks. Find one using <a href="https://saxobank.github.io/openapi-samples-js/instruments/instrument-search/" target="_blank">the search example</a>.
+This example shows how place an order for Stocks. Find one using <a href="../../instruments/instrument-search/" target="_blank">the search example</a>.
 <br />
-Since buying Bonds and SRD is quite similar, you can use this sample to test those instrument types as well.<br />
+Since buying Bonds, or SRD is quite similar, you can use this sample to test those instrument types as well.<br />
 When you sell a position, you can add a PositionId and after execution, both will be netted out.<br />
+<br />
+Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
 <br />
 More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
 <br />
@@ -37,7 +39,8 @@ More info on handling error responses: <a href="https://www.developer.saxo/opena
 <label>
   Asset type: <select class="selector" id="idCbxAssetType">
     <option value="-">Click "Validate" to populate</option>
-  </select></label>
+  </select>
+</label>
 <label>
   Order type: <select class="selector" id="idCbxOrderType">
     <option value="-" selected>Press "Check conditions" to populate</option>
@@ -74,8 +77,6 @@ POST body containing order parameters:<br />
 </textarea><br />
 <input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
-<input type="button" class="action-button" value="Order costs" id="idBtnGetOrderCosts" />
-<input type="button" class="action-button" value="Download KID" id="idBtnGetKid" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />

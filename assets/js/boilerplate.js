@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.15
+ * boilerplate v1.16
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -21,12 +21,25 @@
  * @return {Object} Object with config, user object and helper functions.
  */
 function demonstrationHelper(settings) {
-    const apiHost = "gateway.saxobank.com";  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
-    const apiPath = "/sim/openapi";  // On production this is "/openapi"
-    const apiUrl = "https://" + apiHost + apiPath;
-    const authUrl = "https://sim.logonvalidation.net/authorize";  // On production this is https://live.logonvalidation.net/authorize
-    const implicitAppKeyDefaultAssetTypes = "e081be34791f4c7eac479b769b96d623";  // No need to create your own app, unless you want to test on a different environment than SIM
-    const implicitAppKeyExtendedAssetTypes = "877130df4a954b60860088dc00d56bda";  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+    const configSim = {
+        "authUrl": "https://sim.logonvalidation.net/authorize",
+        "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
+        "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
+        "implicitAppKey": {
+            "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
+            "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        }
+    };
+    const configLive = {
+        // Using "Live" for testing the samples is a risk. Use it with care!
+        "authUrl": "https://live.logonvalidation.net/authorize",
+        "apiHost": "gateway.saxobank.com",
+        "apiPath": "/openapi",
+        "implicitAppKey": {
+            "defaultAssetTypes": "enter-your-app-key-1",
+            "extendedAssetTypes": "enter-your-app-key-2"
+        }
+    };
     const user = {};
 
     /**
@@ -108,6 +121,24 @@ function demonstrationHelper(settings) {
             }
             return 0;
         });
+    }
+
+    /**
+     * Get the configuration for SIM or Live, depending on the '?env=' query parameter.
+     * @return {Object} Object with config.
+     */
+    function getConfig() {
+        let urlParams;
+        if (window.URLSearchParams) {
+            urlParams = new window.URLSearchParams(document.location.search.substring(1));
+            return (
+                urlParams.get("env") === "live"
+                ? configLive
+                : configSim
+            );
+        } else {
+            return configSim;
+        }
     }
 
     /**
@@ -204,11 +235,12 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function getDataFromApi() {
-            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + apiHost + "\r\n\r\n\r\n";
+            const config = getConfig();
+            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
             const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
             // This function uses a batch request to do three requests in one. See the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
             fetch(
-                apiUrl + "/port/batch",  // Grouping is done per service group, so "/ref" for example, goes in a different batch.
+                "https://" + config.apiHost + config.apiPath + "/port/batch",  // Grouping is done per service group, so "/ref" for example, goes in a different batch.
                 {
                     "headers": {
                         "Content-Type": "multipart/mixed; boundary=\"+\"",
@@ -299,7 +331,8 @@ function demonstrationHelper(settings) {
      * @return {void}
      */
     function displayVersion(serviceGroup) {
-        fetch(apiUrl + "/" + serviceGroup + "/Isalive", {}).then(function (response) {
+        const config = getConfig();
+        fetch("https://" + config.apiHost + config.apiPath + "/" + serviceGroup + "/Isalive", {}).then(function (response) {
             if (response.ok) {
                 response.text().then(function (responseText) {
                     settings.footerElm.innerText = responseText;
@@ -370,11 +403,23 @@ function demonstrationHelper(settings) {
      * @return {void}
      */
     function tryToGetToken() {
+        const config = getConfig();
+        const state = JSON.stringify({
+            "redirect": window.location.pathname,
+            "env": (
+                config.authUrl === configLive.authUrl
+                ? "live"
+                : "sim"
+            )
+        });
         // First, maybe the token is supplied in the URL?
         const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
         let newAccessToken = urlParams.get("access_token");
         let secondsUntilExpiry;
+        if (urlParams.get("error_description") !== null) {  // Something went wrong..
+            console.error("Error getting token: " + urlParams.get("error_description"));
+        }
         if (newAccessToken === null) {
             // Second, maybe the token is stored before a refresh, or in a different sample?
             try {
@@ -393,37 +438,48 @@ function demonstrationHelper(settings) {
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
-            urlWithoutParams = authUrl + "?response_type=token&state=" + window.btoa(window.location.pathname) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(state) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
-                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyDefaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + implicitAppKeyExtendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
+                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
             } else {
-                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + implicitAppKeyDefaultAssetTypes;
+                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes;
                 settings.retrieveTokenHref.target = "_self";  // Back to default
             }
         }
     }
 
-    mirrorConsoleLog();
-    mirrorConsoleError();
-    if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
-        tryToGetToken();
-        settings.accessTokenElm.addEventListener("change", function () {
-            saveToken(settings.accessTokenElm.value);
-        });
-        settings.tokenValidateButton.addEventListener("click", function () {
-            delete user.accountKey;
-            run(function () {
-                console.info("Token is valid!");
+    /**
+     * Setup and return settings to be used on demo.js.
+     * @return {Object} Object with config, user object and helper functions.
+     */
+    function setupDemo() {
+        const config = getConfig();
+        const apiUrl = "https://" + config.apiHost + config.apiPath;
+        const authUrl = config.authUrl;
+        mirrorConsoleLog();
+        mirrorConsoleError();
+        if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
+            tryToGetToken();
+            settings.accessTokenElm.addEventListener("change", function () {
+                saveToken(settings.accessTokenElm.value);
             });
+            settings.tokenValidateButton.addEventListener("click", function () {
+                delete user.accountKey;
+                run(function () {
+                    console.info("Token is valid!");
+                });
+            });
+        }
+        return Object.freeze({
+            apiUrl,
+            authUrl,
+            user,
+            displayVersion,
+            run,
+            processError,
+            groupAndSortAccountList
         });
     }
-    return Object.freeze({
-        apiUrl,
-        authUrl,
-        user,
-        displayVersion,
-        run,
-        processError,
-        groupAndSortAccountList
-    });
+
+    return setupDemo();
 }
