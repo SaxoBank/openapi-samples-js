@@ -429,6 +429,7 @@
                     ));
                 });
             } else {
+                // If you get a 404 NotFound, the order might already be executed!
                 demo.processError(response);
             }
         }).catch(function (error) {

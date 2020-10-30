@@ -36,8 +36,8 @@ function demonstrationHelper(settings) {
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "implicitAppKey": {
-            "defaultAssetTypes": "enter-your-app-key-1",
-            "extendedAssetTypes": "enter-your-app-key-2"
+            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
+            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
         }
     };
     const user = {};
@@ -143,11 +143,10 @@ function demonstrationHelper(settings) {
 
     /**
      * Show a function and run it.
-     * @param {Function} functionToRun The function in scope.
-     * @param {Function=} secondFunctionToDisplay An optional function to display besides the functionToRun.
+     * @param {Array<Function>} functionsToRunAndDisplay The first function is invoked and displayed. Other functions are only displayed.
      * @return {void}
      */
-    function run(functionToRun, secondFunctionToDisplay) {
+    function run(functionsToRunAndDisplay) {
 
         /**
          * Add all allowed asset types for the default account to the selection.
@@ -288,7 +287,7 @@ function demonstrationHelper(settings) {
                             }
                         }
                         settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nClientKey: " + user.clientKey;
-                        functionToRun();
+                        functionsToRunAndDisplay[0]();  // Run the first function
                     });
                 } else {
                     settings.accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
@@ -300,28 +299,38 @@ function demonstrationHelper(settings) {
             });
         }
 
-        // Display source of function, for demonstration:
-        let source = functionToRun.toString();
-        if (secondFunctionToDisplay !== undefined && secondFunctionToDisplay !== null) {
-            source = secondFunctionToDisplay.toString() + "\n\n" + source;
+        /**
+         * Display source of function, for demonstration.
+         * @return {void}
+         */
+        function displaySourceCode() {
+            let source;
+            let i;
+            for (i = 0; i < functionsToRunAndDisplay.length; i += 1) {
+                if (functionsToRunAndDisplay[i] !== undefined && functionsToRunAndDisplay[i] !== null) {
+                    source = functionsToRunAndDisplay[i].toString() + "\n\n" + source;
+                }
+            }
+            settings.javaScriptElm.innerText = source;
         }
-        settings.javaScriptElm.innerText = source;
+
+        displaySourceCode();
         settings.responseElm.removeAttribute("style");  // Remove red background, if any.
-        settings.responseElm.innerText = "Started function " + functionToRun.name + "()..";
+        settings.responseElm.innerText = "Started function " + functionsToRunAndDisplay[0].name + "()..";
         if (tokenInputFieldExists()) {
             if (settings.accessTokenElm.value.length < 10) {
                 settings.accessTokenElm.setCustomValidity("Bearer token is required for requests.");
                 console.error("Bearer token is required for requests.");
             } else {
                 if (user.hasOwnProperty("accountKey")) {
-                    functionToRun();
+                    functionsToRunAndDisplay[0]();
                 } else {
                     // Not initialized yet. Request customer data in a batch.
                     getDataFromApi();
                 }
             }
         } else {
-            functionToRun();
+            functionsToRunAndDisplay[0]();
         }
     }
 
@@ -465,9 +474,9 @@ function demonstrationHelper(settings) {
             });
             settings.tokenValidateButton.addEventListener("click", function () {
                 delete user.accountKey;
-                run(function () {
+                run([function () {
                     console.info("Token is valid!");
-                });
+                }]);
             });
         }
         return Object.freeze({
