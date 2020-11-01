@@ -328,32 +328,16 @@
         );
     }
 
-    document.getElementById("idBtnGetPortfolioClient").addEventListener("click", function () {
-        demo.run([getPortfolioClient, getPortfolio, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetPortfolioAccountGroup").addEventListener("click", function () {
-        demo.run([getPortfolioAccountGroup, getPortfolio, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetPortfolioAccount").addEventListener("click", function () {
-        demo.run([getPortfolioAccount, getPortfolio, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetOrdersClient").addEventListener("click", function () {
-        demo.run([getOrdersClient, getOrders, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetOrdersAccountGroup").addEventListener("click", function () {
-        demo.run([getOrdersAccountGroup, getOrders, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetOrdersAccount").addEventListener("click", function () {
-        demo.run([getOrdersAccount, getOrders, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetHistoricalOrdersClient").addEventListener("click", function () {
-        demo.run([getHistoricalOrdersClient, getHistoricalOrders, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetHistoricalOrdersAccountGroup").addEventListener("click", function () {
-        demo.run([getHistoricalOrdersAccountGroup, getHistoricalOrders, displayAndFormatValue]);
-    });
-    document.getElementById("idBtnGetHistoricalOrdersAccount").addEventListener("click", function () {
-        demo.run([getHistoricalOrdersAccount, getHistoricalOrders, displayAndFormatValue]);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetPortfolioClient", "func": getPortfolioClient, "funcsToDisplay": [getPortfolioClient, getPortfolio, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetPortfolioAccountGroup", "func": getPortfolioAccountGroup, "funcsToDisplay": [getPortfolioAccountGroup, getPortfolio, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetPortfolioAccount", "func": getPortfolioAccount, "funcsToDisplay": [getPortfolioAccount, getPortfolio, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetOrdersClient", "func": getOrdersClient, "funcsToDisplay": [getOrdersClient, getOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetOrdersAccountGroup", "func": getOrdersAccountGroup, "funcsToDisplay": [getOrdersAccountGroup, getOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetOrdersAccount", "func": getOrdersAccount, "funcsToDisplay": [getOrdersAccount, getOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersClient", "func": getHistoricalOrdersClient, "funcsToDisplay": [getHistoricalOrdersClient, getHistoricalOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccountGroup", "func": getHistoricalOrdersAccountGroup, "funcsToDisplay": [getHistoricalOrdersAccountGroup, getHistoricalOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccount", "func": getHistoricalOrdersAccount, "funcsToDisplay": [getHistoricalOrdersAccount, getHistoricalOrders, displayAndFormatValue]}
+    ]);
     demo.displayVersion("port");
 }());

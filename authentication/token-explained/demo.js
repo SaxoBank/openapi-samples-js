@@ -93,14 +93,9 @@
         }
     }
 
-    document.getElementById("idBtnGetHeader").addEventListener("click", function () {
-        demo.run([getHeader]);
-    });
-    document.getElementById("idBtnGetPayload").addEventListener("click", function () {
-        demo.run([getPayload]);
-    });
-    document.getElementById("idBtnVerify").addEventListener("click", function () {
-        demo.run([verify]);
-    });
-    demo.displayVersion("trade");
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetHeader", "func": getHeader, "funcsToDisplay": [getHeader]},
+        {"evt": "click", "elmId": "idBtnGetPayload", "func": getPayload, "funcsToDisplay": [getPayload]},
+        {"evt": "click", "elmId": "idBtnVerify", "func": verify, "funcsToDisplay": [verify]}
+    ]);
 }());

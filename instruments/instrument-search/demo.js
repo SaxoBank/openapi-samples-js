@@ -223,20 +223,11 @@
         });
     }
 
-    document.getElementById("idCbxAccount").addEventListener("change", function () {
-        // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
-        window.setTimeout(function () {
-            demo.run([getLegalAssetTypes]);
-        }, 10);
-    });
-    document.getElementById("idBtnGetExchanges").addEventListener("click", function () {
-        demo.run([getExchanges]);
-    });
-    document.getElementById("idBtnFind").addEventListener("click", function () {
-        demo.run([findInstrument]);
-    });
-    document.getElementById("idBtnGetDetails").addEventListener("click", function () {
-        demo.run([getDetails]);
-    });
+    demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxAccount", "func": getLegalAssetTypes, "funcsToDisplay": [getLegalAssetTypes], "isDelayedRun": true},
+        {"evt": "click", "elmId": "idBtnGetExchanges", "func": getExchanges, "funcsToDisplay": [getExchanges]},
+        {"evt": "click", "elmId": "idBtnFind", "func": findInstrument, "funcsToDisplay": [findInstrument]},
+        {"evt": "click", "elmId": "idBtnGetDetails", "func": getDetails, "funcsToDisplay": [getDetails]}
+    ]);
     demo.displayVersion("ref");
 }());

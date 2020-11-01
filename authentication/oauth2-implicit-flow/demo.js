@@ -29,7 +29,7 @@
         document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\">" + url + "</a>";
     }
 
-    document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
-        demo.run([generateLoginLink]);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGenerateLink", "func": generateLoginLink, "funcsToDisplay": [generateLoginLink]}
+    ]);
 }());

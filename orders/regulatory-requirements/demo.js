@@ -436,17 +436,11 @@
         });
     }
 
-    document.getElementById("idCbxAssetType").addEventListener("change", function () {
-        demo.run([getAssetType]);
-    });
-    document.getElementById("idBtnComplexWarning").addEventListener("click", function () {
-        demo.run([getComplexWarning]);
-    });
-    document.getElementById("idBtnGetOrderCosts").addEventListener("click", function () {
-        demo.run([getOrderCosts]);
-    });
-    document.getElementById("idBtnGetKid").addEventListener("click", function () {
-        demo.run(getKid);
-    });
+    demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxAssetType", "func": getAssetType, "funcsToDisplay": [getAssetType]},
+        {"evt": "click", "elmId": "idBtnComplexWarning", "func": getComplexWarning, "funcsToDisplay": [getComplexWarning]},
+        {"evt": "click", "elmId": "idBtnGetOrderCosts", "func": getOrderCosts, "funcsToDisplay": [getOrderCosts]},
+        {"evt": "click", "elmId": "idBtnGetKid", "func": etKid, "funcsToDisplay": [etKid]}
+    ]);
     demo.displayVersion("trade");
 }());

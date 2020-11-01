@@ -133,17 +133,12 @@
             console.error(error);
         });
     }
-    document.getElementById("idBtnGetLegalAssetTypes").addEventListener("click", function () {
-        demo.run([getLegalAssetTypes]);
-    });
-    document.getElementById("idBtnSearchIshares").addEventListener("click", function () {
-        demo.run([findIshares]);
-    });
-    document.getElementById("idBtnFindEtf").addEventListener("click", function () {
-        demo.run([findEtf]);
-    });
-    document.getElementById("idBtnGetHistOrders").addEventListener("click", function () {
-        demo.run([getHistOrders]);
-    });
+
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetLegalAssetTypes", "func": getLegalAssetTypes, "funcsToDisplay": [getLegalAssetTypes]},
+        {"evt": "click", "elmId": "idBtnSearchIshares", "func": findIshares, "funcsToDisplay": [findIshares]},
+        {"evt": "click", "elmId": "idBtnFindEtf", "func": findEtf, "funcsToDisplay": [findEtf]},
+        {"evt": "click", "elmId": "idBtnGetHistOrders", "func": getHistOrders, "funcsToDisplay": [getHistOrders]}
+    ]);
     demo.displayVersion("ref");
 }());

@@ -87,11 +87,9 @@
         });
     }
 
-    document.getElementById("idBtnGetRequest").addEventListener("click", function () {
-        demo.run([composeBatchRequest]);
-    });
-    document.getElementById("idBtnGetResponse").addEventListener("click", function () {
-        demo.run([doBatchRequest]);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetRequest", "func": composeBatchRequest, "funcsToDisplay": [composeBatchRequest]},
+        {"evt": "click", "elmId": "idBtnGetResponse", "func": doBatchRequest, "funcsToDisplay": [doBatchRequest]}
+    ]);
     demo.displayVersion("port");
 }());

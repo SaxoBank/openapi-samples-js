@@ -155,17 +155,11 @@
         });
     }
 
-    document.getElementById("idBtnGetUser").addEventListener("click", function () {
-        demo.run([getUser]);
-    });
-    document.getElementById("idBtnGetClient").addEventListener("click", function () {
-        demo.run([getClient]);
-    });
-    document.getElementById("idBtnGetAccounts").addEventListener("click", function () {
-        demo.run([getAccounts, demo.groupAndSortAccountList]);
-    });
-    document.getElementById("idBtnGetBalance").addEventListener("click", function () {
-        demo.run([getBalance]);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetUser", "func": getUser, "funcsToDisplay": [getUser]},
+        {"evt": "click", "elmId": "idBtnGetClient", "func": getClient, "funcsToDisplay": [getClient]},
+        {"evt": "click", "elmId": "idBtnGetAccounts", "func": getAccounts, "funcsToDisplay": [getAccounts, demo.groupAndSortAccountList]},
+        {"evt": "click", "elmId": "idBtnGetBalance", "func": getBalance, "funcsToDisplay": [getBalance]}
+    ]);
     demo.displayVersion("port");
 }());

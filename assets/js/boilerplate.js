@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.16
+ * boilerplate v1.17
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -142,11 +142,11 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Show a function and run it.
-     * @param {Array<Function>} functionsToRunAndDisplay The first function is invoked and displayed. Other functions are only displayed.
+     * Run a function, but only after the token is valid.
+     * @param {Function} functionToRun The function to run.
      * @return {void}
      */
-    function run(functionsToRunAndDisplay) {
+    function run(functionToRun) {
 
         /**
          * Add all allowed asset types for the default account to the selection.
@@ -287,7 +287,7 @@ function demonstrationHelper(settings) {
                             }
                         }
                         settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nClientKey: " + user.clientKey;
-                        functionsToRunAndDisplay[0]();  // Run the first function
+                        functionToRun();  // Run the function
                     });
                 } else {
                     settings.accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
@@ -299,39 +299,67 @@ function demonstrationHelper(settings) {
             });
         }
 
-        /**
-         * Display source of function, for demonstration.
-         * @return {void}
-         */
-        function displaySourceCode() {
-            let source;
-            let i;
-            for (i = 0; i < functionsToRunAndDisplay.length; i += 1) {
-                if (functionsToRunAndDisplay[i] !== undefined && functionsToRunAndDisplay[i] !== null) {
-                    source = functionsToRunAndDisplay[i].toString() + "\n\n" + source;
-                }
-            }
-            settings.javaScriptElm.innerText = source;
-        }
-
-        displaySourceCode();
         settings.responseElm.removeAttribute("style");  // Remove red background, if any.
-        settings.responseElm.innerText = "Started function " + functionsToRunAndDisplay[0].name + "()..";
+        settings.responseElm.innerText = "Started function " + functionToRun.name + "()..";
         if (tokenInputFieldExists()) {
             if (settings.accessTokenElm.value.length < 10) {
                 settings.accessTokenElm.setCustomValidity("Bearer token is required for requests.");
                 console.error("Bearer token is required for requests.");
             } else {
                 if (user.hasOwnProperty("accountKey")) {
-                    functionsToRunAndDisplay[0]();
+                    functionToRun();
                 } else {
                     // Not initialized yet. Request customer data in a batch.
                     getDataFromApi();
                 }
             }
         } else {
-            functionsToRunAndDisplay[0]();
+            functionToRun();
         }
+    }
+
+    /**
+     * Display the source code of one or more functions.
+     * @param {Array<Function>} functions The function to run.
+     * @return {void}
+     */
+    function displaySourceCode(functions) {
+        let sourceCode = "";
+        functions.forEach(function (functionToDisplay) {
+            sourceCode = functionToDisplay.toString() + "\n\n" + sourceCode;
+        });
+        settings.javaScriptElm.innerText = sourceCode;
+    }
+
+    /**
+     * Setup the functions to run after clicking a button or changing a dropdown.
+     * @param {Array<Object>} events The configuration per event.
+     * @return {void}
+     */
+    function setupEvents(events) {
+
+        /**
+         * Create the event listener.
+         * @param {Object} eventToSetup The event configuration.
+         * @return {void}
+         */
+        function setupEvent(eventToSetup) {
+            document.getElementById(eventToSetup.elmId).addEventListener(eventToSetup.evt, function () {
+                run(eventToSetup.func);
+                displaySourceCode(eventToSetup.funcsToDisplay);
+            });
+        }
+
+        events.forEach(function (eventToSetup) {
+            if (eventToSetup.hasOwnProperty("isDelayedRun") && eventToSetup.isDelayedRun === true) {
+                // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
+                window.setTimeout(function () {
+                    setupEvent(eventToSetup);
+                }, 10);
+            } else {
+                setupEvent(eventToSetup);
+            }
+        });
     }
 
     /**
@@ -474,9 +502,9 @@ function demonstrationHelper(settings) {
             });
             settings.tokenValidateButton.addEventListener("click", function () {
                 delete user.accountKey;
-                run([function () {
+                run(function () {
                     console.info("Token is valid!");
-                }]);
+                });
             });
         }
         return Object.freeze({
@@ -484,7 +512,7 @@ function demonstrationHelper(settings) {
             authUrl,
             user,
             displayVersion,
-            run,
+            setupEvents,
             processError,
             groupAndSortAccountList
         });

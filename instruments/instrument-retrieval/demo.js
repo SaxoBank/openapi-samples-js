@@ -157,9 +157,8 @@
 
     const refLimitPerMinute = 60;
     setInterval(runJobFromQueue, (refLimitPerMinute / 60 * 1000) + 25);  // A little more, to prevent risk of 429 TooManyRequests
-
-    document.getElementById("idBtnStart").addEventListener("click", function () {
-        demo.run([start, runJobFromQueue]);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnStart", "func": start, "funcsToDisplay": [start, runJobFromQueue]}
+    ]);
     demo.displayVersion("ref");
 }());

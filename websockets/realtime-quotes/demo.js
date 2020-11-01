@@ -500,32 +500,16 @@
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
-    document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
-        demo.run([createConnection]);
-    });
-    document.getElementById("idBtnStartListener").addEventListener("click", function () {
-        demo.run([startListener]);
-    });
-    document.getElementById("idBtnSubscribeListJson").addEventListener("click", function () {
-        demo.run([subscribeListJson]);
-    });
-    document.getElementById("idBtnSubscribeOrderTicketJson").addEventListener("click", function () {
-        demo.run([subscribeOrderTicketJson]);
-    });
-    document.getElementById("idBtnSubscribeListProtoBuf").addEventListener("click", function () {
-        demo.run([subscribeListProtoBuf]);
-    });
-    document.getElementById("idBtnSubscribeOrderTicketProtoBuf").addEventListener("click", function () {
-        demo.run([subscribeOrderTicketProtoBuf]);
-    });
-    document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        demo.run([extendSubscription]);
-    });
-    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
-        demo.run([unsubscribe]);
-    });
-    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        demo.run([disconnect]);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
+        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
+        {"evt": "click", "elmId": "idBtnSubscribeListJson", "func": subscribeListJson, "funcsToDisplay": [subscribeListJson]},
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketJson", "func": subscribeOrderTicketJson, "funcsToDisplay": [subscribeOrderTicketJson]},
+        {"evt": "click", "elmId": "idBtnSubscribeListProtoBuf", "func": subscribeListProtoBuf, "funcsToDisplay": [subscribeListProtoBuf]},
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
+        {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
+    ]);
     demo.displayVersion("trade");
 }());
