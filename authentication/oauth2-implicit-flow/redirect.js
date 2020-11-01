@@ -85,17 +85,11 @@
         });
     }
 
-    document.getElementById("idBtnCheckErrors").addEventListener("click", function () {
-        demo.run(checkErrors);
-    });
-    document.getElementById("idBtnGetToken").addEventListener("click", function () {
-        demo.run(getToken);
-    });
-    document.getElementById("idBtnGetState").addEventListener("click", function () {
-        demo.run(getState);
-    });
-    document.getElementById("idBtnGetUserData").addEventListener("click", function () {
-        demo.run(getUserData);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnCheckErrors", "func": checkErrors, "funcsToDisplay": [checkErrors]},
+        {"evt": "click", "elmId": "idBtnGetToken", "func": getToken, "funcsToDisplay": [getToken]},
+        {"evt": "click", "elmId": "idBtnGetState", "func": getState, "funcsToDisplay": [getState]},
+        {"evt": "click", "elmId": "idBtnGetUserData", "func": getUserData, "funcsToDisplay": [getUserData]}
+    ]);
     demo.displayVersion("cs");
 }());

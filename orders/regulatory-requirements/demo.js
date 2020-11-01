@@ -440,7 +440,7 @@
         {"evt": "change", "elmId": "idCbxAssetType", "func": getAssetType, "funcsToDisplay": [getAssetType]},
         {"evt": "click", "elmId": "idBtnComplexWarning", "func": getComplexWarning, "funcsToDisplay": [getComplexWarning]},
         {"evt": "click", "elmId": "idBtnGetOrderCosts", "func": getOrderCosts, "funcsToDisplay": [getOrderCosts]},
-        {"evt": "click", "elmId": "idBtnGetKid", "func": etKid, "funcsToDisplay": [etKid]}
+        {"evt": "click", "elmId": "idBtnGetKid", "func": getKid, "funcsToDisplay": [getKid]}
     ]);
     demo.displayVersion("trade");
 }());

@@ -115,8 +115,9 @@
         if (document.getElementById("idChkExtAsset").checked) {
             headers.Pragma = "oapi-x-extasset";
         }
+        // A better example of this request can be found here: https://saxobank.github.io/openapi-samples-js/portfolio/positions-orders/
         fetch(
-            demo.apiUrl + "/cs/v1/audit/orderactivities?FromDateTime=2020-03-12",
+            demo.apiUrl + "/cs/v1/audit/orderactivities?FromDateTime=2020-10-11T00:00:00.000Z",
             {
                 "method": "GET",
                 "headers": headers

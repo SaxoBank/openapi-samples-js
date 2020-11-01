@@ -1,3 +1,3 @@
-# Examples for handling instruments
+# Examples for handling the DisplayAndFormat object
 
-An example on using the DisplayAndFormat object to show prices and an axample of the margin calculation.
+An example on using the DisplayAndFormat object to show prices and an example of the margin calculation.

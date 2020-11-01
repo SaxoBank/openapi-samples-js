@@ -492,6 +492,7 @@ function demonstrationHelper(settings) {
     function setupDemo() {
         const config = getConfig();
         const apiUrl = "https://" + config.apiHost + config.apiPath;
+        const streamerUrl = "wss://" + config.apiHost + config.apiPath + "/streamingws/connect";
         const authUrl = config.authUrl;
         mirrorConsoleLog();
         mirrorConsoleError();
@@ -510,6 +511,7 @@ function demonstrationHelper(settings) {
         return Object.freeze({
             apiUrl,
             authUrl,
+            streamerUrl,
             user,
             displayVersion,
             setupEvents,
