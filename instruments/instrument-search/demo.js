@@ -226,17 +226,17 @@
     document.getElementById("idCbxAccount").addEventListener("change", function () {
         // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
         window.setTimeout(function () {
-            demo.run(getLegalAssetTypes);
+            demo.run([getLegalAssetTypes]);
         }, 10);
     });
     document.getElementById("idBtnGetExchanges").addEventListener("click", function () {
-        demo.run(getExchanges);
+        demo.run([getExchanges]);
     });
     document.getElementById("idBtnFind").addEventListener("click", function () {
-        demo.run(findInstrument);
+        demo.run([findInstrument]);
     });
     document.getElementById("idBtnGetDetails").addEventListener("click", function () {
-        demo.run(getDetails);
+        demo.run([getDetails]);
     });
     demo.displayVersion("ref");
 }());

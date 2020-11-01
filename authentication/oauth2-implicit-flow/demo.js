@@ -30,6 +30,6 @@
     }
 
     document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
-        demo.run(generateLoginLink);
+        demo.run([generateLoginLink]);
     });
 }());

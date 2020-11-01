@@ -94,13 +94,13 @@
     }
 
     document.getElementById("idBtnGetHeader").addEventListener("click", function () {
-        demo.run(getHeader);
+        demo.run([getHeader]);
     });
     document.getElementById("idBtnGetPayload").addEventListener("click", function () {
-        demo.run(getPayload);
+        demo.run([getPayload]);
     });
     document.getElementById("idBtnVerify").addEventListener("click", function () {
-        demo.run(verify);
+        demo.run([verify]);
     });
     demo.displayVersion("trade");
 }());

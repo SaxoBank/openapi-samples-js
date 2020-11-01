@@ -373,28 +373,28 @@
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     document.getElementById("idBtnGetHistoricalData").addEventListener("click", function () {
-        demo.run(getHistoricalData, fetchHistoricalData);
+        demo.run([getHistoricalData, fetchHistoricalData]);
     });
     document.getElementById("idBtnGetOlderData").addEventListener("click", function () {
-        demo.run(getOlderData, fetchHistoricalData);
+        demo.run([getOlderData, fetchHistoricalData]);
     });
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
-        demo.run(createConnection);
+        demo.run([createConnection]);
     });
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
-        demo.run(startListener);
+        demo.run([startListener]);
     });
     document.getElementById("idBtnSubscribe").addEventListener("click", function () {
-        demo.run(subscribe);
+        demo.run([subscribe]);
     });
     document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        demo.run(extendSubscription);
+        demo.run([extendSubscription]);
     });
     document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
-        demo.run(unsubscribe);
+        demo.run([unsubscribe]);
     });
     document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        demo.run(disconnect);
+        demo.run([disconnect]);
     });
     demo.displayVersion("chart");
 }());

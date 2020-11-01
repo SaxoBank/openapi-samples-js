@@ -62,10 +62,10 @@
     }
 
     document.getElementById("idBtnGetFirst").addEventListener("click", function () {
-        demo.run(getFirst, getNext);
+        demo.run([getFirst, getNext]);
     });
     document.getElementById("idBtnGetNext").addEventListener("click", function () {
-        demo.run(getNext);
+        demo.run([getNext]);
     });
     demo.displayVersion("ref");
 }());

@@ -60,18 +60,18 @@
     }
 
     document.getElementById("idBtnTestGetRequest").addEventListener("click", function () {
-        demo.run(testGetRequest, testRequest);
+        demo.run([testGetRequest, testRequest]);
     });
     document.getElementById("idBtnTestPostRequest").addEventListener("click", function () {
-        demo.run(testPostRequest, testRequest);
+        demo.run([testPostRequest, testRequest]);
     });
     document.getElementById("idBtnTestPutRequest").addEventListener("click", function () {
-        demo.run(testPutRequest, testRequest);
+        demo.run([testPutRequest, testRequest]);
     });
     document.getElementById("idBtnTestPatchRequest").addEventListener("click", function () {
-        demo.run(testPatchRequest, testRequest);
+        demo.run([testPatchRequest, testRequest]);
     });
     document.getElementById("idBtnTestDeleteRequest").addEventListener("click", function () {
-        demo.run(testDeleteRequest, testRequest);
+        demo.run([testDeleteRequest, testRequest]);
     });
 }());

@@ -227,28 +227,28 @@
     }
 
     document.getElementById("idBtnCheckErrors").addEventListener("click", function () {
-        demo.run(checkErrors);
+        demo.run([checkErrors]);
     });
     document.getElementById("idBtnGetCode").addEventListener("click", function () {
-        demo.run(getCode);
+        demo.run([getCode]);
     });
     document.getElementById("idBtnGetState").addEventListener("click", function () {
-        demo.run(getState);
+        demo.run([getState]);
     });
     document.getElementById("idBtnGetTokenPhp").addEventListener("click", function () {
-        demo.run(getTokenPhp);
+        demo.run([getTokenPhp]);
     });
     document.getElementById("idBtnGetTokenNodeJs").addEventListener("click", function () {
-        demo.run(getTokenNodeJs);
+        demo.run([getTokenNodeJs]);
     });
     document.getElementById("idBtnGetUserData").addEventListener("click", function () {
-        demo.run(getUserData);
+        demo.run([getUserData]);
     });
     document.getElementById("idBtnRefreshTokenPhp").addEventListener("click", function () {
-        demo.run(refreshTokenPhp);
+        demo.run([refreshTokenPhp]);
     });
     document.getElementById("idBtnRefreshTokenNodeJs").addEventListener("click", function () {
-        demo.run(refreshTokenNodeJs);
+        demo.run([refreshTokenNodeJs]);
     });
     demo.displayVersion("cs");
 }());

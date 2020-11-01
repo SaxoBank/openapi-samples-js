@@ -80,12 +80,12 @@
     }
 
     document.getElementById("idBtnTestRedirectUrl").addEventListener("click", function () {
-        demo.run(testRedirectUrl);
+        demo.run([testRedirectUrl]);
     });
     document.getElementById("idBtnTestOpenApi").addEventListener("click", function () {
-        demo.run(testOpenApi);
+        demo.run([testOpenApi]);
     });
     document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
-        demo.run(generateLink);
+        demo.run([generateLink]);
     });
 }());

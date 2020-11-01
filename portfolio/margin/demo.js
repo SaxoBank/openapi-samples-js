@@ -117,11 +117,11 @@
     document.getElementById("idCbxAccount").addEventListener("change", function () {
         // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
         window.setTimeout(function () {
-            demo.run(getMargin, getBalances);
+            demo.run([getMargin, getBalances]);
         }, 10);
     });
     document.getElementById("idBtnGetMargin").addEventListener("click", function () {
-        demo.run(getMargin, getBalances);
+        demo.run([getMargin, getBalances]);
     });
     demo.displayVersion("port");
 }());

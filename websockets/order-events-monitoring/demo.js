@@ -406,28 +406,28 @@
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
-        demo.run(createConnection);
+        demo.run([createConnection]);
     });
     document.getElementById("idBtnStartListener").addEventListener("click", function () {
-        demo.run(startListener);
+        demo.run([startListener]);
     });
     document.getElementById("idBtnSubscribeEns").addEventListener("click", function () {
-        demo.run(subscribeEns);
+        demo.run([subscribeEns]);
     });
     document.getElementById("idBtnSubscribeBalances").addEventListener("click", function () {
-        demo.run(subscribeBalances);
+        demo.run([subscribeBalances]);
     });
     document.getElementById("idBtnSubscribePositions").addEventListener("click", function () {
-        demo.run(subscribePositions);
+        demo.run([subscribePositions]);
     });
     document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        demo.run(extendSubscription);
+        demo.run([extendSubscription]);
     });
     document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
-        demo.run(unsubscribe);
+        demo.run([unsubscribe]);
     });
     document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        demo.run(disconnect);
+        demo.run([disconnect]);
     });
     demo.displayVersion("ens");
 }());

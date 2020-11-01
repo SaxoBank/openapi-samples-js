@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console demonstrationHelper */
+/*global window console demonstrationHelper CryptoJS */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
@@ -77,12 +77,12 @@
     }
 
     document.getElementById("idBtnTestRedirectUrl").addEventListener("click", function () {
-        demo.run(testRedirectUrl);
+        demo.run([testRedirectUrl]);
     });
     document.getElementById("idBtnGenerateCodeVerifier").addEventListener("click", function () {
-        demo.run(generateCodeVerifier);
+        demo.run([generateCodeVerifier]);
     });
     document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
-        demo.run(generateLink);
+        demo.run([generateLink]);
     });
 }());

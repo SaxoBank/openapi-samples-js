@@ -97,10 +97,10 @@
     }
 
     document.getElementById("idBtnAccountStatementPdf").addEventListener("click", function () {
-        demo.run(getAccountStatementPdf, getReport);
+        demo.run([getAccountStatementPdf, getReport]);
     });
     document.getElementById("idBtnAccountStatementExcel").addEventListener("click", function () {
-        demo.run(getAccountStatementExcel, getReport);
+        demo.run([getAccountStatementExcel, getReport]);
     });
     demo.displayVersion("cr");
 }());

@@ -120,16 +120,16 @@
     }
 
     document.getElementById("idBtnGet404NotFound").addEventListener("click", function () {
-        demo.run(trigger404NotFound);
+        demo.run([trigger404NotFound]);
     });
     document.getElementById("idBtnGet401Unauthorized").addEventListener("click", function () {
-        demo.run(trigger401Unauthorized);
+        demo.run([trigger401Unauthorized]);
     });
     document.getElementById("idBtnGet400BadRequest").addEventListener("click", function () {
-        demo.run(trigger400BadRequest, demo.processError);
+        demo.run([trigger400BadRequest, demo.processError]);
     });
     document.getElementById("idBtnGet429TooManyRequests").addEventListener("click", function () {
-        demo.run(trigger429TooManyRequests, demo.processError);
+        demo.run([trigger429TooManyRequests, demo.processError]);
     });
     demo.displayVersion("ref");
 }());

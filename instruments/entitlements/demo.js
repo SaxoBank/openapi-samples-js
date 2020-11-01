@@ -103,10 +103,10 @@
     }
 
     document.getElementById("idBtnGetEntitlements").addEventListener("click", function () {
-        demo.run(getEntitlements);
+        demo.run([getEntitlements]);
     });
     document.getElementById("idBtnGetSubscriptionLevels").addEventListener("click", function () {
-        demo.run(getSubscriptionLevels);
+        demo.run([getSubscriptionLevels]);
     });
     demo.displayVersion("port");
 }());

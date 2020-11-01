@@ -455,28 +455,28 @@
     }
 
     document.getElementById("idCbxOrderType").addEventListener("change", function () {
-        demo.run(selectOrderType);
+        demo.run([selectOrderType]);
     });
     document.getElementById("idCbxOrderDuration").addEventListener("change", function () {
-        demo.run(selectOrderDuration);
+        demo.run([selectOrderDuration]);
     });
     document.getElementById("idBtnGetSeries").addEventListener("click", function () {
-        demo.run(getSeries);
+        demo.run([getSeries]);
     });
     document.getElementById("idBtnGetConditions").addEventListener("click", function () {
-        demo.run(getConditions);
+        demo.run([getConditions]);
     });
     document.getElementById("idBtnPreCheckOrder").addEventListener("click", function () {
-        demo.run(preCheckNewOrder);
+        demo.run([preCheckNewOrder]);
     });
     document.getElementById("idBtnPlaceNewOrder").addEventListener("click", function () {
-        demo.run(placeNewOrder);
+        demo.run([placeNewOrder]);
     });
     document.getElementById("idBtnModifyLastOrder").addEventListener("click", function () {
-        demo.run(modifyLastOrder);
+        demo.run([modifyLastOrder]);
     });
     document.getElementById("idBtnCancelLastOrder").addEventListener("click", function () {
-        demo.run(cancelLastOrder);
+        demo.run([cancelLastOrder]);
     });
     demo.displayVersion("trade");
 }());

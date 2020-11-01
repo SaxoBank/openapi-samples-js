@@ -134,16 +134,16 @@
         });
     }
     document.getElementById("idBtnGetLegalAssetTypes").addEventListener("click", function () {
-        demo.run(getLegalAssetTypes);
+        demo.run([getLegalAssetTypes]);
     });
     document.getElementById("idBtnSearchIshares").addEventListener("click", function () {
-        demo.run(findIshares);
+        demo.run([findIshares]);
     });
     document.getElementById("idBtnFindEtf").addEventListener("click", function () {
-        demo.run(findEtf);
+        demo.run([findEtf]);
     });
     document.getElementById("idBtnGetHistOrders").addEventListener("click", function () {
-        demo.run(getHistOrders);
+        demo.run([getHistOrders]);
     });
     demo.displayVersion("ref");
 }());

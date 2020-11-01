@@ -88,10 +88,10 @@
     }
 
     document.getElementById("idBtnGetRequest").addEventListener("click", function () {
-        demo.run(composeBatchRequest);
+        demo.run([composeBatchRequest]);
     });
     document.getElementById("idBtnGetResponse").addEventListener("click", function () {
-        demo.run(doBatchRequest);
+        demo.run([doBatchRequest]);
     });
     demo.displayVersion("port");
 }());

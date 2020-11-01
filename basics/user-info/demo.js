@@ -156,16 +156,16 @@
     }
 
     document.getElementById("idBtnGetUser").addEventListener("click", function () {
-        demo.run(getUser);
+        demo.run([getUser]);
     });
     document.getElementById("idBtnGetClient").addEventListener("click", function () {
-        demo.run(getClient);
+        demo.run([getClient]);
     });
     document.getElementById("idBtnGetAccounts").addEventListener("click", function () {
-        demo.run(getAccounts, demo.groupAndSortAccountList);
+        demo.run([getAccounts, demo.groupAndSortAccountList]);
     });
     document.getElementById("idBtnGetBalance").addEventListener("click", function () {
-        demo.run(getBalance);
+        demo.run([getBalance]);
     });
     demo.displayVersion("port");
 }());

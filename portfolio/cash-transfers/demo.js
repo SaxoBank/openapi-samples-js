@@ -118,14 +118,14 @@
     document.getElementById("idCbxAccount").addEventListener("change", function () {
         // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
         window.setTimeout(function () {
-            demo.run(getAccountCurrency);
+            demo.run([getAccountCurrency]);
         }, 10);
     });
     document.getElementById("idBtnGetBeneficiaryInstructions").addEventListener("click", function () {
-        demo.run(getBeneficiaryInstructions);
+        demo.run([getBeneficiaryInstructions]);
     });
     document.getElementById("idBtnTransferMoney").addEventListener("click", function () {
-        demo.run(transferMoney);
+        demo.run([transferMoney]);
     });
     demo.displayVersion("atr");
 }());
