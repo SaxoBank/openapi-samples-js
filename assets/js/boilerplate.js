@@ -6,10 +6,13 @@
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
- * For demonstration the code which is executed, is shown in the code output.
+ * The source code which is executed, is listed in the code output.
  * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for an explanation.
  *
- * The token is stored in the localeStorage, so it remains available after a page refresh.
+ * This page can be downloaded and loaded via http://localhost/openapi-samples-js/basics/user-info/ or file:///C:/Repos/openapi-samples-js/basics/user-info/index.html
+ * Running on production is done by adding the query parameter ?env=live (Use at Your Own Risk!).
+ *
+ * The token is stored in the localStorage, so it remains available after a page refresh.
  *
  * Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
  *
@@ -21,10 +24,12 @@
  * @return {Object} Object with config, user object and helper functions.
  */
 function demonstrationHelper(settings) {
+    // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
+        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
         "implicitAppKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
@@ -35,6 +40,7 @@ function demonstrationHelper(settings) {
         "authUrl": "https://live.logonvalidation.net/authorize",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
+        "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
         "implicitAppKey": {
             "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
             "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
@@ -59,8 +65,8 @@ function demonstrationHelper(settings) {
     function processError(errorObject, extraMessageToShow) {
         let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
             extraMessageToShow === undefined
-            ? ""
-            : "\n" + extraMessageToShow
+                ? ""
+                : "\n" + extraMessageToShow
         );
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
@@ -99,8 +105,8 @@ function demonstrationHelper(settings) {
             function getAccountGroupDisplayNameForSorting(account) {
                 let result = (
                     account.AccountType === "Normal"
-                    ? "1"  // Normal account before special ones like TaxFavoredAccount
-                    : "2"
+                        ? "1"  // Normal account before special ones like TaxFavoredAccount
+                        : "2"
                 );
                 if (account.hasOwnProperty("AccountGroupName")) {  // Group by AccountGroupName
                     result += account.AccountGroupName;
@@ -133,8 +139,8 @@ function demonstrationHelper(settings) {
             urlParams = new window.URLSearchParams(document.location.search.substring(1));
             return (
                 urlParams.get("env") === "live"
-                ? configLive
-                : configSim
+                    ? configLive
+                    : configSim
             );
         } else {
             return configSim;
@@ -201,8 +207,8 @@ function demonstrationHelper(settings) {
                     option = document.createElement("option");
                     option.text = (
                         account.hasOwnProperty("DisplayName")
-                        ? account.DisplayName + " "
-                        : ""
+                            ? account.DisplayName + " "
+                            : ""
                     ) + account.AccountId + " " + account.Currency;
                     option.value = account.AccountKey;
                     if (option.value === user.accountKey) {
@@ -268,18 +274,18 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                    case "1":  // Response of GET /users/me
-                                        user.culture = responseJson.Culture;
-                                        user.language = responseJson.Language;
-                                        break;
-                                    case "2":  // Response of GET /clients/me
-                                        user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                        user.clientKey = responseJson.ClientKey;
-                                        user.name = responseJson.Name;
-                                        break;
-                                    case "3":  // Response of GET /accounts/me
-                                        populateAccountSelection(responseJson.Data);
-                                        break;
+                                        case "1":  // Response of GET /users/me
+                                            user.culture = responseJson.Culture;
+                                            user.language = responseJson.Language;
+                                            break;
+                                        case "2":  // Response of GET /clients/me
+                                            user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                            user.clientKey = responseJson.ClientKey;
+                                            user.name = responseJson.Name;
+                                            break;
+                                        case "3":  // Response of GET /accounts/me
+                                            populateAccountSelection(responseJson.Data);
+                                            break;
                                     }
                                 } catch (error) {
                                     console.error(error);
@@ -445,8 +451,8 @@ function demonstrationHelper(settings) {
             "redirect": window.location.pathname,
             "env": (
                 config.authUrl === configLive.authUrl
-                ? "live"
-                : "sim"
+                    ? "live"
+                    : "sim"
             )
         });
         // First, maybe the token is supplied in the URL?
@@ -492,7 +498,7 @@ function demonstrationHelper(settings) {
     function setupDemo() {
         const config = getConfig();
         const apiUrl = "https://" + config.apiHost + config.apiPath;
-        const streamerUrl = "wss://" + config.apiHost + config.apiPath + "/streamingws/connect";
+        const streamerUrl = config.streamerUrl;
         const authUrl = config.authUrl;
         mirrorConsoleLog();
         mirrorConsoleError();
