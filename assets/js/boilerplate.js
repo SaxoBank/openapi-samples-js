@@ -65,8 +65,8 @@ function demonstrationHelper(settings) {
     function processError(errorObject, extraMessageToShow) {
         let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
             extraMessageToShow === undefined
-                ? ""
-                : "\n" + extraMessageToShow
+            ? ""
+            : "\n" + extraMessageToShow
         );
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
@@ -105,8 +105,8 @@ function demonstrationHelper(settings) {
             function getAccountGroupDisplayNameForSorting(account) {
                 let result = (
                     account.AccountType === "Normal"
-                        ? "1"  // Normal account before special ones like TaxFavoredAccount
-                        : "2"
+                    ? "1"  // Normal account before special ones like TaxFavoredAccount
+                    : "2"
                 );
                 if (account.hasOwnProperty("AccountGroupName")) {  // Group by AccountGroupName
                     result += account.AccountGroupName;
@@ -139,8 +139,8 @@ function demonstrationHelper(settings) {
             urlParams = new window.URLSearchParams(document.location.search.substring(1));
             return (
                 urlParams.get("env") === "live"
-                    ? configLive
-                    : configSim
+                ? configLive
+                : configSim
             );
         } else {
             return configSim;
@@ -207,8 +207,8 @@ function demonstrationHelper(settings) {
                     option = document.createElement("option");
                     option.text = (
                         account.hasOwnProperty("DisplayName")
-                            ? account.DisplayName + " "
-                            : ""
+                        ? account.DisplayName + " "
+                        : ""
                     ) + account.AccountId + " " + account.Currency;
                     option.value = account.AccountKey;
                     if (option.value === user.accountKey) {
@@ -274,18 +274,18 @@ function demonstrationHelper(settings) {
                                 try {
                                     responseJson = JSON.parse(line);
                                     switch (requestId) {
-                                        case "1":  // Response of GET /users/me
-                                            user.culture = responseJson.Culture;
-                                            user.language = responseJson.Language;
-                                            break;
-                                        case "2":  // Response of GET /clients/me
-                                            user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                            user.clientKey = responseJson.ClientKey;
-                                            user.name = responseJson.Name;
-                                            break;
-                                        case "3":  // Response of GET /accounts/me
-                                            populateAccountSelection(responseJson.Data);
-                                            break;
+                                    case "1":  // Response of GET /users/me
+                                        user.culture = responseJson.Culture;
+                                        user.language = responseJson.Language;
+                                        break;
+                                    case "2":  // Response of GET /clients/me
+                                        user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                        user.clientKey = responseJson.ClientKey;
+                                        user.name = responseJson.Name;
+                                        break;
+                                    case "3":  // Response of GET /accounts/me
+                                        populateAccountSelection(responseJson.Data);
+                                        break;
                                     }
                                 } catch (error) {
                                     console.error(error);
@@ -451,8 +451,8 @@ function demonstrationHelper(settings) {
             "redirect": window.location.pathname,
             "env": (
                 config.authUrl === configLive.authUrl
-                    ? "live"
-                    : "sim"
+                ? "live"
+                : "sim"
             )
         });
         // First, maybe the token is supplied in the URL?
