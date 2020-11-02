@@ -61,11 +61,9 @@
         getNext();
     }
 
-    document.getElementById("idBtnGetFirst").addEventListener("click", function () {
-        demo.run(getFirst, getNext);
-    });
-    document.getElementById("idBtnGetNext").addEventListener("click", function () {
-        demo.run(getNext);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetFirst", "func": getFirst, "funcsToDisplay": [getFirst, getNext]},
+        {"evt": "click", "elmId": "idBtnGetNext", "func": getNext, "funcsToDisplay": [getNext]}
+    ]);
     demo.displayVersion("ref");
 }());

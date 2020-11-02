@@ -119,17 +119,11 @@
         doRequest();
     }
 
-    document.getElementById("idBtnGet404NotFound").addEventListener("click", function () {
-        demo.run(trigger404NotFound);
-    });
-    document.getElementById("idBtnGet401Unauthorized").addEventListener("click", function () {
-        demo.run(trigger401Unauthorized);
-    });
-    document.getElementById("idBtnGet400BadRequest").addEventListener("click", function () {
-        demo.run(trigger400BadRequest, demo.processError);
-    });
-    document.getElementById("idBtnGet429TooManyRequests").addEventListener("click", function () {
-        demo.run(trigger429TooManyRequests, demo.processError);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGet404NotFound", "func": trigger404NotFound, "funcsToDisplay": [trigger404NotFound]},
+        {"evt": "click", "elmId": "idBtnGet401Unauthorized", "func": trigger401Unauthorized, "funcsToDisplay": [trigger401Unauthorized]},
+        {"evt": "click", "elmId": "idBtnGet400BadRequest", "func": trigger400BadRequest, "funcsToDisplay": [trigger400BadRequest, demo.processError]},
+        {"evt": "click", "elmId": "idBtnGet429TooManyRequests", "func": trigger429TooManyRequests, "funcsToDisplay": [trigger429TooManyRequests, demo.processError]}
+    ]);
     demo.displayVersion("ref");
 }());

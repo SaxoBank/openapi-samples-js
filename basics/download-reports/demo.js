@@ -96,11 +96,9 @@
         );
     }
 
-    document.getElementById("idBtnAccountStatementPdf").addEventListener("click", function () {
-        demo.run(getAccountStatementPdf, getReport);
-    });
-    document.getElementById("idBtnAccountStatementExcel").addEventListener("click", function () {
-        demo.run(getAccountStatementExcel, getReport);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnAccountStatementPdf", "func": getAccountStatementPdf, "funcsToDisplay": [getAccountStatementPdf, getReport]},
+        {"evt": "click", "elmId": "idBtnAccountStatementExcel", "func": getAccountStatementExcel, "funcsToDisplay": [getAccountStatementExcel, getReport]}
+    ]);
     demo.displayVersion("cr");
 }());

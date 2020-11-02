@@ -79,13 +79,9 @@
         document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\">" + url + "</a>";
     }
 
-    document.getElementById("idBtnTestRedirectUrl").addEventListener("click", function () {
-        demo.run(testRedirectUrl);
-    });
-    document.getElementById("idBtnTestOpenApi").addEventListener("click", function () {
-        demo.run(testOpenApi);
-    });
-    document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
-        demo.run(generateLink);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnTestRedirectUrl", "func": testRedirectUrl, "funcsToDisplay": [testRedirectUrl]},
+        {"evt": "click", "elmId": "idBtnTestOpenApi", "func": testOpenApi, "funcsToDisplay": [testOpenApi]},
+        {"evt": "click", "elmId": "idBtnGenerateLink", "func": generateLink, "funcsToDisplay": [generateLink]}
+    ]);
 }());

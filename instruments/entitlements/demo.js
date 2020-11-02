@@ -102,11 +102,9 @@
         });
     }
 
-    document.getElementById("idBtnGetEntitlements").addEventListener("click", function () {
-        demo.run(getEntitlements);
-    });
-    document.getElementById("idBtnGetSubscriptionLevels").addEventListener("click", function () {
-        demo.run(getSubscriptionLevels);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetEntitlements", "func": getEntitlements, "funcsToDisplay": [getEntitlements]},
+        {"evt": "click", "elmId": "idBtnGetSubscriptionLevels", "func": getSubscriptionLevels, "funcsToDisplay": [getSubscriptionLevels]}
+    ]);
     demo.displayVersion("port");
 }());

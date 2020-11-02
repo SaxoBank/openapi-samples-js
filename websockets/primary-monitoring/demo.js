@@ -70,7 +70,7 @@
     function createConnection() {
         const accessToken = document.getElementById("idBearerToken").value;
         const contextId = encodeURIComponent(document.getElementById("idContextId").value);
-        const streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+        const streamerUrl = demo.streamerUrl + "?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
         if (!isWebSocketsSupportedByBrowser()) {
             console.error("This browser doesn't support WebSockets.");
             throw "This browser doesn't support WebSockets.";
@@ -387,32 +387,16 @@
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
-    document.getElementById("idBtnGetAccessRights").addEventListener("click", function () {
-        demo.run(getAccessRights);
-    });
-    document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
-        demo.run(createConnection);
-    });
-    document.getElementById("idBtnStartListener").addEventListener("click", function () {
-        demo.run(startListener);
-    });
-    document.getElementById("idBtnSubscribe").addEventListener("click", function () {
-        demo.run(subscribe);
-    });
-    document.getElementById("idBtnBecomePrimary").addEventListener("click", function () {
-        demo.run(becomePrimary);
-    });
-    document.getElementById("idBtnBecomePrimaryAgain").addEventListener("click", function () {
-        demo.run(becomePrimaryAgain);
-    });
-    document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        demo.run(extendSubscription);
-    });
-    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
-        demo.run(unsubscribe);
-    });
-    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        demo.run(disconnect);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetAccessRights", "func": getAccessRights, "funcsToDisplay": [getAccessRights]},
+        {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
+        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
+        {"evt": "click", "elmId": "idBtnSubscribe", "func": subscribe, "funcsToDisplay": [subscribe]},
+        {"evt": "click", "elmId": "idBtnBecomePrimary", "func": becomePrimary, "funcsToDisplay": [becomePrimary]},
+        {"evt": "click", "elmId": "idBtnBecomePrimaryAgain", "func": becomePrimaryAgain, "funcsToDisplay": [becomePrimaryAgain]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
+        {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
+    ]);
     demo.displayVersion("root");
 }());

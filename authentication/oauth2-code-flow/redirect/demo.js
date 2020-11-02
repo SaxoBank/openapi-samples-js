@@ -226,29 +226,15 @@
         });
     }
 
-    document.getElementById("idBtnCheckErrors").addEventListener("click", function () {
-        demo.run(checkErrors);
-    });
-    document.getElementById("idBtnGetCode").addEventListener("click", function () {
-        demo.run(getCode);
-    });
-    document.getElementById("idBtnGetState").addEventListener("click", function () {
-        demo.run(getState);
-    });
-    document.getElementById("idBtnGetTokenPhp").addEventListener("click", function () {
-        demo.run(getTokenPhp);
-    });
-    document.getElementById("idBtnGetTokenNodeJs").addEventListener("click", function () {
-        demo.run(getTokenNodeJs);
-    });
-    document.getElementById("idBtnGetUserData").addEventListener("click", function () {
-        demo.run(getUserData);
-    });
-    document.getElementById("idBtnRefreshTokenPhp").addEventListener("click", function () {
-        demo.run(refreshTokenPhp);
-    });
-    document.getElementById("idBtnRefreshTokenNodeJs").addEventListener("click", function () {
-        demo.run(refreshTokenNodeJs);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnCheckErrors", "func": checkErrors, "funcsToDisplay": [checkErrors]},
+        {"evt": "click", "elmId": "idBtnGetCode", "func": getCode, "funcsToDisplay": [getCode]},
+        {"evt": "click", "elmId": "idBtnGetState", "func": getState, "funcsToDisplay": [getState]},
+        {"evt": "click", "elmId": "idBtnGetTokenPhp", "func": getTokenPhp, "funcsToDisplay": [getTokenPhp]},
+        {"evt": "click", "elmId": "idBtnGetTokenNodeJs", "func": getTokenNodeJs, "funcsToDisplay": [getTokenNodeJs]},
+        {"evt": "click", "elmId": "idBtnGetUserData", "func": getUserData, "funcsToDisplay": [getUserData]},
+        {"evt": "click", "elmId": "idBtnRefreshTokenPhp", "func": refreshTokenPhp, "funcsToDisplay": [refreshTokenPhp]},
+        {"evt": "click", "elmId": "idBtnRefreshTokenNodeJs", "func": refreshTokenNodeJs, "funcsToDisplay": [refreshTokenNodeJs]}
+    ]);
     demo.displayVersion("cs");
 }());

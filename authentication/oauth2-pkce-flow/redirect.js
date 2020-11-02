@@ -92,17 +92,11 @@
         });
     }
 
-    document.getElementById("idBtnCheckErrors").addEventListener("click", function () {
-        demo.run(checkErrors);
-    });
-    document.getElementById("idBtnGetCode").addEventListener("click", function () {
-        demo.run(getCode);
-    });
-    document.getElementById("idBtnGetState").addEventListener("click", function () {
-        demo.run(getState);
-    });
-    document.getElementById("idBtnGetToken").addEventListener("click", function () {
-        demo.run(getToken);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnCheckErrors", "func": checkErrors, "funcsToDisplay": [checkErrors]},
+        {"evt": "click", "elmId": "idBtnGetCode", "func": getCode, "funcsToDisplay": [getCode]},
+        {"evt": "click", "elmId": "idBtnGetState", "func": getState, "funcsToDisplay": [getState]},
+        {"evt": "click", "elmId": "idBtnGetToken", "func": getToken, "funcsToDisplay": [getToken]}
+    ]);
     demo.displayVersion("cs");
 }());

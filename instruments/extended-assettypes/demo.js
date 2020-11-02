@@ -115,8 +115,9 @@
         if (document.getElementById("idChkExtAsset").checked) {
             headers.Pragma = "oapi-x-extasset";
         }
+        // A better example of this request can be found here: https://saxobank.github.io/openapi-samples-js/portfolio/positions-orders/
         fetch(
-            demo.apiUrl + "/cs/v1/audit/orderactivities?FromDateTime=2020-03-12",
+            demo.apiUrl + "/cs/v1/audit/orderactivities?FromDateTime=2020-10-11T00:00:00.000Z",
             {
                 "method": "GET",
                 "headers": headers
@@ -133,17 +134,12 @@
             console.error(error);
         });
     }
-    document.getElementById("idBtnGetLegalAssetTypes").addEventListener("click", function () {
-        demo.run(getLegalAssetTypes);
-    });
-    document.getElementById("idBtnSearchIshares").addEventListener("click", function () {
-        demo.run(findIshares);
-    });
-    document.getElementById("idBtnFindEtf").addEventListener("click", function () {
-        demo.run(findEtf);
-    });
-    document.getElementById("idBtnGetHistOrders").addEventListener("click", function () {
-        demo.run(getHistOrders);
-    });
+
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetLegalAssetTypes", "func": getLegalAssetTypes, "funcsToDisplay": [getLegalAssetTypes]},
+        {"evt": "click", "elmId": "idBtnSearchIshares", "func": findIshares, "funcsToDisplay": [findIshares]},
+        {"evt": "click", "elmId": "idBtnFindEtf", "func": findEtf, "funcsToDisplay": [findEtf]},
+        {"evt": "click", "elmId": "idBtnGetHistOrders", "func": getHistOrders, "funcsToDisplay": [getHistOrders]}
+    ]);
     demo.displayVersion("ref");
 }());

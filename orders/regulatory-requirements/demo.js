@@ -416,7 +416,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const options = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                     const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                     if (responseJson.Data.length === 0) {
                         console.error("No instrument of type " + assetType + " found.");
@@ -437,17 +436,11 @@
         });
     }
 
-    document.getElementById("idCbxAssetType").addEventListener("change", function () {
-        demo.run(getAssetType);
-    });
-    document.getElementById("idBtnComplexWarning").addEventListener("click", function () {
-        demo.run(getComplexWarning);
-    });
-    document.getElementById("idBtnGetOrderCosts").addEventListener("click", function () {
-        demo.run(getOrderCosts);
-    });
-    document.getElementById("idBtnGetKid").addEventListener("click", function () {
-        demo.run(getKid);
-    });
+    demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxAssetType", "func": getAssetType, "funcsToDisplay": [getAssetType]},
+        {"evt": "click", "elmId": "idBtnComplexWarning", "func": getComplexWarning, "funcsToDisplay": [getComplexWarning]},
+        {"evt": "click", "elmId": "idBtnGetOrderCosts", "func": getOrderCosts, "funcsToDisplay": [getOrderCosts]},
+        {"evt": "click", "elmId": "idBtnGetKid", "func": getKid, "funcsToDisplay": [getKid]}
+    ]);
     demo.displayVersion("trade");
 }());

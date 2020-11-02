@@ -351,32 +351,16 @@
         });
     }
 
-    document.getElementById("idCbxOptionStrategy").addEventListener("change", function () {
-        demo.run(getStrategy);
-    });
-    document.getElementById("idCbxOrderType").addEventListener("change", function () {
-        demo.run(selectOrderType);
-    });
-    document.getElementById("idCbxOrderDuration").addEventListener("change", function () {
-        demo.run(selectOrderDuration);
-    });
-    document.getElementById("idBtnGetStrategy").addEventListener("click", function () {
-        demo.run(getStrategy);
-    });
-    document.getElementById("idBtnGetSeries").addEventListener("click", function () {
-        demo.run(getSeries);
-    });
-    document.getElementById("idBtnPreCheckOrder").addEventListener("click", function () {
-        demo.run(preCheckNewOrder);
-    });
-    document.getElementById("idBtnPlaceNewOrder").addEventListener("click", function () {
-        demo.run(placeNewOrder);
-    });
-    document.getElementById("idBtnModifyLastOrder").addEventListener("click", function () {
-        demo.run(modifyLastOrder);
-    });
-    document.getElementById("idBtnCancelLastOrder").addEventListener("click", function () {
-        demo.run(cancelLastOrder);
-    });
+    demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxOptionStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
+        {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
+        {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
+        {"evt": "click", "elmId": "idBtnGetStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
+        {"evt": "click", "elmId": "idBtnGetSeries", "func": getSeries, "funcsToDisplay": [getSeries]},
+        {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
+        {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
+        {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
+        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]}
+    ]);
     demo.displayVersion("trade");
 }());

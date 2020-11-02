@@ -59,19 +59,11 @@
         testRequest("DELETE", demo.apiUrl + "/root/v1/diagnostics/delete");
     }
 
-    document.getElementById("idBtnTestGetRequest").addEventListener("click", function () {
-        demo.run(testGetRequest, testRequest);
-    });
-    document.getElementById("idBtnTestPostRequest").addEventListener("click", function () {
-        demo.run(testPostRequest, testRequest);
-    });
-    document.getElementById("idBtnTestPutRequest").addEventListener("click", function () {
-        demo.run(testPutRequest, testRequest);
-    });
-    document.getElementById("idBtnTestPatchRequest").addEventListener("click", function () {
-        demo.run(testPatchRequest, testRequest);
-    });
-    document.getElementById("idBtnTestDeleteRequest").addEventListener("click", function () {
-        demo.run(testDeleteRequest, testRequest);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnTestGetRequest", "func": testGetRequest, "funcsToDisplay": [testGetRequest, testRequest]},
+        {"evt": "click", "elmId": "idBtnTestPostRequest", "func": testPostRequest, "funcsToDisplay": [testPostRequest, testRequest]},
+        {"evt": "click", "elmId": "idBtnTestPutRequest", "func": testPutRequest, "funcsToDisplay": [testPutRequest, testRequest]},
+        {"evt": "click", "elmId": "idBtnTestPatchRequest", "func": testPatchRequest, "funcsToDisplay": [testPatchRequest, testRequest]},
+        {"evt": "click", "elmId": "idBtnTestDeleteRequest", "func": testDeleteRequest, "funcsToDisplay": [testDeleteRequest, testRequest]}
+    ]);
 }());

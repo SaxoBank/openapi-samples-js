@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true */
-/*global window console demonstrationHelper */
+/*global window console demonstrationHelper CryptoJS */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
@@ -76,13 +76,9 @@
         document.getElementById("idResponse").innerHTML = '<h2>Follow this link to continue with step 2:</h2><a href="' + url + '" target="_blank">' + url + "</a><br /><br />Remember the verifier: " + codeVerifier;
     }
 
-    document.getElementById("idBtnTestRedirectUrl").addEventListener("click", function () {
-        demo.run(testRedirectUrl);
-    });
-    document.getElementById("idBtnGenerateCodeVerifier").addEventListener("click", function () {
-        demo.run(generateCodeVerifier);
-    });
-    document.getElementById("idBtnGenerateLink").addEventListener("click", function () {
-        demo.run(generateLink);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnTestRedirectUrl", "func": testRedirectUrl, "funcsToDisplay": [testRedirectUrl]},
+        {"evt": "click", "elmId": "idBtnGenerateCodeVerifier", "func": generateCodeVerifier, "funcsToDisplay": [generateCodeVerifier]},
+        {"evt": "click", "elmId": "idBtnGenerateLink", "func": generateLink, "funcsToDisplay": [generateLink]}
+    ]);
 }());

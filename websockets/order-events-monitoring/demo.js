@@ -39,7 +39,7 @@
     function createConnection() {
         const accessToken = document.getElementById("idBearerToken").value;
         const contextId = encodeURIComponent(document.getElementById("idContextId").value);
-        const streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+        const streamerUrl = demo.streamerUrl + "?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
         if (!isWebSocketsSupportedByBrowser()) {
             console.error("This browser doesn't support WebSockets.");
             throw "This browser doesn't support WebSockets.";
@@ -405,29 +405,15 @@
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
-    document.getElementById("idBtnCreateConnection").addEventListener("click", function () {
-        demo.run(createConnection);
-    });
-    document.getElementById("idBtnStartListener").addEventListener("click", function () {
-        demo.run(startListener);
-    });
-    document.getElementById("idBtnSubscribeEns").addEventListener("click", function () {
-        demo.run(subscribeEns);
-    });
-    document.getElementById("idBtnSubscribeBalances").addEventListener("click", function () {
-        demo.run(subscribeBalances);
-    });
-    document.getElementById("idBtnSubscribePositions").addEventListener("click", function () {
-        demo.run(subscribePositions);
-    });
-    document.getElementById("idBtnExtendSubscription").addEventListener("click", function () {
-        demo.run(extendSubscription);
-    });
-    document.getElementById("idBtnUnsubscribe").addEventListener("click", function () {
-        demo.run(unsubscribe);
-    });
-    document.getElementById("idBtnDisconnect").addEventListener("click", function () {
-        demo.run(disconnect);
-    });
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
+        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
+        {"evt": "click", "elmId": "idBtnSubscribeEns", "func": subscribeEns, "funcsToDisplay": [subscribeEns]},
+        {"evt": "click", "elmId": "idBtnSubscribeBalances", "func": subscribeBalances, "funcsToDisplay": [subscribeBalances]},
+        {"evt": "click", "elmId": "idBtnSubscribePositions", "func": subscribePositions, "funcsToDisplay": [subscribePositions]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
+        {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
+    ]);
     demo.displayVersion("ens");
 }());

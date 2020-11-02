@@ -2,14 +2,17 @@
 /*global console */
 
 /*
- * boilerplate v1.16
+ * boilerplate v1.17
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
- * For demonstration the code which is executed, is shown in the code output.
+ * The source code which is executed, is listed in the code output.
  * It also handles errors when the fetch fails. See https://saxobank.github.io/openapi-samples-js/error-handling/ for an explanation.
  *
- * The token is stored in the localeStorage, so it remains available after a page refresh.
+ * This page can be downloaded and loaded via http://localhost/openapi-samples-js/basics/user-info/ or file:///C:/Repos/openapi-samples-js/basics/user-info/index.html
+ * Running on production is done by adding the query parameter ?env=live (Use at Your Own Risk!).
+ *
+ * The token is stored in the localStorage, so it remains available after a page refresh.
  *
  * Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
  *
@@ -21,10 +24,12 @@
  * @return {Object} Object with config, user object and helper functions.
  */
 function demonstrationHelper(settings) {
+    // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
+        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
         "implicitAppKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
@@ -35,9 +40,10 @@ function demonstrationHelper(settings) {
         "authUrl": "https://live.logonvalidation.net/authorize",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
+        "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
         "implicitAppKey": {
-            "defaultAssetTypes": "enter-your-app-key-1",
-            "extendedAssetTypes": "enter-your-app-key-2"
+            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
+            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
         }
     };
     const user = {};
@@ -142,12 +148,11 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Show a function and run it.
-     * @param {Function} functionToRun The function in scope.
-     * @param {Function=} secondFunctionToDisplay An optional function to display besides the functionToRun.
+     * Run a function, but only after the token is valid.
+     * @param {Function} functionToRun The function to run.
      * @return {void}
      */
-    function run(functionToRun, secondFunctionToDisplay) {
+    function run(functionToRun) {
 
         /**
          * Add all allowed asset types for the default account to the selection.
@@ -288,7 +293,7 @@ function demonstrationHelper(settings) {
                             }
                         }
                         settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nClientKey: " + user.clientKey;
-                        functionToRun();
+                        functionToRun();  // Run the function
                     });
                 } else {
                     settings.accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
@@ -300,12 +305,6 @@ function demonstrationHelper(settings) {
             });
         }
 
-        // Display source of function, for demonstration:
-        let source = functionToRun.toString();
-        if (secondFunctionToDisplay !== undefined && secondFunctionToDisplay !== null) {
-            source = secondFunctionToDisplay.toString() + "\n\n" + source;
-        }
-        settings.javaScriptElm.innerText = source;
         settings.responseElm.removeAttribute("style");  // Remove red background, if any.
         settings.responseElm.innerText = "Started function " + functionToRun.name + "()..";
         if (tokenInputFieldExists()) {
@@ -323,6 +322,50 @@ function demonstrationHelper(settings) {
         } else {
             functionToRun();
         }
+    }
+
+    /**
+     * Display the source code of one or more functions.
+     * @param {Array<Function>} functions The function to run.
+     * @return {void}
+     */
+    function displaySourceCode(functions) {
+        let sourceCode = "";
+        functions.forEach(function (functionToDisplay) {
+            sourceCode = functionToDisplay.toString() + "\n\n" + sourceCode;
+        });
+        settings.javaScriptElm.innerText = sourceCode;
+    }
+
+    /**
+     * Setup the functions to run after clicking a button or changing a dropdown.
+     * @param {Array<Object>} events The configuration per event.
+     * @return {void}
+     */
+    function setupEvents(events) {
+
+        /**
+         * Create the event listener.
+         * @param {Object} eventToSetup The event configuration.
+         * @return {void}
+         */
+        function setupEvent(eventToSetup) {
+            document.getElementById(eventToSetup.elmId).addEventListener(eventToSetup.evt, function () {
+                run(eventToSetup.func);
+                displaySourceCode(eventToSetup.funcsToDisplay);
+            });
+        }
+
+        events.forEach(function (eventToSetup) {
+            if (eventToSetup.hasOwnProperty("isDelayedRun") && eventToSetup.isDelayedRun === true) {
+                // Give boilerplate event priority to set correct account (useCapture is broken in some browsers)
+                window.setTimeout(function () {
+                    setupEvent(eventToSetup);
+                }, 10);
+            } else {
+                setupEvent(eventToSetup);
+            }
+        });
     }
 
     /**
@@ -455,6 +498,7 @@ function demonstrationHelper(settings) {
     function setupDemo() {
         const config = getConfig();
         const apiUrl = "https://" + config.apiHost + config.apiPath;
+        const streamerUrl = config.streamerUrl;
         const authUrl = config.authUrl;
         mirrorConsoleLog();
         mirrorConsoleError();
@@ -473,9 +517,10 @@ function demonstrationHelper(settings) {
         return Object.freeze({
             apiUrl,
             authUrl,
+            streamerUrl,
             user,
             displayVersion,
-            run,
+            setupEvents,
             processError,
             groupAndSortAccountList
         });

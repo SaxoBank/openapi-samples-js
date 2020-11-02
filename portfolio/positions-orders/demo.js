@@ -104,7 +104,7 @@
     function getPortfolioClient() {
         getPortfolio(
             demo.apiUrl + "/port/v1/netpositions?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey),
-            "All (netted) positions for client '" + demo.user.clientKey + "'"
+            "All (netted) positions for client '" + demo.user.clientKey + "'."
         );
     }
 
@@ -118,7 +118,7 @@
         } else {
             getPortfolio(
                 demo.apiUrl + "/port/v1/netpositions?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKeys[0]),
-                "All (netted) positions for your account group '" + demo.user.accountGroupKeys[0] + "'"
+                "All (netted) positions for your account group '" + demo.user.accountGroupKeys[0] + "'."
             );
         }
     }
@@ -130,7 +130,7 @@
     function getPortfolioAccount() {
         getPortfolio(
             demo.apiUrl + "/port/v1/netpositions?FieldGroups=NetPositionBase,NetPositionView,DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
-            "All (netted) positions for your account '" + demo.user.accountKey + "'"
+            "All (netted) positions for your account '" + demo.user.accountKey + "'."
         );
     }
 
@@ -189,7 +189,7 @@
     function getOrdersClient() {
         getOrders(
             demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey),
-            "All open orders for client '" + demo.user.clientKey + "'"
+            "All open orders for client '" + demo.user.clientKey + "'."
         );
     }
 
@@ -203,7 +203,7 @@
         } else {
             getOrders(
                 demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKeys[0]),
-                "All open orders for your account group '" + demo.user.accountGroupKeys[0] + "'"
+                "All open orders for your account group '" + demo.user.accountGroupKeys[0] + "'."
             );
         }
     }
@@ -215,27 +215,129 @@
     function getOrdersAccount() {
         getOrders(
             demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
-            "All open orders for your account '" + demo.user.accountKey + "'"
+            "All open orders for your account '" + demo.user.accountKey + "'."
         );
     }
 
-    document.getElementById("idBtnGetPortfolioClient").addEventListener("click", function () {
-        demo.run(getPortfolioClient, displayAndFormatValue);
-    });
-    document.getElementById("idBtnGetPortfolioAccountGroup").addEventListener("click", function () {
-        demo.run(getPortfolioAccountGroup, displayAndFormatValue);
-    });
-    document.getElementById("idBtnGetPortfolioAccount").addEventListener("click", function () {
-        demo.run(getPortfolioAccount, displayAndFormatValue);
-    });
-    document.getElementById("idBtnGetOrdersClient").addEventListener("click", function () {
-        demo.run(getOrdersClient, displayAndFormatValue);
-    });
-    document.getElementById("idBtnGetOrdersAccountGroup").addEventListener("click", function () {
-        demo.run(getOrdersAccountGroup, displayAndFormatValue);
-    });
-    document.getElementById("idBtnGetOrdersAccount").addEventListener("click", function () {
-        demo.run(getOrdersAccount, displayAndFormatValue);
-    });
+    /**
+     * Example of formatting historical orders.
+     * @param {string} url The URL to use for the request.
+     * @param {string} msg Text to display as comment, followed by the orders.
+     * @param {number} daysInThePast Start of the range.
+     * @return {void}
+     */
+    function getHistoricalOrders(url, msg, daysInThePast) {
+
+        /**
+         * Prefix number with zero, if it has one digit.
+         * @param {number} n The one or two digit number representing day or month.
+         * @return {string} The formatted numer.
+         */
+        function addLeadingZeroes(n) {
+            if (n <= 9) {
+                return "0" + n;
+            }
+            return n;
+        }
+
+        const fromDate = new Date();
+        let fromDateString;
+        fromDate.setDate(fromDate.getDate() - daysInThePast);
+        fromDateString = fromDate.getFullYear() + "-" + addLeadingZeroes(fromDate.getMonth() + 1) + "-" + addLeadingZeroes(fromDate.getDate()) + "T00:00:00.000Z";
+        url += "&FromDateTime=" + encodeURIComponent(fromDateString);
+        fetch(
+            url,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let list = "";
+                    let order;
+                    let i;
+                    for (i = 0; i < responseJson.Data.length; i += 1) {
+                        order = responseJson.Data[i];
+                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " (status " + order.Status + " " + order.SubStatus + ")" + (
+                            order.hasOwnProperty("ExternalReference")
+                            ? " reference: " + order.ExternalReference
+                            : ""
+                        ) + (
+                            order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
+                            ? " partially filled: " + order.FilledAmount
+                            : ""
+                        ) + "\n";
+                    }
+                    console.log(msg + "\n\n" + (
+                        list === ""
+                        ? "No orders found."
+                        : list
+                    ));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Example of getting historical orders for the selected account.
+     * @return {void}
+     */
+    function getHistoricalOrdersClient() {
+        const daysInThePast = 21;
+        getHistoricalOrders(
+            demo.apiUrl + "/cs/v1/audit/orderactivities?IncludeSubAccounts=false&EntryType=Last&FieldGroups=DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey),
+            "Historical orders from past " + daysInThePast + " days for client '" + demo.user.clientKey + "'.",
+            daysInThePast
+        );
+    }
+
+    /**
+     * Example of getting historical orders for the selected account.
+     * @return {void}
+     */
+    function getHistoricalOrdersAccountGroup() {
+        const daysInThePast = 21;
+        if (demo.user.accountGroupKeys[0] === demo.user.clientKey) {
+            console.error("AccountGroups are not enabled for this client.");
+        } else {
+            getHistoricalOrders(
+                demo.apiUrl + "/cs/v1/audit/orderactivities?IncludeSubAccounts=false&EntryType=Last&FieldGroups=DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKey),
+                "Historical orders from past " + daysInThePast + " days for account group '" + demo.user.accountGroupKeys[0] + "'.",
+                daysInThePast
+            );
+        }
+    }
+
+    /**
+     * Example of getting historical orders for the selected account.
+     * @return {void}
+     */
+    function getHistoricalOrdersAccount() {
+        const daysInThePast = 21;
+        getHistoricalOrders(
+            demo.apiUrl + "/cs/v1/audit/orderactivities?IncludeSubAccounts=false&EntryType=Last&FieldGroups=DisplayAndFormat&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            "Historical orders from past " + daysInThePast + " days for account '" + demo.user.accountKey + "'.",
+            daysInThePast
+        );
+    }
+
+    demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetPortfolioClient", "func": getPortfolioClient, "funcsToDisplay": [getPortfolioClient, getPortfolio, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetPortfolioAccountGroup", "func": getPortfolioAccountGroup, "funcsToDisplay": [getPortfolioAccountGroup, getPortfolio, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetPortfolioAccount", "func": getPortfolioAccount, "funcsToDisplay": [getPortfolioAccount, getPortfolio, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetOrdersClient", "func": getOrdersClient, "funcsToDisplay": [getOrdersClient, getOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetOrdersAccountGroup", "func": getOrdersAccountGroup, "funcsToDisplay": [getOrdersAccountGroup, getOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetOrdersAccount", "func": getOrdersAccount, "funcsToDisplay": [getOrdersAccount, getOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersClient", "func": getHistoricalOrdersClient, "funcsToDisplay": [getHistoricalOrdersClient, getHistoricalOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccountGroup", "func": getHistoricalOrdersAccountGroup, "funcsToDisplay": [getHistoricalOrdersAccountGroup, getHistoricalOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccount", "func": getHistoricalOrdersAccount, "funcsToDisplay": [getHistoricalOrdersAccount, getHistoricalOrders, displayAndFormatValue]}
+    ]);
     demo.displayVersion("port");
 }());
