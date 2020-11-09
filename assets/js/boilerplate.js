@@ -42,8 +42,8 @@ function demonstrationHelper(settings) {
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
         "implicitAppKey": {
-            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
-            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
+            "defaultAssetTypes": "ae84ff08844e40d9a7e546bb1c4bdeb7",
+            "extendedAssetTypes": "4995383fd4b344e588eb784a7c666835"
         }
     };
     const user = {};
@@ -156,28 +156,33 @@ function demonstrationHelper(settings) {
 
         /**
          * Add all allowed asset types for the default account to the selection.
-         * @param {Array} legalAssetTypes The allowed asset types.
+         * @param {string} accountKey The account key.
+         * @param {Array} legalAssetTypesPerAccount The available AssetTypes per account key.
          * @return {void}
          */
-        function populateAssetTypeSelection(legalAssetTypes) {
+        function populateAssetTypeSelection(accountKey, legalAssetTypesPerAccount) {
             let i;
             let option;
-            if (settings.hasOwnProperty("assetTypesList") && settings.assetTypesList !== null) {
-                // Select the asset types enabled for the default account
-                for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
-                    settings.assetTypesList.remove(i);
-                }
-                legalAssetTypes.sort();
-                for (i = 0; i < legalAssetTypes.length; i += 1) {
-                    option = document.createElement("option");
-                    option.text = legalAssetTypes[i];
-                    option.value = legalAssetTypes[i];
-                    if (option.value === settings.selectedAssetType) {
-                        option.setAttribute("selected", true);
-                    }
-                    settings.assetTypesList.add(option);
-                }
+            let legalAssetTypes;
+            // Select the asset types enabled for the default account
+            for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
+                settings.assetTypesList.remove(i);
             }
+            legalAssetTypesPerAccount.forEach(function (legalAssetTypesElement) {
+                if (legalAssetTypesElement.accountKey === accountKey) {
+                    legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
+                    return false;
+                }
+            });
+            legalAssetTypes.forEach(function (legalAssetType) {
+                option = document.createElement("option");
+                option.text = legalAssetType;
+                option.value = legalAssetType;
+                if (option.value === settings.selectedAssetType) {
+                    option.setAttribute("selected", true);
+                }
+                settings.assetTypesList.add(option);
+            });
         }
 
         /**
@@ -187,8 +192,8 @@ function demonstrationHelper(settings) {
          */
         function populateAccountSelection(accountsResponseData) {
             const existingOptionGroups = settings.accountsList.getElementsByTagName("optgroup");
+            const legalAssetTypesPerAccount = [];
             let i;
-            let account;
             let option;
             let optionGroup;
             let currentAccountGroupName = "";
@@ -200,8 +205,7 @@ function demonstrationHelper(settings) {
             }
             user.accountGroupKeys = [];
             groupAndSortAccountList(accountsResponseData);
-            for (i = 0; i < accountsResponseData.length; i += 1) {
-                account = accountsResponseData[i];
+            accountsResponseData.forEach(function (account) {
                 // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
                 if (account.Active) {
                     option = document.createElement("option");
@@ -211,9 +215,17 @@ function demonstrationHelper(settings) {
                         : ""
                     ) + account.AccountId + " " + account.Currency;
                     option.value = account.AccountKey;
-                    if (option.value === user.accountKey) {
+                    // Remember the LegalAssetTypes for every account, so the dropdown can be populated after switching accounts
+                    account.LegalAssetTypes.sort();
+                    legalAssetTypesPerAccount.push({
+                        "accountKey": account.AccountKey,
+                        "legalAssetTypes": account.LegalAssetTypes
+                    });
+                    if (account.AccountKey === user.accountKey) {
                         option.setAttribute("selected", true);
-                        populateAssetTypeSelection(account.LegalAssetTypes);
+                        if (settings.hasOwnProperty("assetTypesList") && settings.assetTypesList !== null) {
+                            populateAssetTypeSelection(account.AccountKey, legalAssetTypesPerAccount);
+                        }
                     }
                     // If there are account groups, show the accounts in the right group(s)
                     if (account.hasOwnProperty("AccountGroupName") && account.AccountGroupName !== currentAccountGroupName) {
@@ -228,9 +240,12 @@ function demonstrationHelper(settings) {
                         user.accountGroupKeys.push(account.AccountGroupKey);
                     }
                 }
-            }
+            });
             settings.accountsList.addEventListener("change", function () {
                 user.accountKey = settings.accountsList.value;
+                if (settings.hasOwnProperty("assetTypesList") && settings.assetTypesList !== null) {
+                    populateAssetTypeSelection(user.accountKey, legalAssetTypesPerAccount);
+                }
                 console.log("Using account " + user.accountKey);
             });
         }
@@ -262,12 +277,10 @@ function demonstrationHelper(settings) {
                     settings.accessTokenElm.setCustomValidity("");
                     response.text().then(function (responseText) {
                         const responseArray = responseText.split("\n");
-                        let lineNumber;
-                        let line;
                         let requestId = "";
                         let responseJson;
-                        for (lineNumber = 0; lineNumber < responseArray.length; lineNumber += 1) {
-                            line = responseArray[lineNumber].trim();
+                        responseArray.forEach(function (line) {
+                            line = line.trim();
                             if (line.substr(0, 13) === "X-Request-Id:") {
                                 requestId = line.substr(13).trim();
                             } else if (line.charAt(0) === "{") {
@@ -291,7 +304,7 @@ function demonstrationHelper(settings) {
                                     console.error(error);
                                 }
                             }
-                        }
+                        });
                         settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nClientKey: " + user.clientKey;
                         functionToRun();  // Run the function
                     });
