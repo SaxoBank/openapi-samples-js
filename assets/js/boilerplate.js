@@ -42,8 +42,8 @@ function demonstrationHelper(settings) {
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
         "implicitAppKey": {
-            "defaultAssetTypes": "ae84ff08844e40d9a7e546bb1c4bdeb7",
-            "extendedAssetTypes": "4995383fd4b344e588eb784a7c666835"
+            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
+            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
         }
     };
     const user = {};
