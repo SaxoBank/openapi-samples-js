@@ -172,7 +172,6 @@ function demonstrationHelper(settings) {
             legalAssetTypesPerAccount.forEach(function (legalAssetTypesElement) {
                 if (legalAssetTypesElement.accountKey === accountKey) {
                     legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
-                    return false;
                 }
             });
             legalAssetTypes.forEach(function (legalAssetType) {

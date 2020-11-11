@@ -1,0 +1,93 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Decompose batch requests</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Batch Requests Unpacked</h1>
+<h2 class="project-tagline">View batch request as single requests</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<h1>Example on how to decompose a batch request</h1>
+Batch requests are used by the Saxo apps and can be used as an example on how the Api can be used. However, batch requests are sometimes difficult to read. With this tool you can convert the requests into single requests.
+<br />
+Keep in mind that a lot of endpoints used by Investor+, or SaxoTraderGO, are only for Saxo internal usage.
+<br /><br />
+More info: <a href="https://www.developer.saxo/openapi/learn/batching-requests" target="_blank">https://www.developer.saxo/openapi/learn/batching-requests</a>
+<br />
+<br />
+POST body containing requests:
+<br />
+<textarea class="json-input" id="idBatchRequest" rows="5" wrap="off">
+--+
+Content-Type:application/http; msgtype=request
+
+GET /sim/openapi/ref/v1/watchlists/14814 HTTP/1.1
+X-Request-Id:244
+Pragma:oapi-x-extasset
+Host:www.saxoinvestor.fr
+
+
+--+
+Content-Type:application/http; msgtype=request
+
+GET /sim/openapi/ref/v1/watchlists/7432 HTTP/1.1
+X-Request-Id:245
+Pragma:oapi-x-extasset
+Host:www.saxoinvestor.fr
+
+
+--+--
+</textarea>
+<br />
+Response of the batch request:
+<br />
+<textarea class="json-input" id="idBatchResponse" rows="5" wrap="off">
+--f3b85c46-2d43-4fbf-9bcd-b469735f6dba
+Content-Type: application/http; msgtype=response
+
+HTTP/1.1 404 Not Found
+X-RateLimit-RefDataMinute-Limit: 60
+X-RateLimit-RefDataMinute-Remaining: 58
+X-RateLimit-RefDataMinute-Reset: 42
+X-Request-Id: 244
+X-Correlation: f37b4e6ec389406dbd626b546993c55e#193#8c59181d-2cce-4b87-a651-ae6c3aae3972#81
+Access-Control-Allow-Origin: https://www.saxoinvestor.fr
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range,X-Correlation
+
+
+--f3b85c46-2d43-4fbf-9bcd-b469735f6dba
+Content-Type: application/http; msgtype=response
+
+HTTP/1.1 200 OK
+X-RateLimit-RefDataMinute-Limit: 60
+X-RateLimit-RefDataMinute-Remaining: 57
+X-RateLimit-RefDataMinute-Reset: 42
+X-Request-Id: 245
+X-Correlation: f37b4e6ec389406dbd626b546993c55e#193#8c59181d-2cce-4b87-a651-ae6c3aae3972#81
+Access-Control-Allow-Origin: https://www.saxoinvestor.fr
+Access-Control-Allow-Credentials: true
+Access-Control-Expose-Headers: X-Auth-Token,X-Auth-Token-Expiry,X-Auth-Token-Expiry-Minutes,X-Request-Id,WWW-Authenticate,Location,Content-Encoding,ETag,Content-Range,X-Correlation
+Content-Type: application/json; charset=utf-8
+
+{"Instruments":[{"Amount":0.0,"AssetType":"Stock","Description":"ING Groep NV","NonTradableReason":"None","Symbol":"ING:xams","TradingStatus":"Tradable","Uic":3066,"WatchlistInstrumentId":"122276671"},{"Amount":0.0,"AssetType":"Stock","Description":"Aegon NV","NonTradableReason":"None","Symbol":"AGN:xams","TradingStatus":"Tradable","Uic":111717,"WatchlistInstrumentId":"122276672"},{"Amount":0.0,"AssetType":"Stock","Description":"Koninklijke DSM NV","NonTradableReason":"None","Symbol":"DSM:xams","TradingStatus":"Tradable","Uic":38441,"WatchlistInstrumentId":"122276673"},{"Amount":0.0,"AssetType":"Stock","Description":"KPN (Koninklijke)","NonTradableReason":"None","Symbol":"KPN:xams","TradingStatus":"Tradable","Uic":1640,"WatchlistInstrumentId":"122276674"},{"Amount":0.0,"AssetType":"Stock","Description":"Randstad Holding NV","NonTradableReason":"None","Symbol":"RAND:xams","TradingStatus":"Tradable","Uic":4982,"WatchlistInstrumentId":"122276675"},{"Amount":0.0,"AssetType":"Stock","Description":"Royal Philips Electronics NV","NonTradableReason":"None","Symbol":"PHIA:xams","TradingStatus":"Tradable","Uic":111721,"WatchlistInstrumentId":"122276676"},{"Amount":0.0,"AssetType":"Stock","Description":"Wolters Kluwer NV","NonTradableReason":"None","Symbol":"WKL:xams","TradingStatus":"Tradable","Uic":28735,"WatchlistInstrumentId":"122276677"},{"Amount":0.0,"AssetType":"Stock","Description":"Heineken","NonTradableReason":"None","Symbol":"HEIA:xams","TradingStatus":"Tradable","Uic":111720,"WatchlistInstrumentId":"122276678"},{"Amount":0.0,"AssetType":"Stock","Description":"ASML Holding NV","NonTradableReason":"None","Symbol":"ASML:xams","TradingStatus":"Tradable","Uic":1636,"WatchlistInstrumentId":"122276679"},{"Amount":0.0,"AssetType":"Stock","Description":"NN Group NV","NonTradableReason":"None","Symbol":"NN:xams","TradingStatus":"Tradable","Uic":984685,"WatchlistInstrumentId":"122276680"},{"Amount":0.0,"AssetType":"Stock","Description":"ABN AMRO Bank NV","NonTradableReason":"None","Symbol":"ABN:xams","TradingStatus":"Tradable","Uic":2906958,"WatchlistInstrumentId":"122276681"},{"Amount":0.0,"AssetType":"Stock","Description":"Galapagos","NonTradableReason":"None","Symbol":"GLPG:xams","TradingStatus":"Tradable","Uic":766290,"WatchlistInstrumentId":"122276682"},{"Amount":0.0,"AssetType":"Stock","Description":"Koninklijke Ahold NV","NonTradableReason":"None","Symbol":"AD:xams","TradingStatus":"Tradable","Uic":4641426,"WatchlistInstrumentId":"122276683"},{"Amount":0.0,"AssetType":"Stock","Description":"ArcelorMittal","NonTradableReason":"None","Symbol":"MT:xams","TradingStatus":"Tradable","Uic":22454,"WatchlistInstrumentId":"122276684"},{"Amount":0.0,"AssetType":"Stock","Description":"ASR Nederland NV","NonTradableReason":"None","Symbol":"ASRNL:xams","TradingStatus":"Tradable","Uic":4289285,"WatchlistInstrumentId":"122276685"},{"Amount":0.0,"AssetType":"Stock","Description":"Unibail-Rodamco-Westfield NV","NonTradableReason":"None","Symbol":"URW:xams","TradingStatus":"Tradable","Uic":9854532,"WatchlistInstrumentId":"122276686"},{"Amount":0.0,"AssetType":"Stock","Description":"RELX Plc","NonTradableReason":"None","Symbol":"REN:xams","TradingStatus":"Tradable","Uic":10701975,"WatchlistInstrumentId":"122276687"},{"Amount":0.0,"AssetType":"Stock","Description":"Akzo Nobel NV","NonTradableReason":"None","Symbol":"AKZA:xams","TradingStatus":"Tradable","Uic":111719,"WatchlistInstrumentId":"122276688"},{"Amount":0.0,"AssetType":"Stock","Description":"Royal Dutch Shell Plc A","NonTradableReason":"None","Symbol":"RDSa:xams","TradingStatus":"Tradable","Uic":16350,"WatchlistInstrumentId":"122276689"},{"Amount":0.0,"AssetType":"Stock","Description":"Adyen NV","NonTradableReason":"None","Symbol":"ADYEN:xams","TradingStatus":"Tradable","Uic":9894784,"WatchlistInstrumentId":"122276690"},{"Amount":0.0,"AssetType":"Stock","Description":"IMCD NV","NonTradableReason":"None","Symbol":"IMCD:xams","TradingStatus":"Tradable","Uic":983890,"WatchlistInstrumentId":"122276691"},{"Amount":0.0,"AssetType":"Stock","Description":"Unilever NV","NonTradableReason":"None","Symbol":"UNA:xams","TradingStatus":"Tradable","Uic":14231761,"WatchlistInstrumentId":"122276692"},{"Amount":0.0,"AssetType":"Stock","Description":"Prosus NV","NonTradableReason":"None","Symbol":"PRX:xams","TradingStatus":"Tradable","Uic":14838059,"WatchlistInstrumentId":"122276693"},{"Amount":0.0,"AssetType":"Stock","Description":"ASM International NV","NonTradableReason":"None","Symbol":"ASMI:xams","TradingStatus":"Tradable","Uic":13269,"WatchlistInstrumentId":"122276694"},{"Amount":0.0,"AssetType":"Stock","Description":"Just Eat Takeaway","NonTradableReason":"None","Symbol":"TKWY:xams","TradingStatus":"Tradable","Uic":6900023,"WatchlistInstrumentId":"122276695"}],"Name":"Stocks Netherlands","ParentCategoryId":"7414","PrimaryAssetType":"Stock","TradeRegionId":"16","Type":"Predefined","WatchlistId":"7432"}
+--f3b85c46-2d43-4fbf-9bcd-b469735f6dba--
+</textarea>
+<br />
+<input type="button" class="action-button" value="Decompose requests" id="idBtnDecomposeRequests" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>
