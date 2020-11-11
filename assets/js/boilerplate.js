@@ -75,6 +75,7 @@ function demonstrationHelper(settings) {
                 errorObjectJson = errorObjectJson.ErrorInfo;
             }
             if (errorObjectJson.hasOwnProperty("ErrorCode")) {
+                // Be aware that the errorObjectJson.Message might contain line breaks, escaped like "\r\n"!
                 textToDisplay += "\n" + errorObjectJson.ErrorCode + ": " + errorObjectJson.Message;
                 if (errorObjectJson.hasOwnProperty("ModelState")) {
                     // Not all ErrorCodes contain a ModelState. See for the list:

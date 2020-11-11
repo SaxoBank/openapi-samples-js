@@ -328,6 +328,7 @@
                         // Order could be placed if the account had sufficient margin and funding.
                         // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
                         if (responseJson.hasOwnProperty("ErrorInfo")) {
+                            // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
                             console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4));
                         } else {
                             // The order can be placed
