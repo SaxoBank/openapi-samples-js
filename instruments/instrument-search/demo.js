@@ -69,53 +69,6 @@
     }
 
     /**
-     * This function collects all available AssetTypes for the active account, so you don't search for something you won't find because it is not available.
-     * @param {Function=} callback An optional function to run after a successful request.
-     * @return {void}
-     */
-    function getLegalAssetTypes(callback) {
-        const cbxAssetType = document.getElementById("idCbxAssetType");
-        let option;
-        let i;
-        for (i = cbxAssetType.options.length - 1; i >= 0; i -= 1) {
-            cbxAssetType.remove(i);
-        }
-        fetch(
-            demo.apiUrl + "/port/v1/accounts/" + encodeURIComponent(demo.user.accountKey),
-            {
-                "method": "GET",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                }
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    let j;
-                    responseJson.LegalAssetTypes.sort();  // Sort the list for reading purposes
-                    for (j = 0; j < responseJson.LegalAssetTypes.length; j += 1) {
-                        option = document.createElement("option");
-                        option.text = responseJson.LegalAssetTypes[j];
-                        option.value = responseJson.LegalAssetTypes[j];
-                        if (option.value === "Stock") {
-                            // Make the most common type the default one
-                            option.setAttribute("selected", true);
-                        }
-                        cbxAssetType.add(option);
-                    }
-                    if (callback !== undefined) {
-                        callback();
-                    }
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
      * This is an example of instrument search.
      * @return {void}
      */
@@ -162,6 +115,7 @@
                             instrumentIdType = "uic";
                         }
                     }
+                    // You can search for an ISIN. That will work. But due to market limitations the ISIN won't be in the response.
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -224,7 +178,6 @@
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxAccount", "func": getLegalAssetTypes, "funcsToDisplay": [getLegalAssetTypes], "isDelayedRun": true},
         {"evt": "click", "elmId": "idBtnGetExchanges", "func": getExchanges, "funcsToDisplay": [getExchanges]},
         {"evt": "click", "elmId": "idBtnFind", "func": findInstrument, "funcsToDisplay": [findInstrument]},
         {"evt": "click", "elmId": "idBtnGetDetails", "func": getDetails, "funcsToDisplay": [getDetails]}
