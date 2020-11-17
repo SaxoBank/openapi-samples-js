@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.17
+ * boilerplate v1.18
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -279,6 +279,8 @@ function demonstrationHelper(settings) {
                         const responseArray = responseText.split("\n");
                         let requestId = "";
                         let responseJson;
+                        let userId;
+                        let clientId;
                         responseArray.forEach(function (line) {
                             line = line.trim();
                             if (line.substr(0, 13) === "X-Request-Id:") {
@@ -290,11 +292,13 @@ function demonstrationHelper(settings) {
                                     case "1":  // Response of GET /users/me
                                         user.culture = responseJson.Culture;
                                         user.language = responseJson.Language;
+                                        userId = responseJson.UserId;
                                         break;
                                     case "2":  // Response of GET /clients/me
                                         user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                         user.clientKey = responseJson.ClientKey;
                                         user.name = responseJson.Name;
+                                        clientId = responseJson.ClientId;
                                         break;
                                     case "3":  // Response of GET /accounts/me
                                         populateAccountSelection(responseJson.Data);
@@ -305,7 +309,7 @@ function demonstrationHelper(settings) {
                                 }
                             }
                         });
-                        settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nClientKey: " + user.clientKey;
+                        settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId;
                         functionToRun();  // Run the function
                     });
                 } else {

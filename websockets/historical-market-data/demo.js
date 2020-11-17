@@ -116,7 +116,7 @@
             connection.binaryType = "arraybuffer";
             console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
             // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
-            // 0 = CONNECTING, 1 = OPEN
+            // 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
         } catch (error) {
             console.error("Error creating websocket. " + error);
         }
