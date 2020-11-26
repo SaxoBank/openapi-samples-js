@@ -472,7 +472,8 @@ function demonstrationHelper(settings) {
                 : "sim"
             )
         });
-        // First, maybe the token is supplied in the URL?
+        // First, maybe the token is supplied in the URL, as a bookmark?
+        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
         const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
         let newAccessToken = urlParams.get("access_token");

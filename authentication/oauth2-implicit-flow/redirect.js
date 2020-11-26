@@ -12,7 +12,7 @@
     const pageDisplayTime = new Date();
 
     /**
-     * If login failed, the error can be found as a query parameter.
+     * If login failed, the error can be found as a bookmark.
      * @return {void}
      */
     function checkErrors() {
@@ -26,10 +26,11 @@
     }
 
     /**
-     * After a successful authentication, the token can be found as query parameter.
+     * After a successful authentication, the token can be found as bookmark.
      * @return {void}
      */
     function getToken() {
+        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
         const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
         const expiresInSeconds = urlParams.get("expires_in");  // Note tat this doesn't work when the page is refreshed. To be sure, use a cookie, or sessionStorage
         const accessTokenExpirationTime = new Date(pageDisplayTime.getTime() + expiresInSeconds * 1000);
@@ -38,7 +39,7 @@
     }
 
     /**
-     * After a successful authentication, the state entered before authentication is passed as query parameter.
+     * After a successful authentication, the state entered before authentication is passed as bookmark.
      * @return {void}
      */
     function getState() {
