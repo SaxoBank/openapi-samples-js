@@ -32,23 +32,16 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let initialMarginAvailable;
-                    let marginUtilisation;
-                    if (responseJson.hasOwnProperty("InitialMargin")) {
-                        // Add some formatting, to respect the number of decimals
-                        initialMarginAvailable = responseJson.InitialMargin.MarginAvailable.toLocaleString(undefined, {
-                            minimumFractionDigits: responseJson.CurrencyDecimals,
-                            maximumFractionDigits: responseJson.CurrencyDecimals
-                        });
-                        marginUtilisation = responseJson.MarginUtilizationPct.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
-                        result += "\n\nInitial margin available: " + responseJson.Currency + " " + initialMarginAvailable + " (utilisation " + marginUtilisation + "%)";
-                    } else {
-                        // This is not a trading account.
-                        result += "\n\nNo margin, this is not a trading account (object InitialMargin not available in response).";
-                    }
+                    // Add some formatting, to respect the number of decimals
+                    let initialMarginAvailable = responseJson.MarginAvailableForTrading.toLocaleString(undefined, {
+                        minimumFractionDigits: responseJson.CurrencyDecimals,
+                        maximumFractionDigits: responseJson.CurrencyDecimals
+                    });
+                    let marginUtilisation = responseJson.MarginUtilizationPct.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    result += "\n\nMargin available for trading: " + responseJson.Currency + " " + initialMarginAvailable + " (utilisation " + marginUtilisation + "%)";
                     result += "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
                     console.log(result);
                 });
