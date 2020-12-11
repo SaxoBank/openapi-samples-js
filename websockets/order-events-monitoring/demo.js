@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -17,6 +17,13 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
+    const streamingState = {
+        // This object contains the state of the subscriptions, so a reconnect can be processed.
+        isBalanceSubscriptionActive: false,
+        isPositionSubscriptionActive: false,
+        isEnsSubscriptionActive: false,
+        ensLastSequenceId: null
+    };
     let connection;
 
     /**
@@ -60,11 +67,185 @@
     }
 
     /**
+     * This is an example of subscribing to changes in the account balance.
+     * @return {void}
+     */
+    function subscribeBalances() {
+        const data = {
+            "ContextId": document.getElementById("idContextId").value,
+            "ReferenceId": "MyBalanceEvent",
+            "RefreshRate": 5000,  // Default is every second, which probably is too chatty
+            "Arguments": {
+                "AccountKey": demo.user.accountKey,
+                "ClientKey": demo.user.clientKey,
+                "FieldGroups": [
+                    "MarginOverview"
+                ]
+            }
+        };
+        fetch(
+            demo.apiUrl + "/port/v1/balances/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                streamingState.isBalanceSubscriptionActive = true;
+                console.log("Subscription for balance changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of subscribing to changes in net positions.
+     * These changes are published in ENS as well, this can be used as a catch up, every minute, because due to price changes is has many updates.
+     * @return {void}
+     */
+    function subscribePositions() {
+        const data = {
+            "ContextId": document.getElementById("idContextId").value,
+            "ReferenceId": "MyPositionEvent",
+            "RefreshRate": 60000,  // Default is every second, which probably is too chatty
+            "Arguments": {
+                "AccountKey": demo.user.accountKey,
+                "ClientKey": demo.user.clientKey
+            }
+        };
+        fetch(
+            demo.apiUrl + "/port/v1/netpositions/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                streamingState.isPositionSubscriptionActive = true;
+                console.log("Subscription for position changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of subscribing to ENS, which notifies about order and position events. And withdrawals and deposits are published on this subscription.
+     * @return {void}
+     */
+    function subscribeEns() {
+        const data = {
+            "ContextId": document.getElementById("idContextId").value,
+            "ReferenceId": "MyEnsEvent",
+            "Arguments": {
+                "AccountKey": demo.user.accountKey,
+                "Activities": [
+                    "AccountFundings",
+                    "Orders",
+                    "Positions"
+                ],
+                "FieldGroups": [
+                    "DisplayAndFormat",
+                    "ExchangeInfo"
+                ]
+            }
+        };
+        if (streamingState.ensLastSequenceId !== null) {
+            // If specified and message with SequenceId available in ENS cache, streaming of events start from SequenceId.
+            // If sequenceId not found in ENS system, Subscription Error with "Sequence id unavailable".
+            // If not specified and FromDateTime is not specified, subscription will be real-time subscription.
+            data.Arguments.SequenceId = streamingState.ensLastSequenceId;
+            console.log("Supplied last received SequenceId to retrieve gap: " + streamingState.ensLastSequenceId);
+        }
+        fetch(
+            demo.apiUrl + "/ens/v1/activities/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                streamingState.isEnsSubscriptionActive = true;
+                console.log("Subscription for order changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This function initiates the events and contains the processing of new messages.
      * @return {void}
      */
     function startListener() {
         const utf8Decoder = new window.TextDecoder();
+
+        /**
+         * This event is triggered when the socket connection is opened.
+         * @return {void}
+         */
+        function handleSocketOpen() {
+            console.log("Streaming connected.");
+        }
+
+        /**
+         * This event is triggered when the socket connection is closed.
+         * @param {Object} evt The event containing the reason
+         * @return {void}
+         */
+        function handleSocketClose(evt) {
+            // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
+            if (evt.wasClean === true) {
+                console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
+            } else {
+                console.error("Streaming disconnected with code " + evt.code + ".");
+                if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (" + evt.code + "). Do you want to reconnect?")) {
+                    createConnection();
+                    startListener();
+                    // Ideally you create a setup where the connection is restored automatically, after a second or so.
+                    // You can do this with an increasing wait time, until a maximum of say 10 retries.
+                    setTimeout(function () {
+                        if (streamingState.isBalanceSubscriptionActive) {
+                            subscribeBalances();
+                        }
+                        if (streamingState.isPositionSubscriptionActive) {
+                            subscribePositions();
+                        }
+                        if (streamingState.isEnsSubscriptionActive) {
+                            subscribeEns();  // Resubscribe and retrieve missed messages, if any
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
+        /**
+         * This event is triggered when the socket connection enters an error state.
+         * @param {Object} evt The event containing the reason
+         * @return {void}
+         */
+        function handleSocketError(evt) {
+            console.error(evt);
+        }
 
         /**
          * Creates a Long from its little endian byte representation (function is part of long.js - https://github.com/dcodeIO/long.js).
@@ -172,26 +353,35 @@
             return parsedMessages;
         }
 
-        connection.onopen = function () {
-            console.log("Streaming connected.");
-        };
-        connection.onclose = function (evt) {
-            // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
-            if (evt.wasClean === true) {
-                console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
-            } else {
-                console.error("Streaming disconnected with code " + evt.code + ".");
-            }
-        };
-        connection.onerror = function (evt) {
-            console.error(evt);
-        };
-        connection.onmessage = function (messageFrame) {
+        /**
+         * ENS messages contain a SequenceID, that can be used to retrieve the gap after a reconnect.
+         * @param {Array<Object>} payload The received array of ENS messages
+         * @return {void}
+         */
+        function getNewLastSequenceId(payload) {
+            payload.forEach(function (message) {
+                streamingState.ensLastSequenceId = (
+                    streamingState.ensLastSequenceId === null
+                    ? message.SequenceId
+                    : Math.max(message.SequenceId, streamingState.ensLastSequenceId)
+                );
+                console.debug("New last SequenceId for ENS reconnect: " + streamingState.ensLastSequenceId);
+            });
+        }
+
+        /**
+         * New data is received. Read and process the data.
+         * @param {Object} messageFrame The received message
+         * @return {void}
+         */
+        function handleSocketMessage(messageFrame) {
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message) {
                 switch (message.referenceId) {
                 case "MyEnsEvent":
                     // With this event you receive in realtime the changes of portfolio and orders. You also get notified on deposits or withdrawals.
+                    // Remember the last SequenceId. This can be used to retrieve the gap after an unwanted disconnect.
+                    getNewLastSequenceId(message.payload);
                     console.log("Streaming order/position/fundings event from ENS " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "MyBalanceEvent":
@@ -215,124 +405,13 @@
                     console.error("No processing implemented for message with reference " + message.referenceId);
                 }
             });
-        };
+        }
+
+        connection.onopen = handleSocketOpen;
+        connection.onclose = handleSocketClose;
+        connection.onerror = handleSocketError;
+        connection.onmessage = handleSocketMessage;
         console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
-    }
-
-    /**
-     * This is an example of subscribing to ENS, which notifies about order and position events. And withdrawals and deposits are published on this subscription.
-     * @return {void}
-     */
-    function subscribeEns() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyEnsEvent",
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Activities": [
-                    "AccountFundings",
-                    "Orders",
-                    "Positions"
-                ],
-                "FieldGroups": [
-                    "DisplayAndFormat",
-                    "ExchangeInfo"
-                ]
-            }
-        };
-        fetch(
-            demo.apiUrl + "/ens/v1/activities/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                console.log("Subscription for order changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to changes in the account balance.
-     * @return {void}
-     */
-    function subscribeBalances() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyBalanceEvent",
-            "RefreshRate": 5000,  // Default is every second, which probably is too chatty
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "ClientKey": demo.user.clientKey,
-                "FieldGroups": [
-                    "MarginOverview"
-                ]
-            }
-        };
-        fetch(
-            demo.apiUrl + "/port/v1/balances/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                console.log("Subscription for balance changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to changes in net positions.
-     * These changes are published in ENS as well, this can be used as a catch up, every minute, because due to price changes is has many updates.
-     * @return {void}
-     */
-    function subscribePositions() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyPositionEvent",
-            "RefreshRate": 60000,  // Default is every second, which probably is too chatty
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "ClientKey": demo.user.clientKey
-            }
-        };
-        fetch(
-            demo.apiUrl + "/port/v1/netpositions/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                console.log("Subscription for position changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
     }
 
     /**
@@ -361,38 +440,82 @@
 
     /**
      * This is an example of unsubscribing to the events.
+     * @param {Function} callbackOnSuccess Function to invoke on success
      * @return {void}
      */
-    function unsubscribe() {
+    function unsubscribe(callbackOnSuccess) {
 
         /**
          * Unsubscribe for the service added to the URL.
-         * @param {number} url The URL pointing to the service to unsubscribe
+         * @param {boolean} isSubscriptionActive When not active, skip and invoke callback
+         * @param {string} urlPath The URL pointing to the service to unsubscribe
+         * @param {Function} internalCallbackOnSuccess Function to invoke on success
          * @return {void}
          */
-        function removeSubscription(url) {
-            fetch(
-                url,
-                {
-                    "method": "DELETE",
-                    "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+        function removeSubscription(isSubscriptionActive, urlPath, internalCallbackOnSuccess) {
+            if (isSubscriptionActive) {
+                fetch(
+                    demo.apiUrl + urlPath,
+                    {
+                        "method": "DELETE",
+                        "headers": {
+                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                        }
                     }
-                }
-            ).then(function (response) {
-                if (response.ok) {
-                    console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
+                ).then(function (response) {
+                    if (response.ok) {
+                        console.log("Unsubscribed to " + urlPath + ".\nReadyState " + connection.readyState + ".");
+                        internalCallbackOnSuccess();
+                    } else {
+                        demo.processError(response);
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                });
+            } else {
+                internalCallbackOnSuccess();
+            }
         }
 
-        removeSubscription(demo.apiUrl + "/ens/v1/activities/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
-        removeSubscription(demo.apiUrl + "/port/v1/balances/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
-        removeSubscription(demo.apiUrl + "/port/v1/netpositions/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+        const contextId = document.getElementById("idContextId").value;
+        const urlPathEns = "/ens/v1/activities/subscriptions/" + encodeURIComponent(contextId);
+        const urlPathBalance = "/port/v1/balances/subscriptions/" + encodeURIComponent(contextId);
+        const urlPathPosition = "/port/v1/netpositions/subscriptions/" + encodeURIComponent(contextId);
+        removeSubscription(streamingState.isEnsSubscriptionActive, urlPathEns, function () {
+            removeSubscription(streamingState.isBalanceSubscriptionActive, urlPathBalance, function () {
+                removeSubscription(streamingState.isPositionSubscriptionActive, urlPathPosition, callbackOnSuccess);
+            });
+        });
+    }
+
+    /**
+     * When you want to use a different account, there is no need to setup a different connection. Just delete the existing subscription and open a new subscription.
+     * @return {void}
+     */
+    function switchAccount() {
+        unsubscribe(function () {
+            if (streamingState.isEnsSubscriptionActive) {
+                subscribeEns();
+            }
+            if (streamingState.isBalanceSubscriptionActive) {
+                subscribeBalances();
+            }
+            if (streamingState.isPositionSubscriptionActive) {
+                subscribePositions();
+            }
+        });
+    }
+
+    /**
+     * This is an example of unsubscribing, including a reset of the state.
+     * @return {void}
+     */
+    function unsubscribeAndResetState() {
+        unsubscribe(function () {
+            streamingState.isEnsSubscriptionActive = false;
+            streamingState.isBalanceSubscriptionActive = false;
+            streamingState.isPositionSubscriptionActive = false;
+        });
     }
 
     /**
@@ -411,8 +534,9 @@
         {"evt": "click", "elmId": "idBtnSubscribeEns", "func": subscribeEns, "funcsToDisplay": [subscribeEns]},
         {"evt": "click", "elmId": "idBtnSubscribeBalances", "func": subscribeBalances, "funcsToDisplay": [subscribeBalances]},
         {"evt": "click", "elmId": "idBtnSubscribePositions", "func": subscribePositions, "funcsToDisplay": [subscribePositions]},
+        {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
-        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
+        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);
     demo.displayVersion("ens");

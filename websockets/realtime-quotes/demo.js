@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true */
 /*global window console demonstrationHelper ParserProtobuf protobuf */
 
 /**
@@ -20,10 +20,10 @@
     const parserProtobuf = new ParserProtobuf("default", protobuf);
     const streamingState = {
         // This object contains the state of the subscriptions, so a reconnect can be processed.
-        isJsonListActive: false,
-        isJsonOrderTicketActive: false,
-        isProtoBufListActive: false,
-        isProtoBufOrderTicketActive: false
+        isJsonListSubscriptionActive: false,
+        isJsonOrderTicketSubscriptionActive: false,
+        isProtoBufListSubscriptionActive: false,
+        isProtoBufOrderTicketSubscriptionActive: false
     };
     let schemaName;
     let connection;
@@ -69,45 +69,218 @@
     }
 
     /**
-     * This event is triggered when the socket connection is opened.
+     * This is an example of subscribing to price updates for multiple instruments, using Json.
      * @return {void}
      */
-    function handleSocketOpen() {
-        console.log("Streaming connected.");
+    function subscribeListJson() {
+        const data = {
+            "ContextId": document.getElementById("idContextId").value,
+            "ReferenceId": "MyPriceEvent_JSON",
+            "Arguments": {
+                "AccountKey": demo.user.accountKey,
+                "Uics": document.getElementById("idUics").value,
+                "AssetType": "FxSpot",
+                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                // MarketDepth gives the order book, when available.
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
+            }
+        };
+        fetch(
+            // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
+            // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
+            // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
+            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                streamingState.isJsonListSubscriptionActive = true;
+                response.json().then(function (responseJson) {
+                    console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
-     * This event is triggered when the socket connection is closed.
-     * @param {Object} evt The event containing the reason
+     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Json.
      * @return {void}
      */
-    function handleSocketClose(evt) {
-        // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
-        if (evt.wasClean === true) {
-            console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
-        } else {
-            console.error("Streaming disconnected with code " + evt.code + ".");
-            if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (" + evt.code + "). Do you want to reconnect?")) {
-                createConnection();
-                startListener();
-                // Ideally you create a setup where the connection is restored automatically, after a second or so.
-                // You can do this with an increasing wait time, until a maximum of say 10 retries.
-                setTimeout(function () {
-                    if (streamingState.isJsonListActive) {
-                        subscribeListJson();
-                    }
-                    if (streamingState.isJsonOrderTicketActive) {
-                        subscribeOrderTicketJson();
-                    }
-                    if (streamingState.isProtoBufListActive) {
-                        subscribeListProtoBuf();
-                    }
-                    if (streamingState.isProtoBufOrderTicketActive) {
-                        subscribeOrderTicketProtoBuf();
-                    }
-                }, 1000);
-            }
+    function subscribeOrderTicketJson() {
+
+        /**
+         * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
+         * @param {number} uic Instrument ID (of type FxSpot, in this example)
+         * @return {void}
+         */
+        function subscribe(uic) {
+            const data = {
+                "ContextId": document.getElementById("idContextId").value,
+                "ReferenceId": "MyPriceEvent" + "_" + uic,
+                "Arguments": {
+                    "AccountKey": demo.user.accountKey,
+                    "Uic": uic,
+                    "AssetType": "FxSpot",
+                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                    // MarketDepth gives the order book, when available.
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
+                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
+                }
+            };
+            fetch(
+                demo.apiUrl + "/trade/v1/prices/subscriptions",
+                {
+                    "method": "POST",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    "body": JSON.stringify(data)
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    streamingState.isJsonOrderTicketSubscriptionActive = true;
+                    response.json().then(function (responseJson) {
+                        console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
         }
+
+        const uicList = document.getElementById("idUics").value.split(",");
+        uicList.forEach(subscribe);
+    }
+
+    /**
+     * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
+     * @return {void}
+     */
+    function subscribeListProtoBuf() {
+        // The Saxo API supports ProtoBuf, which saves some bandwidth.
+        //
+        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
+        //
+        // In order to make the parsing work, parts of the client-lib are used.
+        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
+        const data = {
+            "ContextId": document.getElementById("idContextId").value,
+            "ReferenceId": "MyPriceEvent_ProtoBuf",
+            "Format": "application/x-protobuf",  // This triggers ProtoBuf
+            "Arguments": {
+                "AccountKey": demo.user.accountKey,
+                "Uics": document.getElementById("idUics").value,
+                "AssetType": "FxSpot",
+                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                // MarketDepth gives the order book, when available.
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
+            }
+        };
+        fetch(
+            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                streamingState.isProtoBufListSubscriptionActive = true;
+                response.json().then(function (responseJson) {
+                    // The schema to use when parsing the messages, is send together with the snapshot.
+                    schemaName = responseJson.SchemaName;
+                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                        console.error("Adding schema to protobuf was not successful");
+                    }
+                    console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Protocol Buffers.
+     * @return {void}
+     */
+    function subscribeOrderTicketProtoBuf() {
+        // The Saxo API supports ProtoBuf, which saves some bandwidth.
+        //
+        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
+        //
+        // In order to make the parsing work, parts of the client-lib are used.
+        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
+
+        /**
+         * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
+         * @param {number} uic Instrument ID (of type FxSpot, in this example)
+         * @return {void}
+         */
+        function subscribe(uic) {
+            const data = {
+                "ContextId": document.getElementById("idContextId").value,
+                "ReferenceId": "MyPriceEvent" + "_" + uic,
+                "Format": "application/x-protobuf",  // This triggers ProtoBuf
+                "Arguments": {
+                    "AccountKey": demo.user.accountKey,
+                    "Uic": uic,
+                    "AssetType": "FxSpot",
+                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                    // MarketDepth gives the order book, when available.
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
+                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
+                }
+            };
+            fetch(
+                demo.apiUrl + "/trade/v1/prices/subscriptions",
+                {
+                    "method": "POST",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                        "Content-Type": "application/json; charset=utf-8"
+                    },
+                    "body": JSON.stringify(data)
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    streamingState.isProtoBufOrderTicketSubscriptionActive = true;
+                    response.json().then(function (responseJson) {
+                        // The schema to use when parsing the messages, is send together with the snapshot.
+                        schemaName = responseJson.SchemaName;
+                        if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                            console.error("Adding schema to protobuf was not successful");
+                        }
+                        console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        const uicList = document.getElementById("idUics").value.split(",");
+        uicList.forEach(subscribe);
     }
 
     /**
@@ -116,6 +289,57 @@
      */
     function startListener() {
         const utf8Decoder = new window.TextDecoder();
+
+        /**
+         * This event is triggered when the socket connection is opened.
+         * @return {void}
+         */
+        function handleSocketOpen() {
+            console.log("Streaming connected.");
+        }
+
+        /**
+         * This event is triggered when the socket connection is closed.
+         * @param {Object} evt The event containing the reason
+         * @return {void}
+         */
+        function handleSocketClose(evt) {
+            // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
+            if (evt.wasClean === true) {
+                console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
+            } else {
+                console.error("Streaming disconnected with code " + evt.code + ".");
+                if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (" + evt.code + "). Do you want to reconnect?")) {
+                    createConnection();
+                    startListener();
+                    // Ideally you create a setup where the connection is restored automatically, after a second or so.
+                    // You can do this with an increasing wait time, until a maximum of say 10 retries.
+                    setTimeout(function () {
+                        if (streamingState.isJsonListSubscriptionActive) {
+                            subscribeListJson();
+                        }
+                        if (streamingState.isJsonOrderTicketSubscriptionActive) {
+                            subscribeOrderTicketJson();
+                        }
+                        if (streamingState.isProtoBufListSubscriptionActive) {
+                            subscribeListProtoBuf();
+                        }
+                        if (streamingState.isProtoBufOrderTicketSubscriptionActive) {
+                            subscribeOrderTicketProtoBuf();
+                        }
+                    }, 1000);
+                }
+            }
+        }
+
+        /**
+         * This event is triggered when the socket connection enters an error state.
+         * @param {Object} evt The event containing the reason
+         * @return {void}
+         */
+        function handleSocketError(evt) {
+            console.error(evt);
+        }
 
         /**
          * Creates a Long from its little endian byte representation (function is part of long.js - https://github.com/dcodeIO/long.js).
@@ -223,12 +447,12 @@
             return parsedMessages;
         }
 
-        connection.onopen = handleSocketOpen;
-        connection.onclose = handleSocketClose;
-        connection.onerror = function (evt) {
-            console.error(evt);
-        };
-        connection.onmessage = function (messageFrame) {
+        /**
+         * New data is received. Read and process the data.
+         * @param {Object} messageFrame The received message
+         * @return {void}
+         */
+        function handleSocketMessage(messageFrame) {
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message) {
                 const priceEventName = "MyPriceEvent";
@@ -255,223 +479,13 @@
                     }
                 }
             });
-        };
+        }
+
+        connection.onopen = handleSocketOpen;
+        connection.onclose = handleSocketClose;
+        connection.onerror = handleSocketError;
+        connection.onmessage = handleSocketMessage;
         console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
-    }
-
-    /**
-     * This is an example of subscribing to price updates for multiple instruments, using Json.
-     * @return {void}
-     */
-    function subscribeListJson() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyPriceEvent_JSON",
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Uics": document.getElementById("idUics").value,
-                "AssetType": "FxSpot",
-                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
-            }
-        };
-        fetch(
-            // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
-            // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
-            // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
-            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                streamingState.isJsonListActive = true;
-                response.json().then(function (responseJson) {
-                    console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
-     * @return {void}
-     */
-    function subscribeListProtoBuf() {
-        // The Saxo API supports ProtoBuf, which saves some bandwidth.
-        //
-        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
-        //
-        // In order to make the parsing work, parts of the client-lib are used.
-        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": "MyPriceEvent_ProtoBuf",
-            "Format": "application/x-protobuf",  // This triggers ProtoBuf
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Uics": document.getElementById("idUics").value,
-                "AssetType": "FxSpot",
-                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
-            }
-        };
-        fetch(
-            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                streamingState.isProtoBufListActive = true;
-                response.json().then(function (responseJson) {
-                    // The schema to use when parsing the messages, is send together with the snapshot.
-                    schemaName = responseJson.SchemaName;
-                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                        console.error("Adding schema to protobuf was not successful");
-                    }
-                    console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Json.
-     * @return {void}
-     */
-    function subscribeOrderTicketJson() {
-
-        /**
-         * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
-         * @param {number} uic Instrument ID (of type FxSpot, in this example)
-         * @return {void}
-         */
-        function subscribe(uic) {
-            const data = {
-                "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": "MyPriceEvent" + "_" + uic,
-                "Arguments": {
-                    "AccountKey": demo.user.accountKey,
-                    "Uic": uic,
-                    "AssetType": "FxSpot",
-                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                    // MarketDepth gives the order book, when available.
-                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
-                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
-                }
-            };
-            fetch(
-                demo.apiUrl + "/trade/v1/prices/subscriptions",
-                {
-                    "method": "POST",
-                    "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                        "Content-Type": "application/json; charset=utf-8"
-                    },
-                    "body": JSON.stringify(data)
-                }
-            ).then(function (response) {
-                if (response.ok) {
-                    streamingState.isJsonOrderTicketActive = true;
-                    response.json().then(function (responseJson) {
-                        console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
-                    });
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
-        }
-
-        const uicList = document.getElementById("idUics").value.split(",");
-        uicList.forEach(subscribe);
-    }
-
-    /**
-     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Protocol Buffers.
-     * @return {void}
-     */
-    function subscribeOrderTicketProtoBuf() {
-        // The Saxo API supports ProtoBuf, which saves some bandwidth.
-        //
-        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
-        //
-        // In order to make the parsing work, parts of the client-lib are used.
-        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
-
-        /**
-         * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
-         * @param {number} uic Instrument ID (of type FxSpot, in this example)
-         * @return {void}
-         */
-        function subscribe(uic) {
-            const data = {
-                "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": "MyPriceEvent" + "_" + uic,
-                "Format": "application/x-protobuf",  // This triggers ProtoBuf
-                "Arguments": {
-                    "AccountKey": demo.user.accountKey,
-                    "Uic": uic,
-                    "AssetType": "FxSpot",
-                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                    // MarketDepth gives the order book, when available.
-                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
-                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
-                }
-            };
-            fetch(
-                demo.apiUrl + "/trade/v1/prices/subscriptions",
-                {
-                    "method": "POST",
-                    "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                        "Content-Type": "application/json; charset=utf-8"
-                    },
-                    "body": JSON.stringify(data)
-                }
-            ).then(function (response) {
-                if (response.ok) {
-                    streamingState.isProtoBufOrderTicketActive = true;
-                    response.json().then(function (responseJson) {
-                        // The schema to use when parsing the messages, is send together with the snapshot.
-                        schemaName = responseJson.SchemaName;
-                        if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                            console.error("Adding schema to protobuf was not successful");
-                        }
-                        console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
-                    });
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
-        }
-
-        const uicList = document.getElementById("idUics").value.split(",");
-        uicList.forEach(subscribe);
     }
 
     /**
@@ -500,52 +514,50 @@
 
     /**
      * This is an example of unsubscribing to the events.
-     * @param {Function} callbackIfReady Function to invoke on success
+     * @param {Function} callbackOnSuccess Function to invoke on success
      * @return {void}
      */
-    function unsubscribe(callbackIfReady) {
+    function unsubscribe(callbackOnSuccess) {
 
         /**
          * Unsubscribe for the service added to the URL.
-         * @param {number} url The URL pointing to the service to unsubscribe
-         * @param {Function} callbackOnSuccess Function to invoke on success
+         * @param {boolean} isSubscriptionActive When not active, skip and invoke callback
+         * @param {string} urlPath The URL pointing to the service to unsubscribe
+         * @param {Function} internalCallbackOnSuccess Function to invoke on success
          * @return {void}
          */
-        function removeSubscription(url, callbackOnSuccess) {
-            fetch(
-                url,
-                {
-                    "method": "DELETE",
-                    "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+        function removeSubscription(isSubscriptionActive, urlPath, internalCallbackOnSuccess) {
+            if (isSubscriptionActive) {
+                fetch(
+                    demo.apiUrl + urlPath,
+                    {
+                        "method": "DELETE",
+                        "headers": {
+                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                        }
                     }
-                }
-            ).then(function (response) {
-                if (response.ok) {
-                    console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
-                    callbackOnSuccess();
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
+                ).then(function (response) {
+                    if (response.ok) {
+                        console.log("Unsubscribed to " + demo.apiUrl + urlPath + ".\nReadyState " + connection.readyState + ".");
+                        internalCallbackOnSuccess();
+                    } else {
+                        demo.processError(response);
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                });
+            } else {
+                internalCallbackOnSuccess();
+            }
         }
 
-        const urlInfoPrices = demo.apiUrl + "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value);
-        const urlPrices = demo.apiUrl + "/trade/v1/prices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value);
+        const contextId = document.getElementById("idContextId").value;
+        const urlPathInfoPrices = "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(contextId);
+        const urlPathPrices = "/trade/v1/prices/subscriptions/" + encodeURIComponent(contextId);
         // Make sure this is done sequentially.
-        if (streamingState.isJsonListActive || streamingState.isProtoBufListActive) {
-            removeSubscription(urlInfoPrices, function () {
-                if (streamingState.isJsonOrderTicketActive || streamingState.isProtoBufOrderTicketActive) {
-                    removeSubscription(urlPrices, callbackIfReady);
-                } else {
-                    callbackIfReady();
-                }
-            });
-        } else if (streamingState.isJsonOrderTicketActive || streamingState.isProtoBufOrderTicketActive) {
-            removeSubscription(urlPrices, callbackIfReady);
-        }
+        removeSubscription(streamingState.isJsonListSubscriptionActive || streamingState.isProtoBufListSubscriptionActive, urlPathInfoPrices, function () {
+            removeSubscription(streamingState.isJsonOrderTicketSubscriptionActive || streamingState.isProtoBufOrderTicketSubscriptionActive, urlPathPrices, callbackOnSuccess);
+        });
         // (By adding a referenceId, the unsubscribe can be done per instrument)
     }
 
@@ -555,16 +567,16 @@
      */
     function switchAccount() {
         unsubscribe(function () {
-            if (streamingState.isJsonListActive) {
+            if (streamingState.isJsonListSubscriptionActive) {
                 subscribeListJson();
             }
-            if (streamingState.isJsonOrderTicketActive) {
+            if (streamingState.isJsonOrderTicketSubscriptionActive) {
                 subscribeOrderTicketJson();
             }
-            if (streamingState.isProtoBufListActive) {
+            if (streamingState.isProtoBufListSubscriptionActive) {
                 subscribeListProtoBuf();
             }
-            if (streamingState.isProtoBufOrderTicketActive) {
+            if (streamingState.isProtoBufOrderTicketSubscriptionActive) {
                 subscribeOrderTicketProtoBuf();
             }
         });
@@ -576,10 +588,10 @@
      */
     function unsubscribeAndResetState() {
         unsubscribe(function () {
-            streamingState.isJsonListActive = false;
-            streamingState.isProtoBufListActive = false;
-            streamingState.isJsonOrderTicketActive = false;
-            streamingState.isProtoBufOrderTicketActive = false;
+            streamingState.isJsonListSubscriptionActive = false;
+            streamingState.isProtoBufListSubscriptionActive = false;
+            streamingState.isJsonOrderTicketSubscriptionActive = false;
+            streamingState.isProtoBufOrderTicketSubscriptionActive = false;
         });
     }
 
@@ -595,11 +607,11 @@
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
-        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener, handleSocketOpen, handleSocketClose]},
+        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribeListJson", "func": subscribeListJson, "funcsToDisplay": [subscribeListJson]},
         {"evt": "click", "elmId": "idBtnSubscribeOrderTicketJson", "func": subscribeOrderTicketJson, "funcsToDisplay": [subscribeOrderTicketJson]},
         {"evt": "click", "elmId": "idBtnSubscribeListProtoBuf", "func": subscribeListProtoBuf, "funcsToDisplay": [subscribeListProtoBuf]},
-        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf] },
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf]},
         {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState, unsubscribe]},
