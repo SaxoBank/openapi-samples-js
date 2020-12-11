@@ -104,7 +104,7 @@
                             textToDisplay += currentAccountGroupName + ":\n";
                         }
                         textToDisplay += (
-                            account.AccountKey === demo.user.accountKey  // Make the default account bold or something..
+                            account.AccountKey === demo.user.accountKey  // Make the selected (and probably default) account bold or something..
                             ? "** "
                             : " - "
                         );

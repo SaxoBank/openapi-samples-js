@@ -18,6 +18,13 @@
         "footerElm": document.getElementById("idFooter")
     });
     const parserProtobuf = new ParserProtobuf("default", protobuf);
+    const streamingState = {
+        // This object contains the state of the subscriptions, so a reconnect can be processed.
+        isJsonListActive: false,
+        isJsonOrderTicketActive: false,
+        isProtoBufListActive: false,
+        isProtoBufOrderTicketActive: false
+    };
     let schemaName;
     let connection;
 
@@ -58,6 +65,48 @@
             // 0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED
         } catch (error) {
             console.error("Error creating websocket. " + error);
+        }
+    }
+
+    /**
+     * This event is triggered when the socket connection is opened.
+     * @return {void}
+     */
+    function handleSocketOpen() {
+        console.log("Streaming connected.");
+    }
+
+    /**
+     * This event is triggered when the socket connection is closed.
+     * @param {Object} evt The event containing the reason
+     * @return {void}
+     */
+    function handleSocketClose(evt) {
+        // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
+        if (evt.wasClean === true) {
+            console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
+        } else {
+            console.error("Streaming disconnected with code " + evt.code + ".");
+            if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (" + evt.code + "). Do you want to reconnect?")) {
+                createConnection();
+                startListener();
+                // Ideally you create a setup where the connection is restored automatically, after a second or so.
+                // You can do this with an increasing wait time, until a maximum of say 10 retries.
+                setTimeout(function () {
+                    if (streamingState.isJsonListActive) {
+                        subscribeListJson();
+                    }
+                    if (streamingState.isJsonOrderTicketActive) {
+                        subscribeOrderTicketJson();
+                    }
+                    if (streamingState.isProtoBufListActive) {
+                        subscribeListProtoBuf();
+                    }
+                    if (streamingState.isProtoBufOrderTicketActive) {
+                        subscribeOrderTicketProtoBuf();
+                    }
+                }, 1000);
+            }
         }
     }
 
@@ -174,17 +223,8 @@
             return parsedMessages;
         }
 
-        connection.onopen = function () {
-            console.log("Streaming connected.");
-        };
-        connection.onclose = function (evt) {
-            // Status codes: https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
-            if (evt.wasClean === true) {
-                console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
-            } else {
-                console.error("Streaming disconnected with code " + evt.code + ".");
-            }
-        };
+        connection.onopen = handleSocketOpen;
+        connection.onclose = handleSocketClose;
         connection.onerror = function (evt) {
             console.error(evt);
         };
@@ -251,6 +291,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
+                streamingState.isJsonListActive = true;
                 response.json().then(function (responseJson) {
                     console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
@@ -298,6 +339,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
+                streamingState.isProtoBufListActive = true;
                 response.json().then(function (responseJson) {
                     // The schema to use when parsing the messages, is send together with the snapshot.
                     schemaName = responseJson.SchemaName;
@@ -351,6 +393,7 @@
                 }
             ).then(function (response) {
                 if (response.ok) {
+                    streamingState.isJsonOrderTicketActive = true;
                     response.json().then(function (responseJson) {
                         console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                     });
@@ -410,6 +453,7 @@
                 }
             ).then(function (response) {
                 if (response.ok) {
+                    streamingState.isProtoBufOrderTicketActive = true;
                     response.json().then(function (responseJson) {
                         // The schema to use when parsing the messages, is send together with the snapshot.
                         schemaName = responseJson.SchemaName;
@@ -456,16 +500,18 @@
 
     /**
      * This is an example of unsubscribing to the events.
+     * @param {Function} callbackIfReady Function to invoke on success
      * @return {void}
      */
-    function unsubscribe() {
+    function unsubscribe(callbackIfReady) {
 
         /**
          * Unsubscribe for the service added to the URL.
          * @param {number} url The URL pointing to the service to unsubscribe
+         * @param {Function} callbackOnSuccess Function to invoke on success
          * @return {void}
          */
-        function removeSubscription(url) {
+        function removeSubscription(url, callbackOnSuccess) {
             fetch(
                 url,
                 {
@@ -477,6 +523,7 @@
             ).then(function (response) {
                 if (response.ok) {
                     console.log("Unsubscribed to " + url + ".\nReadyState " + connection.readyState + ".");
+                    callbackOnSuccess();
                 } else {
                     demo.processError(response);
                 }
@@ -485,9 +532,55 @@
             });
         }
 
-        removeSubscription(demo.apiUrl + "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
-        removeSubscription(demo.apiUrl + "/trade/v1/prices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value));
+        const urlInfoPrices = demo.apiUrl + "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value);
+        const urlPrices = demo.apiUrl + "/trade/v1/prices/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value);
+        // Make sure this is done sequentially.
+        if (streamingState.isJsonListActive || streamingState.isProtoBufListActive) {
+            removeSubscription(urlInfoPrices, function () {
+                if (streamingState.isJsonOrderTicketActive || streamingState.isProtoBufOrderTicketActive) {
+                    removeSubscription(urlPrices, callbackIfReady);
+                } else {
+                    callbackIfReady();
+                }
+            });
+        } else if (streamingState.isJsonOrderTicketActive || streamingState.isProtoBufOrderTicketActive) {
+            removeSubscription(urlPrices, callbackIfReady);
+        }
         // (By adding a referenceId, the unsubscribe can be done per instrument)
+    }
+
+    /**
+     * When you want to use a different account, there is no need to setup a different connection. Just delete the existing subscription and open a new subscription.
+     * @return {void}
+     */
+    function switchAccount() {
+        unsubscribe(function () {
+            if (streamingState.isJsonListActive) {
+                subscribeListJson();
+            }
+            if (streamingState.isJsonOrderTicketActive) {
+                subscribeOrderTicketJson();
+            }
+            if (streamingState.isProtoBufListActive) {
+                subscribeListProtoBuf();
+            }
+            if (streamingState.isProtoBufOrderTicketActive) {
+                subscribeOrderTicketProtoBuf();
+            }
+        });
+    }
+
+    /**
+     * This is an example of unsubscribing, including a reset of the state.
+     * @return {void}
+     */
+    function unsubscribeAndResetState() {
+        unsubscribe(function () {
+            streamingState.isJsonListActive = false;
+            streamingState.isProtoBufListActive = false;
+            streamingState.isJsonOrderTicketActive = false;
+            streamingState.isProtoBufOrderTicketActive = false;
+        });
     }
 
     /**
@@ -502,13 +595,14 @@
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
-        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
+        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener, handleSocketOpen, handleSocketClose]},
         {"evt": "click", "elmId": "idBtnSubscribeListJson", "func": subscribeListJson, "funcsToDisplay": [subscribeListJson]},
         {"evt": "click", "elmId": "idBtnSubscribeOrderTicketJson", "func": subscribeOrderTicketJson, "funcsToDisplay": [subscribeOrderTicketJson]},
         {"evt": "click", "elmId": "idBtnSubscribeListProtoBuf", "func": subscribeListProtoBuf, "funcsToDisplay": [subscribeListProtoBuf]},
-        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf]},
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf] },
+        {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
-        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
+        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState, unsubscribe]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);
     demo.displayVersion("trade");
