@@ -9,12 +9,15 @@
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
+        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
+        "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
+        "selectedAssetType": "FxSpot",  // Only FX has realtime prices, if Live account is not linked
         "footerElm": document.getElementById("idFooter")
     });
     const parserProtobuf = new ParserProtobuf("default", protobuf);
@@ -79,10 +82,10 @@
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
-                "AssetType": "FxSpot",
+                "AssetType": document.getElementById("idCbxAssetType").value,
                 // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
                 // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
             }
         };
         fetch(
@@ -120,21 +123,21 @@
 
         /**
          * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
-         * @param {number} uic Instrument ID (of type FxSpot, in this example)
+         * @param {number} uic Instrument ID
          * @return {void}
          */
         function subscribe(uic) {
             const data = {
                 "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": "MyPriceEvent" + "_" + uic,
+                "ReferenceId": "MyPriceEventOfUic" + "_" + uic,
                 "Arguments": {
                     "AccountKey": demo.user.accountKey,
                     "Uic": uic,
-                    "AssetType": "FxSpot",
+                    "AssetType": document.getElementById("idCbxAssetType").value,
+                    "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
                     // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
                     // MarketDepth gives the order book, when available.
-                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
-                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
                 }
             };
             fetch(
@@ -183,10 +186,10 @@
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
-                "AssetType": "FxSpot",
+                "AssetType": document.getElementById("idCbxAssetType").value,
                 // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
                 // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"]
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
             }
         };
         fetch(
@@ -232,22 +235,22 @@
 
         /**
          * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
-         * @param {number} uic Instrument ID (of type FxSpot, in this example)
+         * @param {number} uic Instrument ID
          * @return {void}
          */
         function subscribe(uic) {
             const data = {
                 "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": "MyPriceEvent" + "_" + uic,
+                "ReferenceId": "MyPriceEventOfUic" + "_" + uic,
                 "Format": "application/x-protobuf",  // This triggers ProtoBuf
                 "Arguments": {
                     "AccountKey": demo.user.accountKey,
                     "Uic": uic,
-                    "AssetType": "FxSpot",
+                    "AssetType": document.getElementById("idCbxAssetType").value,
+                    "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
                     // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
                     // MarketDepth gives the order book, when available.
-                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat"],
-                    "RequireTradableQuote": true  // This field lets the server know the prices are used to base trading decisions on
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
                 }
             };
             fetch(

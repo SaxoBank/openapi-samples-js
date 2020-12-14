@@ -30,13 +30,18 @@
 <h1>Realtime quotes for a group of instruments</h1>
 This is an example on retrieving realtime prices. Make sure your application is the <a href="https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/" target="_blank">primary</a> one, to be entitled for the price feed.
 <br />
-ON SIM, only prices for FxSpot are not available, unless you <a href="https://www.developer.saxo/openapi/appmanagement#/connectlive" target="_blank">connect your SIM account with your Live account</a>.
+On SIM, only prices for FxSpot are not available, unless you <a href="https://www.developer.saxo/openapi/appmanagement#/connectlive" target="_blank">connect your SIM account with your Live account</a>.
 <br />
 <br />
 <label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
 <br />
 <br />
-<label>List of Uics: <input type="text" class="text-field" id="idUics" value="4,12,14,17,18,21,31,38,43" /> (Use FxSpot type for realtime prices on every account)</label>
+<label>List of Uics: <input type="text" class="text-field" id="idUics" value="4,12,14,17,18,21,31,38,43" /></label>
+<label>
+  Asset type: <select class="selector" id="idCbxAssetType">
+    <option value="FxSpot">FxSpot</option>
+  </select> (FxSpot has realtime prices on SIM)
+</label>
 <br />
 <br />
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
