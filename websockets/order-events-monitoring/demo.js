@@ -218,7 +218,7 @@
                 console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
             } else {
                 console.error("Streaming disconnected with code " + evt.code + ".");
-                if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (" + evt.code + "). Do you want to reconnect?")) {
+                if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure or expired token (" + evt.code + ").\nDo you want to reconnect?")) {
                     createConnection();
                     startListener();
                     // Ideally you create a setup where the connection is restored automatically, after a second or so.
