@@ -45,6 +45,10 @@ function createJwt() {
     // The generated assertion/jwt can be validated using https://jwt.io
     // More info about using jsonwebtoken: https://github.com/auth0/node-jsonwebtoken
     const assertion = jwt.sign(payload, privateKey, options);
+    console.log("userId: " + userId);
+    console.log("appKey: " + appKey);
+    console.log("serviceProviderUrl: " + serviceProviderUrl);
+    console.log("certThumbPrint: " + certThumbPrint);
     console.log("Private key used to sign the JWT:\n" + privateKey);
     console.log("Assertion has been created:\n" + assertion);
     return assertion;
@@ -81,9 +85,12 @@ function requestToken(assertion, successCallback) {
                 successCallback(responseJson);
             });
         } else {
+            console.log(response);
+            console.log("Response headers:");
+            console.log(response.headers.raw());
+			console.log("Error getting token: " + response.status + " " + response.statusText);
             response.text().then(function (responseText) {
-                console.log("Error getting token.\n\n" + responseText);
-                console.log(response);
+                console.log(responseText);
             });
         }
     }).catch(function (error) {

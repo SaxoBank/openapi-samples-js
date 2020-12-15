@@ -14,9 +14,9 @@ The password is required when generating the PKCS private key, using the command
 This PEM file will be the input for the NodeJs example, together with the userId generating this certificate, the appKey and appSecret.
 
 Setup and run:
-1. Download the dependencies with the command 'npm install', from within this folder.
+1. Download the dependencies with the command ``` npm install ```, from within this folder.
 2. Change the 5 constants in the example.js, so your app and secrets are used.
-3. Run the sample with 'node example.js'.
+3. Run the sample with ``` node example.js ```.
 
 This example reads the certificate from a file, but better is to install the certificate on the host itself. There is a [C# example](https://github.com/SaxoBank/openapi-samples-csharp/tree/master/authentication/Authentication_Cba) on that.
 
