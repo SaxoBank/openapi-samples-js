@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.18
+ * boilerplate v1.19
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -97,12 +97,17 @@ function demonstrationHelper(settings) {
 
     /**
      * For a good display, the list of accounts must be grouped by type, and sorted by valuta.
-     * @param {Array} accounts The account list from the response.
+     * @param {Array<Object>} accounts The account list from the response.
      * @return {void}
      */
     function groupAndSortAccountList(accounts) {
         accounts.sort(function (x, y) {
 
+            /**
+             * Convert the account object to a string so it can alphabetically sorted on importancy.
+             * @param {Object} account The account.
+             * @return {string} The sortable string representaion of the account.
+             */
             function getAccountGroupDisplayNameForSorting(account) {
                 let result = (
                     account.AccountType === "Normal"
@@ -403,16 +408,26 @@ function demonstrationHelper(settings) {
 
     const tokenKey = "saxoBearerToken";
 
+    /**
+     * Examinate the token body, to see if it is not expired.
+     * @param {string} token The token to be checked.
+     * @return {number} The seconds until expiration.
+     */
     function getSecondsUntilExpiry(token) {
         const now = new Date();
         let payload;
+        if (token === null) {
+            return 0;
+        }
         try {
             // The JWT contains an header, payload and checksum
             // Payload is a base64 encoded JSON string
             payload = JSON.parse(window.atob(token.split(".")[1]));
             // An example about the different claims can be found here: authentication/token-explained/
             return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
-        } catch (ignore) {
+        } catch (error) {
+            console.error("Error getting expiration time of token: " + token);
+            console.error(error);
             return 0;
         }
     }
@@ -422,12 +437,12 @@ function demonstrationHelper(settings) {
      * @param {string} token The token to be saved.
      * @return {void}
      */
-    function saveToken(token) {
+    function saveAccessToken(token) {
         if (getSecondsUntilExpiry(token) > 0) {
             try {
                 window.localStorage.setItem(tokenKey, token);
             } catch (ignore) {
-                console.error("Unable to remember token (locale storage not supported).");
+                console.error("Unable to remember token (LocalStorage not supported).");
             }
         }
     }
@@ -463,15 +478,45 @@ function demonstrationHelper(settings) {
      * @return {void}
      */
     function tryToGetToken() {
+
+        /**
+         * Try to get the token from localStorage.
+         * @return {null|string} The token - null if not found.
+         */
+        function loadAccessToken() {
+            try {
+                return window.localStorage.getItem(tokenKey);
+            } catch (ignore) {
+                console.error("LocalStorage (used to remember the token) fails in this browser.");
+                return null;
+            }
+        }
+
+        /**
+         * Store the CSRF token in localStorage or cookie.
+         * @param {string} token The random code to be checked after authentication (see /assets/html/redirect.html).
+         * @return {void}
+         */
+        function saveCsrfToken(token) {
+            const csrfTokenKey = "csrfToken";
+            console.log("Saving CSRF token " + token);
+            try {
+                window.localStorage.setItem(csrfTokenKey, token);
+            } catch (ignore) {
+                console.error("LocalStorage (used to store the CSRF token) fails in this browser.");
+            }
+        }
+
         const config = getConfig();
-        const state = JSON.stringify({
-            "redirect": window.location.pathname,
+        const stateObject = {
+            "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
+            "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
             "env": (
                 config.authUrl === configLive.authUrl
                 ? "live"
                 : "sim"
             )
-        });
+        };
         // First, maybe the token is supplied in the URL, as a bookmark?
         // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
         const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
@@ -483,13 +528,9 @@ function demonstrationHelper(settings) {
         }
         if (newAccessToken === null) {
             // Second, maybe the token is stored before a refresh, or in a different sample?
-            try {
-                newAccessToken = window.localStorage.getItem(tokenKey);
-            } catch (ignore) {
-                console.error("Locale storage (used to remember the token) fails in this browser.");
-            }
+            newAccessToken = loadAccessToken();
         } else {
-            saveToken(newAccessToken);
+            saveAccessToken(newAccessToken);
         }
         secondsUntilExpiry = getSecondsUntilExpiry(newAccessToken);
         if (secondsUntilExpiry > 0) {
@@ -499,13 +540,14 @@ function demonstrationHelper(settings) {
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
-            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(state) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
                 settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
             } else {
                 settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes;
                 settings.retrieveTokenHref.target = "_self";  // Back to default
             }
+            saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
         }
     }
 
@@ -523,7 +565,7 @@ function demonstrationHelper(settings) {
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
             settings.accessTokenElm.addEventListener("change", function () {
-                saveToken(settings.accessTokenElm.value);
+                saveAccessToken(settings.accessTokenElm.value);
             });
             settings.tokenValidateButton.addEventListener("click", function () {
                 delete user.accountKey;

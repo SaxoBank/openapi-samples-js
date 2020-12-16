@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="NOINDEX, NOFOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
-    <title>Redirect</title>
+    <title>Redirecting..</title>
 </head>
 <body>
 <section class="page-header">
@@ -13,15 +15,39 @@
 <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
 </section>
 
+The redirect URL must be an absolute URL, for security reasons.<br />
+Sometimes it is desirable to have many pages with a login option. For this you can use a generic redirect page, <a href="https://auth0.com/docs/protocols/state-parameters#redirect-users">redirecting back to the originating page</a>. This can be achieved using the 'state'.<br />
+<br />
+The state contains the path. Without host, to prevent XSS attacks.<br />
+In this example the state is actually a base64 encoded stringified JSON object. This way it can contain more data, like a unique identifier to <a href="https://auth0.com/docs/protocols/state-parameters#csrf-attacks">prevent CSRF attacks</a>.
+
 <script type="text/javascript">
+
+    /**
+     * If authentication was successful, we validate the response by comparing states. Ideally the state is stored in a cookie or localStorage.
+     * @param {string} state The state, which is a JSON object including the CSRF token.
+     * @return {void}
+     */
+    function verifyCsrfToken(csrfTokenFromState) {
+        const csrfTokenKey = "csrfToken";
+        const csrfTokenCreated = window.localStorage.getItem(csrfTokenKey);  // The token as saved before initiating authentication.
+        const errorText = "Something went wrong. The state supplied when logging in, is not identical to the state from the response. More info: https://auth0.com/docs/protocols/state-parameters#csrf-attacks";
+        console.log("Comparing stored CSRF code " + csrfTokenCreated + " with retrieved code " + csrfTokenFromState + "..");
+        if (csrfTokenFromState !== csrfTokenCreated) {
+            console.error(errorText);
+            window.alert(errorText);
+        }
+    }
+
     const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
-    const state = JSON.parse(window.atob(urlParams.get("state")));  // Get this by using window.location.pathname
-    const newRedirect = window.location.protocol + "//" + window.location.host + state.redirect + (
-        state.env === "live"
+    const stateObject = JSON.parse(window.atob(urlParams.get("state")));  // Get this by using window.location.pathname
+    const newRedirect = window.location.protocol + "//" + window.location.host + stateObject.redirect + (
+        stateObject.env.toLowerCase() === "live"
         ? "?env=live"
         : ""
     );
     document.getElementById("idRedirectUrl").innerText = "..to " + newRedirect;
+    verifyCsrfToken(stateObject.csrfToken);
     window.location.replace(newRedirect + window.location.hash);
 </script>
 
