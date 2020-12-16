@@ -499,9 +499,9 @@ function demonstrationHelper(settings) {
          */
         function saveCsrfToken(token) {
             const csrfTokenKey = "csrfToken";
-            console.log("Saving CSRF token " + token);
             try {
                 window.localStorage.setItem(csrfTokenKey, token);
+                console.debug("CSRF token " + token + " saved to localStorage.");
             } catch (ignore) {
                 console.error("LocalStorage (used to store the CSRF token) fails in this browser.");
             }
