@@ -712,8 +712,85 @@
         window.clearInterval(activityMonitor);
     }
 
+    /**
+     * This function has nothing to do with websockets, it only digs up 5 Uics to subscribe to, when AssetType is selected.
+     * @return {void}
+     */
+    function findInstrumentsForAssetType() {
+
+        /**
+         * For options, the identifier is an OptionRoot. Convert this to a Uic.
+         * @param {number} optionRootId The identifier from the instrument response
+         * @return {void}
+         */
+        function convertOptionRootIdToUic(optionRootId) {
+            fetch(
+                demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,  // Randomly pick first option root
+                {
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    }
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const uics = [];
+                        responseJson.OptionSpace[0].SpecificOptions.forEach(function (specificOption) {
+                            if (uics.length < 200) {
+                                // Max 200 subscriptions are allowed.
+                                uics.push(specificOption.Uic);
+                            }
+                        });
+                        document.getElementById("idUics").value = uics.join();
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        const assetType = document.getElementById("idCbxAssetType").value;
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=5" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    const identifiers = [];
+                    if (responseJson.Data.length === 0) {
+                        console.error("No instrument of type " + assetType + " found.");
+                    } else {
+                        responseJson.Data.forEach(function (instrument) {
+                            identifiers.push(instrument.Identifier);  // This might only be an OptionRootId!
+                        });
+                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
+                            convertOptionRootIdToUic(identifiers[0]);
+                        } else {
+                            document.getElementById("idUics").value = identifiers.join();
+                        }
+                        console.log("Changed object to asset of type " + assetType + ".");
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribeListJson", "func": subscribeListJson, "funcsToDisplay": [subscribeListJson]},

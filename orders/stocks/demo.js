@@ -469,8 +469,13 @@
      * This sample can be used for other AssetTypes than Stock. After switching, retrieve a valid Asset.
      * @return {void}
      */
-    function getAssetType() {
+    function findInstrumentsForAssetType() {
 
+        /**
+         * For options, the identifier is an OptionRoot. Convert this to a Uic.
+         * @param {number} optionRootId The identifier from the instrument response
+         * @return {void}
+         */
         function convertOptionRootIdToUic(optionRootId) {
             fetch(
                 demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,
@@ -542,7 +547,7 @@
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxAssetType", "func": getAssetType, "funcsToDisplay": [getAssetType]},
+        { "evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
         {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
