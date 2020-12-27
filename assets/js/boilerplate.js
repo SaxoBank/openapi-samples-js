@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.19
+ * boilerplate v1.20
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -47,6 +47,8 @@ function demonstrationHelper(settings) {
         }
     };
     const user = {};
+    const tokenKey = "saxoBearerToken";
+    let tokenExpirationTimer;
 
     /**
      * Determine if the token edit exists.
@@ -406,23 +408,22 @@ function demonstrationHelper(settings) {
         });
     }
 
-    const tokenKey = "saxoBearerToken";
-
     /**
      * Examinate the token body, to see if it is not expired.
      * @param {string} token The token to be checked.
      * @return {number} The seconds until expiration.
      */
-    function getSecondsUntilExpiry(token) {
+    function getSecondsUntilTokenExpiry(token) {
         const now = new Date();
+        const tokenArray = String(token).split(".");
         let payload;
-        if (token === null) {
-            return 0;
+        if (tokenArray.length !== 3) {
+            return 0;  // Header, payload and checksum must be available, separated by dots. If not, token is invalid.
         }
         try {
             // The JWT contains an header, payload and checksum
             // Payload is a base64 encoded JSON string
-            payload = JSON.parse(window.atob(token.split(".")[1]));
+            payload = JSON.parse(window.atob(tokenArray[1]));
             // An example about the different claims can be found here: authentication/token-explained/
             return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
         } catch (error) {
@@ -433,12 +434,33 @@ function demonstrationHelper(settings) {
     }
 
     /**
+     * Notify about token expiration in 5 seconds.
+     * @param {string} token The token to be checked.
+     * @return {void}
+     */
+    function activateTokenExpirationWarning(token) {
+        let secondsUntilTokenExpiry;
+        let secondsUntilTokenExpiryWarning;
+        if (token !== "") {
+            secondsUntilTokenExpiry = getSecondsUntilTokenExpiry(token);
+            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - 5;
+            if (secondsUntilTokenExpiryWarning > 0) {
+                window.clearTimeout(tokenExpirationTimer);
+                tokenExpirationTimer = window.setTimeout(function () {
+                    console.error("The access token expires in 5 seconds. The app might need to refresh the token. And update the websocket subscription.");
+                }, secondsUntilTokenExpiryWarning * 1000);
+            }
+        }
+    }
+
+    /**
      * Remember token, so it can be reused after a page refresh.
      * @param {string} token The token to be saved.
      * @return {void}
      */
     function saveAccessToken(token) {
-        if (getSecondsUntilExpiry(token) > 0) {
+        const secondsUntilExpiry = getSecondsUntilTokenExpiry(token);
+        if (secondsUntilExpiry > 0) {
             try {
                 window.localStorage.setItem(tokenKey, token);
             } catch (ignore) {
@@ -532,7 +554,7 @@ function demonstrationHelper(settings) {
         } else {
             saveAccessToken(newAccessToken);
         }
-        secondsUntilExpiry = getSecondsUntilExpiry(newAccessToken);
+        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
         if (secondsUntilExpiry > 0) {
             settings.accessTokenElm.value = newAccessToken;
             console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
@@ -564,8 +586,10 @@ function demonstrationHelper(settings) {
         mirrorConsoleError();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
+            activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
                 saveAccessToken(settings.accessTokenElm.value);
+                activateTokenExpirationWarning(settings.accessTokenElm.value);
             });
             settings.tokenValidateButton.addEventListener("click", function () {
                 delete user.accountKey;
@@ -582,7 +606,8 @@ function demonstrationHelper(settings) {
             displayVersion,
             setupEvents,
             processError,
-            groupAndSortAccountList
+            groupAndSortAccountList,
+            getSecondsUntilTokenExpiry
         });
     }
 

@@ -442,7 +442,7 @@
     }
 
     demo.setupEvents([
-        { "evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
+        {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "click", "elmId": "idBtnComplexWarning", "func": getComplexWarning, "funcsToDisplay": [getComplexWarning]},
         {"evt": "click", "elmId": "idBtnGetOrderCosts", "func": getOrderCosts, "funcsToDisplay": [getOrderCosts]},
         {"evt": "click", "elmId": "idBtnGetKid", "func": getKid, "funcsToDisplay": [getKid]}

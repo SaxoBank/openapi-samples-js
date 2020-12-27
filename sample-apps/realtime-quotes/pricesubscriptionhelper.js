@@ -1,41 +1,32 @@
 /*jslint this: true, browser: true, long: true, bitwise: true */
-/*global window console demonstrationHelper */
+/*global window console ParserProtobuf protobuf $ InstrumentRow */
 
 /**
- * Follows WebSocket behaviour defined by spec:
- * https://html.spec.whatwg.org/multipage/web-sockets.html
+ * Init demo and return config and helper functions.
+ * @param {Object} demo The required elements in the website.
+ * @return {Object} Object with config, user object and helper functions.
  */
+function priceSubscriptionHelper(demo) {
 
-(function () {
-    // Create a helper function to remove some boilerplate code from the example itself.
-    const demo = demonstrationHelper({
-        "responseElm": document.getElementById("idResponse"),
-        "javaScriptElm": document.getElementById("idJavaScript"),
-        "accessTokenElm": document.getElementById("idBearerToken"),
-        "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
-        "tokenValidateButton": document.getElementById("idBtnValidate"),
-        "accountsList": document.getElementById("idCbxAccount"),
-        "footerElm": document.getElementById("idFooter")
-    });
+    const contextId = "PriceDemo_" + Date.now();  // Some unique value
+    const parserProtobuf = new ParserProtobuf("default", protobuf);
     // These objects contains the state of the subscriptions, so a reconnect can be processed and health can be monitored.
-    const balanceSubscription = {
-        "reference": "MyBalanceEvent",
-        "isActive": false,
-        "isRecentDataReceived": false
-    };
-    const positionSubscription = {
-        "reference": "MyPositionEvent",
-        "isActive": false,
-        "isRecentDataReceived": false
-    };
-    const ensSubscription = {
-        "reference": "MyEnsEvent",
+    const listSubscription = {
+        "reference": "PriceListEvent",
         "isActive": false,
         "isRecentDataReceived": false,
-        "lastSequenceId": null
+        "instruments": [],
+        "assetType": ""
     };
-    let connection;
+    const tradeLevelSubscription = {
+        "reference": "TradeLevelEvent",
+        "isActive": false,
+        "isRecentDataReceived": false
+    };
+    let connection = null;
+    let schemaName;
     let activityMonitor = null;
+    let bearerToken;
 
     /**
      * Test if the browser supports the features required for websockets.
@@ -55,16 +46,10 @@
      * @return {void}
      */
     function createConnection() {
-        const accessToken = document.getElementById("idBearerToken").value;
-        const contextId = encodeURIComponent(document.getElementById("idContextId").value);
-        const streamerUrl = demo.streamerUrl + "?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+        const streamerUrl = demo.streamerUrl + "?authorization=Bearer " + encodeURIComponent(bearerToken) + "&contextId=" + encodeURIComponent(contextId);
         if (!isWebSocketsSupportedByBrowser()) {
             console.error("This browser doesn't support WebSockets.");
             throw "This browser doesn't support WebSockets.";
-        }
-        if (contextId !== document.getElementById("idContextId").value) {
-            console.error("Invalid characters in Context ID.");
-            throw "Invalid characters in Context ID.";
         }
         try {
             connection = new window.WebSocket(streamerUrl);
@@ -78,132 +63,25 @@
     }
 
     /**
-     * This is an example of subscribing to changes in the account balance.
-     * @return {void}
+     * Create the body object for fetching data from the API.
+     * @param {string} method GET, POST, PATCH etc.
+     * @param {Object} body The optional data to send to the API - GET and DELETE don't send gata via the body (in general)
+     * @return {Object} The object with Bearer token
      */
-    function subscribeBalances() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": balanceSubscription.reference,
-            "RefreshRate": 10000,  // Default is every second, which probably is too chatty
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "ClientKey": demo.user.clientKey,
-                "FieldGroups": [
-                    "MarginOverview"
-                ]
-            }
-        };
-        fetch(
-            demo.apiUrl + "/port/v1/balances/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                balanceSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                balanceSubscription.isActive = true;
-                console.log("Subscription for balance changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
+    function getFetchBody(method, body) {
 
-    /**
-     * This is an example of subscribing to changes in net positions.
-     * These changes are published in ENS as well, this can be used as a catch up, every minute, because due to price changes is has many updates.
-     * @return {void}
-     */
-    function subscribePositions() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": positionSubscription.reference,
-            "RefreshRate": 60000,  // Default is every second, which probably is too chatty
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "ClientKey": demo.user.clientKey
+        const result = {
+            "method": method.toUpperCase(),
+            "headers": {
+                "Authorization": "Bearer " + bearerToken
             }
         };
-        fetch(
-            demo.apiUrl + "/port/v1/netpositions/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                positionSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                positionSubscription.isActive = true;
-                console.log("Subscription for position changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to ENS, which notifies about order and position events. And withdrawals and deposits are published on this subscription.
-     * @return {void}
-     */
-    function subscribeEns() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": ensSubscription.reference,
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Activities": [
-                    "AccountFundings",
-                    "Orders",
-                    "Positions"
-                ],
-                "FieldGroups": [
-                    "DisplayAndFormat",
-                    "ExchangeInfo"
-                ]
-            }
-        };
-        if (ensSubscription.lastSequenceId !== null) {
-            // If specified and message with SequenceId available in ENS cache, streaming of events start from SequenceId.
-            // If sequenceId not found in ENS system, Subscription Error with "Sequence id unavailable".
-            // If not specified and FromDateTime is not specified, subscription will be real-time subscription.
-            data.Arguments.SequenceId = ensSubscription.lastSequenceId;
-            console.log("Supplied last received SequenceId to retrieve gap: " + ensSubscription.lastSequenceId);
+        if (body !== undefined && body !== null) {
+            // We are sending JSON if using POST or PATCH. API is not accepting www-form-urlencoded.
+            result.headers["Content-Type"] = "application/json; charset=utf-8";
+            result.body = JSON.stringify(body);
         }
-        fetch(
-            demo.apiUrl + "/ens/v1/activities/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                ensSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                ensSubscription.isActive = true;
-                console.log("Subscription for order changes created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
+        return result;
     }
 
     /**
@@ -222,17 +100,9 @@
          */
         function removeSubscription(isSubscriptionActive, urlPath, internalCallbackOnSuccess) {
             if (isSubscriptionActive) {
-                fetch(
-                    demo.apiUrl + urlPath,
-                    {
-                        "method": "DELETE",
-                        "headers": {
-                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                        }
-                    }
-                ).then(function (response) {
+                fetch(demo.apiUrl + urlPath, getFetchBody("DELETE")).then(function (response) {
                     if (response.ok) {
-                        console.log("Unsubscribed to " + urlPath + ".\nReadyState " + connection.readyState + ".");
+                        console.log("Unsubscribed to " + demo.apiUrl + urlPath + ".\nReadyState " + connection.readyState + ".");
                         internalCallbackOnSuccess();
                     } else {
                         demo.processError(response);
@@ -245,15 +115,176 @@
             }
         }
 
-        const contextId = document.getElementById("idContextId").value;
-        const urlPathEns = "/ens/v1/activities/subscriptions/" + encodeURIComponent(contextId);
-        const urlPathBalance = "/port/v1/balances/subscriptions/" + encodeURIComponent(contextId);
-        const urlPathPosition = "/port/v1/netpositions/subscriptions/" + encodeURIComponent(contextId);
-        removeSubscription(ensSubscription.isActive, urlPathEns, function () {
-            removeSubscription(balanceSubscription.isActive, urlPathBalance, function () {
-                removeSubscription(positionSubscription.isActive, urlPathPosition, callbackOnSuccess);
-            });
+        const urlPathInfoPrices = "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(contextId);
+        // Make sure this is done sequentially.
+        removeSubscription(listSubscription.isActive, urlPathInfoPrices, function () {
+            // Delete all active subscriptions
+            PubSubManager.publish("RemoveInstrumentList");
+            callbackOnSuccess();
         });
+    }
+
+    /**
+     * This is an example of making the current app primary, so real time prices can be shown. Other apps are notified and get delayed prices.
+     * @return {void}
+     */
+    function requestPrimaryPriceSession() {
+        const data = {
+            "TradeLevel": "FullTradingAndChat"
+        };
+        fetch(demo.apiUrl + "/root/v1/sessions/capabilities", getFetchBody("PUT", data)).then(function (response) {
+            if (response.ok) {
+                console.log("Requested FullTradingAndChat session capabilities..");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Subscribe to price session changes.
+     * @return {void}
+     */
+    function subscribeToTradeLevelChanges() {
+        const data = {
+            "ContextId": encodeURIComponent(contextId),
+            "ReferenceId": tradeLevelSubscription.reference
+        };
+        fetch(demo.apiUrl + "/root/v1/sessions/events/subscriptions", getFetchBody("POST", data)).then(function (response) {
+            tradeLevelSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+            tradeLevelSubscription.isActive = true;
+            if (response.ok) {
+                console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'");
+                requestPrimaryPriceSession();
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Request primary price session if allowed, and keep this.
+     * @return {void}
+     */
+    function getAndKeepPrimarySession() {
+        fetch(demo.apiUrl + "/root/v1/user", getFetchBody("GET")).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson.AccessRights.CanTakePriceSession) {
+                        console.log("You can request the primary price session. Proceeding to request..");
+                        subscribeToTradeLevelChanges();
+                    } else {
+                        console.error("You are not allowed to request a primary session for realtime prices.");
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Convert the currency code to a symbol (USD to $).
+     * @param {string} currencyCode Currency code, coming from the API.
+     * @return {string} Currency symbol.
+     */
+    function currencyCodeToSymbol(currencyCode) {
+        switch (currencyCode) {
+        case "EUR":
+            return "€";
+        case "USD":
+            return "$";
+        case "JPY":
+            return "¥";
+        case "GBP":
+            return "£";
+        case "RUB":
+            return "₽";
+        case "CNH":
+            return "¥";
+        case "ILS":
+            return "₪";
+        case "THB":
+            return "฿";
+        default:
+            return currencyCode;
+        }
+    }
+
+    /**
+     * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
+     * @param {Array<number>} instrumentList Instrument Uics
+     * @param {string} assetType Instrument AssetType
+     * @return {void}
+     */
+    function subscribeToList(instrumentList, assetType) {
+
+        function internalSubscribe() {
+            // The Saxo API supports ProtoBuf, which saves some bandwidth.
+            //
+            // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
+            //
+            // In order to make the parsing work, parts of the client-lib are used.
+            // See Github: https://github.com/SaxoBank/openapi-clientlib-js
+            const data = {
+                "ContextId": contextId,
+                "ReferenceId": listSubscription.reference,
+                "Format": "application/x-protobuf",  // This triggers ProtoBuf
+                "Arguments": {
+                    "AccountKey": demo.user.accountKey,
+                    "Uics": instrumentList.join(),
+                    "AssetType": assetType,
+                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                    // MarketDepth gives the order book, when available.
+                    // PriceInfo gives NetChange and PercentChange attributes in update messages.
+                    "FieldGroups": ["Quote", "DisplayAndFormat", "InstrumentPriceDetails", "PriceInfo", "PriceInfoDetails"]
+                }
+                // https://www.saxoinvestor.fr/sim/openapi/trade/v1/prices/subscriptions
+                // {"Format":"application/x-protobuf","Arguments":{"AccountKey":"XIeV3EweQCO5pkSko8F3SA==","AssetType":"StockIndex","Uic":12999,"FieldGroups":["PriceInfo","PriceInfoDetails","InstrumentPriceDetails","HistoricalChanges","MarketDepth","Quote"]},"RefreshRate":500,"Tag":null,"ContextId":"7616225273","ReferenceId":"22","KnownSchemas":["Price-3.3.344+e533a2681c"]}
+            };
+            console.log("Subscribing to " + instrumentList.length + " instruments of AssetType " + assetType + "..");
+            fetch(demo.apiUrl + "/trade/v1/infoprices/subscriptions", getFetchBody("POST", data)).then(function (response) {
+                if (response.ok) {
+                    listSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+                    listSubscription.isActive = true;
+                    response.json().then(function (responseJson) {
+                        // The schema to use when parsing the messages, is send together with the snapshot.
+                        schemaName = responseJson.SchemaName;
+                        if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                            console.error("Adding schema to protobuf was not successful.");
+                        }
+                        responseJson.Snapshot.Data.forEach(function (instrument) {
+                            let instrumentName = instrument.DisplayAndFormat.Description + " (" + currencyCodeToSymbol(instrument.DisplayAndFormat.Currency) + ") [" + (
+                                instrument.Quote.DelayedByMinutes === 0
+                                ? "realtime"
+                                : "delayed"
+                            ) + "]";
+                            new InstrumentRow(document.getElementById("idInstrumentsList"), instrumentName, instrument);
+                        });
+                        console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".");
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        listSubscription.instruments = instrumentList;
+        listSubscription.assetType = assetType;
+        if (listSubscription.isActive) {
+            // First, unsubscribe to current list
+            unsubscribe(internalSubscribe);
+        } else {
+            internalSubscribe();
+        }
     }
 
     /**
@@ -262,14 +293,11 @@
      */
     function recreateSubscriptions() {
         unsubscribe(function () {
-            if (ensSubscription.isActive) {
-                subscribeEns();  // Resubscribe and retrieve missed messages, if any
+            if (listSubscription.isActive) {
+                subscribeToList(listSubscription.instruments, listSubscription.assetType);
             }
-            if (balanceSubscription.isActive) {
-                subscribeBalances();
-            }
-            if (positionSubscription.isActive) {
-                subscribePositions();
+            if (tradeLevelSubscription.isActive) {
+                subscribeToTradeLevelChanges();
             }
         });
     }
@@ -302,6 +330,7 @@
                 console.error("Streaming disconnected with code " + evt.code + ".");
                 if (demo.getSecondsUntilTokenExpiry(bearerToken) <= 0) {
                     window.alert("It looks like the socket has been disconnected due to an expired token (error code " + evt.code + ").");
+                    unsubscribeAndResetState();
                 } else if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (error code " + evt.code + ").\nDo you want to (try to) reconnect?")) {
                     createConnection();
                     startListener();
@@ -339,14 +368,11 @@
                             break;
                         case "NoNewData":
                             switch (heartbeat.OriginatingReferenceId) {
-                            case ensSubscription.reference:
-                                ensSubscription.isRecentDataReceived = true;
+                            case listSubscription.reference:
+                                listSubscription.isRecentDataReceived = true;
                                 break;
-                            case balanceSubscription.reference:
-                                balanceSubscription.isRecentDataReceived = true;
-                                break;
-                            case positionSubscription.reference:
-                                positionSubscription.isRecentDataReceived = true;
+                            case tradeLevelSubscription.reference:
+                                tradeLevelSubscription.isRecentDataReceived = true;
                                 break;
                             }
                             console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
@@ -357,9 +383,51 @@
                     });
                 });
             } else {
-                // This might be a TradeLevelChange event
                 console.log("Received non-array heartbeat notification: " + JSON.stringify(payload, null, 4));
             }
+        }
+
+        /**
+         * This function processes the price messages.
+         * @param {Array<Object>} payload The list of messages
+         * @return {void}
+         */
+        function handlePriceMessage(payload) {
+            payload.Collection.forEach(function (priceMessage) {
+                PubSubManager.publish("NewQuote", priceMessage);
+            });
+            listSubscription.isRecentDataReceived = true;
+        }
+
+        /**
+         * This is an example of making the current app primary, so real time prices can be shown again. Other apps are notified and get delayed prices.
+         * @return {void}
+         */
+        function requestPrimaryPriceSessionAgain() {
+            const data = {
+                "TradeLevel": "FullTradingAndChat"
+            };
+            fetch(demo.apiUrl + "/root/v1/sessions/capabilities", getFetchBody("PATCH", data)).then(function (response) {
+                if (response.ok) {
+                    console.log("Requested FullTradingAndChat session capabilities again..");
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        /**
+         * This function processes the price messages.
+         * @param {Array<Object>} payload The list of messages
+         * @return {void}
+         */
+        function handleTradeLevelMessage(payload) {
+            if (payload.TradeLevel !== "FullTradingAndChat") {
+                requestPrimaryPriceSessionAgain();
+            }
+            tradeLevelSubscription.isRecentDataReceived = true;
         }
 
         /**
@@ -379,9 +447,8 @@
                 }
             }
 
-            check(balanceSubscription);
-            check(positionSubscription);
-            check(ensSubscription);
+            check(listSubscription);
+            check(tradeLevelSubscription);
         }
 
         /**
@@ -472,8 +539,8 @@
                     }
                     break;
                 case 1:
-                    // ProtoBuf is not supported in this example. See the realtime-quotes example for a Protocol Buffers implementation.
-                    console.error("Protocol Buffers are not supported in this example.");
+                    // ProtoBuf
+                    payload = parserProtobuf.parse(payloadBuffer, schemaName);
                     break;
                 default:
                     console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -491,22 +558,6 @@
         }
 
         /**
-         * ENS messages contain a SequenceID, that can be used to retrieve the gap after a reconnect.
-         * @param {Array<Object>} payload The received array of ENS messages
-         * @return {void}
-         */
-        function getNewLastSequenceId(payload) {
-            payload.forEach(function (message) {
-                ensSubscription.lastSequenceId = (
-                    ensSubscription.lastSequenceId === null
-                    ? message.SequenceId
-                    : Math.max(message.SequenceId, ensSubscription.lastSequenceId)
-                );
-                console.debug("New last SequenceId for ENS reconnect: " + ensSubscription.lastSequenceId);
-            });
-        }
-
-        /**
          * New data is received. Read and process the data.
          * @param {Object} messageFrame The received message
          * @return {void}
@@ -515,20 +566,13 @@
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message) {
                 switch (message.referenceId) {
-                case ensSubscription.reference:
-                    // With this event you receive in realtime the changes of portfolio and orders. You also get notified on deposits or withdrawals.
-                    // Remember the last SequenceId. This can be used to retrieve the gap after an unwanted disconnect.
-                    getNewLastSequenceId(message.payload);
-                    ensSubscription.isRecentDataReceived = true;
-                    console.log("Streaming order/position/fundings event from ENS " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                case listSubscription.reference:
+                    handlePriceMessage(message.payload);
+                    //console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     break;
-                case balanceSubscription.reference:
-                    balanceSubscription.isRecentDataReceived = true;
-                    console.log("Streaming balance change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
-                    break;
-                case positionSubscription.reference:
-                    positionSubscription.isRecentDataReceived = true;
-                    console.log("Streaming position change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                case tradeLevelSubscription.reference:
+                    handleTradeLevelMessage(message.payload);
+                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
@@ -564,18 +608,12 @@
 
     /**
      * This is an example of extending the websocket session, when a token refresh took place.
+     * @param {string} accessToken Token required to authenticate.
      * @return {void}
      */
-    function extendSubscription() {
-        fetch(
-            demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
-            {
-                "method": "PUT",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                }
-            }
-        ).then(function (response) {
+    function extendSubscription(accessToken) {
+        bearerToken = accessToken;
+        fetch(demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(contextId), getFetchBody("PUT")).then(function (response) {
             if (response.ok) {
                 console.log("Subscription extended.");
             } else {
@@ -600,14 +638,12 @@
      */
     function unsubscribeAndResetState() {
         unsubscribe(function () {
-            ensSubscription.isActive = false;
-            balanceSubscription.isActive = false;
-            positionSubscription.isActive = false;
+            listSubscription.isActive = false;
         });
     }
 
     /**
-     * This is an example of disconnecting.
+     * This is an example of disconnecting the socket.
      * @return {void}
      */
     function disconnect() {
@@ -617,17 +653,35 @@
         window.clearInterval(activityMonitor);
     }
 
-    document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
-    demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
-        {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
-        {"evt": "click", "elmId": "idBtnSubscribeEns", "func": subscribeEns, "funcsToDisplay": [subscribeEns]},
-        {"evt": "click", "elmId": "idBtnSubscribeBalances", "func": subscribeBalances, "funcsToDisplay": [subscribeBalances]},
-        {"evt": "click", "elmId": "idBtnSubscribePositions", "func": subscribePositions, "funcsToDisplay": [subscribePositions]},
-        {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount, recreateSubscriptions]},
-        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
-        {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState]},
-        {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
-    ]);
-    demo.displayVersion("ens");
-}());
+    /**
+     * Connect to the the websocket connection, if not already active.
+     * @param {string} accessToken Token required to authenticate.
+     * @return {void}
+     */
+    function connect(accessToken) {
+        bearerToken = accessToken;
+        // Connect to feed, if not already connected
+        if (connection === null) {
+            createConnection();
+            startListener();
+            getAndKeepPrimarySession();
+        }
+    }
+
+    /**
+     * Setup and return settings to be used on demo.js.
+     * @return {Object} Object with price streamer helper functions.
+     */
+    function setupPriceSubscriptionHelper() {
+        return Object.freeze({
+            connect,
+            disconnect,
+            subscribeToList,
+            extendSubscription,
+            switchAccount,
+            unsubscribeAndResetState
+        });
+    }
+
+    return setupPriceSubscriptionHelper();
+}

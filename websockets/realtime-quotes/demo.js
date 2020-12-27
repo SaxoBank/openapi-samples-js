@@ -111,6 +111,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
+                jsonListSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
                 jsonListSubscription.isActive = true;
                 response.json().then(function (responseJson) {
                     console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
@@ -158,8 +159,8 @@
                 orderTicketSubscriptions.push({
                     "reference": data.ReferenceId,
                     "uic": uic,
+                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
                     "isActive": true,
-                    "isRecentDataReceived": false,
                     "format": "json"
                 });
                 response.json().then(function (responseJson) {
@@ -218,12 +219,13 @@
             }
         ).then(function (response) {
             if (response.ok) {
+                protoBufListSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
                 protoBufListSubscription.isActive = true;
                 response.json().then(function (responseJson) {
                     // The schema to use when parsing the messages, is send together with the snapshot.
                     schemaName = responseJson.SchemaName;
                     if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                        console.error("Adding schema to protobuf was not successful");
+                        console.error("Adding schema to protobuf was not successful.");
                     }
                     console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 });
@@ -271,8 +273,8 @@
                 orderTicketSubscriptions.push({
                     "reference": data.ReferenceId,
                     "uic": uic,
+                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
                     "isActive": true,
-                    "isRecentDataReceived": false,
                     "format": "protoBuf"
                 });
                 response.json().then(function (responseJson) {
@@ -407,7 +409,9 @@
                 console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
             } else {
                 console.error("Streaming disconnected with code " + evt.code + ".");
-                if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure or expired token (" + evt.code + ").\nDo you want to (try to) reconnect?")) {
+                if (demo.getSecondsUntilTokenExpiry(bearerToken) <= 0) {
+                    window.alert("It looks like the socket has been disconnected due to an expired token (error code " + evt.code + ").");
+                } else if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (error code " + evt.code + ").\nDo you want to (try to) reconnect?")) {
                     createConnection();
                     startListener();
                     // Ideally you create a setup where the connection is restored automatically, after a second or so.
@@ -434,35 +438,40 @@
          */
         function handleHeartbeat(payload) {
             // Heartbeat messages are sent every 20 seconds. If there is a minute without messages, this is an error.
-            payload.forEach(function (heartbeatMessages) {
-                heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
-                    switch (heartbeat.Reason) {
-                    case "SubscriptionTemporarilyDisabled":
-                    case "SubscriptionPermanentlyDisabled":
-                        console.error("Heartbeat event error: " + heartbeat.Reason);
-                        break;
-                    case "NoNewData":
-                        switch (heartbeat.OriginatingReferenceId) {
-                        case jsonListSubscription.reference:
-                            jsonListSubscription.isRecentDataReceived = true;
+            if (Array.isArray(payload)) {
+                payload.forEach(function (heartbeatMessages) {
+                    heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
+                        switch (heartbeat.Reason) {
+                        case "SubscriptionTemporarilyDisabled":
+                        case "SubscriptionPermanentlyDisabled":
+                            console.error("Heartbeat event error: " + heartbeat.Reason);
                             break;
-                        case protoBufListSubscription.reference:
-                            protoBufListSubscription.isRecentDataReceived = true;
+                        case "NoNewData":
+                            switch (heartbeat.OriginatingReferenceId) {
+                            case jsonListSubscription.reference:
+                                jsonListSubscription.isRecentDataReceived = true;
+                                break;
+                            case protoBufListSubscription.reference:
+                                protoBufListSubscription.isRecentDataReceived = true;
+                                break;
+                            default:
+                                orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
+                                    if (orderTicketSubscription.reference === heartbeat.OriginatingReferenceId) {
+                                        orderTicketSubscription.isRecentDataReceived = true;
+                                    }
+                                });
+                            }
+                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
                             break;
                         default:
-                            orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                                if (orderTicketSubscription.reference === heartbeat.OriginatingReferenceId) {
-                                    orderTicketSubscription.isRecentDataReceived = true;
-                                }
-                            });
+                            console.error("Unknown heartbeat message received: " + JSON.stringify(payload));
                         }
-                        console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
-                        break;
-                    default:
-                        console.error("Unknown heartbeat message received: " + JSON.stringify(payload));
-                    }
+                    });
                 });
-            });
+            } else {
+                // This might be a TradeLevelChange event
+                console.log("Received non-array heartbeat notification: " + JSON.stringify(payload, null, 4));
+            }
         }
 
         /**

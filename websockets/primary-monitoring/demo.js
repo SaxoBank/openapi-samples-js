@@ -225,6 +225,7 @@
                     console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
+                    // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
                     console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
                     break;
                 case "_resetsubscriptions":
@@ -233,7 +234,7 @@
                     break;
                 case "_disconnect":
                     // The server has disconnected the client. This messages requires you to re-authenticate if you wish to continue receiving messages.
-                    console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
+                    console.error("The server has disconnected the client! New login is required.\n\n" + JSON.stringify(message.payload, null, 4));
                     break;
                 default:
                     console.error("No processing implemented for message with reference " + message.referenceId);
@@ -244,7 +245,7 @@
     }
 
     /**
-     * This is an example of setting the trading settings of an instrument.
+     * This is an example of subscribing to primary price session changes.
      * @return {void}
      */
     function subscribe() {
@@ -277,7 +278,7 @@
      * This is an example of making the current app primary, so real time prices can be shown. Other apps are notified and get delayed prices.
      * @return {void}
      */
-    function becomePrimary() {
+    function requestPrimaryPriceSession() {
         fetch(
             demo.apiUrl + "/root/v1/sessions/capabilities",
             {
@@ -292,7 +293,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
-                console.log("Requested to become primary..");
+                console.log("Requested FullTradingAndChat session capabilities..");
             } else {
                 demo.processError(response);
             }
@@ -305,7 +306,7 @@
      * This is an example of making the current app primary, so real time prices can be shown again. Other apps are notified and get delayed prices.
      * @return {void}
      */
-    function becomePrimaryAgain() {
+    function requestPrimaryPriceSessionAgain() {
         fetch(
             demo.apiUrl + "/root/v1/sessions/capabilities",
             {
@@ -392,8 +393,8 @@
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribe", "func": subscribe, "funcsToDisplay": [subscribe]},
-        {"evt": "click", "elmId": "idBtnBecomePrimary", "func": becomePrimary, "funcsToDisplay": [becomePrimary]},
-        {"evt": "click", "elmId": "idBtnBecomePrimaryAgain", "func": becomePrimaryAgain, "funcsToDisplay": [becomePrimaryAgain]},
+        {"evt": "click", "elmId": "idBtnBecomePrimary", "func": requestPrimaryPriceSession, "funcsToDisplay": [requestPrimaryPriceSession]},
+        {"evt": "click", "elmId": "idBtnBecomePrimaryAgain", "func": requestPrimaryPriceSessionAgain, "funcsToDisplay": [requestPrimaryPriceSessionAgain]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}

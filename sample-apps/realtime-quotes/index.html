@@ -5,17 +5,22 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="stylesheet" href="pricelist.css">
     <!-- ProtoBuf versions https://github.com/protobufjs/protobuf.js/tags -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/dcodeIO/protobuf.js@6.10.2/dist/protobuf.js" defer></script>
     <script type="text/javascript" src="protobuf-lib/protobuf-saxo.js" defer></script>
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="pubsubmanager.js" defer></script>
+    <script type="text/javascript" src="instrumentcell.js" defer></script>
+    <script type="text/javascript" src="instrumentrow.js" defer></script>
+    <script type="text/javascript" src="pricesubscriptionhelper.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demo for retrieving realtime quotes</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Realtime quotes</h1>
-<h2 class="project-tagline">Example on how to get realtime quotes</h2>
+<h1 class="project-name">Streaming quotes sample</h1>
+<h2 class="project-tagline">Example on showing streaming quote updates</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
 </section>
@@ -31,15 +36,12 @@
 </label>
 </div>
 <h1>Realtime quotes for a group of instruments</h1>
-This is an example on retrieving realtime prices. Make sure your application is the <a href="https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/" target="_blank">primary</a> one, to be entitled for the price feed.
+This is an example on retrieving realtime prices. It makes this app the primary one (entitled for realtime quotes, if customer has a subscription).
 <br />
 On SIM, only prices for FxSpot are not available, unless you <a href="https://www.developer.saxo/openapi/appmanagement#/connectlive" target="_blank">connect your SIM account with your Live account</a>.
 <br />
 <br />
-<label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
-<br />
-<br />
-<label>List of Uics: <input type="text" class="text-field" id="idUics" value="4,12,14,17,18,21,31,38,43" /></label>
+<label>Instrument name/ISIN: <input type="text" class="text-field" id="idInstrumentName" value="usd" placeholder="Enter instrument name.."></label>
 <label>
   Asset type: <select class="selector" id="idCbxAssetType">
     <option value="FxSpot">FxSpot</option>
@@ -47,16 +49,12 @@ On SIM, only prices for FxSpot are not available, unless you <a href="https://ww
 </label>
 <br />
 <br />
-<input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
-<input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
-<input type="button" class="action-button" value="Subscribe for list (JSON)" id="idBtnSubscribeListJson" />
-<input type="button" class="action-button" value="Subscribe for order ticket (JSON)" id="idBtnSubscribeOrderTicketJson" /><br />
-<input type="button" class="action-button" value="Subscribe for list (ProtoBuf)" id="idBtnSubscribeListProtoBuf" />
-<input type="button" class="action-button" value="Subscribe for order ticket (ProtoBuf)" id="idBtnSubscribeOrderTicketProtoBuf" /><br />
-<input type="button" class="action-button" value="Switch account" id="idBtnSwitchAccount" />
-<input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
-<input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
-<input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
+<input type="button" class="action-button" value="Find instrument(s)" id="idBtnFind" />
+<br />
+<br />
+Search results: <pre class="code-block" id="idInstrumentsList">
+<span class="instrumentName">Instrument</span><span class="price">Last</span><span class="price">Bid</span><span class="price">Ask</span><span class="price">High</span><span class="price">Low</span><span class="price">Open</span><span class="price">Close</span><span class="price">Volume</span><span class="dateTime">Time</span>
+</pre>
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
 <br />
