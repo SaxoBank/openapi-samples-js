@@ -47,7 +47,7 @@ const PubSubManager = {
     // PubSubManager.unsubscribe("MySubjectWithString", doSomething);
     "unsubscribe": function (subject, handler) {
         if (this.events.hasOwnProperty(subject)) {
-            this.events[subject].splice(this.events[subject].indexOf(handler));
+            this.events[subject].splice(this.events[subject].indexOf(handler), 1);
             if (this.events[subject].length === 0) {
                 delete this.events[subject];
             }

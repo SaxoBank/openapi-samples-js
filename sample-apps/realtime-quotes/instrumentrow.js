@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, for: true, long: true, single: true */
-/*global window $ console InstrumentCell */
+/*global window $ console PubSubManager InstrumentCell */
 
 /**
  * An instrument row
@@ -60,8 +60,12 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
             }
             if (price !== 0) {
                 quoteMessageToBroadcast.prc = price;
-                if (hasPriceInfoDetails && quoteMessage.PriceInfoDetails.hasOwnProperty("MidSize")) {
-                    quoteMessageToBroadcast.vol = quoteMessage.PriceInfoDetails.MidSize;
+                if (hasPriceInfoDetails) {
+                    if (quoteMessage.PriceInfoDetails.hasOwnProperty("LastTradedSize")) {
+                        quoteMessageToBroadcast.vol = quoteMessage.PriceInfoDetails.LastTradedSize;
+                    } else if (quoteMessage.PriceInfoDetails.hasOwnProperty("MidSize")) {
+                        quoteMessageToBroadcast.vol = quoteMessage.PriceInfoDetails.MidSize;
+                    }
                 }
                 if (quoteMessage.Quote.hasOwnProperty("MarketState") && quoteMessage.Quote.MarketState === "Closed") {
                     quoteMessageToBroadcast.tags = "M";  // Indicative price
@@ -111,6 +115,29 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
             }
         }
 
+        function processForOpenPrice(quoteMessageToBroadcast) {
+            if (hasPriceInfoDetails && quoteMessage.PriceInfoDetails.hasOwnProperty("Open")) {
+                quoteMessageToBroadcast.prc = quoteMessage.PriceInfoDetails.Open;
+                openCell.update(quoteMessageToBroadcast);
+            }
+        }
+
+        function processForClosePrice(quoteMessageToBroadcast) {
+            if (hasPriceInfoDetails && quoteMessage.PriceInfoDetails.hasOwnProperty("LastClose")) {
+                quoteMessageToBroadcast.prc = quoteMessage.PriceInfoDetails.LastClose;
+                closeCell.update(quoteMessageToBroadcast);
+                lastCell.update(quoteMessageToBroadcast);  // Do this to be able to calculate difference
+            }
+        }
+
+        function processForVolume(quoteMessageToBroadcast) {
+            // Cumulative volume
+            if (hasPriceInfoDetails && quoteMessage.PriceInfoDetails.hasOwnProperty("Volume")) {
+                quoteMessageToBroadcast.vol = quoteMessage.PriceInfoDetails.Volume;
+                volumeCell.update(quoteMessageToBroadcast);
+            }
+        }
+
         let lastUpdated;
         if (quoteMessage.Uic === initialQuoteMessage.Uic) {
             lastUpdated = (
@@ -138,12 +165,18 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
                 "typ": "low",
                 "dt": lastUpdated
             });
-            // on the list to add xxx
-            //opn: openCell.update(quoteMessage);
-            //cls: closeCell.update(quoteMessage);
-            // Do this to be able to calculate difference
-            //cls: lastCell.update(quoteMessage);
-            //vol: volumeCell.update(quoteMessage);
+            processForOpenPrice({
+                "typ": "opn",
+                "dt": lastUpdated
+            });
+            processForClosePrice({
+                "typ": "cls",
+                "dt": lastUpdated
+            });
+            processForVolume({
+                "typ": "vol",
+                "dt": lastUpdated
+            });
         }
     }
 

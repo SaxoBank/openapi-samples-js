@@ -45,6 +45,8 @@ Samples run against Saxo's simulation environment and require an **access token*
 
 ## Sample Apps
 
-[Basic Order Manager](sample-apps/basic-order-manager/): A Vue.js app that runs in the browser, pulls out open orders of the logged-in client, and displays them in a Vuetify table with sorting and filtering functionality. Includes a simple order blotter and an implementation of OAuth implicit flow to authenticate with the OpenAPI.
+[Basic Price Streamer](sample-apps/realtime-quotes/): Shows how to display prices for instruments and update them when an update is broadcasted. The connection health is monitored.
+
+[Basic Order Manager](sample-apps/basic-order-manager/): A Vue.js app that runs in the browser, pulls out open orders of the logged-in client and displays them in a Vuetify table with sorting and filtering functionality. Includes a simple order blotter and an implementation of OAuth implicit flow to authenticate with the OpenAPI.
 
 Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
