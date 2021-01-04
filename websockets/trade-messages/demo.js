@@ -105,18 +105,28 @@
     function addTradeMessageToList(tradeMessages) {
         const list = document.getElementById("idTradeMessages");
         tradeMessages.forEach(function (tradeMessage) {
-            const titleElement = document.createElement("DT");
-            const bodyElement = document.createElement("DD");
-            const buttonItem = document.createElement("BUTTON");
-            titleElement.appendChild(document.createTextNode(tradeMessage.MessageHeader));
-            list.appendChild(titleElement);
-            bodyElement.appendChild(document.createTextNode(tradeMessage.MessageBody + "\n" + new Date(tradeMessage.DateTime).toLocaleString() + "\n"));
-            buttonItem.innerText = "Mark message as 'seen'";
-            buttonItem.onclick = function () {
-                markMessageAsSeen(tradeMessage.MessageId, titleElement, bodyElement);
-            };
-            bodyElement.appendChild(buttonItem);
-            list.appendChild(bodyElement);
+            let titleElement;
+            let bodyElement;
+            let buttonElement;
+            if (tradeMessage.MessageType !== "PriceAlert") {
+                // Ignore price alerts
+                titleElement = document.createElement("DT");
+                bodyElement = document.createElement("DD");
+                buttonElement = document.createElement("BUTTON");
+                titleElement.appendChild(document.createTextNode(tradeMessage.MessageHeader));
+                list.appendChild(titleElement);
+                bodyElement.appendChild(document.createTextNode(tradeMessage.MessageBody + "\n" + new Date(tradeMessage.DateTime).toLocaleString() + "\n"));
+                buttonElement.innerText = "Mark message as 'seen'";
+                buttonElement.onclick = function () {
+                    markMessageAsSeen(tradeMessage.MessageId, titleElement, bodyElement);
+                };
+                bodyElement.appendChild(buttonElement);
+                list.appendChild(bodyElement);
+                if (tradeMessage.hasOwnProperty("DisplayType") && tradeMessage.DisplayType === "Popup") {
+                    // This message requires immediate attention..
+                    window.alert(tradeMessage.MessageBody);
+                }
+            }
         });
     }
 
@@ -521,5 +531,5 @@
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);
-    demo.displayVersion("ens");
+    demo.displayVersion("trade");
 }());
