@@ -1,5 +1,5 @@
-/*jslint this: true, browser: true, for: true, long: true, single: true */
-/*global window $ console PubSubManager InstrumentCell */
+/*jslint browser: true, long: true */
+/*global console InstrumentCell */
 
 /**
  * An instrument row
@@ -8,6 +8,7 @@
  * @param {Object} containerElm The element which will contain the rows to be created
  * @param {string} name Name of the instrument
  * @param {Object} initialQuoteMessage The initial price state from the response
+ * @return {Object} The object with destroy function
  */
 function InstrumentRow(containerElm, name, initialQuoteMessage) {
 
@@ -22,23 +23,6 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
     let openCell;
     let closeCell;
     let volumeCell;
-
-    /**
-     * Get the given title, which is probably the instrument name.
-     * @return {string} Title - Contents of the first column
-     */
-    this.getTitle = function () {
-        return instrumentNameCell.innerText;
-    };
-
-    /**
-     * Update the title.
-     * @param {string} title The new title.
-     * @return {void}
-     */
-    this.setTitle = function (title) {
-        instrumentNameCell.innerText = title;
-    };
 
     /**
      * Update the appropriate cell with the new price.
@@ -138,73 +122,75 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
             }
         }
 
-        let lastUpdated;
-        if (quoteMessage.Uic === initialQuoteMessage.Uic) {
-            lastUpdated = (
-                quoteMessage.hasOwnProperty("LastUpdated")
-                ? new Date(quoteMessage.LastUpdated)
-                : new Date()
-            );
-            processForAskPrice({
-                "typ": "ask",
-                "dt": lastUpdated
-            });
-            processForBidPrice({
-                "typ": "bid",
-                "dt": lastUpdated
-            });
-            processForLastPrice({
-                "typ": "lst",
-                "dt": lastUpdated
-            });
-            processForHighPrice({
-                "typ": "hgh",
-                "dt": lastUpdated
-            });
-            processForLowPrice({
-                "typ": "low",
-                "dt": lastUpdated
-            });
-            processForOpenPrice({
-                "typ": "opn",
-                "dt": lastUpdated
-            });
-            processForClosePrice({
-                "typ": "cls",
-                "dt": lastUpdated
-            });
-            processForVolume({
-                "typ": "vol",
-                "dt": lastUpdated
-            });
-        }
+        const lastUpdated = (
+            quoteMessage.hasOwnProperty("LastUpdated")
+            ? new Date(quoteMessage.LastUpdated)
+            : new Date()
+        );
+        processForAskPrice({
+            "typ": "ask",
+            "dt": lastUpdated
+        });
+        processForBidPrice({
+            "typ": "bid",
+            "dt": lastUpdated
+        });
+        processForLastPrice({
+            "typ": "lst",
+            "dt": lastUpdated
+        });
+        processForHighPrice({
+            "typ": "hgh",
+            "dt": lastUpdated
+        });
+        processForLowPrice({
+            "typ": "low",
+            "dt": lastUpdated
+        });
+        processForOpenPrice({
+            "typ": "opn",
+            "dt": lastUpdated
+        });
+        processForClosePrice({
+            "typ": "cls",
+            "dt": lastUpdated
+        });
+        processForVolume({
+            "typ": "vol",
+            "dt": lastUpdated
+        });
     }
 
     /**
      * Stop listening and remove row.
      * @return {void}
      */
-    function removeRow() {
-        // This function can be made for a specific Uic..
+    function remove() {
         lastCell.stop();
+        lastCell = null;
         bidCell.stop();
+        bidCell = null;
         askCell.stop();
+        askCell = null;
         openCell.stop();
+        openCell = null;
         closeCell.stop();
+        closeCell = null;
         highCell.stop();
+        highCell = null;
         lowCell.stop();
+        lowCell = null;
         volumeCell.stop();
+        volumeCell = null;
         instrumentNameCell.remove();
         elmMain.remove();
-        PubSubManager.unsubscribe("RemoveInstrumentList", removeRow);
-        PubSubManager.unsubscribe("NewQuote", processQuoteMessage);
     }
 
     /**
      * Initialize the row, by creating the cells and append them to the container.
      * @return {void}
      */
-    function init() {
+    function setupInstrumentRow() {
         instrumentNameCell.classList.add("instrumentName");
         instrumentNameCell.innerText = name;
         elmMain.append(instrumentNameCell);
@@ -219,10 +205,12 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
         volumeCell = new InstrumentCell(elmMain, "vol", "volume", false, initialQuoteMessage);
         lastTimeCell = new InstrumentCell(elmMain, "lst", "time", true, initialQuoteMessage);
         containerElm.append(elmMain);
-        // Subscribe to new price broadcasts
-        PubSubManager.subscribe("NewQuote", processQuoteMessage);
-        PubSubManager.subscribe("RemoveInstrumentList", removeRow);
+        return Object.freeze({
+            initialQuoteMessage,
+            processQuoteMessage,
+            remove
+        });
     }
 
-    init();
+    return setupInstrumentRow();
 }

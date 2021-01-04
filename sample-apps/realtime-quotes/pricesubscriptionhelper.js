@@ -1,5 +1,5 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
-/*global window console ParserProtobuf protobuf $ InstrumentRow */
+/*jslint browser: true, long: true, bitwise: true */
+/*global console ParserProtobuf protobuf InstrumentRow */
 
 /**
  * Init demo and return config and helper functions.
@@ -23,6 +23,7 @@ function priceSubscriptionHelper(demo) {
         "isActive": false,
         "isRecentDataReceived": false
     };
+    let rows = [];
     let connection = null;
     let schemaName;
     let activityMonitor = null;
@@ -119,8 +120,21 @@ function priceSubscriptionHelper(demo) {
         // Make sure this is done sequentially.
         removeSubscription(listSubscription.isActive, urlPathInfoPrices, function () {
             // Delete all active subscriptions
-            PubSubManager.publish("RemoveInstrumentList");
+            rows.forEach(function (row) {
+                row.remove();
+            });
+            rows = [];
             callbackOnSuccess();
+        });
+    }
+
+    /**
+     * This is an example of unsubscribing, including a reset of the state.
+     * @return {void}
+     */
+    function unsubscribeAndResetState() {
+        unsubscribe(function () {
+            listSubscription.isActive = false;
         });
     }
 
@@ -265,9 +279,9 @@ function priceSubscriptionHelper(demo) {
                                 ? "realtime"
                                 : "delayed"
                             ) + "]";
-                            new InstrumentRow(document.getElementById("idInstrumentsList"), instrumentName, instrument);
+                            rows.push(new InstrumentRow(document.getElementById("idInstrumentsList"), instrumentName, instrument));
                         });
-                        console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".");
+                        console.log("Subscription for " + rows.length + " instruments created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".");
                     });
                 } else {
                     demo.processError(response);
@@ -393,9 +407,16 @@ function priceSubscriptionHelper(demo) {
          * @return {void}
          */
         function handlePriceMessage(payload) {
-            payload.Collection.forEach(function (priceMessage) {
-                PubSubManager.publish("NewQuote", priceMessage);
-            });
+
+            function publishPrice(message) {
+                rows.forEach(function (row) {
+                    if (message.hasOwnProperty("Uic") && message.Uic === row.initialQuoteMessage.Uic) {
+                        row.processQuoteMessage(message);
+                    }
+                });
+            }
+
+            payload.Collection.forEach(publishPrice);
             listSubscription.isRecentDataReceived = true;
         }
 
@@ -630,16 +651,6 @@ function priceSubscriptionHelper(demo) {
      */
     function switchAccount() {
         recreateSubscriptions();
-    }
-
-    /**
-     * This is an example of unsubscribing, including a reset of the state.
-     * @return {void}
-     */
-    function unsubscribeAndResetState() {
-        unsubscribe(function () {
-            listSubscription.isActive = false;
-        });
     }
 
     /**

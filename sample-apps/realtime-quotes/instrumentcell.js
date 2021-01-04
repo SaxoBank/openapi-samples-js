@@ -1,5 +1,5 @@
-/*jslint this: true, browser: true, long: true, single: true */
-/*global console window */
+/*jslint browser: true, long: true */
+/*global console */
 
 /**
  * An instrument cell, part of a row
@@ -89,100 +89,6 @@ function InstrumentCell(containerElm, cellType, infoToShow, hasHighlighting, ini
             // No close arrived for this instrument
             resetHighlighting("black");
         }
-    }
-
-    /**
-     * Initialize the cell, by appending it to the containing row.
-     * @return {void}
-     */
-    function init() {
-        const hasPriceInfo = initialQuoteMessage.hasOwnProperty("PriceInfo");
-        const hasPriceInfoDetails = initialQuoteMessage.hasOwnProperty("PriceInfoDetails");
-        let textToDisplay = "";
-        let eventDateTime;
-        switch (cellType) {
-        case "ask":
-            if (initialQuoteMessage.Quote.hasOwnProperty("Ask")) {
-                currentPrice = initialQuoteMessage.Quote.Ask;
-            } else if (initialQuoteMessage.Quote.hasOwnProperty("PriceTypeAsk") && initialQuoteMessage.Quote.PriceTypeAsk === "NoAccess") {
-                // You are not setup for a price feed on this instrument. No price will be provided. If you believe this is an error, please contact Saxo to be set up for prices on this instrument.
-                textToDisplay = "NoAccess";
-            }
-            break;
-        case "bid":
-            if (initialQuoteMessage.Quote.hasOwnProperty("Bid")) {
-                currentPrice = initialQuoteMessage.Quote.Bid;
-            } else if (initialQuoteMessage.Quote.hasOwnProperty("PriceTypeBid") && initialQuoteMessage.Quote.PriceTypeBid === "NoAccess") {
-                textToDisplay = "NoAccess";
-            }
-            break;
-        case "lst":
-            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("LastTraded")) {
-                if (infoToShow === "volume") {
-                    currentPrice = initialQuoteMessage.PriceInfoDetails.LastTradedSize;
-                } else {
-                    currentPrice = initialQuoteMessage.PriceInfoDetails.LastTraded;
-                }
-            }
-            // Fallback is the mid price:
-            if (infoToShow === "price" && currentPrice === 0 && initialQuoteMessage.Quote.hasOwnProperty("Mid")) {
-                currentPrice = initialQuoteMessage.Quote.Mid;
-            }
-            // Use previous day close price for coloring the price green or red:
-            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("LastClose")) {
-                previousDayClosePrice = initialQuoteMessage.PriceInfoDetails.LastClose;
-            }
-            break;
-        case "cls":
-            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("LastClose")) {
-                currentPrice = initialQuoteMessage.PriceInfoDetails.LastClose;
-            }
-            break;
-        case "opn":
-            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("Open")) {
-                currentPrice = initialQuoteMessage.PriceInfoDetails.Open;
-            }
-            break;
-        case "hgh":
-            if (hasPriceInfo && initialQuoteMessage.PriceInfo.hasOwnProperty("High")) {
-                currentPrice = initialQuoteMessage.PriceInfo.High;
-            }
-            break;
-        case "low":
-            if (hasPriceInfo && initialQuoteMessage.PriceInfo.hasOwnProperty("Low")) {
-                currentPrice = initialQuoteMessage.PriceInfo.Low;
-            }
-            break;
-        case "vol":
-            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("Volume")) {
-                currentPrice = initialQuoteMessage.PriceInfoDetails.Volume;
-            }
-            break;
-        }
-        switch (infoToShow) {
-        case "price":
-        case "volume":
-            elm.classList.add("price");
-            break;
-        case "time":
-            elm.classList.add("dateTime");
-            break;
-        }
-        if (infoToShow === "time") {
-            eventDateTime = new Date(initialQuoteMessage.LastUpdated);
-            if (eventDateTime.getTime() > Date.now() - (300 * 24 * 60 * 60 * 1000)) {
-                textToDisplay = getTimeString(eventDateTime);
-            }
-        } else if (currentPrice !== 0) {
-            textToDisplay = currentPrice.toFixed(initialQuoteMessage.DisplayAndFormat.Decimals);
-        }
-        if (textToDisplay === "") {
-            elm.innerHTML = "&nbsp;";
-        } else {
-            elm.innerText = textToDisplay;
-        }
-        giveValueColor(currentPrice);
-        containerElm.append(elm);
     }
 
     /**
@@ -293,7 +199,7 @@ function InstrumentCell(containerElm, cellType, infoToShow, hasHighlighting, ini
      * @param {Object} quoteMessage The new data to display.
      * @return {void}
      */
-    this.update = function (quoteMessage) {
+    function update(quoteMessage) {
 
         function truncate(number) {
             return (
@@ -350,16 +256,114 @@ function InstrumentCell(containerElm, cellType, infoToShow, hasHighlighting, ini
         currentPrice = priceAsNumber;
         lastUpdateDateTime = currentUpdateDateTime;
         updateTitleAttribute(quoteMessage, lastUpdateDateTime);
-    };
+    }
 
     /**
      * Stop highlighting prices.
      * @return {void}
      */
-    this.stop = function () {
+    function stop() {
         stopHighlightTimer();
         elm.remove();
-    };
+    }
 
-    init();
+    /**
+     * Initialize the cell, by appending it to the containing row.
+     * @return {void}
+     */
+    function setupInstrumentCell() {
+        const hasPriceInfo = initialQuoteMessage.hasOwnProperty("PriceInfo");
+        const hasPriceInfoDetails = initialQuoteMessage.hasOwnProperty("PriceInfoDetails");
+        let textToDisplay = "";
+        let eventDateTime;
+        switch (cellType) {
+        case "ask":
+            if (initialQuoteMessage.Quote.hasOwnProperty("Ask")) {
+                currentPrice = initialQuoteMessage.Quote.Ask;
+            } else if (initialQuoteMessage.Quote.hasOwnProperty("PriceTypeAsk") && initialQuoteMessage.Quote.PriceTypeAsk === "NoAccess") {
+                // You are not setup for a price feed on this instrument. No price will be provided. If you believe this is an error, please contact Saxo to be set up for prices on this instrument.
+                textToDisplay = "NoAccess";
+            }
+            break;
+        case "bid":
+            if (initialQuoteMessage.Quote.hasOwnProperty("Bid")) {
+                currentPrice = initialQuoteMessage.Quote.Bid;
+            } else if (initialQuoteMessage.Quote.hasOwnProperty("PriceTypeBid") && initialQuoteMessage.Quote.PriceTypeBid === "NoAccess") {
+                textToDisplay = "NoAccess";
+            }
+            break;
+        case "lst":
+            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("LastTraded")) {
+                if (infoToShow === "volume") {
+                    currentPrice = initialQuoteMessage.PriceInfoDetails.LastTradedSize;
+                } else {
+                    currentPrice = initialQuoteMessage.PriceInfoDetails.LastTraded;
+                }
+            }
+            // Fallback is the mid price:
+            if (infoToShow === "price" && currentPrice === 0 && initialQuoteMessage.Quote.hasOwnProperty("Mid")) {
+                currentPrice = initialQuoteMessage.Quote.Mid;
+            }
+            // Use previous day close price for coloring the price green or red:
+            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("LastClose")) {
+                previousDayClosePrice = initialQuoteMessage.PriceInfoDetails.LastClose;
+            }
+            break;
+        case "cls":
+            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("LastClose")) {
+                currentPrice = initialQuoteMessage.PriceInfoDetails.LastClose;
+            }
+            break;
+        case "opn":
+            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("Open")) {
+                currentPrice = initialQuoteMessage.PriceInfoDetails.Open;
+            }
+            break;
+        case "hgh":
+            if (hasPriceInfo && initialQuoteMessage.PriceInfo.hasOwnProperty("High")) {
+                currentPrice = initialQuoteMessage.PriceInfo.High;
+            }
+            break;
+        case "low":
+            if (hasPriceInfo && initialQuoteMessage.PriceInfo.hasOwnProperty("Low")) {
+                currentPrice = initialQuoteMessage.PriceInfo.Low;
+            }
+            break;
+        case "vol":
+            if (hasPriceInfoDetails && initialQuoteMessage.PriceInfoDetails.hasOwnProperty("Volume")) {
+                currentPrice = initialQuoteMessage.PriceInfoDetails.Volume;
+            }
+            break;
+        }
+        switch (infoToShow) {
+        case "price":
+        case "volume":
+            elm.classList.add("price");
+            break;
+        case "time":
+            elm.classList.add("dateTime");
+            break;
+        }
+        if (infoToShow === "time") {
+            eventDateTime = new Date(initialQuoteMessage.LastUpdated);
+            if (eventDateTime.getTime() > Date.now() - (300 * 24 * 60 * 60 * 1000)) {
+                textToDisplay = getTimeString(eventDateTime);
+            }
+        } else if (currentPrice !== 0) {
+            textToDisplay = currentPrice.toFixed(initialQuoteMessage.DisplayAndFormat.Decimals);
+        }
+        if (textToDisplay === "") {
+            elm.innerHTML = "&nbsp;";
+        } else {
+            elm.innerText = textToDisplay;
+        }
+        giveValueColor(currentPrice);
+        containerElm.append(elm);
+        return Object.freeze({
+            update,
+            stop
+        });
+    }
+
+    return setupInstrumentCell();
 }
