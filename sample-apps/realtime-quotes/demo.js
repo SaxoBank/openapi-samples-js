@@ -1,5 +1,5 @@
 /*jslint this: true, browser: true, long: true, bitwise: true */
-/*global window console demonstrationHelper ParserProtobuf protobuf $ InstrumentRow */
+/*global window console demonstrationHelper ParserProtobuf protobuf priceSubscriptionHelper InstrumentRow */
 
 /**
  * Follows WebSocket behaviour defined by spec:
@@ -85,6 +85,51 @@
     }
 
     /**
+     * This is an example of getting all exchanges.
+     * @return {void}
+     */
+    function getExchanges() {
+        const cbxExchange = document.getElementById("idCbxExchange");
+        cbxExchange.options.length = 1;  // Remove all, except the first
+        fetch(
+            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    responseJson.Data.sort(function (a, b) {
+                        const nameA = a.Name.toUpperCase();
+                        const nameB = b.Name.toUpperCase();
+                        if (nameA < nameB) {
+                            return -1;
+                        }
+                        if (nameA > nameB) {
+                            return 1;
+                        }
+                        return 0;
+                    });
+                    responseJson.Data.forEach(function (exchange) {
+                        const option = document.createElement("option");
+                        option.text = exchange.Name + " (code " + exchange.ExchangeId + ", mic " + exchange.Mic + ")";
+                        option.value = exchange.ExchangeId;
+                        cbxExchange.add(option);
+                    });
+                    console.log("Found " + responseJson.Data.length + " exchanges:\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * Find instruments of the selected AssetType, to create a list with prices.
      * @return {void}
      */
@@ -95,11 +140,15 @@
             ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
             : ""
         );
+        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=200" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+        if (document.getElementById("idCbxExchange").value !== "-") {
+            url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
+        }
         priceSubscription.connect(document.getElementById("idBearerToken").value);
         // Search for instruments
         // You can search for an ISIN. That will work. But due to market limitations the ISIN won't be in the response.
         fetch(
-            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=200" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords),
+            url,
             {
                 "method": "GET",
                 "headers": {
@@ -132,6 +181,10 @@
         }).catch(function (error) {
             console.error(error);
         });
+        if (document.getElementById("idCbxExchange").options.length === 2) {
+            // Populate the list of exchanges, so instruments can be filtered on Exchange
+            getExchanges();
+        }
     }
 
     demo.setupEvents([

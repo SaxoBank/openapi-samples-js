@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -24,11 +24,7 @@
      */
     function getExchanges() {
         const cbxExchange = document.getElementById("idCbxExchange");
-        let option;
-        let i;
-        for (i = cbxExchange.options.length - 1; i > 0; i -= 1) {
-            cbxExchange.remove(i);  // Remove all, except the first
-        }
+        cbxExchange.options.length = 1;  // Remove all, except the first
         fetch(
             demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
             {
@@ -40,7 +36,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let j;
                     responseJson.Data.sort(function (a, b) {
                         const nameA = a.Name.toUpperCase();
                         const nameB = b.Name.toUpperCase();
@@ -52,12 +47,12 @@
                         }
                         return 0;
                     });
-                    for (j = 0; j < responseJson.Data.length; j += 1) {
-                        option = document.createElement("option");
-                        option.text = responseJson.Data[j].Name + " (code " + responseJson.Data[j].ExchangeId + ", mic " + responseJson.Data[j].Mic + ")";
-                        option.value = responseJson.Data[j].ExchangeId;
+                    responseJson.Data.forEach(function (exchange) {
+                        const option = document.createElement("option");
+                        option.text = exchange.Name + " (code " + exchange.ExchangeId + ", mic " + exchange.Mic + ")";
+                        option.value = exchange.ExchangeId;
                         cbxExchange.add(option);
-                    }
+                    });
                     console.log("Found " + responseJson.Data.length + " exchanges:\n\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {

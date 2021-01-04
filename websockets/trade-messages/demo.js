@@ -18,24 +18,11 @@
         "footerElm": document.getElementById("idFooter")
     });
     // These objects contains the state of the subscriptions, so a reconnect can be processed and health can be monitored.
-    const balanceSubscription = {
-        "reference": "MyBalanceEvent",
+    const tradeMessageSubscription = {
+        "reference": "MyTradeMessageEvent",
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false
-    };
-    const positionSubscription = {
-        "reference": "MyPositionEvent",
-        "isActive": false,
-        "activityMonitor": null,
-        "isRecentDataReceived": false
-    };
-    const ensSubscription = {
-        "reference": "MyEnsEvent",
-        "isActive": false,
-        "activityMonitor": null,
-        "isRecentDataReceived": false,
-        "lastSequenceId": null
     };
     let connection;
 
@@ -80,6 +67,60 @@
     }
 
     /**
+     * Mark a message as seen.
+     * @param {string} messageId The message to mark as seen
+     * @param {Object} titleElement ListItem to be hidden
+     * @param {Object} bodyElement ListItem body to be hidden
+     * @return {void}
+     */
+    function markMessageAsSeen(messageId, titleElement, bodyElement) {
+        fetch(
+            demo.apiUrl + "/trade/v1/messages/seen/" + encodeURIComponent(messageId),
+            {
+                "method": "PUT",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                // Remove message from the list:
+                bodyElement.remove();
+                titleElement.remove();
+                // No response, just mention the successful response..
+                console.log("Message marked as 'seen': " + messageId);
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Add the trade messages to a listbox.
+     * @param {Object} tradeMessages The snapshot from the response, or the incoming trade messages
+     * @return {void}
+     */
+    function addTradeMessageToList(tradeMessages) {
+        const list = document.getElementById("idTradeMessages");
+        tradeMessages.forEach(function (tradeMessage) {
+            const titleElement = document.createElement("DT");
+            const bodyElement = document.createElement("DD");
+            const buttonItem = document.createElement("BUTTON");
+            titleElement.appendChild(document.createTextNode(tradeMessage.MessageHeader));
+            list.appendChild(titleElement);
+            bodyElement.appendChild(document.createTextNode(tradeMessage.MessageBody + "\n" + new Date(tradeMessage.DateTime).toLocaleString() + "\n"));
+            buttonItem.innerText = "Mark message as 'seen'";
+            buttonItem.onclick = function () {
+                markMessageAsSeen(tradeMessage.MessageId, titleElement, bodyElement);
+            };
+            bodyElement.appendChild(buttonItem);
+            list.appendChild(bodyElement);
+        });
+    }
+
+    /**
      * This function monitors the data going over the network for the different active subscriptions.
      * @param {Object} subscription The subscription to monitor
      * @returns {void}
@@ -96,24 +137,16 @@
     }
 
     /**
-     * This is an example of subscribing to changes in the account balance.
+     * This is an example of subscribing to trade messages.
      * @return {void}
      */
-    function subscribeBalances() {
+    function subscribeTradeMessages() {
         const data = {
             "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": balanceSubscription.reference,
-            "RefreshRate": 10000,  // Default is every second, which probably is too chatty
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "ClientKey": demo.user.clientKey,
-                "FieldGroups": [
-                    "MarginOverview"
-                ]
-            }
+            "ReferenceId": tradeMessageSubscription.reference
         };
         fetch(
-            demo.apiUrl + "/port/v1/balances/subscriptions",
+            demo.apiUrl + "/trade/v1/messages/subscriptions",
             {
                 "method": "POST",
                 "headers": {
@@ -124,121 +157,21 @@
             }
         ).then(function (response) {
             if (response.ok) {
-                balanceSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                balanceSubscription.isActive = true;
+                tradeMessageSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+                tradeMessageSubscription.isActive = true;
                 response.json().then(function (responseJson) {
                     // Monitor connection every "InactivityTimeout" seconds.
-                    if (balanceSubscription.activityMonitor === null) {
-                        balanceSubscription.activityMonitor = window.setInterval(function () {
-                            monitorActivity(balanceSubscription);
+                    if (tradeMessageSubscription.activityMonitor === null) {
+                        tradeMessageSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(tradeMessageSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription for balance changes created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to changes in net positions.
-     * These changes are published in ENS as well, this can be used as a catch up, every minute, because due to price changes is has many updates.
-     * @return {void}
-     */
-    function subscribePositions() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": positionSubscription.reference,
-            "RefreshRate": 60000,  // Default is every second, which probably is too chatty
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "ClientKey": demo.user.clientKey
-            }
-        };
-        fetch(
-            demo.apiUrl + "/port/v1/netpositions/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                positionSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                positionSubscription.isActive = true;
-                response.json().then(function (responseJson) {
-                    // Monitor connection every "InactivityTimeout" seconds.
-                    if (positionSubscription.activityMonitor === null) {
-                        positionSubscription.activityMonitor = window.setInterval(function () {
-                            monitorActivity(positionSubscription);
-                        }, responseJson.InactivityTimeout * 1000);
+                    if (responseJson.Snapshot.Data.length > 0) {
+                        addTradeMessageToList(responseJson.Snapshot.Data);
+                    } else {
+                        window.alert("No messages to show, but listening to new messages.");
                     }
-                    console.log("Subscription for position changes created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to ENS, which notifies about order and position events. And withdrawals and deposits are published on this subscription.
-     * @return {void}
-     */
-    function subscribeEns() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": ensSubscription.reference,
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Activities": [
-                    "AccountFundings",
-                    "Orders",
-                    "Positions"
-                ],
-                "FieldGroups": [
-                    "DisplayAndFormat",
-                    "ExchangeInfo"
-                ]
-            }
-        };
-        if (ensSubscription.lastSequenceId !== null) {
-            // If specified and message with SequenceId available in ENS cache, streaming of events start from SequenceId.
-            // If sequenceId not found in ENS system, Subscription Error with "Sequence id unavailable".
-            // If not specified and FromDateTime is not specified, subscription will be real-time subscription.
-            data.Arguments.SequenceId = ensSubscription.lastSequenceId;
-            console.log("Supplied last received SequenceId to retrieve gap: " + ensSubscription.lastSequenceId);
-        }
-        fetch(
-            demo.apiUrl + "/ens/v1/activities/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                ensSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                ensSubscription.isActive = true;
-                response.json().then(function (responseJson) {
-                    // Monitor connection every "InactivityTimeout" seconds.
-                    if (ensSubscription.activityMonitor === null) {
-                        ensSubscription.activityMonitor = window.setInterval(function () {
-                            monitorActivity(ensSubscription);
-                        }, responseJson.InactivityTimeout * 1000);
-                    }
-                    console.log("Subscription for order changes created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    console.log("Subscription for trade messages created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -288,14 +221,8 @@
         }
 
         const contextId = document.getElementById("idContextId").value;
-        const urlPathEns = "/ens/v1/activities/subscriptions/" + encodeURIComponent(contextId);
-        const urlPathBalance = "/port/v1/balances/subscriptions/" + encodeURIComponent(contextId);
-        const urlPathPosition = "/port/v1/netpositions/subscriptions/" + encodeURIComponent(contextId);
-        removeSubscription(ensSubscription.isActive, urlPathEns, function () {
-            removeSubscription(balanceSubscription.isActive, urlPathBalance, function () {
-                removeSubscription(positionSubscription.isActive, urlPathPosition, callbackOnSuccess);
-            });
-        });
+        const urlPathTradeMessages = "/trade/v1/messages/subscriptions/" + encodeURIComponent(contextId);
+        removeSubscription(tradeMessageSubscription.isActive, urlPathTradeMessages, callbackOnSuccess);
     }
 
     /**
@@ -304,14 +231,8 @@
      */
     function recreateSubscriptions() {
         unsubscribe(function () {
-            if (ensSubscription.isActive) {
-                subscribeEns();  // Resubscribe and retrieve missed messages, if any
-            }
-            if (balanceSubscription.isActive) {
-                subscribeBalances();
-            }
-            if (positionSubscription.isActive) {
-                subscribePositions();
+            if (tradeMessageSubscription.isActive) {
+                subscribeTradeMessages();
             }
         });
     }
@@ -381,14 +302,8 @@
                             break;
                         case "NoNewData":
                             switch (heartbeat.OriginatingReferenceId) {
-                            case ensSubscription.reference:
-                                ensSubscription.isRecentDataReceived = true;
-                                break;
-                            case balanceSubscription.reference:
-                                balanceSubscription.isRecentDataReceived = true;
-                                break;
-                            case positionSubscription.reference:
-                                positionSubscription.isRecentDataReceived = true;
+                            case tradeMessageSubscription.reference:
+                                tradeMessageSubscription.isRecentDataReceived = true;
                                 break;
                             }
                             console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
@@ -511,22 +426,6 @@
         }
 
         /**
-         * ENS messages contain a SequenceID, that can be used to retrieve the gap after a reconnect.
-         * @param {Array<Object>} payload The received array of ENS messages
-         * @return {void}
-         */
-        function getNewLastSequenceId(payload) {
-            payload.forEach(function (message) {
-                ensSubscription.lastSequenceId = (
-                    ensSubscription.lastSequenceId === null
-                    ? message.SequenceId
-                    : Math.max(message.SequenceId, ensSubscription.lastSequenceId)
-                );
-                console.debug("New last SequenceId for ENS reconnect: " + ensSubscription.lastSequenceId);
-            });
-        }
-
-        /**
          * New data is received. Read and process the data.
          * @param {Object} messageFrame The received message
          * @return {void}
@@ -535,20 +434,10 @@
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message) {
                 switch (message.referenceId) {
-                case ensSubscription.reference:
-                    // With this event you receive in realtime the changes of portfolio and orders. You also get notified on deposits or withdrawals.
-                    // Remember the last SequenceId. This can be used to retrieve the gap after an unwanted disconnect.
-                    getNewLastSequenceId(message.payload);
-                    ensSubscription.isRecentDataReceived = true;
-                    console.log("Streaming order/position/fundings event from ENS " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
-                    break;
-                case balanceSubscription.reference:
-                    balanceSubscription.isRecentDataReceived = true;
-                    console.log("Streaming balance change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
-                    break;
-                case positionSubscription.reference:
-                    positionSubscription.isRecentDataReceived = true;
-                    console.log("Streaming position change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                case tradeMessageSubscription.reference:
+                    tradeMessageSubscription.isRecentDataReceived = true;
+                    addTradeMessageToList(message.payload);
+                    console.log("Streaming trade message(s) " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
@@ -603,22 +492,12 @@
     }
 
     /**
-     * When you want to use a different account, there is no need to setup a different connection. Just delete the existing subscription and open a new subscription.
-     * @return {void}
-     */
-    function switchAccount() {
-        recreateSubscriptions();
-    }
-
-    /**
      * This is an example of unsubscribing, including a reset of the state.
      * @return {void}
      */
     function unsubscribeAndResetState() {
         unsubscribe(function () {
-            ensSubscription.isActive = false;
-            positionSubscription.isActive = false;
-            balanceSubscription.isActive = false;
+            tradeMessageSubscription.isActive = false;
         });
     }
 
@@ -630,19 +509,14 @@
         const NORMAL_CLOSURE = 1000;
         connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
         // Activity monitoring can be stopped.
-        window.clearInterval(balanceSubscription.activityMonitor);
-        window.clearInterval(positionSubscription.activityMonitor);
-        window.clearInterval(ensSubscription.activityMonitor);
+        window.clearInterval(tradeMessageSubscription.activityMonitor);
     }
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
-        {"evt": "click", "elmId": "idBtnSubscribeEns", "func": subscribeEns, "funcsToDisplay": [subscribeEns]},
-        {"evt": "click", "elmId": "idBtnSubscribeBalances", "func": subscribeBalances, "funcsToDisplay": [subscribeBalances]},
-        {"evt": "click", "elmId": "idBtnSubscribePositions", "func": subscribePositions, "funcsToDisplay": [subscribePositions]},
-        {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount, recreateSubscriptions]},
+        {"evt": "click", "elmId": "idBtnSubscribeTradeMessages", "func": subscribeTradeMessages, "funcsToDisplay": [subscribeTradeMessages]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}

@@ -14,6 +14,7 @@ function priceSubscriptionHelper(demo) {
     const listSubscription = {
         "reference": "PriceListEvent",
         "isActive": false,
+        "activityMonitor": null,
         "isRecentDataReceived": false,
         "instruments": [],
         "assetType": ""
@@ -21,12 +22,12 @@ function priceSubscriptionHelper(demo) {
     const tradeLevelSubscription = {
         "reference": "TradeLevelEvent",
         "isActive": false,
+        "activityMonitor": null,
         "isRecentDataReceived": false
     };
     let rows = [];
     let connection = null;
     let schemaName;
-    let activityMonitor = null;
     let bearerToken;
 
     /**
@@ -158,6 +159,22 @@ function priceSubscriptionHelper(demo) {
     }
 
     /**
+     * This function monitors the data going over the network for the different active subscriptions.
+     * @param {Object} subscription The subscription to monitor
+     * @returns {void}
+     */
+    function monitorActivity(subscription) {
+        if (subscription.isActive) {
+            if (subscription.isRecentDataReceived) {
+                console.debug("Subscription " + subscription.reference + " is healthy..");
+                subscription.isRecentDataReceived = false;
+            } else {
+                console.error("No recent network activity for subscription " + subscription.reference + ". You might want to reconnect.");
+            }
+        }
+    }
+
+    /**
      * Subscribe to price session changes.
      * @return {void}
      */
@@ -170,8 +187,16 @@ function priceSubscriptionHelper(demo) {
             tradeLevelSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
             tradeLevelSubscription.isActive = true;
             if (response.ok) {
-                console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'");
                 requestPrimaryPriceSession();
+                response.json().then(function (responseJson) {
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (tradeLevelSubscription.activityMonitor === null) {
+                        tradeLevelSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(tradeLevelSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
+                    console.log("Subscription created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                });
             } else {
                 demo.processError(response);
             }
@@ -281,6 +306,12 @@ function priceSubscriptionHelper(demo) {
                             ) + "]";
                             rows.push(new InstrumentRow(document.getElementById("idInstrumentsList"), instrumentName, instrument));
                         });
+                        // Monitor connection every "InactivityTimeout" seconds.
+                        if (listSubscription.activityMonitor === null) {
+                            listSubscription.activityMonitor = window.setInterval(function () {
+                                monitorActivity(listSubscription);
+                            }, responseJson.InactivityTimeout * 1000);
+                        }
                         console.log("Subscription for " + rows.length + " instruments created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".");
                     });
                 } else {
@@ -452,27 +483,6 @@ function priceSubscriptionHelper(demo) {
         }
 
         /**
-         * This function monitors the data going over the network for the different active subscriptions.
-         * @returns {void}
-         */
-        function monitorActivity() {
-
-            function check(subscription) {
-                if (subscription.isActive) {
-                    if (subscription.isRecentDataReceived) {
-                        console.debug("Subscription " + subscription.reference + " is healthy..");
-                        subscription.isRecentDataReceived = false;
-                    } else {
-                        console.error("No recent network activity for subscription " + subscription.reference + ". You might want to reconnect.");
-                    }
-                }
-            }
-
-            check(listSubscription);
-            check(tradeLevelSubscription);
-        }
-
-        /**
          * Creates a Long from its little endian byte representation (function is part of long.js - https://github.com/dcodeIO/long.js).
          * @param {!Array.<number>} bytes Little endian byte representation
          * @param {boolean=} unsigned Whether unsigned or not, defaults to signed
@@ -620,10 +630,6 @@ function priceSubscriptionHelper(demo) {
         connection.onclose = handleSocketClose;
         connection.onerror = handleSocketError;
         connection.onmessage = handleSocketMessage;
-        // Monitor connection every 40 seconds.
-        if (activityMonitor === null) {
-            activityMonitor = window.setInterval(monitorActivity, 40 * 1000);
-        }
         console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
     }
 
@@ -660,8 +666,9 @@ function priceSubscriptionHelper(demo) {
     function disconnect() {
         const NORMAL_CLOSURE = 1000;
         connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
-        // Activity monitor can be stopped.
-        window.clearInterval(activityMonitor);
+        // Activity monitoring can be stopped.
+        window.clearInterval(listSubscription.activityMonitor);
+        window.clearInterval(tradeLevelSubscription.activityMonitor);
     }
 
     /**

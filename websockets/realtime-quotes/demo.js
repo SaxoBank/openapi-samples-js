@@ -25,11 +25,13 @@
     const jsonListSubscription = {
         "reference": "MyPriceListEvent_Json",
         "isActive": false,
+        "activityMonitor": null,
         "isRecentDataReceived": false
     };
     const protoBufListSubscription = {
         "reference": "MyPriceListEvent_ProtoBuf",
         "isActive": false,
+        "activityMonitor": null,
         "isRecentDataReceived": false
     };
     const orderTicketSubscriptions = [];
@@ -37,7 +39,7 @@
     const protoBufOrderTicketSubscriptionReferencePrefix = "MyPriceEventProtoBufOfUic_";
     let schemaName;
     let connection;
-    let activityMonitor = null;
+    let orderTicketSubscriptionsActivityMonitor = null;
 
     /**
      * Test if the browser supports the features required for websockets.
@@ -80,6 +82,22 @@
     }
 
     /**
+     * This function monitors the data going over the network for the different active subscriptions.
+     * @param {Object} subscription The subscription to monitor
+     * @returns {void}
+     */
+    function monitorActivity(subscription) {
+        if (subscription.isActive) {
+            if (subscription.isRecentDataReceived) {
+                console.debug("Subscription " + subscription.reference + " is healthy..");
+                subscription.isRecentDataReceived = false;
+            } else {
+                console.error("No recent network activity for subscription " + subscription.reference + ". You might want to reconnect.");
+            }
+        }
+    }
+
+    /**
      * This is an example of subscribing to price updates for multiple instruments, using Json.
      * @return {void}
      */
@@ -114,6 +132,12 @@
                 jsonListSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
                 jsonListSubscription.isActive = true;
                 response.json().then(function (responseJson) {
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (jsonListSubscription.activityMonitor === null) {
+                        jsonListSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(jsonListSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
                     console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -164,6 +188,14 @@
                     "format": "json"
                 });
                 response.json().then(function (responseJson) {
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (orderTicketSubscriptionsActivityMonitor === null) {
+                        orderTicketSubscriptionsActivityMonitor = window.setInterval(function () {
+                            orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
+                                monitorActivity(orderTicketSubscription);
+                            });
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
                     console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -227,6 +259,12 @@
                     if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
                         console.error("Adding schema to protobuf was not successful.");
                     }
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (protoBufListSubscription.activityMonitor === null) {
+                        protoBufListSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(protoBufListSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
                     console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 });
             } else {
@@ -282,6 +320,14 @@
                     schemaName = responseJson.SchemaName;
                     if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
                         console.error("Adding schema to protobuf was not successful.");
+                    }
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (orderTicketSubscriptionsActivityMonitor === null) {
+                        orderTicketSubscriptionsActivityMonitor = window.setInterval(function () {
+                            orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
+                                monitorActivity(orderTicketSubscription);
+                            });
+                        }, responseJson.InactivityTimeout * 1000);
                     }
                     console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 });
@@ -409,7 +455,7 @@
                 console.log("Streaming disconnected with code " + evt.code + ".");  // Most likely 1000 (Normal Closure), or 1001 (Going Away)
             } else {
                 console.error("Streaming disconnected with code " + evt.code + ".");
-                if (demo.getSecondsUntilTokenExpiry(bearerToken) <= 0) {
+                if (demo.getSecondsUntilTokenExpiry(document.getElementById("idBearerToken").value) <= 0) {
                     window.alert("It looks like the socket has been disconnected due to an expired token (error code " + evt.code + ").");
                 } else if (window.confirm("It looks like the socket has been disconnected, probably due to a network failure (error code " + evt.code + ").\nDo you want to (try to) reconnect?")) {
                     createConnection();
@@ -472,28 +518,6 @@
                 // This might be a TradeLevelChange event
                 console.log("Received non-array heartbeat notification: " + JSON.stringify(payload, null, 4));
             }
-        }
-
-        /**
-         * This function monitors the data going over the network for the different active subscriptions.
-         * @returns {void}
-         */
-        function monitorActivity() {
-
-            function check(subscription) {
-                if (subscription.isActive) {
-                    if (subscription.isRecentDataReceived) {
-                        console.debug("Subscription " + subscription.reference + " is healthy..");
-                        subscription.isRecentDataReceived = false;
-                    } else {
-                        console.error("No recent network activity for subscription " + subscription.reference + ". You might want to reconnect.");
-                    }
-                }
-            }
-
-            check(jsonListSubscription);
-            check(protoBufListSubscription);
-            orderTicketSubscriptions.forEach(check);
         }
 
         /**
@@ -659,10 +683,6 @@
         connection.onclose = handleSocketClose;
         connection.onerror = handleSocketError;
         connection.onmessage = handleSocketMessage;
-        // Monitor connection every 40 seconds.
-        if (activityMonitor === null) {
-            activityMonitor = window.setInterval(monitorActivity, 40 * 1000);
-        }
         console.log("Connection subscribed to events. ReadyState: " + connection.readyState + ".");
     }
 
@@ -717,8 +737,10 @@
     function disconnect() {
         const NORMAL_CLOSURE = 1000;
         connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
-        // Activity monitor can be stopped.
-        window.clearInterval(activityMonitor);
+        // Activity monitoring can be stopped.
+        window.clearInterval(orderTicketSubscriptionsActivityMonitor);
+        window.clearInterval(protoBufListSubscription.activityMonitor);
+        window.clearInterval(jsonListSubscription.activityMonitor);
     }
 
     /**
