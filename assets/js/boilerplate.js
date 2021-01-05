@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.20
+ * boilerplate v1.21
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -169,20 +169,16 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function populateAssetTypeSelection(accountKey, legalAssetTypesPerAccount) {
-            let i;
-            let option;
             let legalAssetTypes;
             // Select the asset types enabled for the default account
-            for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
-                settings.assetTypesList.remove(i);
-            }
+            settings.assetTypesList.options.length = 0;
             legalAssetTypesPerAccount.forEach(function (legalAssetTypesElement) {
                 if (legalAssetTypesElement.accountKey === accountKey) {
                     legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
                 }
             });
             legalAssetTypes.forEach(function (legalAssetType) {
-                option = document.createElement("option");
+                const option = document.createElement("option");
                 option.text = legalAssetType;
                 option.value = legalAssetType;
                 if (option.value === settings.selectedAssetType) {
@@ -201,21 +197,18 @@ function demonstrationHelper(settings) {
             const existingOptionGroups = settings.accountsList.getElementsByTagName("optgroup");
             const legalAssetTypesPerAccount = [];
             let i;
-            let option;
             let optionGroup;
             let currentAccountGroupName = "";
             for (i = existingOptionGroups.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.removeChild(existingOptionGroups[i]);  // Remove optgroups, if any
             }
-            for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
-                settings.accountsList.remove(i);  // Remove options, if any
-            }
+            settings.accountsList.options.length = 0;  // Remove options, if any
             user.accountGroupKeys = [];
             groupAndSortAccountList(accountsResponseData);
             accountsResponseData.forEach(function (account) {
                 // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
                 if (account.Active) {
-                    option = document.createElement("option");
+                    const option = document.createElement("option");
                     option.text = (
                         account.hasOwnProperty("DisplayName")
                         ? account.DisplayName + " "
@@ -604,6 +597,7 @@ function demonstrationHelper(settings) {
             streamerUrl,
             user,
             displayVersion,
+            displaySourceCode,
             setupEvents,
             processError,
             groupAndSortAccountList,

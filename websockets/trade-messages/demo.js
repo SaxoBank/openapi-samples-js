@@ -102,30 +102,64 @@
      * @param {Object} tradeMessages The snapshot from the response, or the incoming trade messages
      * @return {void}
      */
-    function addTradeMessageToList(tradeMessages) {
+    function handleTradeMessages(tradeMessages) {
         const list = document.getElementById("idTradeMessages");
         tradeMessages.forEach(function (tradeMessage) {
-            let titleElement;
-            let bodyElement;
-            let buttonElement;
-            if (tradeMessage.MessageType !== "PriceAlert") {
-                // Ignore price alerts
-                titleElement = document.createElement("DT");
-                bodyElement = document.createElement("DD");
-                buttonElement = document.createElement("BUTTON");
-                titleElement.appendChild(document.createTextNode(tradeMessage.MessageHeader));
-                list.appendChild(titleElement);
-                bodyElement.appendChild(document.createTextNode(tradeMessage.MessageBody + "\n" + new Date(tradeMessage.DateTime).toLocaleString() + "\n"));
-                buttonElement.innerText = "Mark message as 'seen'";
-                buttonElement.onclick = function () {
-                    markMessageAsSeen(tradeMessage.MessageId, titleElement, bodyElement);
-                };
-                bodyElement.appendChild(buttonElement);
-                list.appendChild(bodyElement);
-                if (tradeMessage.hasOwnProperty("DisplayType") && tradeMessage.DisplayType === "Popup") {
-                    // This message requires immediate attention..
-                    window.alert(tradeMessage.MessageBody);
-                }
+            const titleElement = document.createElement("DT");
+            const bodyElement = document.createElement("DD");
+            const buttonElement = document.createElement("BUTTON");
+            let headerText = tradeMessage.MessageHeader;
+            let bodyText = tradeMessage.MessageBody + "\n" + new Date(tradeMessage.DateTime).toLocaleString() + "\n";
+            switch (tradeMessage.MessageType) {
+            case "AccountDepreciation":
+                // Message to indicate that an account has depreciated beyond a limit as specified by MIFID II regulations.
+                // Only sent for configured client segments.
+                break;
+            case "MarginCall":
+                // A margin call is a message informing the client about loses affecting his ability fulfill the margin requirements of his positions in the market.
+                break;
+            case "Mifid":
+                // A change has been made to the clients Mifid classification. Only sent for configured client segments.
+                break;
+            case "Notification":
+                // Message from broker to end client.
+                break;
+            case "PositionDepreciation":
+                // Message to indicate that a position has depreciated beyond a limit as specified by MIFID II regulations.
+                // Only sent for configured client segments.
+                break;
+            case "PriceAlert":
+                // A price alert has been triggered.
+                headerText += " (instrument " + tradeMessage.DisplayAndFormat.Description + ")";
+                break;
+            case "ShareWorkspaceNotification":
+                // Platform Workspace Notification: Share workspace notification.
+                break;
+            case "TradeConfirmation":
+                // A very broad set of notifications related to orders and positions. For example:
+                // - An order has been placed
+                // - An order has expired
+                // - An order has been (partially) filled
+                // - An order was cancelled
+                // - A position was stopped out (due to insufficient margin)
+                // - A position was placed
+                break;
+            default:
+                console.error("Unknown MessageType received: " + tradeMessage.MessageType);
+            }
+            titleElement.appendChild(document.createTextNode(headerText));
+            list.appendChild(titleElement);
+            bodyElement.appendChild(document.createTextNode(bodyText));
+            buttonElement.innerText = "Mark message as 'seen'";
+            buttonElement.onclick = function () {
+                markMessageAsSeen(tradeMessage.MessageId, titleElement, bodyElement);
+                demo.displaySourceCode([markMessageAsSeen]);
+            };
+            bodyElement.appendChild(buttonElement);
+            list.appendChild(bodyElement);
+            if (tradeMessage.hasOwnProperty("DisplayType") && tradeMessage.DisplayType === "Popup") {
+                // This message requires immediate attention..
+                window.alert(tradeMessage.MessageBody);
             }
         });
     }
@@ -177,7 +211,7 @@
                         }, responseJson.InactivityTimeout * 1000);
                     }
                     if (responseJson.Snapshot.Data.length > 0) {
-                        addTradeMessageToList(responseJson.Snapshot.Data);
+                        handleTradeMessages(responseJson.Snapshot.Data);
                     } else {
                         window.alert("No messages to show, but listening to new messages.");
                     }
@@ -446,7 +480,8 @@
                 switch (message.referenceId) {
                 case tradeMessageSubscription.reference:
                     tradeMessageSubscription.isRecentDataReceived = true;
-                    addTradeMessageToList(message.payload);
+                    handleTradeMessages(message.payload);
+                    demo.displaySourceCode([handleTradeMessages]);
                     console.log("Streaming trade message(s) " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
