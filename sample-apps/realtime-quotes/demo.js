@@ -140,7 +140,7 @@
             ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
             : ""
         );
-        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=200" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=100" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
         if (document.getElementById("idCbxExchange").value !== "-") {
             url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
         }

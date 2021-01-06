@@ -114,12 +114,11 @@
             case "AccountDepreciation":
                 // Message to indicate that an account has depreciated beyond a limit as specified by MIFID II regulations.
                 // Only sent for configured client segments.
+                // MessageBody is empty:
+                bodyText = "Account deprecation for account " + tradeMessage.AccountId + ": " + tradeMessage.DepreciationPct + "%, starting @ " + new Date(tradeMessage.ReportingPeriodStart).toLocaleString();
                 break;
             case "MarginCall":
                 // A margin call is a message informing the client about loses affecting his ability fulfill the margin requirements of his positions in the market.
-                break;
-            case "Mifid":
-                // A change has been made to the clients Mifid classification. Only sent for configured client segments.
                 break;
             case "Notification":
                 // Message from broker to end client.
@@ -127,13 +126,12 @@
             case "PositionDepreciation":
                 // Message to indicate that a position has depreciated beyond a limit as specified by MIFID II regulations.
                 // Only sent for configured client segments.
+                // MessageBody is empty:
+                bodyText = "Position deprecation for account " + tradeMessage.AccountId + ": " + tradeMessage.DepreciationPct + "%, instrument " + tradeMessage.DisplayAndFormat.Description;
                 break;
             case "PriceAlert":
                 // A price alert has been triggered.
                 headerText += " (instrument " + tradeMessage.DisplayAndFormat.Description + ")";
-                break;
-            case "ShareWorkspaceNotification":
-                // Platform Workspace Notification: Share workspace notification.
                 break;
             case "TradeConfirmation":
                 // A very broad set of notifications related to orders and positions. For example:
@@ -143,6 +141,10 @@
                 // - An order was cancelled
                 // - A position was stopped out (due to insufficient margin)
                 // - A position was placed
+                break;
+            case "Mifid":  // A change has been made to the clients Mifid classification. Only sent for configured client segments.
+            case "ShareWorkspaceNotification":  // Platform Workspace Notification: Share workspace notification.
+                // Added to make the sample complete, but these messages can be ignored by thirdparty applications!
                 break;
             default:
                 console.error("Unknown MessageType received: " + tradeMessage.MessageType);

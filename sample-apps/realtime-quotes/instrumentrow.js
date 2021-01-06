@@ -51,7 +51,7 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
                         quoteMessageToBroadcast.vol = quoteMessage.PriceInfoDetails.MidSize;
                     }
                 }
-                if (quoteMessage.Quote.hasOwnProperty("MarketState") && quoteMessage.Quote.MarketState === "Closed") {
+                if (hasQuote && quoteMessage.Quote.hasOwnProperty("MarketState") && quoteMessage.Quote.MarketState === "Closed") {
                     quoteMessageToBroadcast.tags = "M";  // Indicative price
                 }
                 lastCell.update(quoteMessageToBroadcast);
