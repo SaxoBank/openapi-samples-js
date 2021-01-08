@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true */
+/*jslint browser: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -74,10 +74,16 @@
             ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
             : ""
         );
-        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=true&$top=10" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&$top=10" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
         if (document.getElementById("idCbxExchange").value !== "-") {
             url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
         }
+        // After a corporate action the instrument might be replaced by a copy with new Uic. The old one becomes non tradable.
+        url += "&IncludeNonTradable=" + (
+            document.getElementById("idChkTradable").checked
+            ? "false"
+            : "true"
+        );
         if (document.getElementById("idChkMultiLeg").checked) {
             url += "&CanParticipateInMultiLegOrder=true";
         }
