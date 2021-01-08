@@ -29,6 +29,7 @@ function priceSubscriptionHelper(demo) {
     let connection = null;
     let schemaName;
     let bearerToken;
+    let primarySessionRequestCount = 0;
 
     /**
      * Test if the browser supports the features required for websockets.
@@ -459,15 +460,27 @@ function priceSubscriptionHelper(demo) {
             const data = {
                 "TradeLevel": "FullTradingAndChat"
             };
-            fetch(demo.apiUrl + "/root/v1/sessions/capabilities", getFetchBody("PATCH", data)).then(function (response) {
-                if (response.ok) {
-                    console.log("Requested FullTradingAndChat session capabilities again..");
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
+            const MAX_REQUESTS = 4;
+            if (primarySessionRequestCount < MAX_REQUESTS) {
+                // This check is to prevent a "Primary Session fight", after some retries the app must wait with requesting FullTradingAndChat again.
+                primarySessionRequestCount += 1;
+                fetch(demo.apiUrl + "/root/v1/sessions/capabilities", getFetchBody("PATCH", data)).then(function (response) {
+                    if (response.ok) {
+                        console.log("Requested FullTradingAndChat session capabilities again..");
+                    } else {
+                        demo.processError(response);
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                });
+            } else {
+                // Wait 30 seconds..
+                console.error("Wait 30 seconds with requesting FullTradingAndChat rights again, to prevent a fight with another app...");
+                window.setTimeout(function () {
+                    primarySessionRequestCount = 0;  // Reset
+                    requestPrimaryPriceSessionAgain();
+                }, 30 * 1000);
+            }
         }
 
         /**
@@ -478,6 +491,7 @@ function priceSubscriptionHelper(demo) {
         function handleTradeLevelMessage(payload) {
             if (payload.TradeLevel !== "FullTradingAndChat") {
                 requestPrimaryPriceSessionAgain();
+                demo.displaySourceCode([requestPrimaryPriceSessionAgain]);  // Show code, for demo purposes..
             }
             tradeLevelSubscription.isRecentDataReceived = true;
         }
