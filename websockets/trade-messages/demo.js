@@ -167,6 +167,39 @@
     }
 
     /**
+     * This function retrieves the trade messages that are not marked as seen.
+     * There is no real need to use this endpoint when you setup a subscription, because the messages are also
+     * available as snapshot in the response of the subscription request.
+     * @returns {void}
+     */
+    function getTradeMessages() {
+        fetch(
+            demo.apiUrl + "/trade/v1/messages",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson.length > 0) {
+                        handleTradeMessages(responseJson);
+                    } else {
+                        window.alert("No messages to show.");
+                    }
+                    console.log("Trade messages: " + JSON.stringify(responseJson, null, 4) + "\n\nThis response will also be returned as snapshot in the response of the subscription request.");
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This function monitors the data going over the network for the different active subscriptions.
      * @param {Object} subscription The subscription to monitor
      * @returns {void}
@@ -561,6 +594,7 @@
 
     document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetTradeMessages", "func": getTradeMessages, "funcsToDisplay": [getTradeMessages]},
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribeTradeMessages", "func": subscribeTradeMessages, "funcsToDisplay": [subscribeTradeMessages]},
