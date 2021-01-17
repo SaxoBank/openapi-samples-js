@@ -520,6 +520,11 @@
             }
         }
 
+        function handlePriceUpdate(message, bundleId, bundleCount) {
+            const logLine = "Subscription " + message.referenceId + " - messageId " + message.messageId + " (bundle " + bundleId + "/" + bundleCount + "): " + JSON.stringify(message.payload);
+            console.info(logLine);
+        }
+
         /**
          * Creates a Long from its little endian byte representation (function is part of long.js - https://github.com/dcodeIO/long.js).
          * @param {!Array.<number>} bytes Little endian byte representation
@@ -633,7 +638,7 @@
          */
         function handleSocketMessage(messageFrame) {
             const messages = parseMessageFrame(messageFrame.data);
-            messages.forEach(function (message) {
+            messages.forEach(function (message, i) {
                 switch (message.referenceId) {
                 case jsonListSubscription.reference:
                     jsonListSubscription.isRecentDataReceived = true;
@@ -671,6 +676,7 @@
                         // Notice that the format of the messages of the two endpoints is different.
                         // The /prices contain no Uic, that must be derived from the referenceId.
                         // Since /infoprices is about lists, it always contains the Uic.
+                        handlePriceUpdate(message, i + 1, messages.length);
                         console.log("Individual price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
                         console.error("No processing implemented for message with reference " + message.referenceId);
