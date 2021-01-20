@@ -67,6 +67,17 @@
     }
 
     /**
+     * Remove all messages from the list, before adding all unseen messages.
+     * @return {void}
+     */
+    function emptyMessageList() {
+        const list = document.getElementById("idTradeMessages");
+        while (list.firstChild) {
+            list.removeChild(list.lastChild);
+        }
+    }
+
+    /**
      * Mark a message as seen.
      * @param {string} messageId The message to mark as seen
      * @param {Object} titleElement ListItem to be hidden
@@ -173,6 +184,7 @@
      * @returns {void}
      */
     function getTradeMessages() {
+        emptyMessageList();  // Start with a clean sheet.
         fetch(
             demo.apiUrl + "/trade/v1/messages",
             {
@@ -246,6 +258,7 @@
                         }, responseJson.InactivityTimeout * 1000);
                     }
                     if (responseJson.Snapshot.Data.length > 0) {
+                        emptyMessageList();  // Start with a clean sheet.
                         handleTradeMessages(responseJson.Snapshot.Data);
                     } else {
                         window.alert("No messages to show, but listening to new messages.");
