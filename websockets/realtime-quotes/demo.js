@@ -35,10 +35,10 @@
         "isRecentDataReceived": false
     };
     const orderTicketSubscriptions = [];
-    const jsonOrderTicketSubscriptionReferencePrefix = "MyPriceEventJsonOfUic_";
-    const protoBufOrderTicketSubscriptionReferencePrefix = "MyPriceEventProtoBufOfUic_";
-    let schemaName;
-    let connection;
+    const jsonOrderTicketSubscriptionReferencePrefix = "MyPriceEventJsonOfUic";  // These references are used to determine the Uic when data is received
+    const protoBufOrderTicketSubscriptionReferencePrefix = "MyPriceEventProtoBufOfUic";
+    let schemaName;  // The ProtoBuf schema
+    let connection;  // The websocket connection object
     let orderTicketSubscriptionsActivityMonitor = null;
 
     /**
@@ -149,54 +149,128 @@
     }
 
     /**
-     * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
-     * @param {number} uic Instrument ID
+     * Convert a price subscription request to a text block to be used in a batch request.
+     * @param {Object} postData Subscription data to post, containing instrument and quality of the events
+     * @param {number} requestId Number of the request - this can be used to correlate responses
+     * @return {string} Part of the batch request data
+     */
+    function addSubscriptionRequestToBatchRequest(postData, requestId) {
+        const host = "https://gateway.saxobank.com";
+        let fullPath = demo.apiUrl + "/trade/v1/prices/subscriptions";
+        fullPath = fullPath.substring(host.length);
+        return "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nPOST " + fullPath + " HTTP/1.1\r\nX-Request-Id:" + requestId + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n" + JSON.stringify(postData) + "\r\n";
+    }
+
+    /**
+     * Convert an underscore-separated ReferenceId to an object containing the Uic and AssetType.
+     * @param {string} referenceId ReferenceId to parse
+     * @return {Object} Object containing the Uic and AssetType
+     */
+    function referenceIdToObject(referenceId) {
+        const referenceIdArray = referenceId.split("_");  // Example: protoBufOrderTicketSubscriptionReferencePrefix_21_FxSpot
+        return {
+            "prefix": referenceIdArray[0],
+            "uic": referenceIdArray[1],
+            "assetType": referenceIdArray[2]
+        };
+    }
+
+    /**
+     * Subscribe to prices in high quality. These are meant to display on order tickets, but you can setup multiple subscriptions.
+     * Multiple subscriptions are grouped into a single batch request.
+     * @param {string} format Format of the events, either "json", or "protoBuf"
+     * @param {Array<number>} uicList Instrument list to subscribe to
      * @return {void}
      */
-    function subscribeOrderTicketJson(uic) {
-        const assetType = document.getElementById("idCbxAssetType").value;
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": jsonOrderTicketSubscriptionReferencePrefix + uic + "_" + assetType,
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Uic": uic,
-                "AssetType": assetType,
-                "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
-                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
+    function subscribeOrderTicket(format, uicList) {
+        let postDataBatchRequest = "";
+        let requestId = 0;
+        // Create a batch request to create multiple subscriptions in one request.
+        // More info on batch requests: https://saxobank.github.io/openapi-samples-js/batch-request/
+        uicList.forEach(function (uic) {
+            const assetType = document.getElementById("idCbxAssetType").value;
+            const data = {
+                "ContextId": document.getElementById("idContextId").value,
+                "ReferenceId": (
+                    format === "json"
+                    ? jsonOrderTicketSubscriptionReferencePrefix
+                    : protoBufOrderTicketSubscriptionReferencePrefix
+                ) + "_" + uic + "_" + assetType,
+                "Arguments": {
+                    "AccountKey": demo.user.accountKey,
+                    "Uic": uic,
+                    "AssetType": assetType,
+                    "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
+                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                    // MarketDepth gives the order book, when available.
+                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
+                }
+            };
+            if (format === "protoBuf") {
+                data.Format = "application/x-protobuf";  // This triggers ProtoBuf
             }
-        };
+            requestId += 1;
+            postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
+        });
+        postDataBatchRequest += "--+--\r\n";  // Add the end tag
         fetch(
-            demo.apiUrl + "/trade/v1/prices/subscriptions",
+            demo.apiUrl + "/trade/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
             {
                 "method": "POST",
                 "headers": {
+                    "Content-Type": "multipart/mixed; boundary=\"+\"",
+                    "Accept": "*/*",
+                    "Accept-Language": "en, *;q=0.5",
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
+                    "Cache-Control": "no-cache"
                 },
-                "body": JSON.stringify(data)
+                "body": postDataBatchRequest
             }
         ).then(function (response) {
             if (response.ok) {
-                orderTicketSubscriptions.push({
-                    "reference": data.ReferenceId,
-                    "uic": uic,
-                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
-                    "isActive": true,
-                    "format": "json"
-                });
-                response.json().then(function (responseJson) {
+                response.text().then(function (responseText) {
+                    const responseArray = responseText.split("\n");
+                    let responseCount = 0;
+                    let responseJson;
+                    let smallestInactivityTimeout = Number.MAX_VALUE;
+                    responseArray.forEach(function (line) {
+                        line = line.trim();
+                        if (line.charAt(0) === "{") {
+                            try {
+                                responseJson = JSON.parse(line);
+                                console.debug(responseJson);
+                                smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
+                                orderTicketSubscriptions.push({
+                                    "reference": responseJson.ReferenceId,
+                                    "uic": referenceIdToObject(responseJson.ReferenceId).uic,
+                                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
+                                    "isActive": true,
+                                    "format": format
+                                });
+                                if (format === "protoBuf") {
+                                    // The schema to use when parsing the messages, is send together with the snapshot.
+                                    schemaName = responseJson.SchemaName;
+                                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                                        console.error("Adding schema to protobuf was not successful.");
+                                    }
+                                    console.log("Subscription created. Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema + "\n\nSnapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                } else {
+                                    console.log("Subscription created. Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                }
+                                responseCount += 1;
+                            } catch (error) {
+                                console.error(error);
+                            }
+                        }
+                    });
                     // Monitor connection every "InactivityTimeout" seconds.
                     if (orderTicketSubscriptionsActivityMonitor === null) {
                         orderTicketSubscriptionsActivityMonitor = window.setInterval(function () {
                             orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
                                 monitorActivity(orderTicketSubscription);
                             });
-                        }, responseJson.InactivityTimeout * 1000);
+                        }, smallestInactivityTimeout * 1000);
                     }
-                    console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -210,9 +284,9 @@
      * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Json.
      * @return {void}
      */
-    function subscribeOrderTicketJsonMultiple() {
+    function subscribeOrderTicketJson() {
         const uicList = document.getElementById("idUics").value.split(",");
-        uicList.forEach(subscribeOrderTicketJson);
+        subscribeOrderTicket("json", uicList);
     }
 
     /**
@@ -276,74 +350,10 @@
     }
 
     /**
-     * Get a realtime subscription for prices on a single instrument. Use this to get prices in an order ticket.
-     * @param {number} uic Instrument ID
-     * @return {void}
-     */
-    function subscribeOrderTicketProtoBuf(uic) {
-        const assetType = document.getElementById("idCbxAssetType").value;
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": protoBufOrderTicketSubscriptionReferencePrefix + uic + "_" + assetType,
-            "Format": "application/x-protobuf",  // This triggers ProtoBuf
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Uic": uic,
-                "AssetType": assetType,
-                "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
-                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
-            }
-        };
-        fetch(
-            demo.apiUrl + "/trade/v1/prices/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                orderTicketSubscriptions.push({
-                    "reference": data.ReferenceId,
-                    "uic": uic,
-                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
-                    "isActive": true,
-                    "format": "protoBuf"
-                });
-                response.json().then(function (responseJson) {
-                    // The schema to use when parsing the messages, is send together with the snapshot.
-                    schemaName = responseJson.SchemaName;
-                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                        console.error("Adding schema to protobuf was not successful.");
-                    }
-                    // Monitor connection every "InactivityTimeout" seconds.
-                    if (orderTicketSubscriptionsActivityMonitor === null) {
-                        orderTicketSubscriptionsActivityMonitor = window.setInterval(function () {
-                            orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                                monitorActivity(orderTicketSubscription);
-                            });
-                        }, responseJson.InactivityTimeout * 1000);
-                    }
-                    console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
      * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Protocol Buffers.
      * @return {void}
      */
-    function subscribeOrderTicketProtoBufMultiple() {
+    function subscribeOrderTicketProtoBuf() {
         // The Saxo API supports ProtoBuf, which saves some bandwidth.
         //
         // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
@@ -351,7 +361,7 @@
         // In order to make the parsing work, parts of the client-lib are used.
         // See Github: https://github.com/SaxoBank/openapi-clientlib-js
         const uicList = document.getElementById("idUics").value.split(",");
-        uicList.forEach(subscribeOrderTicketProtoBuf);
+        subscribeOrderTicket("protoBuf", uicList);
     }
 
     /**
@@ -424,8 +434,12 @@
                 }
             });
             orderTicketSubscriptions.length = 0;
-            uicsForJson.forEach(subscribeOrderTicketJson);
-            uicsForProtoBuf.forEach(subscribeOrderTicketProtoBuf);
+            if (uicsForJson.length > 0) {
+                subscribeOrderTicket("json", uicsForJson);
+            }
+            if (uicsForProtoBuf.length > 0) {
+                subscribeOrderTicket("protoBuf", uicsForProtoBuf);
+            }
         });
     }
 
@@ -672,7 +686,7 @@
                             orderTicketSubscription.isRecentDataReceived = true;
                         }
                     });
-                    if (message.referenceId.substring(0, jsonOrderTicketSubscriptionReferencePrefix.length) === jsonOrderTicketSubscriptionReferencePrefix || message.referenceId.substring(0, protoBufOrderTicketSubscriptionReferencePrefix.length) === protoBufOrderTicketSubscriptionReferencePrefix) {
+                    if (referenceIdToObject(message.referenceId).prefix === jsonOrderTicketSubscriptionReferencePrefix || referenceIdToObject(message.referenceId).prefix === protoBufOrderTicketSubscriptionReferencePrefix) {
                         // Notice that the format of the messages of the two endpoints is different.
                         // The /prices contain no Uic, that must be derived from the referenceId.
                         // Since /infoprices is about lists, it always contains the Uic.
@@ -831,9 +845,9 @@
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribeListJson", "func": subscribeListJson, "funcsToDisplay": [subscribeListJson]},
-        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketJson", "func": subscribeOrderTicketJsonMultiple, "funcsToDisplay": [subscribeOrderTicketJsonMultiple, subscribeOrderTicketJson]},
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketJson", "func": subscribeOrderTicketJson, "funcsToDisplay": [subscribeOrderTicketJson, subscribeOrderTicket]},
         {"evt": "click", "elmId": "idBtnSubscribeListProtoBuf", "func": subscribeListProtoBuf, "funcsToDisplay": [subscribeListProtoBuf]},
-        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBufMultiple, "funcsToDisplay": [subscribeOrderTicketProtoBufMultiple, subscribeOrderTicketProtoBuf]},
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf, subscribeOrderTicket]},
         {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount, recreateSubscriptions]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState, unsubscribe]},
