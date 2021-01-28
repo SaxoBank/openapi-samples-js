@@ -313,7 +313,7 @@ function priceSubscriptionHelper(demo) {
                                 monitorActivity(listSubscription);
                             }, responseJson.InactivityTimeout * 1000);
                         }
-                        console.log("Subscription for " + rows.length + " instruments created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".");
+                        console.log("Subscription for " + rows.length + " instruments created with readyState " + connection.readyState + ".\nRefreshRate: " + responseJson.RefreshRate + ".\nSchema name: " + schemaName + ".");
                     });
                 } else {
                     demo.processError(response);

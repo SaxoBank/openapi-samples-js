@@ -138,7 +138,7 @@
                             monitorActivity(jsonListSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription created with readyState " + connection.readyState + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                    console.log("Subscription created (readyState " + connection.readyState + ") with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -253,9 +253,9 @@
                                     if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
                                         console.error("Adding schema to protobuf was not successful.");
                                     }
-                                    console.log("Subscription created. Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema + "\n\nSnapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                    console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema + "\n\nSnapshot:\n" + JSON.stringify(responseJson, null, 4));
                                 } else {
-                                    console.log("Subscription created. Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                    console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                                 }
                                 responseCount += 1;
                             } catch (error) {
@@ -339,7 +339,7 @@
                             monitorActivity(protoBufListSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription created with readyState " + connection.readyState + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
+                    console.log("Subscription created (readyState " + connection.readyState + ") with RefreshRate: " + responseJson.RefreshRate + ".\nSchema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
                 });
             } else {
                 demo.processError(response);
