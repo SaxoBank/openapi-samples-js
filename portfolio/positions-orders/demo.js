@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -77,12 +77,9 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let list = "";
-                    let position;
-                    let i;
-                    for (i = 0; i < responseJson.Data.length; i += 1) {
-                        position = responseJson.Data[i];
-                        list += position.NetPositionView.PositionCount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.AverageOpenPrice) + "\n";
-                    }
+                    responseJson.Data.forEach(function (position) {
+                        list += position.NetPositionBase.Amount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.AverageOpenPrice) + "\n";
+                    });
                     console.log(msg + "\n\n" + (
                         list === ""
                         ? "No positions found."
@@ -98,7 +95,7 @@
     }
 
     /**
-     * Example of getting all formatted positions for the your clientKey.
+     * Example of getting all formatted positions for the clientKey.
      * @return {void}
      */
     function getPortfolioClient() {
@@ -109,7 +106,7 @@
     }
 
     /**
-     * Example of getting all formatted positions for your accountGroupKey.
+     * Example of getting all formatted positions for the accountGroupKey.
      * @return {void}
      */
     function getPortfolioAccountGroup() {
@@ -154,10 +151,7 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let list = "";
-                    let order;
-                    let i;
-                    for (i = 0; i < responseJson.Data.length; i += 1) {
-                        order = responseJson.Data[i];
+                    responseJson.Data.forEach(function (order) {
                         list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price) + " (status " + order.Status + ")" + (
                             order.hasOwnProperty("ExternalReference")
                             ? " reference: " + order.ExternalReference
@@ -167,7 +161,7 @@
                             ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
-                    }
+                    });
                     console.log(msg + "\n\n" + (
                         list === ""
                         ? "No orders found."
@@ -183,7 +177,7 @@
     }
 
     /**
-     * Example of getting all formatted open orders for the your clientKey.
+     * Example of getting all formatted open orders for the clientKey.
      * @return {void}
      */
     function getOrdersClient() {
@@ -194,7 +188,7 @@
     }
 
     /**
-     * Example of getting all formatted open orders for your accountGroupKey.
+     * Example of getting all formatted open orders for the accountGroupKey.
      * @return {void}
      */
     function getOrdersAccountGroup() {
@@ -257,10 +251,7 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let list = "";
-                    let order;
-                    let i;
-                    for (i = 0; i < responseJson.Data.length; i += 1) {
-                        order = responseJson.Data[i];
+                    responseJson.Data.forEach(function (order) {
                         list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " (status " + order.Status + " " + order.SubStatus + ")" + (
                             order.hasOwnProperty("ExternalReference")
                             ? " reference: " + order.ExternalReference
@@ -270,7 +261,7 @@
                             ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
-                    }
+                    });
                     console.log(msg + "\n\n" + (
                         list === ""
                         ? "No orders found."

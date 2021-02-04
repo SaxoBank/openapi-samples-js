@@ -1,0 +1,53 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demonstration of netting mode</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Netting mode</h1>
+<h2 class="project-tagline">RealTime vs EndOfDay</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Netting of positions</h1>
+<p>Netting is the process of consolidation of positions that occurs when two positions in the same instrument and on same account are in opposite direction and thus fully or partially reduces the total market exposure in the instrument. It is the process in which a buy position and sell position are matched to remove both or yield a remainder, if one is bigger than the other.
+<br /><br />
+Since an account may have many positions in the same instrument opened at various times, the client may choose to close them explicitly or implicitly.</p>
+More info: <a href="https://www.developer.saxo/openapi/learn/netting" target="_blank">https://www.developer.saxo/openapi/learn/netting</a><br />
+<a href="https://www.developer.saxo/openapi/learn/position-netting" target="_blank">https://www.developer.saxo/openapi/learn/position-netting</a>
+<br />
+<br />
+<input type="button" class="action-button" value="Get netting mode" id="idBtnGetNettingMode" />
+<input type="button" class="action-button" value="Change netting mode" id="idBtnUpdateNettingMode" />
+<br />
+<input type="button" class="action-button" value="Get open netpositions" id="idBtnGetOpenNetPositions" />
+<input type="button" class="action-button" value="Get open positions" id="idBtnGetOpenPositions" />
+<input type="button" class="action-button" value="Get closed positions" id="idBtnGetClosedPositions" /><br />
+<input type="button" class="action-button" value="Orders" id="idBtnGetOrders" /><br />
+<input type="button" class="action-button" value="Get historical position events" id="idBtnHistoricalEnsEvents" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

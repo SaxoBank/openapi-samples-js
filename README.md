@@ -34,6 +34,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Regulatory requirements for order tickets](orders/regulatory-requirements)
 5. Portfolio
    - [Display Positions and Order List](portfolio/positions-orders)
+   - [Netting (RealTime vs EndOfDay)](portfolio/netting)
    - [Margin calculation](portfolio/margin)
 6. Using websockets
    - [Retrieving Order Events](websockets/order-events-monitoring)
