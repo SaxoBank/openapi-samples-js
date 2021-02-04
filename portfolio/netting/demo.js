@@ -291,7 +291,19 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log("Historical events of the last 24 hours, including the nightly rollover (if any):\n\n" + JSON.stringify(responseJson, null, 4));
+                    let list = "";
+                    responseJson.Data.forEach(function (ensEvent) {
+                        if (ensEvent.PositionEvent === "Updated") {
+                            // More info: https://www.developer.saxo/openapi/learn/position-events
+                            list += "Account " + ensEvent.AccountId + ": Update on " + ensEvent.AssetType + " " + ensEvent.Symbol + " received at " + new Date(ensEvent.ActivityTime).toLocaleString() + "\n";
+                        }
+                    });
+                    if (list === "") {
+                        list = "No PositionEvents of type 'Update' found in the last 24 hours.\n";
+                    } else {
+                        list = "Historical events of the last 24 hours, including the nightly rollover:\n" + list;
+                    }
+                    console.log(list + "\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
