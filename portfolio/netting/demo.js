@@ -13,7 +13,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let positionNettingMode = "";
+    let positionNettingMode = "?";
 
     /**
      * Example of NettingMode retrieval. This mode tells weather to show RealTime netted orders, or EndOfDay.
@@ -211,9 +211,11 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let list = "";
-                    responseJson.Data.forEach(function (position) {
-                        list += position.ClosedPosition.Amount + "x " + position.ClosedPosition.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.ClosingMarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.OpenPrice) + "\n";
-                    });
+                    if (responseJson.hasOwnProperty("Data")) {
+                        responseJson.Data.forEach(function (position) {
+                            list += position.ClosedPosition.Amount + "x " + position.ClosedPosition.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.ClosingMarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.OpenPrice) + "\n";
+                        });
+                    }
                     console.log("All closed positions for client '" + demo.user.clientKey + "' using netting mode " + positionNettingMode + ".\n\n" + (
                         list === ""
                         ? "No positions found."
