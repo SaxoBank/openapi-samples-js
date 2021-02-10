@@ -1,4 +1,4 @@
-# Client-side Samples for placing Stock Orders
+# Client-side Sample for Corporate Actions
 
 This is a demonstration on how to get corporate action events with different Corporate action types (Mandatory or Voluntary).
 

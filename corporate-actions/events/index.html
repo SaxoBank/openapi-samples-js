@@ -7,11 +7,11 @@
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Demo for Searching Instruments</title>
+    <title>Demo for Corporate Actions</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Corporate Acrion Event Search</h1>
+<h1 class="project-name">Corporate Action Event Search</h1>
 <h2 class="project-tagline">This example shows how to find events of corporate actions</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
@@ -30,10 +30,14 @@
 <h1>Find Events</h1>
 This example shows how to search for events or get a specific event by eventId.
 <br />
+DISCLAIMER: the Corporate Action endpoints on SIM give 403 errors. The endpoints only work on Live.<br />
+To test on production: add '?env=live' to the URL of this page and grab a valid token from the network traffic of <a href="https://www.saxotrader.com/" target="_blank">SaxoTraderGO</a>.
 <br />
-<label>Corporate Action Types：<select class="selector" id="idCaType">
+DISCLAIMER: the Corporate Action endpoints are not public yet.
+<br />
+<label>Corporate Action Types： <select class="selector" id="idCaType">
   <option value="Voluntary" selected>Voluntary</option>
-  <option value="Mandatory" >Mandatory</option>
+  <option value="Mandatory">Mandatory</option>
 </select></label><br />
 <label>Event Status: <select class="selector" id="idEventStatus">
   <option value="-" selected>No filter on Event Status</option>
