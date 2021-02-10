@@ -65,6 +65,20 @@ function demonstrationHelper(settings) {
      * @return {void}
      */
     function processError(errorObject, extraMessageToShow) {
+
+        function processErrorInfo(errorInfo) {
+            // Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
+            let result = "\n" + errorInfo.ErrorCode + ": " + errorInfo.Message;
+            if (errorInfo.hasOwnProperty("ModelState")) {
+                // Not all ErrorCodes contain a ModelState. See for the list:
+                // https://www.developer.saxo/openapi/learn/openapi-request-response
+                Object.keys(errorInfo.ModelState).forEach(function (key) {
+                    result += "\n" + key + ":\n - " + errorInfo.ModelState[key].join("\n - ");
+                });
+            }
+            return result;
+        }
+
         let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
             extraMessageToShow === undefined
             ? ""
@@ -73,19 +87,16 @@ function demonstrationHelper(settings) {
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
             if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
-                // The 400 for orders might be wrapped in an ErrorInfo object (test an order placement without ManualOrder property)
+                // The 400 for single orders might be wrapped in an ErrorInfo object (verify this with an order where ManualOrder property is missing).
                 errorObjectJson = errorObjectJson.ErrorInfo;
             }
             if (errorObjectJson.hasOwnProperty("ErrorCode")) {
-                // Be aware that the errorObjectJson.Message might contain line breaks, escaped like "\r\n"!
-                textToDisplay += "\n" + errorObjectJson.ErrorCode + ": " + errorObjectJson.Message;
-                if (errorObjectJson.hasOwnProperty("ModelState")) {
-                    // Not all ErrorCodes contain a ModelState. See for the list:
-                    // https://www.developer.saxo/openapi/learn/openapi-request-response
-                    Object.keys(errorObjectJson.ModelState).forEach(function (key) {
-                        textToDisplay += "\n" + key + ":\n - " + errorObjectJson.ModelState[key].join("\n - ");
-                    });
-                }
+                textToDisplay += processErrorInfo(errorObjectJson);
+            } else if (errorObjectJson.hasOwnProperty("Orders")) {
+                // This response is returned when there is a 400 on related order requests:
+                errorObjectJson.Orders.forEach(function (orderError) {
+                    textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                });
             }
             // Always log the correlation header, so Saxo can trace this id in the logging.
             textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
