@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Order Demo for Conditional Orders</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Conditional Orders</h1>
+<h2 class="project-tagline">Creating Orders with a Trigger</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Orders that are placed with a condition</h1>
+This example shows how create an order that will be placed under a condition.<br />
+It uses the Nasdaq Composite Index (USD!) as the reference for the trigger.<br />
+Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
+<br />
+<br />
+<label>
+    Order type: <select class="selector" id="idCbxOrderType">
+        <option value="BreakoutTrigger" selected>BreakoutTrigger</option>
+        <option value="LimitTrigger" selected>LimitTrigger</option>
+        <option value="StopTrigger" selected>StopTrigger</option>
+    </select>
+</label>
+<br />
+<label>
+    Quote type: <select class="selector" id="idCbxQuoteType">
+        <option value="Last" selected>Last</option>
+    </select>
+</label>
+<br />
+<label>
+    Limit: <select class="selector" id="idCbxLimit">
+        <option value="BiggerThen" selected>&gt;</option>
+    </select>
+</label>
+<br />
+<label>Price: <input type="text" class="text-field" id="idPrice" value="30" placeholder="Price.." /></label>
+<br />
+<label>End date: <input type="text" class="text-field" id="idEndDate" value="2020-11-20" placeholder="End date.." /></label>
+<br />
+<br />
+POST body containing order parameters:
+<br />
+<textarea class="json-input" id="idNewOrderObject" rows="13">
+{
+    "AccountKey": "(added on first request)",
+    "OrderType": "Market",
+    "Uic": 590850,
+    "AssetType": "Stock",
+    "BuySell": "Buy",
+    "Amount": 100,
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    },
+    "ExternalReference": "MyConditionalOrderCorrelationId",
+    "ManualOrder": true,
+    "Orders": [{
+        "OrderType": "TriggerBreakout",
+        "TriggerOrderData": {
+            "LowerPrice": 10,
+            "UpperPrice": 1000,
+            "PriceType": "LastTraded"
+        },
+        "Uic": 1376,
+        "AssetType": "StockIndex",
+        "ExternalReference": "MyOrderTriggerCorrelationId",
+        "ManualOrder": true
+    }]
+}
+</textarea>
+<br />
+<input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
+<input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
+<input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
+<input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

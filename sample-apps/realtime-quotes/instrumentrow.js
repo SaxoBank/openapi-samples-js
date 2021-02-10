@@ -24,6 +24,62 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
     let closeCell;
     let volumeCell;
 
+    function logMissedProperties(quoteMessage) {
+        const hasQuote = quoteMessage.hasOwnProperty("Quote");
+        const hasPriceInfo = quoteMessage.hasOwnProperty("PriceInfo");
+        const hasPriceInfoDetails = quoteMessage.hasOwnProperty("PriceInfoDetails");
+        const hasInstrumentPriceDetails = quoteMessage.hasOwnProperty("InstrumentPriceDetails");
+        const originalObject = JSON.stringify(quoteMessage, null, 4);
+        let unknownProperties;
+        delete quoteMessage.LastUpdated;
+        delete quoteMessage.Uic;
+        if (hasQuote) {
+            delete quoteMessage.Quote.Ask;
+            delete quoteMessage.Quote.Bid;
+            delete quoteMessage.Quote.Mid;
+            delete quoteMessage.Quote.PriceTypeAsk;
+            delete quoteMessage.Quote.PriceTypeBid;
+            delete quoteMessage.Quote.MarketState;
+            delete quoteMessage.Quote.Amount;
+            if (JSON.stringify(quoteMessage.Quote) === "{}") {
+                delete quoteMessage.Quote;
+            }
+        }
+        if (hasPriceInfo) {
+            delete quoteMessage.PriceInfo.High;
+            delete quoteMessage.PriceInfo.Low;
+            delete quoteMessage.PriceInfo.NetChange;
+            delete quoteMessage.PriceInfo.PercentChange;
+            if (JSON.stringify(quoteMessage.PriceInfo) === "{}") {
+                delete quoteMessage.PriceInfo;
+            }
+        }
+        if (hasPriceInfoDetails) {
+            delete quoteMessage.PriceInfoDetails.AskSize;
+            delete quoteMessage.PriceInfoDetails.BidSize;
+            delete quoteMessage.PriceInfoDetails.LastTraded;
+            delete quoteMessage.PriceInfoDetails.LastClose;
+            delete quoteMessage.PriceInfoDetails.Volume;
+            if (JSON.stringify(quoteMessage.PriceInfoDetails) === "{}") {
+                delete quoteMessage.PriceInfoDetails;
+            }
+        }
+        if (hasInstrumentPriceDetails) {
+            delete quoteMessage.InstrumentPriceDetails.IsMarketOpen;
+            delete quoteMessage.InstrumentPriceDetails.MidYield;
+            delete quoteMessage.InstrumentPriceDetails.ValueDate;
+            delete quoteMessage.InstrumentPriceDetails.AccruedInterest;
+            delete quoteMessage.InstrumentPriceDetails.OpenInterest;
+            if (JSON.stringify(quoteMessage.InstrumentPriceDetails) === "{}") {
+                delete quoteMessage.InstrumentPriceDetails;
+            }
+        }
+        unknownProperties = JSON.stringify(quoteMessage, null, 4);
+        if (unknownProperties !== "{}") {
+            console.error("Detected missed PriceInfo: " + unknownProperties + "\nOriginal: " + originalObject);
+        }
+    }
+
     /**
      * Update the appropriate cell with the new price.
      * @param {Object} quoteMessage The new data to display.
@@ -159,6 +215,8 @@ function InstrumentRow(containerElm, name, initialQuoteMessage) {
             "typ": "vol",
             "dt": lastUpdated
         });
+
+        logMissedProperties(quoteMessage);
     }
 
     /**

@@ -39,7 +39,12 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(JSON.stringify(responseJson, null, 4));
+                    let result = (
+                        responseJson.Data.length === 0
+                        ? "No events found."
+                        : "Found " + responseJson.Data.length + " events: "
+                    );
+                    console.log(result + "\n\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);

@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.21
+ * boilerplate v1.18
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -47,8 +47,6 @@ function demonstrationHelper(settings) {
         }
     };
     const user = {};
-    const tokenKey = "saxoBearerToken";
-    let tokenExpirationTimer;
 
     /**
      * Determine if the token edit exists.
@@ -99,17 +97,12 @@ function demonstrationHelper(settings) {
 
     /**
      * For a good display, the list of accounts must be grouped by type, and sorted by valuta.
-     * @param {Array<Object>} accounts The account list from the response.
+     * @param {Array} accounts The account list from the response.
      * @return {void}
      */
     function groupAndSortAccountList(accounts) {
         accounts.sort(function (x, y) {
 
-            /**
-             * Convert the account object to a string so it can alphabetically sorted on importancy.
-             * @param {Object} account The account.
-             * @return {string} The sortable string representaion of the account.
-             */
             function getAccountGroupDisplayNameForSorting(account) {
                 let result = (
                     account.AccountType === "Normal"
@@ -169,16 +162,20 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function populateAssetTypeSelection(accountKey, legalAssetTypesPerAccount) {
+            let i;
+            let option;
             let legalAssetTypes;
             // Select the asset types enabled for the default account
-            settings.assetTypesList.options.length = 0;
+            for (i = settings.assetTypesList.options.length - 1; i >= 0; i -= 1) {
+                settings.assetTypesList.remove(i);
+            }
             legalAssetTypesPerAccount.forEach(function (legalAssetTypesElement) {
                 if (legalAssetTypesElement.accountKey === accountKey) {
                     legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
                 }
             });
             legalAssetTypes.forEach(function (legalAssetType) {
-                const option = document.createElement("option");
+                option = document.createElement("option");
                 option.text = legalAssetType;
                 option.value = legalAssetType;
                 if (option.value === settings.selectedAssetType) {
@@ -197,18 +194,21 @@ function demonstrationHelper(settings) {
             const existingOptionGroups = settings.accountsList.getElementsByTagName("optgroup");
             const legalAssetTypesPerAccount = [];
             let i;
+            let option;
             let optionGroup;
             let currentAccountGroupName = "";
             for (i = existingOptionGroups.length - 1; i >= 0; i -= 1) {
                 settings.accountsList.removeChild(existingOptionGroups[i]);  // Remove optgroups, if any
             }
-            settings.accountsList.options.length = 0;  // Remove options, if any
+            for (i = settings.accountsList.options.length - 1; i >= 0; i -= 1) {
+                settings.accountsList.remove(i);  // Remove options, if any
+            }
             user.accountGroupKeys = [];
             groupAndSortAccountList(accountsResponseData);
             accountsResponseData.forEach(function (account) {
                 // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
                 if (account.Active) {
-                    const option = document.createElement("option");
+                    option = document.createElement("option");
                     option.text = (
                         account.hasOwnProperty("DisplayName")
                         ? account.DisplayName + " "
@@ -401,48 +401,19 @@ function demonstrationHelper(settings) {
         });
     }
 
-    /**
-     * Examinate the token body, to see if it is not expired.
-     * @param {string} token The token to be checked.
-     * @return {number} The seconds until expiration.
-     */
-    function getSecondsUntilTokenExpiry(token) {
+    const tokenKey = "saxoBearerToken";
+
+    function getSecondsUntilExpiry(token) {
         const now = new Date();
-        const tokenArray = String(token).split(".");
         let payload;
-        if (tokenArray.length !== 3) {
-            return 0;  // Header, payload and checksum must be available, separated by dots. If not, token is invalid.
-        }
         try {
             // The JWT contains an header, payload and checksum
             // Payload is a base64 encoded JSON string
-            payload = JSON.parse(window.atob(tokenArray[1]));
+            payload = JSON.parse(window.atob(token.split(".")[1]));
             // An example about the different claims can be found here: authentication/token-explained/
             return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
-        } catch (error) {
-            console.error("Error getting expiration time of token: " + token);
-            console.error(error);
+        } catch (ignore) {
             return 0;
-        }
-    }
-
-    /**
-     * Notify about token expiration in 5 seconds.
-     * @param {string} token The token to be checked.
-     * @return {void}
-     */
-    function activateTokenExpirationWarning(token) {
-        let secondsUntilTokenExpiry;
-        let secondsUntilTokenExpiryWarning;
-        if (token !== "") {
-            secondsUntilTokenExpiry = getSecondsUntilTokenExpiry(token);
-            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - 5;
-            if (secondsUntilTokenExpiryWarning > 0) {
-                window.clearTimeout(tokenExpirationTimer);
-                tokenExpirationTimer = window.setTimeout(function () {
-                    console.error("The access token expires in 5 seconds. The app might need to refresh the token. And update the websocket subscription.");
-                }, secondsUntilTokenExpiryWarning * 1000);
-            }
         }
     }
 
@@ -451,13 +422,12 @@ function demonstrationHelper(settings) {
      * @param {string} token The token to be saved.
      * @return {void}
      */
-    function saveAccessToken(token) {
-        const secondsUntilExpiry = getSecondsUntilTokenExpiry(token);
-        if (secondsUntilExpiry > 0) {
+    function saveToken(token) {
+        if (getSecondsUntilExpiry(token) > 0) {
             try {
                 window.localStorage.setItem(tokenKey, token);
             } catch (ignore) {
-                console.error("Unable to remember token (LocalStorage not supported).");
+                console.error("Unable to remember token (locale storage not supported).");
             }
         }
     }
@@ -489,66 +459,19 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Intercept the fetch request and if applicable, populate the input with the GET-request.
-     * @return {void}
-     */
-    function mirrorFetch() {
-        let fetchCopy;
-        if (settings.hasOwnProperty("getRequestPlayback")) {
-            fetchCopy = window.fetch;
-            window.fetch = function() {
-                getRequestPlayback.value = arguments[0];
-                // Get the parameter in arguments
-                // Intercept the parameter here 
-                return fetchCopy.apply(this, arguments)
-            }
-        }
-    }
-
-    /**
      * Try to hunt down a previously used access_token, so a page refresh is less a hassle.
      * @return {void}
      */
     function tryToGetToken() {
-
-        /**
-         * Try to get the token from localStorage.
-         * @return {null|string} The token - null if not found.
-         */
-        function loadAccessToken() {
-            try {
-                return window.localStorage.getItem(tokenKey);
-            } catch (ignore) {
-                console.error("LocalStorage (used to remember the token) fails in this browser.");
-                return null;
-            }
-        }
-
-        /**
-         * Store the CSRF token in localStorage or cookie.
-         * @param {string} token The random code to be checked after authentication (see /assets/html/redirect.html).
-         * @return {void}
-         */
-        function saveCsrfToken(token) {
-            const csrfTokenKey = "csrfToken";
-            try {
-                window.localStorage.setItem(csrfTokenKey, token);
-                console.debug("CSRF token " + token + " saved to localStorage.");
-            } catch (ignore) {
-                console.error("LocalStorage (used to store the CSRF token) fails in this browser.");
-            }
-        }
-
         const config = getConfig();
-        const stateObject = {
-            "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
-            "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
+        const state = JSON.stringify({
+            "redirect": window.location.pathname,
             "env": (
                 config.authUrl === configLive.authUrl
                 ? "live"
                 : "sim"
             )
-        };
+        });
         // First, maybe the token is supplied in the URL, as a bookmark?
         // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
         const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
@@ -560,11 +483,15 @@ function demonstrationHelper(settings) {
         }
         if (newAccessToken === null) {
             // Second, maybe the token is stored before a refresh, or in a different sample?
-            newAccessToken = loadAccessToken();
+            try {
+                newAccessToken = window.localStorage.getItem(tokenKey);
+            } catch (ignore) {
+                console.error("Locale storage (used to remember the token) fails in this browser.");
+            }
         } else {
-            saveAccessToken(newAccessToken);
+            saveToken(newAccessToken);
         }
-        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
+        secondsUntilExpiry = getSecondsUntilExpiry(newAccessToken);
         if (secondsUntilExpiry > 0) {
             settings.accessTokenElm.value = newAccessToken;
             console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
@@ -572,14 +499,13 @@ function demonstrationHelper(settings) {
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
-            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(state) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
                 settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
             } else {
                 settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes;
                 settings.retrieveTokenHref.target = "_self";  // Back to default
             }
-            saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
         }
     }
 
@@ -594,13 +520,10 @@ function demonstrationHelper(settings) {
         const authUrl = config.authUrl;
         mirrorConsoleLog();
         mirrorConsoleError();
-        mirrorFetch();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
-            activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
-                saveAccessToken(settings.accessTokenElm.value);
-                activateTokenExpirationWarning(settings.accessTokenElm.value);
+                saveToken(settings.accessTokenElm.value);
             });
             settings.tokenValidateButton.addEventListener("click", function () {
                 delete user.accountKey;
@@ -615,11 +538,9 @@ function demonstrationHelper(settings) {
             streamerUrl,
             user,
             displayVersion,
-            displaySourceCode,
             setupEvents,
             processError,
-            groupAndSortAccountList,
-            getSecondsUntilTokenExpiry
+            groupAndSortAccountList
         });
     }
 

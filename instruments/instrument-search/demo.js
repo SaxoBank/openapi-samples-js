@@ -7,6 +7,7 @@
         "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
+        "getRequestPlayback": document.getElementById("idGetRequest"),  // Echo GET requests to an input, to enable playback
         "accessTokenElm": document.getElementById("idBearerToken"),
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
