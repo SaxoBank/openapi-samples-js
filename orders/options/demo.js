@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -24,6 +24,8 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+            newOrderObject.AccountKey = demo.user.accountKey;
+            document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
         }
@@ -37,7 +39,6 @@
     function selectOrderType() {
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
-        newOrderObject.AccountKey = demo.user.accountKey;
         delete newOrderObject.OrderPrice;
         delete newOrderObject.StopLimitPrice;
         delete newOrderObject.TrailingstopDistanceToMarket;
@@ -138,16 +139,16 @@
             cbxOrderType.remove(i);
         }
         orderTypes.sort();
-        for (i = 0; i < orderTypes.length; i += 1) {
+        orderTypes.forEach(function (orderType) {
             option = document.createElement("option");
-            option.text = orderTypes[i];
-            option.value = orderTypes[i];
-            if (orderTypes[i] === selectedOrderType) {
+            option.text = orderType;
+            option.value = orderType;
+            if (orderType === selectedOrderType) {
                 option.setAttribute("selected", true);  // Make the selected type the default one
                 isSelectedOrderTypeAllowed = true;
             }
             cbxOrderType.add(option);
-        }
+        });
         if (!isSelectedOrderTypeAllowed) {
             selectOrderType();  // The current order type is not supported. Change to a different one
         }
@@ -177,7 +178,6 @@
                     if (responseJson.hasOwnProperty("OptionSpace")) {
                         newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
                         newOrderObject.AssetType = responseJson.AssetType;  // Can differ (StockOption, StockIndexOption)
-                        newOrderObject.AccountKey = demo.user.accountKey;
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                         console.log(JSON.stringify(responseJson, null, 4));
                     } else {
@@ -306,7 +306,6 @@
     function preCheckNewOrder() {
         // Bug: Preview doesn't check for limit outside market hours
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
             demo.apiUrl + "/trade/v2/orders/precheck",
@@ -357,7 +356,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        newOrderObject.AccountKey = demo.user.accountKey;
         if (document.getElementById("idChkRequestIdHeader").checked) {
             headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
         }
@@ -397,7 +395,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.OrderId = lastOrderId;
         if (document.getElementById("idChkRequestIdHeader").checked) {
             headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds

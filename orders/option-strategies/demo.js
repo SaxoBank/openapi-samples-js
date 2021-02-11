@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -24,6 +24,8 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+            newOrderObject.AccountKey = demo.user.accountKey;
+            document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
         }
@@ -37,7 +39,6 @@
     function selectOrderType() {
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
-        newOrderObject.AccountKey = demo.user.accountKey;
         delete newOrderObject.OrderPrice;
         delete newOrderObject.StopLimitPrice;
         delete newOrderObject.TrailingstopDistanceToMarket;
@@ -111,12 +112,12 @@
         for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
             cbxOrderType.remove(i);
         }
-        for (i = 0; i < orderTypes.length; i += 1) {
+        orderTypes.forEach(function (orderType) {
             option = document.createElement("option");
-            option.text = orderTypes[i];
-            option.value = orderTypes[i];
+            option.text = orderType;
+            option.value = orderType;
             cbxOrderType.add(option);
-        }
+        });
     }
 
     /**
@@ -138,16 +139,14 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const newOrderObject = getOrderObjectFromJson();
-                    let i;
-                    newOrderObject.AccountKey = demo.user.accountKey;
                     newOrderObject.OrderDuration = {
                         "DurationType": document.getElementById("idCbxOrderDuration").value
                     };
                     newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
                     newOrderObject.Legs = responseJson.Legs;
-                    for (i = 0; i < newOrderObject.Legs.length; i += 1) {
-                        newOrderObject.Legs[i].ToOpenClose = "ToOpen";
-                    }
+                    newOrderObject.Legs.forEach(function (leg) {
+                        leg.ToOpenClose = "ToOpen";
+                    });
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                     selectOrderType();
                     selectOrderDuration();
@@ -169,7 +168,6 @@
     function getSeries() {
         const optionRootId = document.getElementById("idInstrumentId").value;
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         fetch(
             demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
@@ -203,7 +201,6 @@
         // Bug: Preview doesn't check for limit outside market hours
         // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
             demo.apiUrl + "/trade/v2/orders/multileg/precheck",
@@ -255,7 +252,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        newOrderObject.AccountKey = demo.user.accountKey;
         if (document.getElementById("idChkRequestIdHeader").checked) {
             headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
         }
@@ -295,7 +291,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.MultiLegOrderId = lastOrderId;
         if (document.getElementById("idChkRequestIdHeader").checked) {
             headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds

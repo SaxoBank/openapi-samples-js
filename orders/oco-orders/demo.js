@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -44,10 +44,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        let i;
-        for (i = 0; i < newOrderObject.Orders.length; i += 1) {
-            newOrderObject.Orders[i].AccountKey = demo.user.accountKey;
-        }
         fetch(
             demo.apiUrl + "/trade/v2/orders",
             {
@@ -131,37 +127,30 @@
     }
 
     /**
-     * This is an example of removing an order from the book.
+     * This is an example of removing two orders from the book in one operation.
      * @return {void}
      */
     function cancelLastOrder() {
-
-        function cancel(orderId) {
-            console.log("Canceling order " + orderId);
-            fetch(
-                demo.apiUrl + "/trade/v2/orders/" + orderId + "?AccountKey=" + encodeURIComponent(demo.user.accountKey),
-                {
-                    "method": "DELETE",
-                    "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                    }
+        fetch(
+            demo.apiUrl + "/trade/v2/orders/" + lastOrderId1 + "," + lastOrderId2 + "?AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            {
+                "method": "DELETE",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
                 }
-            ).then(function (response) {
-                if (response.ok) {
-                    response.json().then(function (responseJson) {
-                        // Response must have an OrderId
-                        console.log(JSON.stringify(responseJson, null, 4));
-                    });
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
-        }
-
-        cancel(lastOrderId1);
-        cancel(lastOrderId2);
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    // Response must have an OrderId
+                    console.log(JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
@@ -192,11 +181,38 @@
         });
     }
 
+    /**
+     * Get the open orders, reflecting the created relation between the orders.
+     * @return {void}
+     */
+    function getOrders() {
+        fetch(
+            demo.apiUrl + "/port/v1/orders/me",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Found " + responseJson.Data.length + " open orders:\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
         {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
-        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]}
+        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]},
+        {"evt": "click", "elmId": "idBtnGetOrders", "func": getOrders, "funcsToDisplay": [getOrders]}
     ]);
     demo.displayVersion("trade");
 }());
