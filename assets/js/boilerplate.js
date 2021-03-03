@@ -29,7 +29,7 @@ function demonstrationHelper(settings) {
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
-        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
+        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
         "implicitAppKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
@@ -59,26 +59,36 @@ function demonstrationHelper(settings) {
     }
 
     /**
+     * The response contains an error message. Return the parsed message.
+     * @param {Object} errorInfo The error.
+     * @return {string} The message to add to the error text.
+     */
+    function processErrorInfo(errorInfo) {
+        // Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
+        let result = "\n" + (
+            errorInfo.hasOwnProperty("ErrorCode")
+            ? errorInfo.ErrorCode + ": "
+            : ""
+        ) + errorInfo.Message;
+        if (errorInfo.hasOwnProperty("ModelState")) {
+            // Not all ErrorCodes contain a ModelState. See for the list:
+            // https://www.developer.saxo/openapi/learn/openapi-request-response
+            Object.keys(errorInfo.ModelState).forEach(function (key) {
+                result += "\n" + key + ":\n - " + errorInfo.ModelState[key].join("\n - ");
+            });
+        }
+        return result;
+    }
+
+    /**
      * Shared function to display an unsuccessful response.
      * @param {Response} errorObject The complete error object.
      * @param {string=} extraMessageToShow An optional extra message to display.
      * @return {void}
      */
     function processError(errorObject, extraMessageToShow) {
-
-        function processErrorInfo(errorInfo) {
-            // Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
-            let result = "\n" + errorInfo.ErrorCode + ": " + errorInfo.Message;
-            if (errorInfo.hasOwnProperty("ModelState")) {
-                // Not all ErrorCodes contain a ModelState. See for the list:
-                // https://www.developer.saxo/openapi/learn/openapi-request-response
-                Object.keys(errorInfo.ModelState).forEach(function (key) {
-                    result += "\n" + key + ":\n - " + errorInfo.ModelState[key].join("\n - ");
-                });
-            }
-            return result;
-        }
-
+        // Always log the correlation header, so Saxo can trace this id in the logging:
+        const correlationInfo = "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
         let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
             extraMessageToShow === undefined
             ? ""
@@ -90,7 +100,7 @@ function demonstrationHelper(settings) {
                 // The 400 for single orders might be wrapped in an ErrorInfo object (verify this with an order where ManualOrder property is missing).
                 errorObjectJson = errorObjectJson.ErrorInfo;
             }
-            if (errorObjectJson.hasOwnProperty("ErrorCode")) {
+            if (errorObjectJson.hasOwnProperty("Message")) {
                 textToDisplay += processErrorInfo(errorObjectJson);
             } else if (errorObjectJson.hasOwnProperty("Orders")) {
                 // This response is returned when there is a 400 on related order requests:
@@ -98,14 +108,82 @@ function demonstrationHelper(settings) {
                     textToDisplay += processErrorInfo(orderError.ErrorInfo);
                 });
             }
-            // Always log the correlation header, so Saxo can trace this id in the logging.
-            textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
-            console.error(textToDisplay);
+            console.error(textToDisplay + correlationInfo);
         }).catch(function () {
-            textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
             // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
-            console.error(textToDisplay);
+            console.error(textToDisplay + correlationInfo);
         });
+    }
+
+    /**
+     * Parse the batch response to see if there are errors.
+     * @param {Array} responseTextArray The complete text response of the batch request.
+     * @param {string} correlationId The X-Correlation header of the response, for trouble shooting with Saxo.
+     * @return {boolean} True is there are one or more failed requests.
+     */
+    function hasBatchResponseErrors(responseTextArray, correlationId) {
+
+        /**
+         * Shared function to display an unsuccessful response.
+         * @param {string} httpError The line with the error.
+         * @param {string} response The body with extra error information.
+         * @param {string} correlationId The correlation header from the batch response. Might be overruled by the specific correlationIds.
+         * @param {string=} extraMessageToShow An optional extra message to display.
+         * @return {void}
+         */
+        function processBatchError(httpError, response, correlationId, extraMessageToShow) {
+            const correlationInfo = "\n\nX-Correlation header (for troubleshooting with Saxo): " + correlationId;
+            let textToDisplay = "Error with status " + httpError + (
+                extraMessageToShow === undefined
+                ? ""
+                : "\n" + extraMessageToShow
+            );
+            let errorObjectJson;
+            // Some errors have a JSON-response, containing explanation of what went wrong.
+            try {
+                errorObjectJson = JSON.parse(response);
+                if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
+                    // The 400 for single orders might be wrapped in an ErrorInfo object (verify this with an order where ManualOrder property is missing).
+                    errorObjectJson = errorObjectJson.ErrorInfo;
+                }
+                if (errorObjectJson.hasOwnProperty("Message")) {
+                    textToDisplay += processErrorInfo(errorObjectJson);
+                } else if (errorObjectJson.hasOwnProperty("Orders")) {
+                    // This response is returned when there is a 400 on related order requests:
+                    errorObjectJson.Orders.forEach(function (orderError) {
+                        textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                    });
+                }
+                console.error(textToDisplay + correlationInfo);
+            } catch (ignore) {
+                // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
+                console.error(textToDisplay + correlationInfo);
+            }
+        }
+
+        let positionInResponse = 0;
+        let hasErrors = false;
+        let body = "";
+        let httpStatus = "";
+        let correlationIdOfRequest = correlationId;
+        responseTextArray.forEach(function (line, lineNumber) {
+            const correlationIdMarker = "X-Correlation:";
+            if (line.substr(0, 2) === "--" && lineNumber !== 0 && httpStatus.charAt(0) !== "2") {
+                hasErrors = true;
+                processBatchError(httpStatus, body, correlationIdOfRequest);
+                positionInResponse = 0;
+                body = "";
+                correlationIdOfRequest = correlationId;
+            } else if (positionInResponse === 3) {
+                httpStatus = line.substring(line.indexOf(" ") + 1);
+            } else if (line.substr(0, correlationIdMarker.length) === correlationIdMarker) {
+                correlationIdOfRequest = line.substr(correlationIdMarker.length).trim();
+            } else if (line.charAt(0) === "{") {
+                body = line;
+            }
+            positionInResponse += 1;
+        });
+        return hasErrors;
     }
 
     /**
@@ -266,6 +344,45 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function getDataFromApi() {
+
+            function processBatchResponse(responseArray) {
+                const requestIdMarker = "X-Request-Id:";
+                let requestId = "";
+                let responseJson;
+                let userId;
+                let clientId;
+                responseArray.forEach(function (line) {
+                    line = line.trim();
+                    if (line.substr(0, requestIdMarker.length) === requestIdMarker) {
+                        requestId = line.substr(requestIdMarker.length).trim();
+                    } else if (line.charAt(0) === "{") {
+                        try {
+                            responseJson = JSON.parse(line);
+                            switch (requestId) {
+                            case "1":  // Response of GET /users/me
+                                user.culture = responseJson.Culture;
+                                user.language = responseJson.Language;
+                                userId = responseJson.UserId;
+                                break;
+                            case "2":  // Response of GET /clients/me
+                                user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                user.clientKey = responseJson.ClientKey;
+                                user.name = responseJson.Name;
+                                clientId = responseJson.ClientId;
+                                break;
+                            case "3":  // Response of GET /accounts/me
+                                populateAccountSelection(responseJson.Data);
+                                break;
+                            }
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }
+                });
+                settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId;
+                functionToRun();  // Run the function
+            }
+
             const config = getConfig();
             const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
             const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
@@ -287,41 +404,10 @@ function demonstrationHelper(settings) {
                 if (response.ok) {
                     settings.accessTokenElm.setCustomValidity("");
                     response.text().then(function (responseText) {
-                        const responseArray = responseText.split("\n");
-                        let requestId = "";
-                        let responseJson;
-                        let userId;
-                        let clientId;
-                        responseArray.forEach(function (line) {
-                            line = line.trim();
-                            if (line.substr(0, 13) === "X-Request-Id:") {
-                                requestId = line.substr(13).trim();
-                            } else if (line.charAt(0) === "{") {
-                                try {
-                                    responseJson = JSON.parse(line);
-                                    switch (requestId) {
-                                    case "1":  // Response of GET /users/me
-                                        user.culture = responseJson.Culture;
-                                        user.language = responseJson.Language;
-                                        userId = responseJson.UserId;
-                                        break;
-                                    case "2":  // Response of GET /clients/me
-                                        user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                        user.clientKey = responseJson.ClientKey;
-                                        user.name = responseJson.Name;
-                                        clientId = responseJson.ClientId;
-                                        break;
-                                    case "3":  // Response of GET /accounts/me
-                                        populateAccountSelection(responseJson.Data);
-                                        break;
-                                    }
-                                } catch (error) {
-                                    console.error(error);
-                                }
-                            }
-                        });
-                        settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId;
-                        functionToRun();  // Run the function
+                        const responseTextArray = responseText.split("\n");
+                        if (!hasBatchResponseErrors(responseTextArray, response.headers.get("X-Correlation"))) {
+                            processBatchResponse(responseTextArray);
+                        }
                     });
                 } else {
                     settings.accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
@@ -611,6 +697,7 @@ function demonstrationHelper(settings) {
             displaySourceCode,
             setupEvents,
             processError,
+            hasBatchResponseErrors,
             groupAndSortAccountList,
             getSecondsUntilTokenExpiry
         });
