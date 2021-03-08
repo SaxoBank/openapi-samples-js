@@ -165,6 +165,10 @@
      * @return {void}
      */
     function refreshTokenPhp() {
+        if (tokenObject === undefined) {
+            console.error("Get a token first..");
+            return;
+        }
         fetch(
             "backend-php/server-refresh-token.php",
             {
