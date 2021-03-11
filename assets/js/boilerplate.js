@@ -361,8 +361,12 @@ function demonstrationHelper(settings) {
                             switch (requestId) {
                             case "1":  // Response of GET /users/me
                                 user.culture = responseJson.Culture;
-                                user.language = responseJson.Language;
+                                user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
                                 userId = responseJson.UserId;
+                                if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
+                                    // This is only an issue for Live - SIM supports only FX prices.
+                                    console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
+                                }
                                 break;
                             case "2":  // Response of GET /clients/me
                                 user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
@@ -379,7 +383,7 @@ function demonstrationHelper(settings) {
                         }
                     }
                 });
-                settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId;
+                console.log("The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId);
                 functionToRun();  // Run the function
             }
 
