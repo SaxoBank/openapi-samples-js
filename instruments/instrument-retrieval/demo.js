@@ -4,6 +4,7 @@
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
+        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -19,11 +20,9 @@
     function processContractOptionSpace(assetType, responseJson) {
         responseJson.OptionSpace.forEach(function (optionSerie) {
             optionSerie.SpecificOptions.forEach(function (specificOption) {
-                instrumentIds.push(specificOption.Uic + "/" + assetType);
+                instrumentIds.push(assetType + "," + specificOption.Uic + "," + responseJson.Exchange.ExchangeId);
             });
         });
-        document.getElementById("idInstruments").value = instrumentIds.join(",");
-        console.debug("Added " + responseJson.OptionSpace.length + " instruments type " + assetType + ". Total " + instrumentIds.length + " instruments..");
     }
 
     function processDetailsListResponse(assetType, responseJson) {
@@ -38,10 +37,8 @@
         }
         // We have the Uic - collect the details
         responseJson.Data.forEach(function (instrument) {
-            instrumentIds.push(instrument.Uic + "/" + instrument.AssetType);
+            instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId);
         });
-        document.getElementById("idInstruments").value = instrumentIds.join(",");
-        console.debug("Found " + responseJson.Data.length + " instruments in the response. Total " + instrumentIds.length + " instruments found..");
     }
 
     function processOptionSearchResponse(assetType, responseJson) {
@@ -85,21 +82,9 @@
                 response.json().then(function (responseJson) {
                     responseJson.LegalAssetTypes.forEach(function (legalAssetType) {
                         const unsupportedAssetTypes = [
-                            "CfdStockOption",
-                            "CfdFutureOption",
-                            "WarrantDoubleKnockOut",
-                            "CertificateUncappedCapitalProtection",
-                            "CertificateCappedCapitalProtected",
-                            "CertificateDiscount",
-                            "CertificateCappedOutperformance",
-                            "CertificateExpress",
-                            "CertificateUncappedOutperformance",
-                            "SrdOnEtf",
-                            "IpoOnStock",
-                            "FuturesStrategy",
-                            "FuturesOption"
+                            "Cash"
                         ];
-                        if (legalAssetType === "StockOption" || legalAssetType === "StockIndexOption") {
+                        if (legalAssetType === "StockOption" || legalAssetType === "StockIndexOption" || legalAssetType === "FuturesOption") {
                             requestQueue.push({
                                 "assetType": legalAssetType,
                                 "url": demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + legalAssetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(demo.user.accountKey),
@@ -128,7 +113,7 @@
         let job;
         if (requestQueue.length > 0) {
             job = requestQueue.shift();
-            console.log("Processing job for AssetType " + job.assetType + ":\r\n" + job.url + "\r\nRequests: " + requestCount + "\r\nJobs in queue: " + requestQueue.length);
+            console.log("Processing job for AssetType " + job.assetType + ":\r\n" + job.url + "\r\nFound " + instrumentIds.length + " instruments with " + requestCount + " requests.\r\nPending jobs in queue: " + requestQueue.length + "..");
             fetch(
                 job.url,
                 {
@@ -153,7 +138,13 @@
     }
 
     const refLimitPerMinute = 60;
-    setInterval(runJobFromQueue, (refLimitPerMinute / 60 * 1000) + 25);  // A little more, to prevent risk of 429 TooManyRequests
+    window.setInterval(runJobFromQueue, (refLimitPerMinute / 60 * 1000) + 25);  // A little more, to prevent risk of 429 TooManyRequests
+    // Update textarea every 10 seconds.
+    window.setInterval(function () {
+        document.getElementById("idInstruments").value = instrumentIds.join("\n");
+        console.debug("Showing " + instrumentIds.length + " instruments..");
+    }, 1000 * 10);
+
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnStart", "func": start, "funcsToDisplay": [start, runJobFromQueue]}
     ]);
