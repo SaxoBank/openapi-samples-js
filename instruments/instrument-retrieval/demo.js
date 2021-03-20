@@ -20,7 +20,7 @@
     function processContractOptionSpace(assetType, responseJson) {
         responseJson.OptionSpace.forEach(function (optionSerie) {
             optionSerie.SpecificOptions.forEach(function (specificOption) {
-                instrumentIds.push(assetType + "," + specificOption.Uic + "," + responseJson.Exchange.ExchangeId);
+                instrumentIds.push(assetType + "," + specificOption.Uic + ",\"" + responseJson.Exchange.ExchangeId + "\",\"" + responseJson.Description.trim() + " " + optionSerie.DisplayExpiry + " " + specificOption.StrikePrice + " " + specificOption.PutCall + "\"");
             });
         });
     }
@@ -37,7 +37,7 @@
         }
         // We have the Uic - collect the details
         responseJson.Data.forEach(function (instrument) {
-            instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId);
+            instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId + ",\"" + instrument.Description.trim() + "\"");
         });
     }
 
@@ -80,17 +80,27 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
+                    document.getElementById("idInstruments").value = "Collecting instruments of LegalAssetTypes:\n" + responseJson.LegalAssetTypes.join("\n");
                     responseJson.LegalAssetTypes.forEach(function (legalAssetType) {
                         const unsupportedAssetTypes = [
                             "Cash"
                         ];
-                        if (legalAssetType === "StockOption" || legalAssetType === "StockIndexOption" || legalAssetType === "FuturesOption") {
+                        const optionAssetTypes = [
+                            "StockOption",
+                            "StockIndexOption",
+                            "FuturesOption",
+                            "CfdStockOption",
+                            "CfdFutureOption"
+                        ];
+                        if (optionAssetTypes.indexOf(legalAssetType) !== -1) {
+                            // For options, the collection is different - an option root must be found first.
                             requestQueue.push({
                                 "assetType": legalAssetType,
                                 "url": demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + legalAssetType + "&IncludeNonTradable=false&$top=1000&AccountKey=" + encodeURIComponent(demo.user.accountKey),
                                 "callback": processOptionSearchResponse
                             });
                         } else if (unsupportedAssetTypes.indexOf(legalAssetType) === -1) {
+                            // Only collect supported AssetTypes.
                             requestQueue.push({
                                 "assetType": legalAssetType,
                                 "url": demo.apiUrl + "/ref/v1/instruments/details?$top=400&FieldGroups=" + encodeURIComponent("OrderSetting,TradingSessions") + "&AssetTypes=" + legalAssetType,
@@ -139,11 +149,11 @@
 
     const refLimitPerMinute = 60;
     window.setInterval(runJobFromQueue, (refLimitPerMinute / 60 * 1000) + 25);  // A little more, to prevent risk of 429 TooManyRequests
-    // Update textarea every 10 seconds.
+    // Update textarea every 20 seconds.
     window.setInterval(function () {
         document.getElementById("idInstruments").value = instrumentIds.join("\n");
         console.debug("Showing " + instrumentIds.length + " instruments..");
-    }, 1000 * 10);
+    }, 1000 * 20);
 
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnStart", "func": start, "funcsToDisplay": [start, runJobFromQueue]}
