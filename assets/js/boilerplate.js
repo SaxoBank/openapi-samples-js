@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.21
+ * boilerplate v1.22
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -293,6 +293,7 @@ function demonstrationHelper(settings) {
             }
             settings.accountsList.options.length = 0;  // Remove options, if any
             user.accountGroupKeys = [];
+            user.accounts = [];
             groupAndSortAccountList(accountsResponseData);
             accountsResponseData.forEach(function (account) {
                 // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
@@ -309,6 +310,11 @@ function demonstrationHelper(settings) {
                     legalAssetTypesPerAccount.push({
                         "accountKey": account.AccountKey,
                         "legalAssetTypes": account.LegalAssetTypes
+                    });
+                    // Used to map accountIds with accountKeys:
+                    user.accounts.push({
+                        "accountId": account.AccountId,
+                        "accountKey": account.AccountKey
                     });
                     if (account.AccountKey === user.accountKey) {
                         option.setAttribute("selected", true);

@@ -196,6 +196,16 @@
             }
         }
 
+        function checkSupportedAccounts(tradableOn) {
+            // Verify if the selected account is capable of handling this instrument.
+            // First, get the id of the active account:
+            const activeAccountId = demo.user.accounts.find(function(i) { return i.accountKey === demo.user.accountKey; }).accountId;
+            // Next, check if instrument is allowed on this account:
+            if (tradableOn.indexOf(activeAccountId) === -1) {
+                window.alert("This instrument cannot be traded on the selected account " + activeAccountId + ", but only on " + tradableOn.join(", ") + ".");
+            }
+        }
+
         function calculateFactor(tickSize) {
             let numberOfDecimals = 0;
             if ((tickSize % 1) !== 0) {
@@ -265,6 +275,7 @@
                     console.log(JSON.stringify(responseJson, null, 4));
                     if (responseJson.IsTradable === false) {
                         window.alert("This instrument is not tradable!");
+                        // For demonstration purposes, the validation continues, but an order ticket shouldn't be shown!
                     }
                     checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
                     if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn") {
@@ -274,6 +285,7 @@
                             checkTickSize(newOrderObject, responseJson.TickSize);
                         }
                     }
+                    checkSupportedAccounts(responseJson.TradableOn);
                     checkMinimumTradeSize(newOrderObject, responseJson);
                     if (newOrderObject.AssetType === "Stock") {
                         checkMinimumOrderValue(newOrderObject, responseJson);
