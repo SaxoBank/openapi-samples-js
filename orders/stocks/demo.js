@@ -197,6 +197,37 @@
     }
 
     /**
+     * This function collects the access rights of the logged in user.
+     * @return {void}
+     */
+    function getAccessRights() {
+        fetch(
+            demo.apiUrl + "/root/v1/user",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const responseText = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    if (responseJson.AccessRights.CanTrade) {
+                        console.log("You are allowed to place orders." + responseText);
+                    } else {
+                        console.error("You are not allowed to place orders." + responseText);
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of getting the trading settings of an instrument.
      * @return {void}
      */
@@ -211,7 +242,9 @@
         function checkSupportedAccounts(tradableOn) {
             // Verify if the selected account is capable of handling this instrument.
             // First, get the id of the active account:
-            const activeAccountId = demo.user.accounts.find(function(i) { return i.accountKey === demo.user.accountKey; }).accountId;
+            const activeAccountId = demo.user.accounts.find(function (i) {
+                return i.accountKey === demo.user.accountKey;
+            }).accountId;
             // Next, check if instrument is allowed on this account:
             if (tradableOn.indexOf(activeAccountId) === -1) {
                 window.alert("This instrument cannot be traded on the selected account " + activeAccountId + ", but only on " + tradableOn.join(", ") + ".");
@@ -559,6 +592,7 @@
         {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
         {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
+        {"evt": "click", "elmId": "idBtnGetAccessRights", "func": getAccessRights, "funcsToDisplay": [getAccessRights]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},

@@ -199,7 +199,9 @@
         function checkSupportedAccounts(tradableOn) {
             // Verify if the selected account is capable of handling this instrument.
             // First, get the id of the active account:
-            const activeAccountId = demo.user.accounts.find(function(i) { return i.accountKey === demo.user.accountKey; }).accountId;
+            const activeAccountId = demo.user.accounts.find(function (i) {
+                return i.accountKey === demo.user.accountKey;
+            }).accountId;
             // Next, check if instrument is allowed on this account:
             if (tradableOn.indexOf(activeAccountId) === -1) {
                 window.alert("This instrument cannot be traded on the selected account " + activeAccountId + ", but only on " + tradableOn.join(", ") + ".");
