@@ -1,8 +1,8 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true */
 /*global console */
 
 /*
- * boilerplate v1.22
+ * boilerplate v1.23
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -26,22 +26,26 @@
 function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
+        "grantType": "token",  // With some changes the Authorization Code Flow (grantType code) can be used
         "authUrl": "https://sim.logonvalidation.net/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
         "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
-        "implicitAppKey": {
+        "appKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
+        "grantType": "token",  // With some changes the Authorization Code Flow (grantType code) can be used
         "authUrl": "https://live.logonvalidation.net/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
-        "implicitAppKey": {
+        "appKey": {
             "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
             "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
         }
@@ -534,20 +538,21 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Notify about token expiration in 5 seconds.
+     * Notify about token expiration in 10 seconds.
      * @param {string} token The token to be checked.
      * @return {void}
      */
     function activateTokenExpirationWarning(token) {
+        const secondsBeforeWarning = 10;
         let secondsUntilTokenExpiry;
         let secondsUntilTokenExpiryWarning;
         if (token !== "") {
             secondsUntilTokenExpiry = getSecondsUntilTokenExpiry(token);
-            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - 5;
+            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - secondsBeforeWarning;
             if (secondsUntilTokenExpiryWarning > 0) {
                 window.clearTimeout(tokenExpirationTimer);
                 tokenExpirationTimer = window.setTimeout(function () {
-                    console.error("The access token expires in 5 seconds. The app might need to refresh the token. And update the websocket subscription.");
+                    console.error("The access token expires in " + secondsBeforeWarning + " seconds. The app might need to refresh the token. And update the websocket subscription.");
                 }, secondsUntilTokenExpiryWarning * 1000);
             }
         }
@@ -605,7 +610,7 @@ function demonstrationHelper(settings) {
          * Try to get the token from localStorage.
          * @return {null|string} The token - null if not found.
          */
-        function loadAccessToken() {
+        function loadAccessTokenFromLocalStorage() {
             try {
                 return window.localStorage.getItem(tokenKey);
             } catch (ignore) {
@@ -613,6 +618,33 @@ function demonstrationHelper(settings) {
                 return null;
             }
         }
+
+        // First, maybe the token is supplied in the URL, as a bookmark?
+        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
+        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
+        let newAccessToken = urlParams.get("access_token");
+        let secondsUntilExpiry;
+        if (urlParams.get("error_description") !== null) {  // Something went wrong..
+            console.error("Error getting token: " + urlParams.get("error_description"));
+        }
+        if (newAccessToken === null) {
+            // Second, maybe the token is stored before a refresh, or in a different sample?
+            newAccessToken = loadAccessTokenFromLocalStorage();
+        } else {
+            saveAccessToken(newAccessToken);
+        }
+        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
+        if (secondsUntilExpiry > 0) {
+            settings.accessTokenElm.value = newAccessToken;
+            console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
+        }
+    }
+
+    /**
+     * If this sample is run from a known location (https://saxobank.github.io, or http://localhost), the link to authenticate using an app on Extended AssetTypes can be provided.
+     * @return {void}
+     */
+    function addOptionalExtendedAssetTypesLoginLink() {
 
         /**
          * Store the CSRF token in localStorage or cookie.
@@ -639,34 +671,15 @@ function demonstrationHelper(settings) {
                 : "sim"
             )
         };
-        // First, maybe the token is supplied in the URL, as a bookmark?
-        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
-        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        let newAccessToken = urlParams.get("access_token");
-        let secondsUntilExpiry;
-        if (urlParams.get("error_description") !== null) {  // Something went wrong..
-            console.error("Error getting token: " + urlParams.get("error_description"));
-        }
-        if (newAccessToken === null) {
-            // Second, maybe the token is stored before a refresh, or in a different sample?
-            newAccessToken = loadAccessToken();
-        } else {
-            saveAccessToken(newAccessToken);
-        }
-        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
-        if (secondsUntilExpiry > 0) {
-            settings.accessTokenElm.value = newAccessToken;
-            console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
-        }
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
-            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
-                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
+                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
             } else {
-                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes;
+                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes;
                 settings.retrieveTokenHref.target = "_self";  // Back to default
             }
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
@@ -686,6 +699,7 @@ function demonstrationHelper(settings) {
         mirrorConsoleError();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
+            addOptionalExtendedAssetTypesLoginLink();
             activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
                 saveAccessToken(settings.accessTokenElm.value);
