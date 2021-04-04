@@ -236,16 +236,26 @@ function demonstrationHelper(settings) {
      */
     function getConfig() {
         let urlParams;
+        let isRunningOnSim = true;
         if (window.URLSearchParams) {
             urlParams = new window.URLSearchParams(document.location.search.substring(1));
-            return (
-                urlParams.get("env") === "live"
-                ? configLive
-                : configSim
-            );
-        } else {
-            return configSim;
+            if (urlParams.get("env") === "live") {
+                isRunningOnSim = false;
+            } else if (urlParams.get("state") !== null) {
+                try {
+                    if (JSON.parse(window.atob(urlParams.get("state"))).env === "live") {
+                        isRunningOnSim = false;
+                    }
+                } catch (ignore) {
+                    console.error("Something went wrong unpacking the state parameter..");
+                }
+            }
         }
+        return (
+            isRunningOnSim
+            ? configSim
+            : configLive
+        );
     }
 
     /**
