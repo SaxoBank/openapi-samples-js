@@ -26,7 +26,8 @@
 function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
-        "grantType": "token",  // With some changes the Authorization Code Flow (grantType code) can be used
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "sim",
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
@@ -39,7 +40,8 @@ function demonstrationHelper(settings) {
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
-        "grantType": "token",  // With some changes the Authorization Code Flow (grantType code) can be used
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "live",
         "authUrl": "https://live.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
@@ -629,24 +631,115 @@ function demonstrationHelper(settings) {
             }
         }
 
-        // First, maybe the token is supplied in the URL, as a bookmark?
-        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
-        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
-        let newAccessToken = urlParams.get("access_token");
-        let secondsUntilExpiry;
-        if (urlParams.get("error_description") !== null) {  // Something went wrong..
-            console.error("Error getting token: " + urlParams.get("error_description"));
+        /**
+         * Display and store the token, if valid.
+         * @param {string} token The access token.
+         * @return {void}
+         */
+        function saveAndShowToken(token) {
+            const secondsUntilExpiry = getSecondsUntilTokenExpiry(token);
+            if (secondsUntilExpiry > 0) {
+                saveAccessToken(token);
+                settings.accessTokenElm.value = token;
+                console.debug("Token is valid for another " + secondsUntilExpiry + " seconds.");
+            }
         }
-        if (newAccessToken === null) {
-            // Second, maybe the token is stored before a refresh, or in a different sample?
-            newAccessToken = loadAccessTokenFromLocalStorage();
+
+        /**
+         * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
+         * @param {string} page The page to be requested.
+         * @param {Object} body The body object to post to the page.
+         * @return {void}
+         */
+        function requestCodeFlowToken(page, body) {
+            fetch(
+                "https://www.your.server/app/saxo/" + page,
+                {
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Accept": "application/json; charset=utf-8"
+                    },
+                    "body": JSON.stringify(body)
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const refreshTime = Math.max(0, (responseJson.expires_in - 5) * 1000);  // Prevent negative values https://stackoverflow.com/questions/8430966/is-calling-settimeout-with-a-negative-delay-ok
+                        // Make sure the token will be refreshed before expiration.
+                        // When you are late with exchanging the code for a token, the expires_in can be negative.
+                        // This is not an issue, the refresh_token is valid much longer.
+                        window.setTimeout(function () {
+                            console.log("Requesting token using the refresh token..");
+                            requestCodeFlowToken("server-refresh-token.php", {
+                                "refresh_token": responseJson.refresh_token
+                            });
+                        }, refreshTime);
+                        if (settings.hasOwnProperty("newTokenCallback") && settings.newTokenCallback !== undefined && settings.newTokenCallback !== null) {
+                            settings.newTokenCallback(responseJson.access_token);
+                        }
+                        saveAndShowToken(responseJson.access_token);
+                        console.log("Access token successfully retrieved.");
+                    });
+                } else {
+                    processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        /**
+         * Use the OAuth2 Code Flow to request a token via a code from the URL.
+         * @param {string} code The code from the URL.
+         * @return {void}
+         */
+        function getTokenViaCodeFlow(code) {
+            let newAccessToken;
+            // First, maybe there is a code in the URL, supplied when being redirected after authententication using Implicit Flow?
+            if (code === null) {
+                // Second, maybe the token is stored before a refresh, or in a different sample?
+                newAccessToken = loadAccessTokenFromLocalStorage();
+                if (newAccessToken !== null) {
+                    saveAndShowToken(newAccessToken);
+                }
+            } else {
+                console.log("Requesting token using the code from the URL..");
+                requestCodeFlowToken("server-get-token.php", {
+                    "code": code
+                });
+            }
+        }
+
+        /**
+         * Use the OAuth2 Implicit Flow to read a token from the URL.
+         * @param {string} newAccessToken The token from the URL.
+         * @return {void}
+         */
+        function getTokenViaImplicitFlow(newAccessToken) {
+            if (newAccessToken === null) {
+                // Second, maybe the token is stored before a refresh, or in a different sample?
+                newAccessToken = loadAccessTokenFromLocalStorage();
+            }
+            if (newAccessToken !== null) {
+                saveAndShowToken(newAccessToken);
+            }
+        }
+
+        const grantType = getConfig().grantType;
+        const urlParams = new window.URLSearchParams(
+            grantType === "code"
+            ? window.location.search
+            : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
+        );
+        const errorDescription = urlParams.get("error_description");
+        if (errorDescription !== null) {
+            // Something went wrong..
+            console.error("Error getting token: " + errorDescription);
+        } else if (grantType === "code") {
+            getTokenViaCodeFlow(urlParams.get("code"));
         } else {
-            saveAccessToken(newAccessToken);
-        }
-        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
-        if (secondsUntilExpiry > 0) {
-            settings.accessTokenElm.value = newAccessToken;
-            console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
+            getTokenViaImplicitFlow(urlParams.get("access_token"));
         }
     }
 
@@ -675,15 +768,11 @@ function demonstrationHelper(settings) {
         const stateObject = {
             "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
             "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
-            "env": (
-                config.authUrl === configLive.authUrl
-                ? "live"
-                : "sim"
-            )
+            "env": config.env
         };
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
-            // We can probably use the Implicit Grant to get a token
+            // We can probably use the Implicit/Code Flow Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
             urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
