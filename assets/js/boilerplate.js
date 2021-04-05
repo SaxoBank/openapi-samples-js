@@ -240,7 +240,11 @@ function demonstrationHelper(settings) {
         let urlParams;
         let isRunningOnSim = true;
         if (window.URLSearchParams) {
-            urlParams = new window.URLSearchParams(document.location.search.substring(1));
+            urlParams = new window.URLSearchParams(
+                window.location.hash === ""
+                ? window.location.search
+                : window.location.hash.replace("#", "?")
+            );
             if (urlParams.get("env") === "live") {
                 isRunningOnSim = false;
             } else if (urlParams.get("state") !== null) {
@@ -727,19 +731,22 @@ function demonstrationHelper(settings) {
         }
 
         const grantType = getConfig().grantType;
-        const urlParams = new window.URLSearchParams(
-            grantType === "code"
-            ? window.location.search
-            : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
-        );
-        const errorDescription = urlParams.get("error_description");
-        if (errorDescription !== null) {
-            // Something went wrong..
-            console.error("Error getting token: " + errorDescription);
-        } else if (grantType === "code") {
-            getTokenViaCodeFlow(urlParams.get("code"));
-        } else {
-            getTokenViaImplicitFlow(urlParams.get("access_token"));
+        let urlParams;
+        if (window.URLSearchParams) {
+            urlParams = new window.URLSearchParams(
+                grantType === "code"
+                ? window.location.search
+                : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
+            );
+            const errorDescription = urlParams.get("error_description");
+            if (errorDescription !== null) {
+                // Something went wrong..
+                console.error("Error getting token: " + errorDescription);
+            } else if (grantType === "code") {
+                getTokenViaCodeFlow(urlParams.get("code"));
+            } else {
+                getTokenViaImplicitFlow(urlParams.get("access_token"));
+            }
         }
     }
 
