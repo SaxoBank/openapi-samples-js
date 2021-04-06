@@ -651,13 +651,14 @@ function demonstrationHelper(settings) {
 
         /**
          * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
+         * @param {string} appServerUrl The host+path of the application backend.
          * @param {string} page The page to be requested.
          * @param {Object} body The body object to post to the page.
          * @return {void}
          */
-        function requestCodeFlowToken(page, body) {
+        function requestCodeFlowToken(appServerUrl, page, body) {
             fetch(
-                "https://www.your.server/app/saxo/" + page,
+                appServerUrl + page,
                 {
                     "method": "POST",
                     "headers": {
@@ -675,7 +676,7 @@ function demonstrationHelper(settings) {
                         // This is not an issue, the refresh_token is valid much longer.
                         window.setTimeout(function () {
                             console.log("Requesting token using the refresh token..");
-                            requestCodeFlowToken("server-refresh-token.php", {
+                            requestCodeFlowToken(appServerUrl + "server-refresh-token.php", {
                                 "refresh_token": responseJson.refresh_token
                             });
                         }, refreshTime);
@@ -695,10 +696,11 @@ function demonstrationHelper(settings) {
 
         /**
          * Use the OAuth2 Code Flow to request a token via a code from the URL.
+         * @param {string} appServerUrl The host+path of the application backend.
          * @param {string} code The code from the URL.
          * @return {void}
          */
-        function getTokenViaCodeFlow(code) {
+        function getTokenViaCodeFlow(appServerUrl, code) {
             let newAccessToken;
             // First, maybe there is a code in the URL, supplied when being redirected after authententication using Implicit Flow?
             if (code === null) {
@@ -709,7 +711,7 @@ function demonstrationHelper(settings) {
                 }
             } else {
                 console.log("Requesting token using the code from the URL..");
-                requestCodeFlowToken("server-get-token.php", {
+                requestCodeFlowToken(appServerUrl + "server-get-token.php", {
                     "code": code
                 });
             }
@@ -730,11 +732,11 @@ function demonstrationHelper(settings) {
             }
         }
 
-        const grantType = getConfig().grantType;
+        const config = getConfig();
         let urlParams;
         if (window.URLSearchParams) {
             urlParams = new window.URLSearchParams(
-                grantType === "code"
+                config.grantType === "code"
                 ? window.location.search
                 : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
             );
@@ -742,8 +744,8 @@ function demonstrationHelper(settings) {
             if (errorDescription !== null) {
                 // Something went wrong..
                 console.error("Error getting token: " + errorDescription);
-            } else if (grantType === "code") {
-                getTokenViaCodeFlow(urlParams.get("code"));
+            } else if (config.grantType === "code") {
+                getTokenViaCodeFlow(config.appServerUrl, urlParams.get("code"));
             } else {
                 getTokenViaImplicitFlow(urlParams.get("access_token"));
             }
