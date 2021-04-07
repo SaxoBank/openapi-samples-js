@@ -676,7 +676,7 @@ function demonstrationHelper(settings) {
                         // This is not an issue, the refresh_token is valid much longer.
                         window.setTimeout(function () {
                             console.log("Requesting token using the refresh token..");
-                            requestCodeFlowToken(appServerUrl + "server-refresh-token.php", {
+                            requestCodeFlowToken(appServerUrl, "server-refresh-token.php", {
                                 "refresh_token": responseJson.refresh_token
                             });
                         }, refreshTime);
@@ -711,7 +711,7 @@ function demonstrationHelper(settings) {
                 }
             } else {
                 console.log("Requesting token using the code from the URL..");
-                requestCodeFlowToken(appServerUrl + "server-get-token.php", {
+                requestCodeFlowToken(appServerUrl, "server-get-token.php", {
                     "code": code
                 });
             }
