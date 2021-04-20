@@ -31,29 +31,27 @@ It uses the Dutch AEX Index as the reference for the trigger.<br />
 Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
 <br />
 <br />
-<label>Reference instrument: <input type="text" class="text-field" id="idUicReference" value="1376" placeholder="Reference.." /></label> (AssetType StockIndex)
-<br />
 <label>
     Condition: <select class="selector" id="idCbxCondition">
-        <option value="Limit" selected>Limit</option>
+        <option value="TriggerBreakout">Breakout</option>
+        <option value="TriggerStop">Distance</option>
+        <option value="TriggerLimit" selected>Price of an instrument</option>
     </select>
 </label>
 <br />
 <label>
-    Quote type: <select class="selector" id="idCbxQuoteType">
-        <option value="Last" selected>Last</option>
+    Operator: <select class="selector" id="idCbxOperator">
+        <option value="AtOrAbove" selected>At, or above</option>
+        <option value="AtOrBelow">At, or below</option>
     </select>
 </label>
 <br />
 <label>
-    Limit: <select class="selector" id="idCbxLimit">
-        <option value="BiggerThen" selected>&gt;</option>
+    Trigger: <select class="selector" id="idCbxTrigger">
+        <option value="Last" selected>Last price</option>
+        <option value="Open">Open price</option>
     </select>
 </label>
-<br />
-<label>Price: <input type="text" class="text-field" id="idPrice" value="30" placeholder="Price.." /></label>
-<br />
-<label>End date: <input type="text" class="text-field" id="idEndDate" value="2020-11-20" placeholder="End date.." /></label>
 <br />
 <br />
 POST body containing order parameters:
@@ -70,19 +68,8 @@ POST body containing order parameters:
         "DurationType": "DayOrder"
     },
     "OrderRelation": "StandAlone",
-    "OrderContext": {
-        "DisclaimerShown": {
-            "DisclaimerId": 449,
-            "DisclaimerKey": "AppropriatenessTest_Notice_NotTaken",
-            "Title": "Product might not be appropriate",
-            "Version": 1,
-            "Revision": 1,
-            "LanguageCode": "en"
-        },
-        "LastSeenClientBidPrice": 10.5,
-        "LastSeenClientAskPrice": 10.504
-    },
-    "AppHint": 17039617,
+    "ExternalReference": "MyConditionalOrderCorrelationId",
+    "ManualOrder": true,
     "Orders": [
         {
             "Uic": 1957254,
@@ -100,32 +87,6 @@ POST body containing order parameters:
             }
         }
     ]
-}
-
-{
-    "AccountKey": "(added on first request)",
-    "OrderType": "Market",
-    "Uic": 590850,
-    "AssetType": "Stock",
-    "BuySell": "Buy",
-    "Amount": 100,
-    "OrderDuration": {
-        "DurationType": "DayOrder"
-    },
-    "ExternalReference": "MyConditionalOrderCorrelationId",
-    "ManualOrder": true,
-    "Orders": [{
-        "OrderType": "TriggerBreakout",
-        "TriggerOrderData": {
-            "LowerPrice": 10,
-            "UpperPrice": 1000,
-            "PriceType": "LastTraded"
-        },
-        "Uic": 1376,
-        "AssetType": "StockIndex",
-        "ExternalReference": "MyOrderTriggerCorrelationId",
-        "ManualOrder": true
-    }]
 }
 </textarea>
 <br />

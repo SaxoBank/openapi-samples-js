@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -11,9 +11,10 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
+        "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
+        "selectedAssetType": "Stock",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
-    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
     let lastOrderId = 0;
 
     /**
@@ -24,6 +25,11 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+            newOrderObject.AccountKey = demo.user.accountKey;
+            newOrderObject.Orders.forEach(function (order) {
+                order.AccountKey = demo.user.accountKey;
+            });
+            document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
         }
@@ -82,16 +88,11 @@
      * @return {void}
      */
     function placeNewOrder() {
-        const newOrderObject = getOrderObjectFromJson();
         const headersObject = {
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        let i;
-        for (i = 0; i < newOrderObject.Orders.length; i += 1) {
-            newOrderObject.Orders[i].AccountKey = demo.user.accountKey;
-        }
-        newOrderObject.AccountKey = demo.user.accountKey;
+        const newOrderObject = getOrderObjectFromJson();
         fetch(
             demo.apiUrl + "/trade/v2/orders",
             {
@@ -111,7 +112,15 @@
                     lastOrderId = responseJson.OrderId;
                 });
             } else {
-                demo.processError(response);
+                console.debug(response);
+                if (response.status === 403) {
+                    // Don't add this check to your application, but for learning purposes:
+                    // An HTTP Forbidden indicates that your app is not enabled for trading.
+                    // See https://www.developer.saxo/openapi/appmanagement
+                    demo.processError(response, "Your app might not be enabled for trading.");
+                } else {
+                    demo.processError(response);
+                }
             }
         }).catch(function (error) {
             console.error(error);
@@ -119,7 +128,7 @@
     }
 
     /**
-     * This is an example of updating a single leg order.
+     * This is an example of updating a conditional order.
      * @return {void}
      */
     function modifyLastOrder() {
@@ -128,7 +137,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.OrderId = lastOrderId;
         fetch(
             demo.apiUrl + "/trade/v2/orders",
@@ -148,6 +156,7 @@
                     ));
                 });
             } else {
+                // If you get a 404 NotFound, the order might already be executed!
                 demo.processError(response);
             }
         }).catch(function (error) {
@@ -182,7 +191,42 @@
         });
     }
 
+    function changeCondition() {
+        // Conditions are Price, Breakout and Distance.
+        // A price condition is met when the price of the trigger instrument reaches a certain value.
+        // Example of a price condition: Microsoft Corp. last traded price is at or below 250.00. Valid until met or cancelled.
+        //      .. of a breakout condition: EURUSD close price is outside 1.1500-1.1600. Valid until trade day 22-Dec-2022.
+        //      .. of a distance condition: DAX Index is 1,000 below highest open price. Valid for current trade day.
+        const newOrderObject = getOrderObjectFromJson();
+        newOrderObject.Orders[0].OrderType = document.getElementById("idCbxCondition").value;
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+    }
+
+    function changeOperator() {
+        // Operators differ per condition.
+        const newOrderObject = getOrderObjectFromJson();
+        switch (document.getElementById("idCbxOperator").value) {
+        case "AtOrAbove":
+            newOrderObject.Orders[0].BuySell = "Sell";
+            break;
+        case "AtOrBelow":
+            newOrderObject.Orders[0].BuySell = "Buy";
+            break;
+        }
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+    }
+
+    function changeTrigger() {
+        // Triggers differ per condition.
+        const newOrderObject = getOrderObjectFromJson();
+        newOrderObject.Orders[0].OrderType = document.getElementById("idCbxTrigger").value;
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+    }
+
     demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxCondition", "func": changeCondition, "funcsToDisplay": [changeCondition]},
+        {"evt": "change", "elmId": "idCbxOperator", "func": changeOperator, "funcsToDisplay": [changeOperator]},
+        {"evt": "change", "elmId": "idCbxTrigger", "func": changeTrigger, "funcsToDisplay": [changeTrigger]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},

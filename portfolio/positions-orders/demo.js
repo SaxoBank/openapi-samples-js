@@ -152,11 +152,17 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
-                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price) + " (status " + order.Status + ")" + (
-                            order.hasOwnProperty("ExternalReference")
-                            ? " reference: " + order.ExternalReference
-                            : ""
-                        ) + (
+                        if (order.OpenOrderType === "LimitTrigger") {
+                            list += "Conditional order on trigger " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price);
+                        } else {
+                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price);
+                        }
+                        list += " (status " + order.Status + ")" + (
+                                order.hasOwnProperty("ExternalReference")
+                                ? " reference: " + order.ExternalReference
+                                : ""
+                            );
+                        list += (
                             order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
                             ? " partially filled: " + order.FilledAmount
                             : ""
