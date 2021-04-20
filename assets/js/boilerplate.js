@@ -1,8 +1,8 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true */
 /*global console */
 
 /*
- * boilerplate v1.22
+ * boilerplate v1.23
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -26,22 +26,28 @@
 function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "sim",
         "authUrl": "https://sim.logonvalidation.net/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
         "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
-        "implicitAppKey": {
+        "appKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "live",
         "authUrl": "https://live.logonvalidation.net/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
-        "implicitAppKey": {
+        "appKey": {
             "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
             "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
         }
@@ -232,16 +238,30 @@ function demonstrationHelper(settings) {
      */
     function getConfig() {
         let urlParams;
+        let isRunningOnSim = true;
         if (window.URLSearchParams) {
-            urlParams = new window.URLSearchParams(document.location.search.substring(1));
-            return (
-                urlParams.get("env") === "live"
-                ? configLive
-                : configSim
+            urlParams = new window.URLSearchParams(
+                window.location.hash === ""
+                ? window.location.search
+                : window.location.hash.replace("#", "?")
             );
-        } else {
-            return configSim;
+            if (urlParams.get("env") === "live") {
+                isRunningOnSim = false;
+            } else if (urlParams.get("state") !== null) {
+                try {
+                    if (JSON.parse(window.atob(urlParams.get("state"))).env === "live") {
+                        isRunningOnSim = false;
+                    }
+                } catch (ignore) {
+                    console.error("Something went wrong unpacking the state parameter..");
+                }
+            }
         }
+        return (
+            isRunningOnSim
+            ? configSim
+            : configLive
+        );
     }
 
     /**
@@ -534,20 +554,21 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Notify about token expiration in 5 seconds.
+     * Notify about token expiration in 10 seconds.
      * @param {string} token The token to be checked.
      * @return {void}
      */
     function activateTokenExpirationWarning(token) {
+        const secondsBeforeWarning = 10;
         let secondsUntilTokenExpiry;
         let secondsUntilTokenExpiryWarning;
         if (token !== "") {
             secondsUntilTokenExpiry = getSecondsUntilTokenExpiry(token);
-            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - 5;
+            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - secondsBeforeWarning;
             if (secondsUntilTokenExpiryWarning > 0) {
                 window.clearTimeout(tokenExpirationTimer);
                 tokenExpirationTimer = window.setTimeout(function () {
-                    console.error("The access token expires in 5 seconds. The app might need to refresh the token. And update the websocket subscription.");
+                    console.error("The access token expires in " + secondsBeforeWarning + " seconds. The app might need to refresh the token. And update the websocket subscription.");
                 }, secondsUntilTokenExpiryWarning * 1000);
             }
         }
@@ -605,7 +626,7 @@ function demonstrationHelper(settings) {
          * Try to get the token from localStorage.
          * @return {null|string} The token - null if not found.
          */
-        function loadAccessToken() {
+        function loadAccessTokenFromLocalStorage() {
             try {
                 return window.localStorage.getItem(tokenKey);
             } catch (ignore) {
@@ -613,6 +634,129 @@ function demonstrationHelper(settings) {
                 return null;
             }
         }
+
+        /**
+         * Display and store the token, if valid.
+         * @param {string} token The access token.
+         * @return {void}
+         */
+        function saveAndShowToken(token) {
+            const secondsUntilExpiry = getSecondsUntilTokenExpiry(token);
+            if (secondsUntilExpiry > 0) {
+                saveAccessToken(token);
+                settings.accessTokenElm.value = token;
+                console.debug("Token is valid for another " + secondsUntilExpiry + " seconds.");
+            }
+        }
+
+        /**
+         * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
+         * @param {string} appServerUrl The host+path of the application backend.
+         * @param {string} page The page to be requested.
+         * @param {Object} body The body object to post to the page.
+         * @return {void}
+         */
+        function requestCodeFlowToken(appServerUrl, page, body) {
+            fetch(
+                appServerUrl + page,
+                {
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Accept": "application/json; charset=utf-8"
+                    },
+                    "body": JSON.stringify(body)
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const refreshTime = Math.max(0, (responseJson.expires_in - 5) * 1000);  // Prevent negative values https://stackoverflow.com/questions/8430966/is-calling-settimeout-with-a-negative-delay-ok
+                        // Make sure the token will be refreshed before expiration.
+                        // When you are late with exchanging the code for a token, the expires_in can be negative.
+                        // This is not an issue, the refresh_token is valid much longer.
+                        window.setTimeout(function () {
+                            console.log("Requesting token using the refresh token..");
+                            requestCodeFlowToken(appServerUrl, "server-refresh-token.php", {
+                                "refresh_token": responseJson.refresh_token
+                            });
+                        }, refreshTime);
+                        if (settings.hasOwnProperty("newTokenCallback") && settings.newTokenCallback !== undefined && settings.newTokenCallback !== null) {
+                            settings.newTokenCallback(responseJson.access_token);
+                        }
+                        saveAndShowToken(responseJson.access_token);
+                        console.log("Access token successfully retrieved.");
+                    });
+                } else {
+                    processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        /**
+         * Use the OAuth2 Code Flow to request a token via a code from the URL.
+         * @param {string} appServerUrl The host+path of the application backend.
+         * @param {string} code The code from the URL.
+         * @return {void}
+         */
+        function getTokenViaCodeFlow(appServerUrl, code) {
+            let newAccessToken;
+            // First, maybe there is a code in the URL, supplied when being redirected after authententication using Implicit Flow?
+            if (code === null) {
+                // Second, maybe the token is stored before a refresh, or in a different sample?
+                newAccessToken = loadAccessTokenFromLocalStorage();
+                if (newAccessToken !== null) {
+                    saveAndShowToken(newAccessToken);
+                }
+            } else {
+                console.log("Requesting token using the code from the URL..");
+                requestCodeFlowToken(appServerUrl, "server-get-token.php", {
+                    "code": code
+                });
+            }
+        }
+
+        /**
+         * Use the OAuth2 Implicit Flow to read a token from the URL.
+         * @param {string} newAccessToken The token from the URL.
+         * @return {void}
+         */
+        function getTokenViaImplicitFlow(newAccessToken) {
+            if (newAccessToken === null) {
+                // Second, maybe the token is stored before a refresh, or in a different sample?
+                newAccessToken = loadAccessTokenFromLocalStorage();
+            }
+            if (newAccessToken !== null) {
+                saveAndShowToken(newAccessToken);
+            }
+        }
+
+        const config = getConfig();
+        let urlParams;
+        if (window.URLSearchParams) {
+            urlParams = new window.URLSearchParams(
+                config.grantType === "code"
+                ? window.location.search
+                : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
+            );
+            const errorDescription = urlParams.get("error_description");
+            if (errorDescription !== null) {
+                // Something went wrong..
+                console.error("Error getting token: " + errorDescription);
+            } else if (config.grantType === "code") {
+                getTokenViaCodeFlow(config.appServerUrl, urlParams.get("code"));
+            } else {
+                getTokenViaImplicitFlow(urlParams.get("access_token"));
+            }
+        }
+    }
+
+    /**
+     * If this sample is run from a known location (https://saxobank.github.io, or http://localhost), the link to authenticate using an app on Extended AssetTypes can be provided.
+     * @return {void}
+     */
+    function addOptionalExtendedAssetTypesLoginLink() {
 
         /**
          * Store the CSRF token in localStorage or cookie.
@@ -633,40 +777,17 @@ function demonstrationHelper(settings) {
         const stateObject = {
             "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
             "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
-            "env": (
-                config.authUrl === configLive.authUrl
-                ? "live"
-                : "sim"
-            )
+            "env": config.env
         };
-        // First, maybe the token is supplied in the URL, as a bookmark?
-        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
-        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        let newAccessToken = urlParams.get("access_token");
-        let secondsUntilExpiry;
-        if (urlParams.get("error_description") !== null) {  // Something went wrong..
-            console.error("Error getting token: " + urlParams.get("error_description"));
-        }
-        if (newAccessToken === null) {
-            // Second, maybe the token is stored before a refresh, or in a different sample?
-            newAccessToken = loadAccessToken();
-        } else {
-            saveAccessToken(newAccessToken);
-        }
-        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
-        if (secondsUntilExpiry > 0) {
-            settings.accessTokenElm.value = newAccessToken;
-            console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
-        }
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
-            // We can probably use the Implicit Grant to get a token
+            // We can probably use the Implicit/Code Flow Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
-            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
-                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
+                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
             } else {
-                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes;
+                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes;
                 settings.retrieveTokenHref.target = "_self";  // Back to default
             }
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
@@ -686,6 +807,7 @@ function demonstrationHelper(settings) {
         mirrorConsoleError();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
+            addOptionalExtendedAssetTypesLoginLink();
             activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
                 saveAccessToken(settings.accessTokenElm.value);

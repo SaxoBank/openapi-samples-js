@@ -41,11 +41,7 @@ In this example the state is actually a base64 encoded stringified JSON object. 
 
     const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
     const stateObject = JSON.parse(window.atob(urlParams.get("state")));  // Get this by using window.location.pathname
-    const newRedirect = window.location.protocol + "//" + window.location.host + stateObject.redirect + (
-        stateObject.env.toLowerCase() === "live"
-        ? "?env=live"
-        : ""
-    );
+    const newRedirect = window.location.protocol + "//" + window.location.host + stateObject.redirect;
     document.getElementById("idRedirectUrl").innerText = "..to " + newRedirect;
     verifyCsrfToken(stateObject.csrfToken);
     window.location.replace(newRedirect + window.location.hash);

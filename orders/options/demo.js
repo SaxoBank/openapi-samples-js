@@ -212,7 +212,9 @@
                 return i.accountKey === demo.user.accountKey;
             }).accountId;
             // Next, check if instrument is allowed on this account:
-            if (tradableOn.indexOf(activeAccountId) === -1) {
+            if (tradableOn.length === 0) {
+                window.alert("This instrument cannot be traded on any of your accounts.");
+            } else if (tradableOn.indexOf(activeAccountId) === -1) {
                 window.alert("This instrument cannot be traded on the selected account " + activeAccountId + ", but only on " + tradableOn.join(", ") + ".");
             }
         }
