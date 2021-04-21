@@ -1,4 +1,4 @@
-/*jslint browser: true, for: true, long: true */
+/*jslint browser: true, long: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -42,6 +42,7 @@
      * @return {void}
      */
     function preCheckNewOrder() {
+        // The PreCheck only checks the order, not the trigger!
         // Bug: Preview doesn't check for limit outside market hours
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.AccountKey = demo.user.accountKey;
@@ -85,7 +86,7 @@
     }
 
     /**
-     * This is an example of placing a single conditional order.
+     * This is an example of placing a conditional order.
      * @return {void}
      */
     function placeNewOrder() {
