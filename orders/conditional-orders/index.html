@@ -33,16 +33,16 @@ Order tickets must warn before trading a complex product, provide a KID download
 <br />
 <label>
     Condition: <select class="selector" id="idCbxCondition">
-        <option value="TriggerBreakout">Breakout</option>
-        <option value="TriggerStop">Distance</option>
-        <option value="TriggerLimit" selected>Price of an instrument</option>
+        <option value="TriggerBreakout">TriggerBreakout (Breakout)</option>
+        <option value="TriggerStop">TriggerStop (Distance)</option>
+        <option value="TriggerLimit" selected>TriggerLimit (Price)</option>
     </select>
 </label>
 <br />
 <label>
     Operator: <select class="selector" id="idCbxOperator">
-        <option value="AtOrAbove" selected>At, or above</option>
-        <option value="AtOrBelow">At, or below</option>
+        <option value="Sell" selected>At, or above</option>
+        <option value="Buy">At, or below</option>
     </select>
 </label>
 <br />
@@ -50,6 +50,16 @@ Order tickets must warn before trading a complex product, provide a KID download
     Trigger: <select class="selector" id="idCbxTrigger">
         <option value="Last" selected>Last price</option>
         <option value="Open">Open price</option>
+        <option value="Close">Close price</option>
+    </select>
+</label>
+<br />
+<label>
+    Expiry: <select class="selector" id="idCbxExpiry">
+        <option value="GoodTillCancel" selected>GoodTillCancel</option>
+        <option value="DayOrder">DayOrder</option>
+        <option value="EOM">End Of Month</option>
+        <option value="EOY">End Of Year</option>
     </select>
 </label>
 <br />
@@ -84,7 +94,8 @@ POST body containing order parameters:
             "TriggerOrderData": {
                 "LowerPrice": 900,
                 "PriceType": "Open"
-            }
+            },
+            "ManualOrder": true
         }
     ]
 }

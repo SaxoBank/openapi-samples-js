@@ -191,6 +191,62 @@
         });
     }
 
+    /**
+     * Create a description of the order with condition.
+     * @return {void}
+     */
+    function getConditionInText(conditionalOrder) {
+
+        function priceTypeInText() {
+            switch (conditionalOrder.TriggerOrderData.PriceType) {
+            case "Last":
+                return "last traded";
+            default:
+                return conditionalOrder.TriggerOrderData.PriceType.toLowerCase();
+            }
+        }
+
+        let description = "Activate this order when the following condition is met:\n";
+        let expirationDate;
+        switch (conditionalOrder.OrderType) {
+        case "TriggerStop":  // Distance
+            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " " + priceTypeInText() + " price is " + conditionalOrder.TriggerOrderData.LowerPrice + " " + (
+                conditionalOrder.BuySell === "Sell"
+                ? "above lowest "
+                : "below highest "
+            ) + priceTypeInText() + " price";
+            break;
+        case "TriggerBreakout":  // Breakout
+            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " " + priceTypeInText() + " price is outside " + conditionalOrder.TriggerOrderData.LowerPrice + "-" + conditionalOrder.TriggerOrderData.UpperPrice;
+            break;
+        case "TriggerLimit":  // Price
+            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " last traded price is at or " + (
+                conditionalOrder.BuySell === "Sell"
+                ? "above"
+                : "below"
+            ) + " " + conditionalOrder.TriggerOrderData.LowerPrice;
+            break;
+        }
+        description += ".\n";
+        switch (conditionalOrder.OrderDuration.DurationType) {
+        case "GoodTillDate":
+            expirationDate = new Date(conditionalOrder.OrderDuration.ExpirationDateTime);
+            description += "Valid until trade day " + expirationDate.toLocaleDateString() + ".";
+            break;
+        case "DayOrder":
+            description += "Valid for current trade day.";
+            break;
+        case "GoodTillCancel":
+            description += "Valid until met or canceled.";
+            break;
+        }
+        return description;
+    }
+
+    /**
+     * This function is called when the value of idCbxCondition is changed.
+     * @return {void}
+     */
     function changeCondition() {
         // Conditions are Price, Breakout and Distance.
         // A price condition is met when the price of the trigger instrument reaches a certain value.
@@ -198,35 +254,91 @@
         //      .. of a breakout condition: EURUSD close price is outside 1.1500-1.1600. Valid until trade day 22-Dec-2022.
         //      .. of a distance condition: DAX Index is 1,000 below highest open price. Valid for current trade day.
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.Orders[0].OrderType = document.getElementById("idCbxCondition").value;
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-    }
-
-    function changeOperator() {
-        // Operators differ per condition.
-        const newOrderObject = getOrderObjectFromJson();
-        switch (document.getElementById("idCbxOperator").value) {
-        case "AtOrAbove":
-            newOrderObject.Orders[0].BuySell = "Sell";
+        const conditionalOrder = newOrderObject.Orders[0];
+        const newCondition = document.getElementById("idCbxCondition").value;
+        conditionalOrder.OrderType = newCondition;
+        delete conditionalOrder.TrailingStopStep;
+        delete conditionalOrder.TrailingStopDistanceToMarket;
+        delete conditionalOrder.UpperPrice;
+        delete conditionalOrder.BuySell;
+        switch (newCondition) {
+        case "TriggerStop":  // Distance
+            conditionalOrder.TrailingStopStep = 0.05;
+            conditionalOrder.TrailingStopDistanceToMarket = 50;
+            conditionalOrder.LowerPrice = 700;
             break;
-        case "AtOrBelow":
-            newOrderObject.Orders[0].BuySell = "Buy";
+        case "TriggerBreakout":  // Breakout
+            conditionalOrder.TriggerOrderData.LowerPrice = 10;
+            conditionalOrder.TriggerOrderData.UpperPrice = 1500;
+            break;
+        case "TriggerLimit":  // Price
+            conditionalOrder.LowerPrice = 1000;
             break;
         }
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+        console.log(getConditionInText(conditionalOrder));
     }
 
+    /**
+     * This function is called when the value of idCbxOperator is changed.
+     * @return {void}
+     */
+    function changeOperator() {
+        // Applicable for Limits. When "At or above": Sell, when "At or below": Buy.
+        const newOrderObject = getOrderObjectFromJson();
+        newOrderObject.Orders[0].BuySell = document.getElementById("idCbxOperator").value;
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+        console.log(getConditionInText(newOrderObject.Orders[0]));
+    }
+
+    /**
+     * This function is called when the value of idCbxTrigger is changed.
+     * @return {void}
+     */
     function changeTrigger() {
         // Triggers differ per condition.
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.Orders[0].OrderType = document.getElementById("idCbxTrigger").value;
+        newOrderObject.Orders[0].TriggerOrderData.PriceType = document.getElementById("idCbxTrigger").value;
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+        console.log(getConditionInText(newOrderObject.Orders[0]));
+    }
+
+    /**
+     * This function is called when the value of idCbxExpiry is changed.
+     * @return {void}
+     */
+    function changeExpiry() {
+        const expiry = document.getElementById("idCbxExpiry").value;
+        const expiryDate = new Date();
+        const newOrderObject = getOrderObjectFromJson();
+        const conditionalOrder = newOrderObject.Orders[0];
+        switch (expiry) {
+        case "EOM":
+            conditionalOrder.OrderDuration.DurationType = "GoodTillDate";
+            expiryDate.setMonth(expiryDate.getMonth() + 1, 0);
+            conditionalOrder.OrderDuration.ExpirationDateTime = expiryDate.toISOString().split("T")[0];
+            conditionalOrder.OrderDuration.ExpirationDateContainsTime = false;
+            break;
+        case "EOY":
+            conditionalOrder.OrderDuration.DurationType = "GoodTillDate";
+            expiryDate.setFullYear(expiryDate.getFullYear() + 1, 0, 0);
+            conditionalOrder.OrderDuration.ExpirationDateTime = expiryDate.toISOString().split("T")[0];
+            conditionalOrder.OrderDuration.ExpirationDateContainsTime = false;
+            break;
+        default:
+            conditionalOrder.OrderDuration.DurationType = expiry;
+            delete conditionalOrder.OrderDuration.ExpirationDateTime;
+            delete conditionalOrder.OrderDuration.ExpirationDateContainsTime;
+        }
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+        console.log(getConditionInText(conditionalOrder));
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxCondition", "func": changeCondition, "funcsToDisplay": [changeCondition]},
-        {"evt": "change", "elmId": "idCbxOperator", "func": changeOperator, "funcsToDisplay": [changeOperator]},
-        {"evt": "change", "elmId": "idCbxTrigger", "func": changeTrigger, "funcsToDisplay": [changeTrigger]},
+        {"evt": "change", "elmId": "idCbxCondition", "func": changeCondition, "funcsToDisplay": [changeCondition, getConditionInText]},
+        {"evt": "change", "elmId": "idCbxOperator", "func": changeOperator, "funcsToDisplay": [changeOperator, getConditionInText]},
+        {"evt": "change", "elmId": "idCbxTrigger", "func": changeTrigger, "funcsToDisplay": [changeTrigger, getConditionInText]},
+        {"evt": "change", "elmId": "idCbxExpiry", "func": changeExpiry, "funcsToDisplay": [changeExpiry, getConditionInText]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
