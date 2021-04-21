@@ -16,6 +16,7 @@
         "footerElm": document.getElementById("idFooter")
     });
     let lastOrderId = 0;
+    let lastOrderIdCondition = 0;
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -110,6 +111,7 @@
                         : "\nX-Request-ID response header: " + xRequestId
                     ));
                     lastOrderId = responseJson.OrderId;
+                    lastOrderIdCondition = responseJson.Orders[0].OrderId;
                 });
             } else {
                 console.debug(response);
@@ -138,6 +140,7 @@
             "Content-Type": "application/json; charset=utf-8"
         };
         newOrderObject.OrderId = lastOrderId;
+        newOrderObject.Orders[0].OrderId = lastOrderIdCondition;
         fetch(
             demo.apiUrl + "/trade/v2/orders",
             {
@@ -210,7 +213,7 @@
         let expirationDate;
         switch (conditionalOrder.OrderType) {
         case "TriggerStop":  // Distance
-            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " " + priceTypeInText() + " price is " + conditionalOrder.TriggerOrderData.LowerPrice + " " + (
+            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " " + priceTypeInText() + " price is " + conditionalOrder.TrailingStopDistanceToMarket + " " + (
                 conditionalOrder.BuySell === "Sell"
                 ? "above lowest "
                 : "below highest "
@@ -259,20 +262,22 @@
         conditionalOrder.OrderType = newCondition;
         delete conditionalOrder.TrailingStopStep;
         delete conditionalOrder.TrailingStopDistanceToMarket;
-        delete conditionalOrder.UpperPrice;
-        delete conditionalOrder.BuySell;
+        delete conditionalOrder.TriggerOrderData.UpperPrice;
         switch (newCondition) {
         case "TriggerStop":  // Distance
             conditionalOrder.TrailingStopStep = 0.05;
             conditionalOrder.TrailingStopDistanceToMarket = 50;
-            conditionalOrder.LowerPrice = 700;
+            conditionalOrder.TriggerOrderData.LowerPrice = 700;
+            conditionalOrder.BuySell = document.getElementById("idCbxOperator").value;
             break;
         case "TriggerBreakout":  // Breakout
             conditionalOrder.TriggerOrderData.LowerPrice = 10;
             conditionalOrder.TriggerOrderData.UpperPrice = 1500;
+            delete conditionalOrder.BuySell;
             break;
         case "TriggerLimit":  // Price
-            conditionalOrder.LowerPrice = 1000;
+            conditionalOrder.TriggerOrderData.LowerPrice = 1000;
+            conditionalOrder.BuySell = document.getElementById("idCbxOperator").value;
             break;
         }
         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
