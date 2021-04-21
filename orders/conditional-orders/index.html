@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Order Demo for Conditional Orders</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Conditional Orders</h1>
+<h2 class="project-tagline">Creating Orders with a Trigger</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Orders that are placed with a condition</h1>
+This example shows how create an order that will be placed under a condition.<br />
+It uses the Dutch AEX Index as the reference for the trigger.<br />
+Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
+<br />
+<br />
+<label>
+    Condition: <select class="selector" id="idCbxCondition">
+        <option value="TriggerBreakout">TriggerBreakout (Breakout)</option>
+        <option value="TriggerStop">TriggerStop (Distance)</option>
+        <option value="TriggerLimit" selected>TriggerLimit (Price)</option>
+    </select>
+</label>
+<br />
+<label>
+    Operator: <select class="selector" id="idCbxOperator">
+        <option value="Sell" selected>Distance: "Below highest", Price: "At or above"</option>
+        <option value="Buy">Distance: "Above lowest", Price: "At or below"</option>
+    </select>
+</label>
+<br />
+<label>
+    Trigger: <select class="selector" id="idCbxTrigger">
+        <option value="Last" selected>Last price</option>
+        <option value="Open">Open price</option>
+        <option value="Close">Close price</option>
+    </select>
+</label>
+<br />
+<label>
+    Expiry: <select class="selector" id="idCbxExpiry">
+        <option value="GoodTillCancel" selected>GoodTillCancel</option>
+        <option value="DayOrder">DayOrder</option>
+        <option value="EOM">End Of Month</option>
+        <option value="EOY">End Of Year</option>
+    </select>
+</label>
+<br />
+<br />
+POST body containing order parameters:
+<br />
+<textarea class="json-input" id="idNewOrderObject" rows="13">
+{
+    "AccountKey": "(added on first request)",
+    "Uic": 3066,
+    "AssetType": "Stock",
+    "OrderType": "Market",
+    "BuySell": "Buy",
+    "Amount": 20,
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    },
+    "OrderRelation": "StandAlone",
+    "ExternalReference": "MyConditionalOrderCorrelationId",
+    "ManualOrder": true,
+    "Orders": [
+        {
+            "Uic": 1957254,
+            "AssetType": "StockIndex",
+            "OrderDuration": {
+                "DurationType": "GoodTillDate",
+                "ExpirationDateTime": "2021-12-31",
+                "ExpirationDateContainsTime": false
+            },
+            "OrderType": "TriggerLimit",
+            "BuySell": "Sell",
+            "TriggerOrderData": {
+                "LowerPrice": 900,
+                "PriceType": "Open"
+            },
+            "ManualOrder": true
+        }
+    ]
+}
+</textarea>
+<br />
+<input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
+<input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
+<input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
+<input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

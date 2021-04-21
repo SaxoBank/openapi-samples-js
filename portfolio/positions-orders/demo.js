@@ -23,37 +23,42 @@
         if (value === undefined || value === null) {
             return "(not available)";
         }
-        switch (displayAndFormat.Format) {
-        case "Normal":  // Standard decimal formatting is used with the Decimals field indicating the number of decimals.
+        if (displayAndFormat.hasOwnProperty("Format")) {
+            switch (displayAndFormat.Format) {
+            case "Normal":  // Standard decimal formatting is used with the Decimals field indicating the number of decimals.
+                result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals});
+                break;
+            case "Percentage":  // Display as percentage, e.g. 12.34%.
+                result = value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + "%";
+                break;
+            case "AllowDecimalPips":  // Display the last digit as a smaller than the rest of the numbers. Note that this digit is not included in the number of decimals, effectively increasing the number of decimals by one. E.g. 12.345 when Decimals is 2 and DisplayFormat is AllowDecimalPips.
+                result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + value.toFixed(displayAndFormat.Decimals + 1).slice(-1);
+                break;
+            case "Fractions":  // Display as regular fraction i.e. 3 1/4 where 1=numerator and 4=denominator.
+                integerPart = parseInt(value);
+                fractionPart = value - integerPart;
+                numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
+                numerator = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
+                result = displayAndFormat.Currency + " " + integerPart + " " + numerator + "/" + Math.pow(2, displayAndFormat.Decimals);
+                break;
+            case "ModernFractions":  // Special US Bonds futures fractional format (1/32s or 1/128s without nominator). If PriceDecimals = -5 then the nominator is 32, else 128.
+                integerPart = parseInt(value);
+                fractionPart = value - integerPart;
+                numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
+                numerator = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
+                result = displayAndFormat.Currency + " " + integerPart + " " + numerator + "/" + (
+                    displayAndFormat.Decimals === -5
+                    ? "32"
+                    : "128"
+                );
+                break;
+            default:
+                console.error("Unsupported format: " + displayAndFormat.Format);
+                throw "Unsupported format";
+            }
+        } else {
+            // No format returned, use "Normal":
             result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals});
-            break;
-        case "Percentage":  // Display as percentage, e.g. 12.34%.
-            result = value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + "%";
-            break;
-        case "AllowDecimalPips":  // Display the last digit as a smaller than the rest of the numbers. Note that this digit is not included in the number of decimals, effectively increasing the number of decimals by one. E.g. 12.345 when Decimals is 2 and DisplayFormat is AllowDecimalPips.
-            result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + value.toFixed(displayAndFormat.Decimals + 1).slice(-1);
-            break;
-        case "Fractions":  // Display as regular fraction i.e. 3 1/4 where 1=numerator and 4=denominator.
-            integerPart = parseInt(value);
-            fractionPart = value - integerPart;
-            numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
-            numerator = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
-            result = displayAndFormat.Currency + " " + integerPart + " " + numerator + "/" + Math.pow(2, displayAndFormat.Decimals);
-            break;
-        case "ModernFractions":  // Special US Bonds futures fractional format (1/32s or 1/128s without nominator). If PriceDecimals = -5 then the nominator is 32, else 128.
-            integerPart = parseInt(value);
-            fractionPart = value - integerPart;
-            numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
-            numerator = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
-            result = displayAndFormat.Currency + " " + integerPart + " " + numerator + "/" + (
-                displayAndFormat.Decimals === -5
-                ? "32"
-                : "128"
-            );
-            break;
-        default:
-            console.error("Unsupported format: " + displayAndFormat.Format);
-            throw "Unsupported format";
         }
         return result;
     }
@@ -132,6 +137,58 @@
     }
 
     /**
+     * Create a description of the condition in case of conditional orders.
+     * @return {void}
+     */
+    function getConditionInText(conditionalOrder) {
+
+        function priceTypeInText() {
+            switch (conditionalOrder.TriggerPriceType) {
+            case "Last":
+                return "last traded";
+            default:
+                return conditionalOrder.TriggerPriceType.toLowerCase();
+            }
+        }
+
+        let description = "Order which will be activated when the following condition is met: ";
+        let expirationDate;
+        switch (conditionalOrder.OpenOrderType) {
+        case "StopTrigger":  // Distance
+            description += conditionalOrder.DisplayAndFormat.Description + " " + priceTypeInText() + " price is " + conditionalOrder.TrailingStopDistanceToMarket + " " + (
+                conditionalOrder.BuySell === "Sell"
+                ? "above lowest "
+                : "below highest "
+            ) + priceTypeInText() + " price";
+            break;
+        case "BreakoutTrigger":  // Breakout
+            description += conditionalOrder.DisplayAndFormat.Description + " " + priceTypeInText() + " price is outside " + conditionalOrder.BreakoutTriggerDownPrice + "-" + conditionalOrder.BreakoutTriggerUpPrice;
+            break;
+        case "LimitTrigger":  // Price
+            description += conditionalOrder.DisplayAndFormat.Description + " last traded price is at or " + (
+                conditionalOrder.BuySell === "Sell"
+                ? "above"
+                : "below"
+            ) + " " + conditionalOrder.Price;
+            break;
+        }
+        description += ". ";
+        switch (conditionalOrder.Duration.DurationType) {
+        case "GoodTillDate":
+            expirationDate = new Date(conditionalOrder.Duration.ExpirationDate);
+            description += "Valid until trade day " + expirationDate.toLocaleDateString() + ".";
+            break;
+        case "DayOrder":
+            description += "Valid for current trade day.";
+            break;
+        case "GoodTillCancel":
+            description += "Valid until met or canceled.";
+            break;
+        }
+        return description;
+    }
+
+    /**
      * Example of formatting pending orders.
      * @param {string} url The URL to use for the request.
      * @param {string} msg Text to display as comment, followed by the orders.
@@ -152,11 +209,25 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
-                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price) + " (status " + order.Status + ")" + (
+                        switch (order.OpenOrderType) {
+                        case "LimitTrigger":
+                            list += "Conditional order of type Price - " + getConditionInText(order);
+                            break;
+                        case "BreakoutTrigger":
+                            list += "Conditional order of type Breakout - " + getConditionInText(order);
+                            break;
+                        case "StopTrigger":
+                            list += "Conditional order of type Distance - " + getConditionInText(order);
+                            break;
+                        default:
+                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price);
+                        }
+                        list += " (status " + order.Status + ")" + (
                             order.hasOwnProperty("ExternalReference")
                             ? " reference: " + order.ExternalReference
                             : ""
-                        ) + (
+                        );
+                        list += (
                             order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
                             ? " partially filled: " + order.FilledAmount
                             : ""
@@ -252,7 +323,20 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
-                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " (status " + order.Status + " " + order.SubStatus + ")" + (
+                        switch (order.OrderType) {
+                        case "LimitTrigger":
+                            list += "Conditional order of type " + order.OrderType;
+                            break;
+                        case "BreakoutTrigger":
+                            list += "Conditional order of type " + order.OrderType;
+                            break;
+                        case "StopTrigger":
+                            list += "Conditional order of type " + order.OrderType;
+                            break;
+                        default:
+                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType;
+                        }
+                        list += " (status " + order.Status + " " + order.SubStatus + ")" + (
                             order.hasOwnProperty("ExternalReference")
                             ? " reference: " + order.ExternalReference
                             : ""
