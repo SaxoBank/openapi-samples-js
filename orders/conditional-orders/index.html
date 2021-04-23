@@ -69,27 +69,24 @@ POST body containing order parameters:
 <textarea class="json-input" id="idNewOrderObject" rows="13">
 {
     "AccountKey": "(added on first request)",
-    "Uic": 3066,
-    "AssetType": "Stock",
-    "OrderType": "Market",
     "BuySell": "Buy",
     "Amount": 20,
+    "AssetType": "Stock",
+    "Uic": 3066,
+    "OrderType": "Market",
     "OrderDuration": {
         "DurationType": "DayOrder"
     },
-    "OrderRelation": "StandAlone",
     "ExternalReference": "MyConditionalOrderCorrelationId",
     "ManualOrder": true,
     "Orders": [
         {
-            "Uic": 1957254,
-            "AssetType": "StockIndex",
-            "OrderDuration": {
-                "DurationType": "GoodTillDate",
-                "ExpirationDateTime": "2021-12-31",
-                "ExpirationDateContainsTime": false
-            },
             "OrderType": "TriggerLimit",
+            "AssetType": "StockIndex",
+            "Uic": 1957254,
+            "OrderDuration": {
+                "DurationType": "GoodTillCancel"
+            },
             "BuySell": "Sell",
             "TriggerOrderData": {
                 "LowerPrice": 900,
