@@ -220,7 +220,11 @@
                             list += "Conditional order of type Distance - " + getConditionInText(order);
                             break;
                         default:
-                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price);
+                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + (
+                                order.OpenOrderType === "Market"  // This can be the case for conditional orders (Status = WaitCondition)
+                                ? " (Market)"
+                                : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
+                            );
                         }
                         list += " (status " + order.Status + ")" + (
                             order.hasOwnProperty("ExternalReference")
@@ -253,7 +257,7 @@
      */
     function getOrdersClient() {
         getOrders(
-            demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey),
+            demo.apiUrl + "/port/v1/orders?Status=All&FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey),
             "All open orders for client '" + demo.user.clientKey + "'."
         );
     }
@@ -267,7 +271,7 @@
             console.error("AccountGroups are not enabled for this client.");
         } else {
             getOrders(
-                demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKeys[0]),
+                demo.apiUrl + "/port/v1/orders?Status=All&FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountGroupKey=" + encodeURIComponent(demo.user.accountGroupKeys[0]),
                 "All open orders for your account group '" + demo.user.accountGroupKeys[0] + "'."
             );
         }
@@ -279,7 +283,7 @@
      */
     function getOrdersAccount() {
         getOrders(
-            demo.apiUrl + "/port/v1/orders?FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            demo.apiUrl + "/port/v1/orders?Status=All&FieldGroups=DisplayAndFormat,ExchangeInfo&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
             "All open orders for your account '" + demo.user.accountKey + "'."
         );
     }
