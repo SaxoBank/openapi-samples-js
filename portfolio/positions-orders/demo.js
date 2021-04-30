@@ -151,7 +151,7 @@
             }
         }
 
-        let description = "Order which will be activated when the following condition is met: ";
+        let description = "  - activated when the following condition is met: ";
         let expirationDate;
         switch (conditionalOrder.OpenOrderType) {
         case "StopTrigger":  // Distance
@@ -209,33 +209,32 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
-                        switch (order.OpenOrderType) {
-                        case "LimitTrigger":
-                            list += "Conditional order of type Price - " + getConditionInText(order);
-                            break;
-                        case "BreakoutTrigger":
-                            list += "Conditional order of type Breakout - " + getConditionInText(order);
-                            break;
-                        case "StopTrigger":
-                            list += "Conditional order of type Distance - " + getConditionInText(order);
-                            break;
-                        default:
+                        const conditionalOrderTypes = ["LimitTrigger", "BreakoutTrigger", "StopTrigger"];
+                        if (conditionalOrderTypes.indexOf(order.OpenOrderType) < 0) {
                             list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + (
                                 order.OpenOrderType === "Market"  // This can be the case for conditional orders (Status = WaitCondition)
                                 ? " (Market)"
                                 : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
                             );
+                            list += " (status " + order.Status + ")" + (
+                                order.hasOwnProperty("ExternalReference")
+                                ? " reference: " + order.ExternalReference
+                                : ""
+                            );
+                            list += (
+                                order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
+                                ? " partially filled: " + order.FilledAmount
+                                : ""
+                            ) + "\n";
+                            if (order.hasOwnProperty("TriggerParentOrderId")) {
+                                // This is the reference to the condition.
+                                responseJson.Data.forEach(function (conditionalOrder) {
+                                    if (conditionalOrder.OrderId === order.TriggerParentOrderId) {
+                                        list += getConditionInText(conditionalOrder) + "\n"
+                                    }
+                                });
+                            }
                         }
-                        list += " (status " + order.Status + ")" + (
-                            order.hasOwnProperty("ExternalReference")
-                            ? " reference: " + order.ExternalReference
-                            : ""
-                        );
-                        list += (
-                            order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
-                            ? " partially filled: " + order.FilledAmount
-                            : ""
-                        ) + "\n";
                     });
                     console.log(msg + "\n\n" + (
                         list === ""
