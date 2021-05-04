@@ -406,6 +406,19 @@
         );
     }
 
+    /**
+     * Example of getting historical orders using the ENS endpoint - more on this in the websockets sample.
+     * @return {void}
+     */
+    function getHistoricalOrdersViaEns() {
+        const daysInThePast = 13;  // ENS allows max 14 days back
+        getHistoricalOrders(
+            demo.apiUrl + "/ens/v1/activities?Activities=Orders",
+            "Historical orders from past " + daysInThePast + " days.",
+            daysInThePast
+        );
+    }
+
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnGetPortfolioClient", "func": getPortfolioClient, "funcsToDisplay": [getPortfolioClient, getPortfolio, displayAndFormatValue]},
         {"evt": "click", "elmId": "idBtnGetPortfolioAccountGroup", "func": getPortfolioAccountGroup, "funcsToDisplay": [getPortfolioAccountGroup, getPortfolio, displayAndFormatValue]},
@@ -415,7 +428,8 @@
         {"evt": "click", "elmId": "idBtnGetOrdersAccount", "func": getOrdersAccount, "funcsToDisplay": [getOrdersAccount, getOrders, displayAndFormatValue]},
         {"evt": "click", "elmId": "idBtnGetHistoricalOrdersClient", "func": getHistoricalOrdersClient, "funcsToDisplay": [getHistoricalOrdersClient, getHistoricalOrders, displayAndFormatValue]},
         {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccountGroup", "func": getHistoricalOrdersAccountGroup, "funcsToDisplay": [getHistoricalOrdersAccountGroup, getHistoricalOrders, displayAndFormatValue]},
-        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccount", "func": getHistoricalOrdersAccount, "funcsToDisplay": [getHistoricalOrdersAccount, getHistoricalOrders, displayAndFormatValue]}
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersAccount", "func": getHistoricalOrdersAccount, "funcsToDisplay": [getHistoricalOrdersAccount, getHistoricalOrders, displayAndFormatValue]},
+        {"evt": "click", "elmId": "idBtnGetHistoricalOrdersViaEns", "func": getHistoricalOrdersViaEns, "funcsToDisplay": [getHistoricalOrdersViaEns, displayAndFormatValue]}
     ]);
     demo.displayVersion("port");
 }());
