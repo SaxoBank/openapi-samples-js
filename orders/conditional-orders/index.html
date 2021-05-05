@@ -48,7 +48,7 @@ Order tickets must warn before trading a complex product, provide a KID download
 <br />
 <label>
     Trigger: <select class="selector" id="idCbxTrigger">
-        <option value="Last" selected>Last price</option>
+        <option value="LastTraded" selected>Last traded price</option>
         <option value="Open">Open price</option>
         <option value="Close">Close price</option>
     </select>
@@ -90,7 +90,7 @@ POST body containing order parameters:
             "BuySell": "Sell",
             "TriggerOrderData": {
                 "LowerPrice": 900,
-                "PriceType": "Last"
+                "PriceType": "LastTraded"
             },
             "ManualOrder": true
         }

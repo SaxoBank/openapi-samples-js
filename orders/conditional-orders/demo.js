@@ -27,9 +27,6 @@
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
             newOrderObject.AccountKey = demo.user.accountKey;
-            newOrderObject.Orders.forEach(function (order) {
-                order.AccountKey = demo.user.accountKey;
-            });
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
@@ -203,7 +200,7 @@
 
         function priceTypeInText() {
             switch (conditionalOrder.TriggerOrderData.PriceType) {
-            case "Last":
+            case "LastTraded":
                 return "last traded";
             default:
                 return conditionalOrder.TriggerOrderData.PriceType.toLowerCase();
