@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.23
+ * boilerplate v1.24
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -286,9 +286,17 @@ function demonstrationHelper(settings) {
                     legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
                 }
             });
+            // Give the option to add "-" to the list of LegalAssetTypes.
+            if (settings.selectedAssetType === "-") {
+                legalAssetTypes.unshift(settings.selectedAssetType);
+            }
             legalAssetTypes.forEach(function (legalAssetType) {
                 const option = document.createElement("option");
-                option.text = legalAssetType;
+                option.text = (
+                    legalAssetType === "-"
+                    ? "No filter on AssetType"
+                    : legalAssetType
+                );
                 option.value = legalAssetType;
                 if (option.value === settings.selectedAssetType) {
                     option.setAttribute("selected", true);
@@ -651,14 +659,13 @@ function demonstrationHelper(settings) {
 
         /**
          * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
-         * @param {string} appServerUrl The host+path of the application backend.
          * @param {string} page The page to be requested.
          * @param {Object} body The body object to post to the page.
          * @return {void}
          */
-        function requestCodeFlowToken(appServerUrl, page, body) {
+        function requestCodeFlowToken(page, body) {
             fetch(
-                appServerUrl + page,
+                "https://www.your.server/app/saxo/" + page,
                 {
                     "method": "POST",
                     "headers": {
@@ -676,7 +683,7 @@ function demonstrationHelper(settings) {
                         // This is not an issue, the refresh_token is valid much longer.
                         window.setTimeout(function () {
                             console.log("Requesting token using the refresh token..");
-                            requestCodeFlowToken(appServerUrl, "server-refresh-token.php", {
+                            requestCodeFlowToken("server-refresh-token.php", {
                                 "refresh_token": responseJson.refresh_token
                             });
                         }, refreshTime);
