@@ -350,6 +350,44 @@
     }
 
     /**
+     * Returns trading schedule for a given uic and asset type.
+     * @return {void}
+     */
+    function getTradingSchedule() {
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments/tradingschedule/" + newOrderObject.Uic + "/" + newOrderObject.AssetType,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const now = new Date();
+                    let responseText = "";
+                    responseJson.Sessions.forEach(function (session) {
+                        const startTime = new Date(session.StartTime);
+                        const endTime = new Date(session.EndTime);
+                        if (now >= startTime && now < endTime) {
+                            // This is the session we are in now, usually the first.
+                            responseText += "--> ";
+                        }
+                        responseText += session.State + " from " + startTime.toLocaleString() + " to " + endTime.toLocaleString() + "\n";
+                    });
+                    console.log(responseText);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of an order validation.
      * @return {void}
      */
@@ -596,6 +634,7 @@
         {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
         {"evt": "click", "elmId": "idBtnGetAccessRights", "func": getAccessRights, "funcsToDisplay": [getAccessRights]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
+        {"evt": "click", "elmId": "idBtnGetTradingSchedule", "func": getTradingSchedule, "funcsToDisplay": [getTradingSchedule]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},

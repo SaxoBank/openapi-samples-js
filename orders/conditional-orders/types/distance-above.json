@@ -1,0 +1,31 @@
+{
+  "AccountKey": "g2WzDtP6DUTyLCwhja9zhw==",
+  "BuySell": "Sell",
+  "Amount": 10,
+  "AssetType": "Stock",
+  "Uic": 3066,
+  "OrderType": "Market",
+  "OrderDuration": {
+    "DurationType": "DayOrder"
+  },
+  "ExternalReference": "MyConditionalOrderCorrelationId",
+  "ManualOrder": true,
+  "Orders": [
+    {
+      "OrderType": "TriggerStop",
+      "AssetType": "StockIndex",
+      "Uic": 1957254,
+      "OrderDuration": {
+        "DurationType": "GoodTillCancel"
+      },
+      "BuySell": "Buy",
+      "TriggerOrderData": {
+        "LowerPrice": 700,
+        "PriceType": "LastTraded"
+      },
+      "ManualOrder": true,
+      "TrailingStopStep": 0.05,
+      "TrailingStopDistanceToMarket": 50
+    }
+  ]
+}
