@@ -1,0 +1,117 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="stylesheet" href="decision-tree.css">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="decision-tree.js"></script>
+    <script type="text/javascript" src="../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Support on OpenApi</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">HELP!</h1>
+<h2 class="project-tagline">Raise a support ticket</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<h1>Raise a support ticket for the OpenApi team</h1>
+<!-- Source: https://kb.wisc.edu/kbGuide/page.php?id=66704#toc3 -->
+<div id="tree-container">
+  <div id="q-container">
+
+    <ul id="tree">
+
+      <li>What type of question do you have?</li>
+      <li><label><input name="lvl1" type="radio">I use a thirdparty application like Excel, MultiCharts, TradingView, Dynamic Trend.</label>
+        <ul>
+          <li>Select the thirdparty app you are using:</li>
+          <li><label><input name="lvl2" type="radio">I use the Excel app.</label>
+          
+          </li>
+          <li><label><input name="lvl2" type="radio">I'm using MultiCharts.</label>
+            <ul>
+              <li>Did you already request help from MultiCharts?</li>
+              <li><label><input name="lvl3" type="radio">No, I didn't ask support from MultiCharts.</label>
+                <ul>
+                  <li class="answer">
+                    <p>We don't handle support questions on using MultiCharts. You can request help by navigating to <a href="https://www.multicharts.com/support/" target="_blank">their website</a>.</p>
+                    <p>If you are sure it is something only SaxoBank can help, contact us via OpenApiSupport@saxobank.com.</p>
+                  </li>
+                </ul>
+              </li>
+              <li><label><input name="lvl3" type="radio">Yes, I've contacted MultiCharts for support, but they cannot solve the issue.</label>
+              
+              </li>
+            </ul>
+          </li>
+          <li><label><input name="lvl2" type="radio">I'm using Dynamic Trend.</label>
+          
+          </li>
+          <li><label><input name="lvl2" type="radio">I'm using TradingView.</label>
+          
+          </li>
+          <li><label><input name="lvl2" type="radio">I'm using MetaTrader.</label>
+          
+          </li>
+          <li><label><input name="lvl2" type="radio">I'm using updata.</label>
+          
+          </li>
+          <li><label><input name="lvl2" type="radio">I'm using another app.</label>
+          
+          </li>
+        </ul>
+      </li>
+      <li><label><input name="lvl1" type="radio">I'm developing an app on the SIM-environment.</label>
+        <ul>
+          <li class="answer">
+            <p>First, let's <a href="sim/index.html">sign in to your SIM-account</a> so we can gather some information.</p>
+          </li>
+        </ul>
+      </li>
+      <li><label><input name="lvl1" type="radio">I have a question about the Live environment.</label>
+        <ul>
+          <li class="answer">
+            <p>First, let's <a href="live/index.html">sign in to your Live-account</a> so we can gather some information.</p>
+          </li>
+        </ul>
+      </li>
+      <li><label><input name="lvl1" type="radio">My question is about something else.</label>
+        <ul>
+          <li>Tell us more.</li>
+          <li><label><input name="lvl2" type="radio">What are the costs of using the OpenApi? Who can use it?</label>
+            <ul>
+              <li class="answer">
+                <p>Answer</p>
+              </li>
+            </ul>
+          </li>
+          <li><label><input name="lvl2" type="radio">I finished development on SIM. What do I need for an app on Live?</label>
+            <ul>
+              <li class="answer">
+                <p>You can create an app on Live after <a href="https://www.developer.saxo/openapi/appmanagement#/liveoverview" target="_blank">connecting your Live account to your SIM-account</a>.</p>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+
+  </div>
+  <button id="goBack" class="treeControls">Back</button> 
+  <button id="reset" class="treeControls">Reset</button>
+</div>
+<br />
+<br />
+Summary: <textarea class="highlight" id="idResponse">Click button to launch function.</textarea>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

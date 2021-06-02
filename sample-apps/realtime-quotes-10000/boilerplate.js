@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.24
+ * boilerplate v1.23
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -26,10 +26,11 @@
 function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
-        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "grantType": "code",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
         "env": "sim",
         "authUrl": "https://sim.logonvalidation.net/authorize",
-        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + window.location.pathname,
+        "appServerUrl": "https://www.basement.nl/saxo/",  // This is required when the code flow is used.
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
         "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
@@ -40,16 +41,17 @@ function demonstrationHelper(settings) {
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
-        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "grantType": "code",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
         "env": "live",
         "authUrl": "https://live.logonvalidation.net/authorize",
-        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + window.location.pathname,
+        "appServerUrl": "https://www.basement.nl/saxo/",  // This is required when the code flow is used.
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
         "appKey": {
-            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
-            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
+            "defaultAssetTypes": "4605bdabeee741b09e2714a428bc4829",
+            "extendedAssetTypes": "4605bdabeee741b09e2714a428bc4829"
         }
     };
     const user = {};
@@ -286,17 +288,9 @@ function demonstrationHelper(settings) {
                     legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
                 }
             });
-            // Give the option to add "-" to the list of LegalAssetTypes.
-            if (settings.selectedAssetType === "-") {
-                legalAssetTypes.unshift(settings.selectedAssetType);
-            }
             legalAssetTypes.forEach(function (legalAssetType) {
                 const option = document.createElement("option");
-                option.text = (
-                    legalAssetType === "-"
-                    ? "No filter on AssetType"
-                    : legalAssetType
-                );
+                option.text = legalAssetType;
                 option.value = legalAssetType;
                 if (option.value === settings.selectedAssetType) {
                     option.setAttribute("selected", true);
@@ -659,13 +653,14 @@ function demonstrationHelper(settings) {
 
         /**
          * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
+         * @param {string} appServerUrl The host+path of the application backend.
          * @param {string} page The page to be requested.
          * @param {Object} body The body object to post to the page.
          * @return {void}
          */
-        function requestCodeFlowToken(page, body) {
+        function requestCodeFlowToken(appServerUrl, page, body) {
             fetch(
-                "https://www.your.server/app/saxo/" + page,
+                appServerUrl + page,
                 {
                     "method": "POST",
                     "headers": {
@@ -683,7 +678,7 @@ function demonstrationHelper(settings) {
                         // This is not an issue, the refresh_token is valid much longer.
                         window.setTimeout(function () {
                             console.log("Requesting token using the refresh token..");
-                            requestCodeFlowToken("server-refresh-token.php", {
+                            requestCodeFlowToken(appServerUrl, "server-refresh-token.php", {
                                 "refresh_token": responseJson.refresh_token
                             });
                         }, refreshTime);

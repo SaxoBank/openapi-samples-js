@@ -9,12 +9,15 @@
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
+        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
+        "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
+        "selectedAssetType": "FxSpot",  // Only FX has realtime prices, if Live account is not linked
         "footerElm": document.getElementById("idFooter")
     });
     let connection;
@@ -40,8 +43,10 @@
      */
     function fetchHistoricalData(upToTime) {
         const uic = document.getElementById("idInstrumentId").value;
+        const assetType = document.getElementById("idCbxAssetType").value;
         const horizon = document.getElementById("idCbxHorizon").value;
-        let url = demo.apiUrl + "/chart/v3/charts?Uic=" + uic + "&AssetType=FxSpot&FieldGroups=BlockInfo,ChartInfo,Data,DisplayAndFormat&Horizon=" + horizon;
+        let url = demo.apiUrl + "/chart/v3/charts?Uic=" + uic + "&AssetType=" + assetType + "&FieldGroups=BlockInfo,ChartInfo,Data,DisplayAndFormat&Horizon=" + horizon;
+
         if (upToTime !== undefined && upToTime !== null) {
             url += "&Mode=UpTo&Time=" + oldestSampleTime.toISOString();
         }
@@ -284,7 +289,7 @@
             "ContextId": document.getElementById("idContextId").value,
             "ReferenceId": "MyChartDataEvent",
             "Arguments": {
-                "AssetType": "FxSpot",
+                "AssetType": document.getElementById("idCbxAssetType").value,
                 "FieldGroups": [
                     "Data"
                 ],

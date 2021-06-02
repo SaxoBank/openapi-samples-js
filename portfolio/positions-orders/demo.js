@@ -144,7 +144,7 @@
 
         function priceTypeInText() {
             switch (conditionalOrder.TriggerPriceType) {
-            case "Last":
+            case "LastTraded":
                 return "last traded";
             default:
                 return conditionalOrder.TriggerPriceType.toLowerCase();
