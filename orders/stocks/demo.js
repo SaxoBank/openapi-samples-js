@@ -482,6 +482,36 @@
     }
 
     /**
+     * This is an example of getting detailed information of a specific order (in this case the last placed order).
+     * @return {void}
+     */
+    function getOrderDetails() {
+        fetch(
+            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "/details?ClientKey=" + demo.user.clientKey,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson === null) {
+                        console.error("The order wasn't found in the list of active orders. Is order " + lastOrderId + " still open?");
+                    } else {
+                        console.log("Response: " + JSON.stringify(responseJson, null, 4));
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of updating a single leg order.
      * @return {void}
      */
@@ -637,6 +667,7 @@
         {"evt": "click", "elmId": "idBtnGetTradingSchedule", "func": getTradingSchedule, "funcsToDisplay": [getTradingSchedule]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
+        {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
         {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]}
     ]);
