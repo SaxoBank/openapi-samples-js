@@ -1,4 +1,4 @@
-/*jslint browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
