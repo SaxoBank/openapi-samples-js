@@ -15,18 +15,18 @@
 
     /**
      * Helper function to convert the json string to an object, with error handling.
-     * @return {Object} The newOrderObject from the input field - null if invalid
+     * @return {Object} The standingInstructionsObject from the input field - null if invalid
      */
-    function getElectionObjectFromJson() {
-        let newOrderObject = null;
+    function getStandingInstructionsObjectFromJson() {
+        let standingInstructionsObject = null;
         try {
-            newOrderObject = JSON.parse(document.getElementById("idBody").value);
-            newOrderObject.ClientKey = demo.user.clientKey;
-            document.getElementById("idBody").value = JSON.stringify(newOrderObject, null, 4);
+            standingInstructionsObject = JSON.parse(document.getElementById("idBody").value);
+            standingInstructionsObject.ClientKey = demo.user.clientKey;
+            document.getElementById("idBody").value = JSON.stringify(standingInstructionsObject, null, 4);
         } catch (e) {
             console.error(e);
         }
-        return newOrderObject;
+        return standingInstructionsObject;
     }
 
     /**
@@ -61,8 +61,7 @@
      * @return {void}
      */
     function createStandingInstruction() {
-        getElectionObjectFromJson();
-        const electBody = document.getElementById("idBody").value;
+        const standingInstructionsBody = getStandingInstructionsObjectFromJson();
         let urlPath = "/ca/v2/standinginstructions";
         fetch(
             demo.apiUrl + urlPath,
@@ -72,7 +71,7 @@
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
                     "Content-Type": "application/json"
                 },
-                "body": electBody
+                "body": standingInstructionsBody
             }
         ).then(function (response) {
             if (response.ok) {
@@ -88,7 +87,6 @@
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxAccount", "func": getElectionObjectFromJson, "funcsToDisplay": [getElectionObjectFromJson]},
         {"evt": "click", "elmId": "idBtnGetStandingInstructions", "func": getStandingInstructions, "funcsToDisplay": [getStandingInstructions]},
         {"evt": "click", "elmId": "idBtnCreateStandingInstruction", "func": createStandingInstruction, "funcsToDisplay": [createStandingInstruction]}
     ]);

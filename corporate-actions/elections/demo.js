@@ -34,7 +34,6 @@
      * @return {void}
      */
     function getActiveEvents() {
-        getElectionObjectFromJson();
         let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active";
         fetch(
             demo.apiUrl + urlPath,
@@ -62,10 +61,9 @@
      * @return {void}
      */
     function elect() {
-        const electBody = document.getElementById("idElectBody").value;
+        const electBody = getElectionObjectFromJson();
         let urlPath = "/ca/v2/elections";
-        const body = JSON.parse(electBody);
-        document.getElementById("idEventId").value = body.EventId;
+        document.getElementById("idEventId").value = electBody.EventId;
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -116,7 +114,6 @@
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxAccount", "func": getElectionObjectFromJson, "funcsToDisplay": [getElectionObjectFromJson]},
         {"evt": "click", "elmId": "idBtnGetActiveEvents", "func": getActiveEvents, "funcsToDisplay": [getActiveEvents]},
         {"evt": "click", "elmId": "idBtnElect", "func": elect, "funcsToDisplay": [elect]},
         {"evt": "click", "elmId": "idBtnGetEventById", "func": getEventById, "funcsToDisplay": [getEventById]}

@@ -31,19 +31,19 @@
 This example shows how to elect an option for an event.
 <br />
 <br />
-<input type="button" class="action-button" value="1. Find Ative Events to Elect" id="idBtnGetActiveEvents" />
+<input type="button" class="action-button" value="1. Find Active Events to Elect" id="idBtnGetActiveEvents" />
 <br />
 <br />
 <label>2. Election: POST body containing election parameters: <input type="button" class="action-button" value=" Fill the election below and click" id="idBtnElect" /> </label> 
 <textarea class="json-input" id="idElectBody" rows="10">{
-  "AccountKey": "(added on first request)",
-  "EventId": "(Pick one EventId of the Events)",
-  "Options": [
-      {
-          "OptionId": "(The option to elect according to Options.OptionId)",
-          "Amount": "(Amount according to Holdings.Amount)"
-      }
-  ]
+    "AccountKey": "(added on first request)",
+    "EventId": "(Pick one EventId of the Events)",
+    "Options": [
+        {
+            "OptionId": "(The option to elect according to Options.OptionId)",
+            "Amount": "(Amount according to Holdings.Amount)"
+        }
+    ]
 }
 </textarea>
 <br />
