@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -19,7 +19,6 @@
      */
     function getHoldings() {
         let url = demo.apiUrl + "/ca/v2/holdings";
-        
         fetch(
             url,
             {
@@ -31,7 +30,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -48,8 +46,7 @@
      */
     function getHoldingsByEventId() {
         const eventId = document.getElementById("idEventId").value;
-        let urlPath = "/ca/v2/holdings?EventId=" + eventId;;
-        
+        let urlPath = "/ca/v2/holdings?EventId=" + eventId;
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -73,7 +70,7 @@
 
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnGetHoldings", "func": getHoldings, "funcsToDisplay": [getHoldings]},
-        {"evt": "click", "elmId": "idBtnGetHoldingsByEvent", "func": getHoldingsByEventId, "funcsToDisplay": [getHoldingsByEventId]},
+        {"evt": "click", "elmId": "idBtnGetHoldingsByEvent", "func": getHoldingsByEventId, "funcsToDisplay": [getHoldingsByEventId]}
     ]);
     demo.displayVersion("ca");
 }());

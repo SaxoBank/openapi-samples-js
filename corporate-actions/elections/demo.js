@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -12,7 +12,6 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -34,9 +33,9 @@
      * This is an example of searching for active corporate events..
      * @return {void}
      */
-    function getActiveEvents() {       
+    function getActiveEvents() {
         getElectionObjectFromJson();
-        let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active";  
+        let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active";
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -48,7 +47,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -66,9 +64,8 @@
     function elect() {
         const electBody = document.getElementById("idElectBody").value;
         let urlPath = "/ca/v2/elections";
-        var body = JSON.parse(electBody);
+        const body = JSON.parse(electBody);
         document.getElementById("idEventId").value = body.EventId;
-        
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -81,7 +78,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
-                console.log("These are the details of this elections:\n\n" + JSON.stringify({ "status": response.status, "statusText": response.statusText}, null, 4));
+                console.log("These are the details of this elections:\n\n" + JSON.stringify({"status": response.status, "statusText": response.statusText}, null, 4));
             } else {
                 demo.processError(response);
             }
@@ -90,14 +87,13 @@
         });
     }
 
-
     /**
      * Get Event by id.
      * @return {void}
      */
-     function getEventById() {       
+    function getEventById() {
         const eventId = document.getElementById("idEventId").value;
-        let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active&EventId=" + eventId;  
+        let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active&EventId=" + eventId;
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -123,7 +119,7 @@
         {"evt": "change", "elmId": "idCbxAccount", "func": getElectionObjectFromJson, "funcsToDisplay": [getElectionObjectFromJson]},
         {"evt": "click", "elmId": "idBtnGetActiveEvents", "func": getActiveEvents, "funcsToDisplay": [getActiveEvents]},
         {"evt": "click", "elmId": "idBtnElect", "func": elect, "funcsToDisplay": [elect]},
-        {"evt": "click", "elmId": "idBtnGetEventById", "func": getEventById, "funcsToDisplay": [getEventById]},
+        {"evt": "click", "elmId": "idBtnGetEventById", "func": getEventById, "funcsToDisplay": [getEventById]}
     ]);
     demo.displayVersion("ca");
 }());

@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -10,10 +10,6 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
-        "caTypeList": document.getElementById("idCaType"),
-        "eventStatusList": document.getElementById("idEventStatus"),  // Optional
-        "selectedCaType": "Voluntary",  // Is required
-        "eventId": document.getElementById("idEventId"),
         "footerElm": document.getElementById("idFooter")
     });
 

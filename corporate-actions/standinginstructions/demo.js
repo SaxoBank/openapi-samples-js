@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -12,7 +12,6 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -34,9 +33,8 @@
      * This is an example of getting standing instructions.
      * @return {void}
      */
-    function getStandingInstructions() {       
-        getElectionObjectFromJson();
-        let urlPath = "/ca/v2/standinginstructions";  
+    function getStandingInstructions() {
+        let urlPath = "/ca/v2/standinginstructions";
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -48,7 +46,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -67,7 +64,6 @@
         getElectionObjectFromJson();
         const electBody = document.getElementById("idBody").value;
         let urlPath = "/ca/v2/standinginstructions";
-        
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -94,7 +90,7 @@
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxAccount", "func": getElectionObjectFromJson, "funcsToDisplay": [getElectionObjectFromJson]},
         {"evt": "click", "elmId": "idBtnGetStandingInstructions", "func": getStandingInstructions, "funcsToDisplay": [getStandingInstructions]},
-        {"evt": "click", "elmId": "idBtnCreateStandingInstruction", "func": createStandingInstruction, "funcsToDisplay": [createStandingInstruction]},
+        {"evt": "click", "elmId": "idBtnCreateStandingInstruction", "func": createStandingInstruction, "funcsToDisplay": [createStandingInstruction]}
     ]);
     demo.displayVersion("ca");
 }());
