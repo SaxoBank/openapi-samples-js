@@ -245,7 +245,7 @@ function demonstrationHelper(settings) {
                 ? window.location.search
                 : window.location.hash.replace("#", "?")
             );
-            if (urlParams.get("env") === "live") {
+            if (urlParams.get("env").toLowerCase() === "live") {
                 isRunningOnSim = false;
             } else if (urlParams.get("state") !== null) {
                 try {
