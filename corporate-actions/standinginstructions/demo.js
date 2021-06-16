@@ -10,9 +10,6 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
-        "caTypeList": document.getElementById("idCaType"),
-        "eventStatusList": document.getElementById("idEventStatus"),  // Optional
-        "electBody": document.getElementById("idBody"),
         "footerElm": document.getElementById("idFooter")
     });
 
@@ -34,7 +31,7 @@
     }
 
     /**
-     * This is an example of instrument search.
+     * This is an example of getting standing instructions.
      * @return {void}
      */
     function getStandingInstructions() {       
@@ -64,7 +61,7 @@
     }
 
     /**
-     * This is an example of getting instrument details, option or future series.
+     * This is an example of creating standing instructions.
      * @return {void}
      */
     function createStandingInstruction() {

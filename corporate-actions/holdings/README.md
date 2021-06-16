@@ -1,5 +1,5 @@
-# Client-side Samples for placing Stock Orders
+# Client-side Samples for Corporate Action Types
 
-This is a demonstration on how to get corporate action events with different Corporate action types (Mandatory or Voluntary).
+This is a demonstration on how to get holdings.
 
 Live demo: https://saxobank.github.io/openapi-samples-js/corporate-actions/events

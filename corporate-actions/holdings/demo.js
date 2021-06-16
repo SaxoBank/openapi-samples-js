@@ -10,13 +10,11 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
-        "caTypeList": document.getElementById("idCaType"),
-        "eventId": document.getElementById("idEventId"),
         "footerElm": document.getElementById("idFooter")
     });
 
     /**
-     * This is an example of instrument search.
+     * This is an example of retrieving the holdings.
      * @return {void}
      */
     function getHoldings() {
@@ -46,7 +44,7 @@
     }
 
     /**
-     * This is an example of getting instrument details, option or future series.
+     * This is an example of getting holdings by EventId.
      * @return {void}
      */
     function getHoldingsByEventId() {

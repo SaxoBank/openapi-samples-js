@@ -10,9 +10,6 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
-        "caTypeList": document.getElementById("idCaType"),
-        "eventStatusList": document.getElementById("idEventStatus"),  // Optional
-        "electBody": document.getElementById("idElectBody"),
         "footerElm": document.getElementById("idFooter")
     });
 
@@ -22,24 +19,24 @@
      * @return {Object} The newOrderObject from the input field - null if invalid
      */
     function getElectionObjectFromJson() {
-        let newOrderObject = null;
+        let newElectObject = null;
         try {
-            newOrderObject = JSON.parse(document.getElementById("idElectBody").value);
-            newOrderObject.AccountKey = demo.user.accountKey;
-            document.getElementById("idElectBody").value = JSON.stringify(newOrderObject, null, 4);
+            newElectObject = JSON.parse(document.getElementById("idElectBody").value);
+            newElectObject.AccountKey = demo.user.accountKey;
+            document.getElementById("idElectBody").value = JSON.stringify(newElectObject, null, 4);
         } catch (e) {
             console.error(e);
         }
-        return newOrderObject;
+        return newElectObject;
     }
 
     /**
-     * This is an example of instrument search.
+     * This is an example of searching for active corporate events..
      * @return {void}
      */
     function getActiveEvents() {       
         getElectionObjectFromJson();
-        let urlPath = "/ca/v2/events/?CorporateActionTypes=Voluntary&EventStatus=Active";  
+        let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active";  
         fetch(
             demo.apiUrl + urlPath,
             {
@@ -101,7 +98,7 @@
      */
      function getEventById() {       
         const eventId = document.getElementById("idEventId").value;
-        let urlPath = "/ca/v2/events/?CorporateActionTypes=Voluntary&EventStatus=Active&EventId=" + eventId;  
+        let urlPath = "/ca/v2/events?CorporateActionTypes=Voluntary&EventStatus=Active&EventId=" + eventId;  
         fetch(
             demo.apiUrl + urlPath,
             {
