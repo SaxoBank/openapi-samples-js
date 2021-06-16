@@ -49,7 +49,7 @@
      */
     function getHoldingsByEventId() {
         const eventId = document.getElementById("idEventId").value;
-        let urlPath = "/ca/v2/holdings/?EventId=" + eventId;;
+        let urlPath = "/ca/v2/holdings?EventId=" + eventId;;
         
         fetch(
             demo.apiUrl + urlPath,

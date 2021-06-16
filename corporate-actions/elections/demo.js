@@ -61,7 +61,7 @@
     }
 
     /**
-     * This is an example of getting instrument details, option or future series.
+     * This is an example of elect an option.
      * @return {void}
      */
     function elect() {
@@ -110,8 +110,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    
-                    // You can search for an ISIN. That will work. But due to market limitations the ISIN won't be in the response.
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
