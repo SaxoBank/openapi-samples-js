@@ -654,15 +654,17 @@ function priceSubscriptionHelper(demo) {
      */
     function extendSubscription(accessToken) {
         bearerToken = accessToken;
-        fetch(demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(contextId), getFetchBody("PUT")).then(function (response) {
-            if (response.ok) {
-                console.log("Subscription extended.");
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
+        if (connection !== null) {
+            fetch(demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(contextId), getFetchBody("PUT")).then(function (response) {
+                if (response.ok) {
+                    console.log("Websocket subscription extended.");
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
     }
 
     /**

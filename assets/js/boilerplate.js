@@ -1,8 +1,8 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global console */
 
 /*
- * boilerplate v1.21
+ * boilerplate v1.24
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -26,24 +26,36 @@
 function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "sim",
         "authUrl": "https://sim.logonvalidation.net/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
-        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
-        "implicitAppKey": {
+        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
+        "appKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "live",
         "authUrl": "https://live.logonvalidation.net/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
+<<<<<<< HEAD
         "implicitAppKey": {
             "defaultAssetTypes": "ae84ff08844e40d9a7e546bb1c4bdeb7",
             "extendedAssetTypes": "4995383fd4b344e588eb784a7c666835"
+=======
+        "appKey": {
+            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
+            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
+>>>>>>> master
         }
     };
     const user = {};
@@ -59,12 +71,36 @@ function demonstrationHelper(settings) {
     }
 
     /**
+     * The response contains an error message. Return the parsed message.
+     * @param {Object} errorInfo The error.
+     * @return {string} The message to add to the error text.
+     */
+    function processErrorInfo(errorInfo) {
+        // Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
+        let result = "\n" + (
+            errorInfo.hasOwnProperty("ErrorCode")
+            ? errorInfo.ErrorCode + ": "
+            : ""
+        ) + errorInfo.Message;
+        if (errorInfo.hasOwnProperty("ModelState")) {
+            // Not all ErrorCodes contain a ModelState. See for the list:
+            // https://www.developer.saxo/openapi/learn/openapi-request-response
+            Object.keys(errorInfo.ModelState).forEach(function (key) {
+                result += "\n" + key + ":\n - " + errorInfo.ModelState[key].join("\n - ");
+            });
+        }
+        return result;
+    }
+
+    /**
      * Shared function to display an unsuccessful response.
      * @param {Response} errorObject The complete error object.
      * @param {string=} extraMessageToShow An optional extra message to display.
      * @return {void}
      */
     function processError(errorObject, extraMessageToShow) {
+        // Always log the correlation header, so Saxo can trace this id in the logging:
+        const correlationInfo = "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
         let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
             extraMessageToShow === undefined
             ? ""
@@ -73,28 +109,93 @@ function demonstrationHelper(settings) {
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
             if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
-                // The 400 for orders might be wrapped in an ErrorInfo object (test an order placement without ManualOrder property)
+                // The 400 for single orders might be wrapped in an ErrorInfo object (verify this with an order where ManualOrder property is missing).
                 errorObjectJson = errorObjectJson.ErrorInfo;
             }
-            if (errorObjectJson.hasOwnProperty("ErrorCode")) {
-                // Be aware that the errorObjectJson.Message might contain line breaks, escaped like "\r\n"!
-                textToDisplay += "\n" + errorObjectJson.ErrorCode + ": " + errorObjectJson.Message;
-                if (errorObjectJson.hasOwnProperty("ModelState")) {
-                    // Not all ErrorCodes contain a ModelState. See for the list:
-                    // https://www.developer.saxo/openapi/learn/openapi-request-response
-                    Object.keys(errorObjectJson.ModelState).forEach(function (key) {
-                        textToDisplay += "\n" + key + ":\n - " + errorObjectJson.ModelState[key].join("\n - ");
+            if (errorObjectJson.hasOwnProperty("Message")) {
+                textToDisplay += processErrorInfo(errorObjectJson);
+            } else if (errorObjectJson.hasOwnProperty("Orders")) {
+                // This response is returned when there is a 400 on related order requests:
+                errorObjectJson.Orders.forEach(function (orderError) {
+                    textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                });
+            }
+            console.error(textToDisplay + correlationInfo);
+        }).catch(function () {
+            // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
+            console.error(textToDisplay + correlationInfo);
+        });
+    }
+
+    /**
+     * Parse the batch response to see if there are errors.
+     * @param {Array} responseTextArray The complete text response of the batch request.
+     * @param {string} correlationId The X-Correlation header of the response, for trouble shooting with Saxo.
+     * @return {boolean} True is there are one or more failed requests.
+     */
+    function hasBatchResponseErrors(responseTextArray, correlationId) {
+
+        /**
+         * Shared function to display an unsuccessful response.
+         * @param {string} httpError The line with the error.
+         * @param {string} response The body with extra error information.
+         * @param {string} correlationId The correlation header from the batch response. Might be overruled by the specific correlationIds.
+         * @param {string=} extraMessageToShow An optional extra message to display.
+         * @return {void}
+         */
+        function processBatchError(httpError, response, correlationId, extraMessageToShow) {
+            const correlationInfo = "\n\nX-Correlation header (for troubleshooting with Saxo): " + correlationId;
+            let textToDisplay = "Error with status " + httpError + (
+                extraMessageToShow === undefined
+                ? ""
+                : "\n" + extraMessageToShow
+            );
+            let errorObjectJson;
+            // Some errors have a JSON-response, containing explanation of what went wrong.
+            try {
+                errorObjectJson = JSON.parse(response);
+                if (errorObjectJson.hasOwnProperty("ErrorInfo")) {
+                    // The 400 for single orders might be wrapped in an ErrorInfo object (verify this with an order where ManualOrder property is missing).
+                    errorObjectJson = errorObjectJson.ErrorInfo;
+                }
+                if (errorObjectJson.hasOwnProperty("Message")) {
+                    textToDisplay += processErrorInfo(errorObjectJson);
+                } else if (errorObjectJson.hasOwnProperty("Orders")) {
+                    // This response is returned when there is a 400 on related order requests:
+                    errorObjectJson.Orders.forEach(function (orderError) {
+                        textToDisplay += processErrorInfo(orderError.ErrorInfo);
                     });
                 }
+                console.error(textToDisplay + correlationInfo);
+            } catch (ignore) {
+                // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
+                console.error(textToDisplay + correlationInfo);
             }
-            // Always log the correlation header, so Saxo can trace this id in the logging.
-            textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
-            console.error(textToDisplay);
-        }).catch(function () {
-            textToDisplay += "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
-            // Typically 401 (Unauthorized) has an empty response, this generates a SyntaxError.
-            console.error(textToDisplay);
+        }
+
+        let positionInResponse = 0;
+        let hasErrors = false;
+        let body = "";
+        let httpStatus = "";
+        let correlationIdOfRequest = correlationId;
+        responseTextArray.forEach(function (line, lineNumber) {
+            const correlationIdMarker = "X-Correlation:";
+            if (line.substr(0, 2) === "--" && lineNumber !== 0 && httpStatus.charAt(0) !== "2") {
+                hasErrors = true;
+                processBatchError(httpStatus, body, correlationIdOfRequest);
+                positionInResponse = 0;
+                body = "";
+                correlationIdOfRequest = correlationId;
+            } else if (positionInResponse === 3) {
+                httpStatus = line.substring(line.indexOf(" ") + 1);
+            } else if (line.substr(0, correlationIdMarker.length) === correlationIdMarker) {
+                correlationIdOfRequest = line.substr(correlationIdMarker.length).trim();
+            } else if (line.charAt(0) === "{") {
+                body = line;
+            }
+            positionInResponse += 1;
         });
+        return hasErrors;
     }
 
     /**
@@ -143,16 +244,32 @@ function demonstrationHelper(settings) {
      */
     function getConfig() {
         let urlParams;
+        let isRunningOnSim = true;
         if (window.URLSearchParams) {
-            urlParams = new window.URLSearchParams(document.location.search.substring(1));
-            return (
-                urlParams.get("env") === "live"
-                ? configLive
-                : configSim
+            urlParams = new window.URLSearchParams(
+                window.location.hash === ""
+                ? window.location.search
+                : window.location.hash.replace("#", "?")
             );
-        } else {
-            return configSim;
+
+            const envParam = urlParams.get("env");
+            if (envParam && envParam.toLowerCase() === "live") {
+                isRunningOnSim = false;
+            } else if (urlParams.get("state") !== null) {
+                try {
+                    if (JSON.parse(window.atob(urlParams.get("state"))).env === "live") {
+                        isRunningOnSim = false;
+                    }
+                } catch (ignore) {
+                    console.error("Something went wrong unpacking the state parameter..");
+                }
+            }
         }
+        return (
+            isRunningOnSim
+            ? configSim
+            : configLive
+        );
     }
 
     /**
@@ -177,9 +294,17 @@ function demonstrationHelper(settings) {
                     legalAssetTypes = legalAssetTypesElement.legalAssetTypes;
                 }
             });
+            // Give the option to add "-" to the list of LegalAssetTypes.
+            if (settings.selectedAssetType === "-") {
+                legalAssetTypes.unshift(settings.selectedAssetType);
+            }
             legalAssetTypes.forEach(function (legalAssetType) {
                 const option = document.createElement("option");
-                option.text = legalAssetType;
+                option.text = (
+                    legalAssetType === "-"
+                    ? "No filter on AssetType"
+                    : legalAssetType
+                );
                 option.value = legalAssetType;
                 if (option.value === settings.selectedAssetType) {
                     option.setAttribute("selected", true);
@@ -204,6 +329,7 @@ function demonstrationHelper(settings) {
             }
             settings.accountsList.options.length = 0;  // Remove options, if any
             user.accountGroupKeys = [];
+            user.accounts = [];
             groupAndSortAccountList(accountsResponseData);
             accountsResponseData.forEach(function (account) {
                 // Inactive accounts are probably not in the response, but since this flag is served, we must consider it a possibility
@@ -220,6 +346,11 @@ function demonstrationHelper(settings) {
                     legalAssetTypesPerAccount.push({
                         "accountKey": account.AccountKey,
                         "legalAssetTypes": account.LegalAssetTypes
+                    });
+                    // Used to map accountIds with accountKeys:
+                    user.accounts.push({
+                        "accountId": account.AccountId,
+                        "accountKey": account.AccountKey
                     });
                     if (account.AccountKey === user.accountKey) {
                         option.setAttribute("selected", true);
@@ -255,6 +386,49 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function getDataFromApi() {
+
+            function processBatchResponse(responseArray) {
+                const requestIdMarker = "X-Request-Id:";
+                let requestId = "";
+                let responseJson;
+                let userId;
+                let clientId;
+                responseArray.forEach(function (line) {
+                    line = line.trim();
+                    if (line.substr(0, requestIdMarker.length) === requestIdMarker) {
+                        requestId = line.substr(requestIdMarker.length).trim();
+                    } else if (line.charAt(0) === "{") {
+                        try {
+                            responseJson = JSON.parse(line);
+                            switch (requestId) {
+                            case "1":  // Response of GET /users/me
+                                user.culture = responseJson.Culture;
+                                user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
+                                userId = responseJson.UserId;
+                                if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
+                                    // This is only an issue for Live - SIM supports only FX prices.
+                                    console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
+                                }
+                                break;
+                            case "2":  // Response of GET /clients/me
+                                user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                user.clientKey = responseJson.ClientKey;
+                                user.name = responseJson.Name;
+                                clientId = responseJson.ClientId;
+                                break;
+                            case "3":  // Response of GET /accounts/me
+                                populateAccountSelection(responseJson.Data);
+                                break;
+                            }
+                        } catch (error) {
+                            console.error(error);
+                        }
+                    }
+                });
+                console.log("The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId);
+                functionToRun();  // Run the function
+            }
+
             const config = getConfig();
             const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
             const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
@@ -276,41 +450,10 @@ function demonstrationHelper(settings) {
                 if (response.ok) {
                     settings.accessTokenElm.setCustomValidity("");
                     response.text().then(function (responseText) {
-                        const responseArray = responseText.split("\n");
-                        let requestId = "";
-                        let responseJson;
-                        let userId;
-                        let clientId;
-                        responseArray.forEach(function (line) {
-                            line = line.trim();
-                            if (line.substr(0, 13) === "X-Request-Id:") {
-                                requestId = line.substr(13).trim();
-                            } else if (line.charAt(0) === "{") {
-                                try {
-                                    responseJson = JSON.parse(line);
-                                    switch (requestId) {
-                                    case "1":  // Response of GET /users/me
-                                        user.culture = responseJson.Culture;
-                                        user.language = responseJson.Language;
-                                        userId = responseJson.UserId;
-                                        break;
-                                    case "2":  // Response of GET /clients/me
-                                        user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                        user.clientKey = responseJson.ClientKey;
-                                        user.name = responseJson.Name;
-                                        clientId = responseJson.ClientId;
-                                        break;
-                                    case "3":  // Response of GET /accounts/me
-                                        populateAccountSelection(responseJson.Data);
-                                        break;
-                                    }
-                                } catch (error) {
-                                    console.error(error);
-                                }
-                            }
-                        });
-                        settings.responseElm.innerText = "The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId;
-                        functionToRun();  // Run the function
+                        const responseTextArray = responseText.split("\n");
+                        if (!hasBatchResponseErrors(responseTextArray, response.headers.get("X-Correlation"))) {
+                            processBatchResponse(responseTextArray);
+                        }
                     });
                 } else {
                     settings.accessTokenElm.setCustomValidity("Invalid access_token.");  // Indicate something is wrong with this input
@@ -427,20 +570,21 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Notify about token expiration in 5 seconds.
+     * Notify about token expiration in 10 seconds.
      * @param {string} token The token to be checked.
      * @return {void}
      */
     function activateTokenExpirationWarning(token) {
+        const secondsBeforeWarning = 10;
         let secondsUntilTokenExpiry;
         let secondsUntilTokenExpiryWarning;
         if (token !== "") {
             secondsUntilTokenExpiry = getSecondsUntilTokenExpiry(token);
-            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - 5;
+            secondsUntilTokenExpiryWarning = secondsUntilTokenExpiry - secondsBeforeWarning;
             if (secondsUntilTokenExpiryWarning > 0) {
                 window.clearTimeout(tokenExpirationTimer);
                 tokenExpirationTimer = window.setTimeout(function () {
-                    console.error("The access token expires in 5 seconds. The app might need to refresh the token. And update the websocket subscription.");
+                    console.error("The access token expires in " + secondsBeforeWarning + " seconds. The app might need to refresh the token. And update the websocket subscription.");
                 }, secondsUntilTokenExpiryWarning * 1000);
             }
         }
@@ -515,7 +659,7 @@ function demonstrationHelper(settings) {
          * Try to get the token from localStorage.
          * @return {null|string} The token - null if not found.
          */
-        function loadAccessToken() {
+        function loadAccessTokenFromLocalStorage() {
             try {
                 return window.localStorage.getItem(tokenKey);
             } catch (ignore) {
@@ -523,6 +667,128 @@ function demonstrationHelper(settings) {
                 return null;
             }
         }
+
+        /**
+         * Display and store the token, if valid.
+         * @param {string} token The access token.
+         * @return {void}
+         */
+        function saveAndShowToken(token) {
+            const secondsUntilExpiry = getSecondsUntilTokenExpiry(token);
+            if (secondsUntilExpiry > 0) {
+                saveAccessToken(token);
+                settings.accessTokenElm.value = token;
+                console.debug("Token is valid for another " + secondsUntilExpiry + " seconds.");
+            }
+        }
+
+        /**
+         * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
+         * @param {string} page The page to be requested.
+         * @param {Object} body The body object to post to the page.
+         * @return {void}
+         */
+        function requestCodeFlowToken(page, body) {
+            fetch(
+                "https://www.your.server/app/saxo/" + page,
+                {
+                    "method": "POST",
+                    "headers": {
+                        "Content-Type": "application/json; charset=utf-8",
+                        "Accept": "application/json; charset=utf-8"
+                    },
+                    "body": JSON.stringify(body)
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const refreshTime = Math.max(0, (responseJson.expires_in - 5) * 1000);  // Prevent negative values https://stackoverflow.com/questions/8430966/is-calling-settimeout-with-a-negative-delay-ok
+                        // Make sure the token will be refreshed before expiration.
+                        // When you are late with exchanging the code for a token, the expires_in can be negative.
+                        // This is not an issue, the refresh_token is valid much longer.
+                        window.setTimeout(function () {
+                            console.log("Requesting token using the refresh token..");
+                            requestCodeFlowToken("server-refresh-token.php", {
+                                "refresh_token": responseJson.refresh_token
+                            });
+                        }, refreshTime);
+                        if (settings.hasOwnProperty("newTokenCallback") && settings.newTokenCallback !== undefined && settings.newTokenCallback !== null) {
+                            settings.newTokenCallback(responseJson.access_token);
+                        }
+                        saveAndShowToken(responseJson.access_token);
+                        console.log("Access token successfully retrieved.");
+                    });
+                } else {
+                    processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        /**
+         * Use the OAuth2 Code Flow to request a token via a code from the URL.
+         * @param {string} appServerUrl The host+path of the application backend.
+         * @param {string} code The code from the URL.
+         * @return {void}
+         */
+        function getTokenViaCodeFlow(appServerUrl, code) {
+            let newAccessToken;
+            // First, maybe there is a code in the URL, supplied when being redirected after authententication using Implicit Flow?
+            if (code === null) {
+                // Second, maybe the token is stored before a refresh, or in a different sample?
+                newAccessToken = loadAccessTokenFromLocalStorage();
+                if (newAccessToken !== null) {
+                    saveAndShowToken(newAccessToken);
+                }
+            } else {
+                console.log("Requesting token using the code from the URL..");
+                requestCodeFlowToken(appServerUrl, "server-get-token.php", {
+                    "code": code
+                });
+            }
+        }
+
+        /**
+         * Use the OAuth2 Implicit Flow to read a token from the URL.
+         * @param {string} newAccessToken The token from the URL.
+         * @return {void}
+         */
+        function getTokenViaImplicitFlow(newAccessToken) {
+            if (newAccessToken === null) {
+                // Second, maybe the token is stored before a refresh, or in a different sample?
+                newAccessToken = loadAccessTokenFromLocalStorage();
+            }
+            if (newAccessToken !== null) {
+                saveAndShowToken(newAccessToken);
+            }
+        }
+
+        const config = getConfig();
+        let urlParams;
+        if (window.URLSearchParams) {
+            urlParams = new window.URLSearchParams(
+                config.grantType === "code"
+                ? window.location.search
+                : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
+            );
+            const errorDescription = urlParams.get("error_description");
+            if (errorDescription !== null) {
+                // Something went wrong..
+                console.error("Error getting token: " + errorDescription);
+            } else if (config.grantType === "code") {
+                getTokenViaCodeFlow(config.appServerUrl, urlParams.get("code"));
+            } else {
+                getTokenViaImplicitFlow(urlParams.get("access_token"));
+            }
+        }
+    }
+
+    /**
+     * If this sample is run from a known location (https://saxobank.github.io, or http://localhost), the link to authenticate using an app on Extended AssetTypes can be provided.
+     * @return {void}
+     */
+    function addOptionalExtendedAssetTypesLoginLink() {
 
         /**
          * Store the CSRF token in localStorage or cookie.
@@ -543,40 +809,17 @@ function demonstrationHelper(settings) {
         const stateObject = {
             "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
             "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
-            "env": (
-                config.authUrl === configLive.authUrl
-                ? "live"
-                : "sim"
-            )
+            "env": config.env
         };
-        // First, maybe the token is supplied in the URL, as a bookmark?
-        // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
-        const urlParams = new window.URLSearchParams(window.location.hash.replace("#", "?"));
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        let newAccessToken = urlParams.get("access_token");
-        let secondsUntilExpiry;
-        if (urlParams.get("error_description") !== null) {  // Something went wrong..
-            console.error("Error getting token: " + urlParams.get("error_description"));
-        }
-        if (newAccessToken === null) {
-            // Second, maybe the token is stored before a refresh, or in a different sample?
-            newAccessToken = loadAccessToken();
-        } else {
-            saveAccessToken(newAccessToken);
-        }
-        secondsUntilExpiry = getSecondsUntilTokenExpiry(newAccessToken);
-        if (secondsUntilExpiry > 0) {
-            settings.accessTokenElm.value = newAccessToken;
-            console.debug("Bearer Token is valid for another " + secondsUntilExpiry + " seconds.");
-        }
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
-            // We can probably use the Implicit Grant to get a token
+            // We can probably use the Implicit/Code Flow Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
-            urlWithoutParams = config.authUrl + "?response_type=token&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html");
+            urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
             if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
-                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.implicitAppKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
+                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
             } else {
-                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.implicitAppKey.defaultAssetTypes;
+                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes;
                 settings.retrieveTokenHref.target = "_self";  // Back to default
             }
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
@@ -597,6 +840,7 @@ function demonstrationHelper(settings) {
         mirrorFetch();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
+            addOptionalExtendedAssetTypesLoginLink();
             activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
                 saveAccessToken(settings.accessTokenElm.value);
@@ -618,6 +862,7 @@ function demonstrationHelper(settings) {
             displaySourceCode,
             setupEvents,
             processError,
+            hasBatchResponseErrors,
             groupAndSortAccountList,
             getSecondsUntilTokenExpiry
         });

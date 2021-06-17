@@ -29,11 +29,19 @@
 </div>
 <h1>Retrieve the instrument universe</h1>
 This example downloads the instrument universe, respecting the rate limits. This is not a use case for most applications.
+<label>Asset type: <select class="selector" id="idCbxAssetType">
+  <option value="-">Click "Validate" to populate</option>
+</select></label>
+<label>Exchange: <select class="selector" id="idCbxExchange">
+  <option value="-">No filter on exchange</option>
+  <option value="-" selected>Click "Get exchanges" to populate</option>
+</select></label>
 <br />
 <br />
-Instrument IDs:<br />
-<textarea class="json-input" id="idInstruments" rows="8">
+Instruments:<br />
+<textarea class="json-input" id="idInstruments" rows="8" wrap="off" >
 </textarea><br />
+<input type="button" class="action-button" value="Get exchanges" id="idBtnGetExchanges" />
 <input type="button" class="action-button" value="Start collecting" id="idBtnStart" />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>

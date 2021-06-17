@@ -40,6 +40,7 @@
                         // Show a warning before placing an order in a complex product.
                         switch (demo.user.language) {
                         case "fr":
+                        case "fr-BE":
                             console.log("Votre ordre porte sur un produit ou service complexe pour lequel vous devez avoir une connaissance et une expérience appropriées. Pour plus d’informations, veuillez consulter nos vidéos pédagogiques et nos guides.\nEn validant cet ordre, vous reconnaissez avoir été informé des risques de cette transaction.");
                             break;
                         default:

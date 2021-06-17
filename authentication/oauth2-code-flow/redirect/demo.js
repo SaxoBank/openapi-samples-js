@@ -85,9 +85,13 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const accessTokenExpirationTime = new Date();
+                    const refreshTokenExpirationTime = new Date();
                     tokenObject = responseJson;
-                    accessTokenExpirationTime.setTime(accessTokenExpirationTime.getTime() + tokenObject.expires_in * 1000);
-                    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
+                    accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
+                    refreshTokenExpirationTime.setSeconds(refreshTokenExpirationTime.getSeconds() + tokenObject.refresh_token_expires_in);
+                    // When you are late with exchanging the code for a token, the expires_in can be negative.
+                    // This might not be an issue, the refresh_token is valid longer.
+                    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + ") and refresh_token (valid until " + refreshTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -119,12 +123,16 @@
                 })
             }
         ).then(function (response) {
-            const accessTokenExpirationTime = new Date();
             if (response.ok) {
                 response.json().then(function (responseJson) {
+                    const accessTokenExpirationTime = new Date();
+                    const refreshTokenExpirationTime = new Date();
                     tokenObject = responseJson;
                     accessTokenExpirationTime.setSeconds(accessTokenExpirationTime.getSeconds() + tokenObject.expires_in);
-                    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
+                    refreshTokenExpirationTime.setSeconds(refreshTokenExpirationTime.getSeconds() + tokenObject.refresh_token_expires_in);
+                    // When you are late with exchanging the code for a token, the expires_in can be negative.
+                    // This might not be an issue, the refresh_token is valid longer.
+                    console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + ") and refresh_token (valid until " + refreshTokenExpirationTime.toLocaleString() + "): " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -165,6 +173,10 @@
      * @return {void}
      */
     function refreshTokenPhp() {
+        if (tokenObject === undefined) {
+            console.error("Get a token first..");
+            return;
+        }
         fetch(
             "backend-php/server-refresh-token.php",
             {

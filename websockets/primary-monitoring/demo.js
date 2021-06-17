@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -48,12 +48,12 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const result = (
-                        responseJson.AccessRights.CanTakePriceSession
-                        ? "You can take the Price Session!"
-                        : "You are not allowed to take the price session."
-                    );
-                    console.log(result + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    const responseText = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    if (responseJson.AccessRights.CanTrade) {
+                        console.log("You can take the Price Session!" + responseText);
+                    } else {
+                        console.error("You are not allowed to take the price session." + responseText);
+                    }
                 });
             } else {
                 demo.processError(response);

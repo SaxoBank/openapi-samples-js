@@ -18,7 +18,11 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
         "selectedAssetType": "FxSpot",  // Only FX has realtime prices, if Live account is not linked
-        "footerElm": document.getElementById("idFooter")
+        "footerElm": document.getElementById("idFooter"),
+        "newTokenCallback": function (accessToken) {
+            // This doesn't work with the Implicit Flow, used in this sample!
+            priceSubscription.extendSubscription(accessToken);
+        }
     });
     const priceSubscription = priceSubscriptionHelper(demo);
 
@@ -113,6 +117,7 @@
                         }
                         return 0;
                     });
+                    // Populate the list of exchanges, so instruments can be filtered on Exchange
                     responseJson.Data.forEach(function (exchange) {
                         const option = document.createElement("option");
                         option.text = exchange.Name + " (code " + exchange.ExchangeId + ", mic " + exchange.Mic + ")";
@@ -181,13 +186,10 @@
         }).catch(function (error) {
             console.error(error);
         });
-        if (document.getElementById("idCbxExchange").options.length === 2) {
-            // Populate the list of exchanges, so instruments can be filtered on Exchange
-            getExchanges();
-        }
     }
 
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetExchanges", "func": getExchanges, "funcsToDisplay": [getExchanges]},
         {"evt": "click", "elmId": "idBtnFind", "func": find, "funcsToDisplay": [find, priceSubscription.subscribeToList]}
     ]);
     demo.displayVersion("trade");

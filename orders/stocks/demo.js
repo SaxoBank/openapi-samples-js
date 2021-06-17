@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -26,6 +26,8 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
+            newOrderObject.AccountKey = demo.user.accountKey;
+            document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
         }
@@ -39,7 +41,6 @@
     function selectOrderType() {
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
-        newOrderObject.AccountKey = demo.user.accountKey;
         delete newOrderObject.OrderPrice;
         delete newOrderObject.StopLimitPrice;
         delete newOrderObject.TrailingstopDistanceToMarket;
@@ -139,16 +140,16 @@
             cbxOrderType.remove(i);
         }
         orderTypes.sort();
-        for (i = 0; i < orderTypes.length; i += 1) {
+        orderTypes.forEach(function (orderType) {
             option = document.createElement("option");
-            option.text = orderTypes[i];
-            option.value = orderTypes[i];
-            if (orderTypes[i] === selectedOrderType) {
+            option.text = orderType;
+            option.value = orderType;
+            if (orderType === selectedOrderType) {
                 option.setAttribute("selected", true);  // Make the selected type the default one
                 isSelectedOrderTypeAllowed = true;
             }
             cbxOrderType.add(option);
-        }
+        });
         if (!isSelectedOrderTypeAllowed) {
             selectOrderType();  // The current order type is not supported. Change to a different one
         }
@@ -196,6 +197,37 @@
     }
 
     /**
+     * This function collects the access rights of the logged in user.
+     * @return {void}
+     */
+    function getAccessRights() {
+        fetch(
+            demo.apiUrl + "/root/v1/user",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const responseText = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    if (responseJson.AccessRights.CanTrade) {
+                        console.log("You are allowed to place orders." + responseText);
+                    } else {
+                        console.error("You are not allowed to place orders." + responseText);
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of getting the trading settings of an instrument.
      * @return {void}
      */
@@ -204,6 +236,20 @@
         function checkSupportedOrderTypes(orderObject, orderTypes) {
             if (orderTypes.indexOf(orderObject.OrderType) === -1) {
                 window.alert("The order type " + orderObject.OrderType + " is not supported for this instrument.");
+            }
+        }
+
+        function checkSupportedAccounts(tradableOn) {
+            // Verify if the selected account is capable of handling this instrument.
+            // First, get the id of the active account:
+            const activeAccountId = demo.user.accounts.find(function (i) {
+                return i.accountKey === demo.user.accountKey;
+            }).accountId;
+            // Next, check if instrument is allowed on this account:
+            if (tradableOn.length === 0) {
+                window.alert("This instrument cannot be traded on any of your accounts.");
+            } else if (tradableOn.indexOf(activeAccountId) === -1) {
+                window.alert("This instrument cannot be traded on the selected account " + activeAccountId + ", but only on " + tradableOn.join(", ") + ".");
             }
         }
 
@@ -276,6 +322,7 @@
                     console.log(getRelatedAssetTypesMessage(responseJson) + "\n\n" + JSON.stringify(responseJson, null, 4));
                     if (responseJson.IsTradable === false) {
                         window.alert("This instrument is not tradable!");
+                        // For demonstration purposes, the validation continues, but an order ticket shouldn't be shown!
                     }
                     checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
                     if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn") {
@@ -285,6 +332,7 @@
                             checkTickSize(newOrderObject, responseJson.TickSize);
                         }
                     }
+                    checkSupportedAccounts(responseJson.TradableOn);
                     checkMinimumTradeSize(newOrderObject, responseJson);
                     if (newOrderObject.AssetType === "Stock") {
                         checkMinimumOrderValue(newOrderObject, responseJson);
@@ -302,13 +350,50 @@
     }
 
     /**
+     * Returns trading schedule for a given uic and asset type.
+     * @return {void}
+     */
+    function getTradingSchedule() {
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments/tradingschedule/" + newOrderObject.Uic + "/" + newOrderObject.AssetType,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const now = new Date();
+                    let responseText = "";
+                    responseJson.Sessions.forEach(function (session) {
+                        const startTime = new Date(session.StartTime);
+                        const endTime = new Date(session.EndTime);
+                        if (now >= startTime && now < endTime) {
+                            // This is the session we are in now, usually the first.
+                            responseText += "--> ";
+                        }
+                        responseText += session.State + " from " + startTime.toLocaleString() + " to " + endTime.toLocaleString() + "\n";
+                    });
+                    console.log(responseText);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of an order validation.
      * @return {void}
      */
     function preCheckNewOrder() {
         // Bug: Preview doesn't check for limit outside market hours
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
             demo.apiUrl + "/trade/v2/orders/precheck",
@@ -359,7 +444,6 @@
             "Content-Type": "application/json; charset=utf-8"
         };
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         if (document.getElementById("idChkRequestIdHeader").checked) {
             headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
         }
@@ -398,6 +482,36 @@
     }
 
     /**
+     * This is an example of getting detailed information of a specific order (in this case the last placed order).
+     * @return {void}
+     */
+    function getOrderDetails() {
+        fetch(
+            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "/details?ClientKey=" + demo.user.clientKey,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson === null) {
+                        console.error("The order wasn't found in the list of active orders. Is order " + lastOrderId + " still open?");
+                    } else {
+                        console.log("Response: " + JSON.stringify(responseJson, null, 4));
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of updating a single leg order.
      * @return {void}
      */
@@ -407,7 +521,6 @@
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.OrderId = lastOrderId;
         if (document.getElementById("idChkRequestIdHeader").checked) {
             headersObject["X-Request-ID"] = newOrderObject.ExternalReference;  // Warning! Prevent error 409 (Conflict) from identical orders within 15 seconds
@@ -530,7 +643,6 @@
                         } else {
                             delete newOrderObject.AmountType;
                         }
-                        newOrderObject.AccountKey = demo.user.accountKey;
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                         if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
                             convertOptionRootIdToUic(responseJson.Data[0].Identifier);
@@ -547,12 +659,15 @@
     }
 
     demo.setupEvents([
-        { "evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
+        {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
         {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
+        {"evt": "click", "elmId": "idBtnGetAccessRights", "func": getAccessRights, "funcsToDisplay": [getAccessRights]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
+        {"evt": "click", "elmId": "idBtnGetTradingSchedule", "func": getTradingSchedule, "funcsToDisplay": [getTradingSchedule]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
+        {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
         {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]}
     ]);

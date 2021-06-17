@@ -28,13 +28,17 @@
                 }
             }
         ).then(function (response) {
-            const req = "\n\nRequest:\nGET " + response.url + " status " + response.status + " " + response.statusText;
+            const req = "Request:\nGET " + response.url + " status " + response.status + " " + response.statusText;
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     // Times are in UTC. Convert them to local time:
                     const lastLoginDate = new Date(responseJson.LastLoginTime).toLocaleString();
                     const rep = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
-                    console.log("Found user with clientKey " + responseJson.ClientKey + " (required for other requests).\nLast login @ " + lastLoginDate + "." + req + rep);
+                    let logMessage = "Found user with clientKey " + responseJson.ClientKey + " (required for other requests).\nLast login @ " + lastLoginDate + ".\n\n";
+                    if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
+                        logMessage += "!!!\nUser didn't accept the terms for receiving Market Data yet.\nSIM users cannot do this, but if your app will request Price data on Live, make sure you ask the user to enable Market Data in SaxoTraderGO via 'Account - Other - OpenAPI data access'.\nOtherwise the user might blaim your app.. ;-)\n!!!\n\n";
+                    }
+                    console.log(logMessage + req + rep);
                 });
             } else {
                 demo.processError(response);

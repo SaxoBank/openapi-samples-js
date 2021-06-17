@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+<<<<<<< HEAD
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+=======
+>>>>>>> master
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
@@ -29,25 +32,43 @@
 </div>
 <h1>Orders that are placed with a condition</h1>
 This example shows how create an order that will be placed under a condition.<br />
+<<<<<<< HEAD
 It uses the Nasdaq Composite Index (USD!) as the reference for the trigger.<br />
+=======
+It uses the Dutch AEX Index as the reference for the trigger.<br />
+>>>>>>> master
 Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
 <br />
 <br />
 <label>
+<<<<<<< HEAD
     Order type: <select class="selector" id="idCbxOrderType">
         <option value="BreakoutTrigger" selected>BreakoutTrigger</option>
         <option value="LimitTrigger" selected>LimitTrigger</option>
         <option value="StopTrigger" selected>StopTrigger</option>
+=======
+    Condition: <select class="selector" id="idCbxCondition">
+        <option value="TriggerBreakout">TriggerBreakout (Breakout)</option>
+        <option value="TriggerStop">TriggerStop (Distance)</option>
+        <option value="TriggerLimit" selected>TriggerLimit (Price)</option>
+>>>>>>> master
     </select>
 </label>
 <br />
 <label>
+<<<<<<< HEAD
     Quote type: <select class="selector" id="idCbxQuoteType">
         <option value="Last" selected>Last</option>
+=======
+    Operator: <select class="selector" id="idCbxOperator">
+        <option value="Sell" selected>Distance: "Below highest", Price: "At or above"</option>
+        <option value="Buy">Distance: "Above lowest", Price: "At or below"</option>
+>>>>>>> master
     </select>
 </label>
 <br />
 <label>
+<<<<<<< HEAD
     Limit: <select class="selector" id="idCbxLimit">
         <option value="BiggerThen" selected>&gt;</option>
     </select>
@@ -56,6 +77,23 @@ Order tickets must warn before trading a complex product, provide a KID download
 <label>Price: <input type="text" class="text-field" id="idPrice" value="30" placeholder="Price.." /></label>
 <br />
 <label>End date: <input type="text" class="text-field" id="idEndDate" value="2020-11-20" placeholder="End date.." /></label>
+=======
+    Trigger: <select class="selector" id="idCbxTrigger">
+        <option value="LastTraded" selected>Last traded price</option>
+        <option value="Open">Open price</option>
+        <option value="Close">Close price</option>
+    </select>
+</label>
+<br />
+<label>
+    Expiry: <select class="selector" id="idCbxExpiry">
+        <option value="GoodTillCancel" selected>GoodTillCancel</option>
+        <option value="DayOrder">DayOrder</option>
+        <option value="EOM">End Of Month</option>
+        <option value="EOY">End Of Year</option>
+    </select>
+</label>
+>>>>>>> master
 <br />
 <br />
 POST body containing order parameters:
@@ -63,16 +101,25 @@ POST body containing order parameters:
 <textarea class="json-input" id="idNewOrderObject" rows="13">
 {
     "AccountKey": "(added on first request)",
+<<<<<<< HEAD
     "OrderType": "Market",
     "Uic": 590850,
     "AssetType": "Stock",
     "BuySell": "Buy",
     "Amount": 100,
+=======
+    "BuySell": "Buy",
+    "Amount": 20,
+    "AssetType": "Stock",
+    "Uic": 3066,
+    "OrderType": "Market",
+>>>>>>> master
     "OrderDuration": {
         "DurationType": "DayOrder"
     },
     "ExternalReference": "MyConditionalOrderCorrelationId",
     "ManualOrder": true,
+<<<<<<< HEAD
     "Orders": [{
         "OrderType": "TriggerBreakout",
         "TriggerOrderData": {
@@ -85,6 +132,24 @@ POST body containing order parameters:
         "ExternalReference": "MyOrderTriggerCorrelationId",
         "ManualOrder": true
     }]
+=======
+    "Orders": [
+        {
+            "OrderType": "TriggerLimit",
+            "AssetType": "StockIndex",
+            "Uic": 1957254,
+            "OrderDuration": {
+                "DurationType": "GoodTillCancel"
+            },
+            "BuySell": "Sell",
+            "TriggerOrderData": {
+                "LowerPrice": 900,
+                "PriceType": "LastTraded"
+            },
+            "ManualOrder": true
+        }
+    ]
+>>>>>>> master
 }
 </textarea>
 <br />
@@ -93,9 +158,15 @@ POST body containing order parameters:
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
 <br />
+<<<<<<< HEAD
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
 <br />
 JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+=======
+Response: <pre class="highlight" id="idResponse">Click button to launch function</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code</pre>
+>>>>>>> master
 <footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
 </section>
 </body>

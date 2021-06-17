@@ -2,7 +2,10 @@
 .vs/
 .vscode/
 node_modules/
-package-lock.json
 *.min.js
+<<<<<<< HEAD
 /swagger
 /gepruts
+=======
+*.bak
+>>>>>>> master

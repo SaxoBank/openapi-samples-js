@@ -49,13 +49,28 @@ function getToken($code) {
         'ssl' => array(
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Tue Dec 8 04:12:05 2020 GMT.
-            'cafile' => 'cacert-2020-12-08.pem',
+            // This bundle was generated at Tue Jan 19 04:12:04 2021 GMT.
+            'cafile' => 'cacert-2021-01-19.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         )
     );
     $context  = stream_context_create($options);
+    // If you are looking here, probably something is wrong.
+    // Is PHP properly installed (including OpenSSL extension)?
+    // Troubleshooting:
+    //  You can follow these steps to see what is going wrong:
+    //  1. Run PHP in development mode, with warnings displayed, by using the development.ini.
+    //  2. Remove the @ before "file_get_contents".
+    //  3. Echo the $result and exit with "die();":
+    //     $result = file_get_contents($configuration->tokenEndpoint, false, $context);
+    //     echo $result;
+    //     die();
+    //  4. Examinate the response of the POST http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/backend-php/server-get-token.php
+    //     That response probably contains warnings like:
+    //       file_get_contents(): Unable to find the wrapper &quot;https&quot; - did you forget to enable it when you configured PHP?
+    //       file_get_contents(): open_basedir restriction in effect. File(https://sim.logonvalidation.net/token) is not within the allowed path(s): (C:\inetpub\wwwroot)
+    //  5. Resolve the warnings.
     $result = @file_get_contents($configuration->tokenEndpoint, false, $context);
     if (!$result) {
         handleErrorAndDie(error_get_last()['message']);
