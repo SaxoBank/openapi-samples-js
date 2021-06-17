@@ -14,16 +14,11 @@
     });
 
     /**
-     * This is an example of finding events.
+     * This is an example of retrieving the holdings.
      * @return {void}
      */
-    function findEvents() {
-        const caType = document.getElementById("idCaType").value;
-        const eventStatus = document.getElementById("idEventStatus").value;
-        let url = demo.apiUrl + "/ca/v2/events?CorporateActionTypes=" + caType;
-        if (eventStatus !== "-") {
-            url += "&EventStatus=" + encodeURIComponent(eventStatus);
-        }
+    function getHoldings() {
+        let url = demo.apiUrl + "/ca/v2/holdings";
         fetch(
             url,
             {
@@ -35,12 +30,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let result = (
-                        responseJson.Data.length === 0
-                        ? "No events found."
-                        : "Found " + responseJson.Data.length + " events: "
-                    );
-                    console.log(result + "\n\n" + JSON.stringify(responseJson, null, 4));
+                    console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -51,13 +41,14 @@
     }
 
     /**
-     * This is an example of getting event details.
+     * This is an example of getting holdings by EventId.
      * @return {void}
      */
-    function getEventById() {
+    function getHoldingsByEventId() {
         const eventId = document.getElementById("idEventId").value;
+        let urlPath = "/ca/v2/holdings?EventId=" + eventId;
         fetch(
-            demo.apiUrl + "/ca/v2/events/" + eventId,
+            demo.apiUrl + urlPath,
             {
                 "method": "GET",
                 "headers": {
@@ -78,8 +69,8 @@
     }
 
     demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnSearchEvents", "func": findEvents, "funcsToDisplay": [findEvents]},
-        {"evt": "click", "elmId": "idBtnGetEventById", "func": getEventById, "funcsToDisplay": [getEventById]}
+        {"evt": "click", "elmId": "idBtnGetHoldings", "func": getHoldings, "funcsToDisplay": [getHoldings]},
+        {"evt": "click", "elmId": "idBtnGetHoldingsByEvent", "func": getHoldingsByEventId, "funcsToDisplay": [getHoldingsByEventId]}
     ]);
-    demo.displayVersion("ref");
+    demo.displayVersion("ca");
 }());
