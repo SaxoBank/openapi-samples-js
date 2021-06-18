@@ -1,4 +1,4 @@
-# Client-side Samples for Corporate Action Types
+# Client-side Samples for Corporate Action Standin Instructions
 
 This is a demonstration on how to create and get standing instructions.
 

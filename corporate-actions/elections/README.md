@@ -1,4 +1,4 @@
-# Client-side Samples for Corporate Action Types
+# Client-side Samples for Corporate Action Elections
 
 This is a demonstration on how to get and make elections.
 
