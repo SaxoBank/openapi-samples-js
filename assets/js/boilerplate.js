@@ -35,6 +35,7 @@ function demonstrationHelper(settings) {
         "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
         "appKey": {
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
+            //"defaultAssetTypes": "e125a21819334a78b4f02adcb362b060",  // This app has no trading rights - use this to test how it behaves when ordering
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
