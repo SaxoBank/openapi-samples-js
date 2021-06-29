@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true, bitwise: true */
+/*jslint browser: true, long: true, bitwise: true, unordered: true */
 /*global console ParserProtobuf protobuf InstrumentRow */
 
 /**
@@ -262,9 +262,10 @@ function priceSubscriptionHelper(demo) {
      * @param {Array<number>} instrumentList Instrument Uics
      * @param {string} assetType Instrument AssetType
      * @param {null|number} batchSize Large lists perform better with smaller batch sizes
+     * @param {number} refreshRate The update speed of prices
      * @return {void}
      */
-    function subscribeToList(instrumentList, assetType, batchSize) {
+    function subscribeToList(instrumentList, assetType, batchSize, refreshRate) {
 
         function internalSubscribe(instrumentListPart, batchNumber) {
             // The Saxo API supports ProtoBuf, which saves some bandwidth.
@@ -282,7 +283,7 @@ function priceSubscriptionHelper(demo) {
                 "ContextId": contextId,
                 "ReferenceId": referenceId,
                 "Format": "application/x-protobuf",  // This triggers ProtoBuf
-                "RefreshRate": 300,
+                "RefreshRate": refreshRate,
                 "Arguments": {
                     "AccountKey": demo.user.accountKey,
                     "Uics": instrumentListPart.join(),

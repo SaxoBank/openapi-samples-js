@@ -189,7 +189,12 @@
                                     console.log("There are more instruments, so requesting next page..");
                                     requestInstrumentList(responseJson.__next);
                                 } else {
-                                    priceSubscription.subscribeToList(instrumentList, document.getElementById("idCbxAssetType").value, document.getElementById("idCbxBatchSize").value);
+                                    priceSubscription.subscribeToList(
+                                        instrumentList,
+                                        document.getElementById("idCbxAssetType").value,
+                                        parseInt(document.getElementById("idCbxBatchSize").value, 10),
+                                        parseInt(document.getElementById("idCbxRefreshRate").value, 10)
+                                    );
                                 }
                             }
                         } else {
