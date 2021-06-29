@@ -12,12 +12,13 @@ function priceSubscriptionHelper(demo) {
     const parserProtobuf = new ParserProtobuf("default", protobuf);
     // These objects contains the state of the subscriptions, so a reconnect can be processed and health can be monitored.
     const listSubscription = {
-        "reference": "PriceListEvent",
+        "batchSize": 100,
+        "requestedRefreshRate": 1000,
+        "reference": "PriceEvent",
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false,
-        "instruments": [],
-        "assetType": ""
+        "instruments": []
     };
     const tradeLevelSubscription = {
         "reference": "TradeLevelEvent",
@@ -30,6 +31,7 @@ function priceSubscriptionHelper(demo) {
     let schemaName;
     let bearerToken;
     let primarySessionRequestCount = 0;
+    let batchNumber = 0;
 
     /**
      * Test if the browser supports the features required for websockets.
@@ -260,30 +262,25 @@ function priceSubscriptionHelper(demo) {
     /**
      * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
      * @param {Array<number>} instrumentList Instrument Uics
-     * @param {string} assetType Instrument AssetType
-     * @param {null|number} batchSize Large lists perform better with smaller batch sizes
-     * @param {number} refreshRate The update speed of prices
+     * @param {number} batchSize Large lists perform better with smaller batch sizes
+     * @param {number} requestedRefreshRate The update speed of prices
      * @return {void}
      */
-    function subscribeToList(instrumentList, assetType, batchSize, refreshRate) {
+    function subscribeToList(instrumentList, batchSize, requestedRefreshRate) {
 
-        function internalSubscribe(instrumentListPart, batchNumber) {
+        function internalSubscribe(instrumentListPart, assetType) {
             // The Saxo API supports ProtoBuf, which saves some bandwidth.
             //
             // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
             //
             // In order to make the parsing work, parts of the client-lib are used.
             // See Github: https://github.com/SaxoBank/openapi-clientlib-js
-            const referenceId = listSubscription.reference + "_" + (
-                batchNumber === undefined
-                ? 0
-                : batchNumber
-            );
+            const referenceId = listSubscription.reference + "_" + batchNumber;
             const data = {
                 "ContextId": contextId,
                 "ReferenceId": referenceId,
                 "Format": "application/x-protobuf",  // This triggers ProtoBuf
-                "RefreshRate": refreshRate,
+                "RefreshRate": listSubscription.requestedRefreshRate,
                 "Arguments": {
                     "AccountKey": demo.user.accountKey,
                     "Uics": instrumentListPart.join(),
@@ -308,12 +305,18 @@ function priceSubscriptionHelper(demo) {
                             console.error("Adding schema to protobuf was not successful.");
                         }
                         responseJson.Snapshot.Data.forEach(function (instrument) {
-                            let instrumentName = instrument.DisplayAndFormat.Description + " (" + currencyCodeToSymbol(instrument.DisplayAndFormat.Currency) + ") [" + (
-                                instrument.Quote.DelayedByMinutes === 0
-                                ? "realtime"
-                                : "delayed"
-                            ) + "]";
-                            rows.push(new InstrumentRow(document.getElementById("idInstrumentsList"), instrumentName, instrument));
+                            let instrumentName;
+                            if (instrument.hasOwnProperty("DisplayAndFormat")) {
+                                instrumentName = instrument.DisplayAndFormat.Description + " (" + currencyCodeToSymbol(instrument.DisplayAndFormat.Currency) + ") [" + (
+                                    instrument.Quote.DelayedByMinutes === 0
+                                    ? "realtime"
+                                    : "delayed"
+                                ) + "]";
+                                rows.push(new InstrumentRow(document.getElementById("idInstrumentsList"), instrumentName, instrument));
+                            } else {
+                                // This should never happen, but it was seen once.
+                                console.error("Instrument without DisplayAndFormat: " + JSON.stringify(instrument));
+                            }
                         });
                         // Monitor connection every "InactivityTimeout" seconds.
                         if (listSubscription.activityMonitor === null) {
@@ -321,7 +324,7 @@ function priceSubscriptionHelper(demo) {
                                 monitorActivity(listSubscription);
                             }, responseJson.InactivityTimeout * 1000);
                         }
-                        console.log("Subscription for " + rows.length + " instruments created with readyState " + connection.readyState + ".\nRefreshRate: " + responseJson.RefreshRate + ".\nSchema name: " + schemaName + "\nReferenceId: " + responseJson.ReferenceId + ".");
+                        console.log("Subscription for " + rows.length + " instruments created with readyState " + connection.readyState + ".\nAssetType: " + assetType + ".\nRefreshRate: " + responseJson.RefreshRate + ".\nSchema name: " + schemaName + "\nReferenceId: " + responseJson.ReferenceId + ".");
                     });
                 } else {
                     demo.processError(response);
@@ -329,34 +332,48 @@ function priceSubscriptionHelper(demo) {
             }).catch(function (error) {
                 console.error(error);
             });
+            batchNumber += 1;
         }
 
-        function divideSubscriptionInParts() {
-            const batchSizeMax = parseInt(batchSize, 10);
-            let batchNumber = 0;
+        function divideSubscriptionInParts(assetType) {
+            const batchSizeMax = listSubscription.batchSize;
             let instrumentListPart = [];
-            instrumentList.forEach(function (instrument) {
-                instrumentListPart.push(instrument);
-                // Add the instruments to the subscription in parts, in order not to delay the response
-                if (instrumentListPart.length === batchSizeMax) {
-                    internalSubscribe(instrumentListPart, batchNumber);
-                    batchNumber += 1;
-                    instrumentListPart = [];
+            listSubscription.instruments.forEach(function (instrument) {
+                if (instrument.assetType === assetType) {
+                    instrumentListPart.push(instrument.uic);
+                    // Add the instruments to the subscription in parts, in order not to delay the response
+                    if (instrumentListPart.length === batchSizeMax) {
+                        internalSubscribe(instrumentListPart, assetType);
+                        instrumentListPart = [];
+                    }
                 }
             });
             // Add remaining instruments to the subscription
             if (instrumentListPart.length > 0) {
-                internalSubscribe(instrumentListPart, batchNumber);
+                internalSubscribe(instrumentListPart, assetType);
             }
         }
 
+        function subscribePerAssetType() {
+            const assetTypes = [];
+            // Determine all different AssetTypes
+            listSubscription.instruments.forEach(function (instrument) {
+                if (assetTypes.indexOf(instrument.assetType) === -1) {
+                    assetTypes.push(instrument.assetType);
+                }
+            });
+            // Subscribe per AssetType
+            assetTypes.forEach(divideSubscriptionInParts);
+        }
+
+        listSubscription.requestedRefreshRate = requestedRefreshRate;
+        listSubscription.batchSize = batchSize;
         listSubscription.instruments = instrumentList;
-        listSubscription.assetType = assetType;
         if (listSubscription.isActive) {
             // First, unsubscribe to current list
-            unsubscribe(divideSubscriptionInParts);
+            unsubscribe(subscribePerAssetType);
         } else {
-            divideSubscriptionInParts();
+            subscribePerAssetType();
         }
     }
 
@@ -367,7 +384,7 @@ function priceSubscriptionHelper(demo) {
     function recreateSubscriptions() {
         unsubscribe(function () {
             if (listSubscription.isActive) {
-                subscribeToList(listSubscription.instruments, listSubscription.assetType);
+                subscribeToList(listSubscription.instruments, listSubscription.batchSize, listSubscription.requestedRefreshRate);
             }
             if (tradeLevelSubscription.isActive) {
                 subscribeToTradeLevelChanges();
@@ -475,8 +492,8 @@ function priceSubscriptionHelper(demo) {
                 });
             }
 
-            payload.Collection.forEach(publishPrice);
             listSubscription.isRecentDataReceived = true;
+            payload.Collection.forEach(publishPrice);
         }
 
         /**

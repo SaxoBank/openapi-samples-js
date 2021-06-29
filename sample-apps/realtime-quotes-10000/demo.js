@@ -17,7 +17,7 @@
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
         "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
-        "selectedAssetType": "Stock",  // Only FX has realtime prices, if Live account is not linked
+        "selectedAssetType": "-",  // Only FX has realtime prices, if Live account is not linked
         "footerElm": document.getElementById("idFooter"),
         "newTokenCallback": function (accessToken) {
             // This doesn't work with the Implicit Flow, used in this sample!
@@ -30,9 +30,10 @@
     /**
      * Find futures by FutureSpaceId.
      * @param {number} futureSpaceId ID from the search.
+     * @param {string} assetType AssetType from the search.
      * @return {void}
      */
-    function findFutureContracts(futureSpaceId) {
+    function findFutureContracts(futureSpaceId, assetType) {
         fetch(
             demo.apiUrl + "/ref/v1/instruments/futuresspaces/" + futureSpaceId,
             {
@@ -46,9 +47,16 @@
                 response.json().then(function (responseJson) {
                     const instrumentList = [];
                     responseJson.Elements.forEach(function (futureContract) {
-                        instrumentList.push(futureContract.Uic);
+                        instrumentList.push({
+                            "uic": futureContract.Uic,
+                            "assetType": assetType
+                        });
                     });
-                    priceSubscription.subscribeToList(instrumentList, document.getElementById("idCbxAssetType").value);
+                    priceSubscription.subscribeToList(
+                        instrumentList,
+                        parseInt(document.getElementById("idCbxBatchSize").value, 10),
+                        parseInt(document.getElementById("idCbxRefreshRate").value, 10)
+                    );
                 });
             } else {
                 demo.processError(response);
@@ -61,9 +69,10 @@
     /**
      * Find options by ContractRootId.
      * @param {number} optionRootId ID from the search.
+     * @param {string} assetType AssetType from the search.
      * @return {void}
      */
-    function findOptionContracts(optionRootId) {
+    function findOptionContracts(optionRootId, assetType) {
         fetch(
             demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,
             {
@@ -77,9 +86,16 @@
                 response.json().then(function (responseJson) {
                     const instrumentList = [];
                     responseJson.OptionSpace[0].SpecificOptions.forEach(function (optionContract) {
-                        instrumentList.push(optionContract.Uic);
+                        instrumentList.push({
+                            "uic": optionContract.Uic,
+                            "assetType": assetType
+                        });
                     });
-                    priceSubscription.subscribeToList(instrumentList, document.getElementById("idCbxAssetType").value);
+                    priceSubscription.subscribeToList(
+                        instrumentList,
+                        parseInt(document.getElementById("idCbxBatchSize").value, 10),
+                        parseInt(document.getElementById("idCbxRefreshRate").value, 10)
+                    );
                 });
             } else {
                 demo.processError(response);
@@ -175,13 +191,16 @@
                         const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                         if (responseJson.Data.length > 0) {
                             if (assetType === "ContractFutures" && responseJson.Data[0].hasOwnProperty("DisplayHint") && responseJson.Data[0].DisplayHint === "Continuous") {
-                                findFutureContracts(responseJson.Data[0].Identifier);
+                                findFutureContracts(responseJson.Data[0].Identifier, assetType);
                             } else if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                                findOptionContracts(responseJson.Data[0].Identifier);
+                                findOptionContracts(responseJson.Data[0].Identifier, assetType);
                             } else {
                                 responseJson.Data.forEach(function (instrument) {
                                     if (instrumentList.length < maxLengthOfInstrumentList) {
-                                        instrumentList.push(instrument.Identifier);
+                                        instrumentList.push({
+                                            "uic": instrument.Identifier,
+                                            "assetType": instrument.AssetType
+                                        });
                                     }
                                 });
                                 if (responseJson.hasOwnProperty("__next") && instrumentList.length < maxLengthOfInstrumentList) {
@@ -191,7 +210,6 @@
                                 } else {
                                     priceSubscription.subscribeToList(
                                         instrumentList,
-                                        document.getElementById("idCbxAssetType").value,
                                         parseInt(document.getElementById("idCbxBatchSize").value, 10),
                                         parseInt(document.getElementById("idCbxRefreshRate").value, 10)
                                     );
@@ -213,7 +231,20 @@
         requestInstrumentList("");
     }
 
+    /**
+     * Small hack to add extra option to LegalAssetTypes.
+     * @return {void}
+     */
+    function addAllTurbosOption() {
+        window.setTimeout(function () {
+            const option = document.getElementById("idCbxAssetType").options[0];
+            option.innerHTML = "All Turbos";
+            option.value = "WarrantKnockOut,WarrantOpenEndKnockOut,MiniFuture,WarrantDoubleKnockOut";
+        }, 100);
+    }
+
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnValidate", "func": addAllTurbosOption, "funcsToDisplay": [addAllTurbosOption]},
         {"evt": "click", "elmId": "idBtnGetExchanges", "func": getExchanges, "funcsToDisplay": [getExchanges]},
         {"evt": "click", "elmId": "idBtnFind", "func": find, "funcsToDisplay": [find, priceSubscription.subscribeToList]}
     ]);
