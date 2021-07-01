@@ -1,0 +1,99 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demo for finding turbos</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Filtering Leveraged Products</h1>
+<h2 class="project-tagline">This example shows how to filter turbo's</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Filter Turbo's</h1>
+There is an enormous amount of turbo's available. This sample is about filtering the list.<br />
+Turbo's are of AssetType "MiniFuture", "WarrantDoubleKnockOut", "WarrantKnockOut", "WarrantOpenEndKnockOut".
+They can be found on the Euronext and CATS_SAXO exchanges. Binck Turbo's are traded on CATS_SAXO.
+<br />
+<br />
+<label>Issuer: <select class="selector" id="idCbxIssuer">
+  <option value="-">No filter on issuer</option>
+  <option value="Binck Bank" selected>BinckBank NV</option>
+  <option value="BNP Paribas">BNP Paribas</option>
+  <option value="Citigroup">Citigroup</option>
+  <option value="Commerzbank">Commerzbank</option>
+  <option value="Goldman Sachs Wertpapier">Goldman Sachs Wertpapier</option>
+  <option value="ING">ING</option>
+  <option value="Royal Bank of Scotland">Royal Bank of Scotland</option>
+  <option value="Societe Generale">Societe Generale</option>
+  <option value="Unicredit">Unicredit</option>
+  <option value="Vontobel Financial Products GM">Vontobel Financial Products GM</option>
+</select></label>
+<br />
+<label>Category: <select class="selector" id="idCbxUnderlyingAssetType">
+  <option value="-" selected>All</option>
+  <option value="Stock">Stocks</option>
+  <option value="StockIndex">Stock Indices</option>
+  <option value="ContractFutures">Contract Futures</option>
+  <option value="FxSpot">Forex</option>
+</select></label>
+<br />
+<label>Direction: <select class="selector" id="idCbxTradePerspective">
+  <option value="-" selected>All</option>
+  <option value="Long,Call">Long/Call</option>
+  <option value="Short,Put">Short/Put</option>
+</select></label>
+<br />
+<label>Barrier/Stop loss min: <input type="text" class="text-field" id="idBarrierPriceFrom" value="0" placeholder="Enter min. barrier price.." /></label>
+<br />
+<label>Barrier/Stop loss max: <input type="text" class="text-field" id="idBarrierPriceTo" value="0" placeholder="Enter max. barrier price.." /></label>
+<br />
+<label>Instrument name/ISIN: <input type="text" class="text-field" id="idInstrumentName" value="AEX" placeholder="Enter instrument name.." /></label>
+<br />
+<label>Exchange: <select class="selector" id="idCbxExchange">
+  <option value="-">No filter on exchange</option>
+  <option value="-" selected>Click "Get exchanges" to populate</option>
+</select></label>
+<br />
+<label>Underlying Uic: <input type="text" class="text-field" id="idUnderlyingUic" value="" placeholder="Enter Uic of underlying.." /></label>
+<br />
+<label>Sort result: <select class="selector" id="idCbxOrderBy">
+  <option value="-" selected>Default</option>
+  <option value="AlphabeticallyByDescription">AlphabeticallyByDescription</option>
+  <option value="AlphabeticallyBySymbol">AlphabeticallyBySymbol</option>
+  <option value="MarketCap desc">MarketCap descending</option>
+  <option value="OneDayPopularity desc">OneDayPopularity descending</option>
+  <option value="OneWeekPopularity desc">OneWeekPopularity descending</option>
+  <option value="OneMonthPopularity desc">OneMonthPopularity descending</option>
+  <option value="ThreeMonthsPopularity desc">ThreeMonthsPopularity descending</option>
+</select></label>
+<br />
+<br />
+<input type="button" class="action-button" value="Get exchanges" id="idBtnGetExchanges" />
+<input type="button" class="action-button" value="Find" id="idBtnFind" />
+<input type="button" class="action-button" value="Get details" id="idBtnGetDetails" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>
