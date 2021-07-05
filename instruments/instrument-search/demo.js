@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -69,14 +69,15 @@
      */
     function findInstrument() {
         const assetType = document.getElementById("idCbxAssetType").value;
+        const exchangeId = document.getElementById("idCbxExchange").value;
         const keywords = document.getElementById("idInstrumentName").value + (
             assetType === "ContractFutures"
             ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
             : ""
         );
         let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&$top=10" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
-        if (document.getElementById("idCbxExchange").value !== "-") {
-            url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
+        if (exchangeId !== "-") {
+            url += "&ExchangeId=" + encodeURIComponent(exchangeId);
         }
         // After a corporate action the instrument might be replaced by a copy with new Uic. The old one becomes non tradable.
         url += "&IncludeNonTradable=" + (

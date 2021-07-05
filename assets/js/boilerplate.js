@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.24
+ * boilerplate v1.25
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -110,9 +110,13 @@ function demonstrationHelper(settings) {
             if (errorObjectJson.hasOwnProperty("Message")) {
                 textToDisplay += processErrorInfo(errorObjectJson);
             } else if (errorObjectJson.hasOwnProperty("Orders")) {
-                // This response is returned when there is a 400 on related order requests:
+                // This response is returned when there is a 400, or 404 on related order requests.
+                // Example: {"Orders":[{"ExternalReference":"MyOcoOrderCorrelationId1","OrderId":"113319549"},{"ErrorInfo":{"ErrorCode":"OnWrongSideOfMarket","Message":"Price is on wrong side of market"},"ExternalReference":"MyOcoOrderCorrelationId2"}]}
                 errorObjectJson.Orders.forEach(function (orderError) {
-                    textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                    // It might be that not all related orders have an issue
+                    if (orderError.hasOwnProperty("ErrorInfo")) {
+                        textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                    }
                 });
             }
             console.error(textToDisplay + correlationInfo);
