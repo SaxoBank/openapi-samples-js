@@ -32,7 +32,8 @@ An Algo order is a regular Order that has an AlgoOrderData section added in the 
 Get the strategy guide <a href="algo-orders-guide.pdf">here</a> and the developer description at the <a href="https://developer.saxobank.com/openapi/learn/algo-orders" target="_blank">Developer Portal</a>.<br />
 Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.<br />
 <br />
-Important, Algo Orders don't work on SIM, but only on Live! When this sample is launched with a query parameter "?env=live", it can be used with a live token.
+!! <b>IMPORTANT</b> !! Algo Orders don't work on SIM, but only on Live!<br />
+To test on production: add '<i>?env=live</i>' to the URL of this page and find a valid token in the network traffic of <a href="https://www.saxotrader.com/" target="_blank">SaxoTraderGO</a>. Or better, a token from <a href="https://www.developer.saxo/openapi/appmanagement#/liveoverview" target="_blank">your own live app</a>.
 <br />
 <br />
 POST body containing order parameters:
@@ -45,8 +46,8 @@ POST body containing order parameters:
 <textarea class="json-input" id="idNewOrderObject" rows="13">
 {
     "AccountKey": "(added on first request)",
-    "Uic": 21,
-    "AssetType": "FxSpot",
+    "Uic": 112809,
+    "AssetType": "Stock",
     "Amount": 100,
     "BuySell": "Buy",
     "OrderType": "Limit",
@@ -56,10 +57,8 @@ POST body containing order parameters:
     },
     "ManualOrder": true,
     "AlgoOrderData": {
-        "StrategyName": "Iceberg",
-        "Arguments": {
-            "MaxFloor": 100
-        }
+        "StrategyName": "Dark",
+        "Arguments": {}
     }
 }
 </textarea>
