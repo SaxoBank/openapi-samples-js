@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, for: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -13,8 +13,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let lastOrderId1 = 0;
-    let lastOrderId2 = 0;
+    let lastOrderId = 0;
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -78,34 +77,63 @@
                     let explanation = "Strategy: " + responseJson.Description;
                     // Populate the strategy arguments:
                     responseJson.Parameters.forEach(function (parameter) {
-                        let value;
+                        let value;  // Used to display (dummy!) data
                         explanation += "\n\nInput field " + parameter.UiOrderingIndex + ": " + parameter.Description;
-                        explanation += "\nDisplayName: " + parameter.DisplayName + (
+                        explanation += "\nDisplayName: " + parameter.DisplayName + " (" + (
                             parameter.IsMandatory === true
-                            ? " (required)"
-                            : " (optional)"
+                            ? "required"
+                            : "optional"
                         );
-                        switch (parameter.DataType) {
-                        case "Char":  // Single character string
-                            value = "a";
-                            break;
-                        case "Int":  // Integer
-                            value = 42;
-                            break;
-                        case "Price":  // Price specified as a decimal number
-                            value = 23.0037;
-                            break;
-                        case "Qty":  // Quantity specified as an integer
-                            value = 100;
-                            break;
-                        case "String":  // A "choose one from a list" value like a dropdown
-                            value = parameter.ParameterValues[0].Value;  // Create a dropdown list to show all options
-                            break;
-                        case "UtcTimestamp":  // Timestamp (not a full date) provided as a string (3 2-digit numeric inputs)
-                            value = "13:27:53";
-                            break;
-                        default:
-                            console.error("Unsupported DataType: " + parameter.DataType);
+                        if (parameter.hasOwnProperty("UiDefaultValue")) {
+                            value = parameter.UiDefaultValue;
+                            explanation += ", default " + value;
+                        } else {
+                            // Just add some random values:
+                            switch (parameter.DataType.toLowerCase()) {
+                            case "char":  // Single character string
+                                value = "a";
+                                break;
+                            case "int":  // Integer
+                                value = 42;
+                                break;
+                            case "price":  // Price specified as a decimal number
+                                value = 23.0037;
+                                break;
+                            case "qty":  // Quantity specified as an integer
+                                value = 100;
+                                break;
+                            case "string":  // A "choose one from a list" value like a dropdown
+                                value = "Bladiebla";  // Little chance there is no list..
+                                break;
+                            case "utctimestamp":  // TimeStamp (not a full date) provided as a string (3 2-digit numeric inputs)
+                                value = "13:27:53";
+                                break;
+                            default:
+                                console.error("Unsupported DataType: " + parameter.DataType);
+                            }
+                        }
+                        if (parameter.hasOwnProperty("UiStepSize")) {
+                            explanation += ", steps of " + parameter.UiStepSize;
+                        }
+                        if (parameter.hasOwnProperty("MinFloatValue")) {
+                            explanation += ", min. " + parameter.MinFloatValue;
+                            // Make sure the dummy value fits into the range:
+                            value = Math.max(parameter.MinFloatValue, value);
+                        }
+                        if (parameter.hasOwnProperty("MaxFloatValue")) {
+                            explanation += ", max. " + parameter.MaxFloatValue;
+                            // Make sure the dummy value fits into the range:
+                            value = Math.min(parameter.MaxFloatValue, value);
+                        }
+                        explanation += ")";
+                        if (parameter.hasOwnProperty("ParameterValues")) {
+                            explanation += "\nValues:";
+                            parameter.ParameterValues.forEach(function (parameterValue, i) {
+                                if (i === 0) {
+                                    value = parameterValue.Value;
+                                }
+                                explanation += "\n- " + parameterValue.Name + ": " + parameterValue.Value;
+                            });
                         }
                         algoOrderData.Arguments[parameter.Name] = value;
                     });
@@ -113,6 +141,9 @@
                     newOrderObject.AlgoOrderData = algoOrderData;
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                     console.log(explanation + "\n\nResponse:\n" + JSON.stringify(responseJson, null, 4));
+                    if (responseJson.SupportedOrderTypes.indexOf(newOrderObject.OrderType) === -1) {
+                        window.alert("Unsupported order type. Supported types are: " + responseJson.SupportedOrderTypes.join(", "));
+                    }
                 });
             } else {
                 demo.processError(response);
@@ -120,28 +151,6 @@
         }).catch(function (error) {
             console.error(error);
         });
-    }
-
-    /**
-     * Add the strategies which are allowed for this instrument.
-     * @param {Array} Strategies The strategies to be added.
-     * @return {void}
-     */
-    function populateSupportedStrategies(strategies) {
-        const cbxStrategy = document.getElementById("idCbxStrategy");
-        let option;
-        let i;
-        for (i = cbxStrategy.options.length - 1; i >= 0; i -= 1) {
-            cbxStrategy.remove(i);
-        }
-        strategies.sort();
-        strategies.forEach(function (strategy) {
-            option = document.createElement("option");
-            option.text = strategy;
-            option.value = strategy;
-            cbxStrategy.add(option);
-        });
-        selectStrategy();
     }
 
     /**
@@ -203,12 +212,7 @@
                         ? ""
                         : "\nX-Request-ID response header: " + xRequestId
                     ));
-                    if (responseJson.Orders.length > 0) {
-                        lastOrderId1 = responseJson.Orders[0].OrderId;
-                        if (responseJson.Orders.length > 1) {
-                            lastOrderId2 = responseJson.Orders[1].OrderId;
-                        }
-                    }
+                    lastOrderId = responseJson.OrderId;
                 });
             } else {
                 demo.processError(response);
@@ -223,59 +227,45 @@
      * @return {void}
      */
     function modifyLastOrder() {
-
-        function modify(newOrderObject) {
-            const headersObject = {
-                "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                "Content-Type": "application/json; charset=utf-8"
-            };
-            console.log("Mofifying order " + newOrderObject.OrderId);
-            fetch(
-                demo.apiUrl + "/trade/v2/orders",
-                {
-                    "method": "PATCH",
-                    "headers": headersObject,
-                    "body": JSON.stringify(newOrderObject)
-                }
-            ).then(function (response) {
-                if (response.ok) {
-                    response.json().then(function (responseJson) {
-                        const xRequestId = response.headers.get("X-Request-ID");
-                        console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
-                            xRequestId === null
-                            ? ""
-                            : "\nX-Request-ID response header: " + xRequestId
-                        ));
-                    });
-                } else {
-                    demo.processError(response);
-                }
-            }).catch(function (error) {
-                console.error(error);
-            });
-        }
-
-        const newOrderObjectArray = getOrderObjectFromJson();
-        let orderObject;
-        if (newOrderObjectArray.Orders.length > 0) {
-            orderObject = newOrderObjectArray.Orders[0];
-            orderObject.OrderId = lastOrderId1;
-            modify(orderObject);
-            if (newOrderObjectArray.Orders.length > 0) {
-                orderObject = newOrderObjectArray.Orders[1];
-                orderObject.OrderId = lastOrderId2;
-                modify(orderObject);
+        const newOrderObject = getOrderObjectFromJson();
+        const headersObject = {
+            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+            "Content-Type": "application/json; charset=utf-8"
+        };
+        newOrderObject.OrderId = lastOrderId;
+        fetch(
+            demo.apiUrl + "/trade/v2/orders",
+            {
+                "method": "PATCH",
+                "headers": headersObject,
+                "body": JSON.stringify(newOrderObject)
             }
-        }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const xRequestId = response.headers.get("X-Request-ID");
+                    console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
+                        xRequestId === null
+                        ? ""
+                        : "\nX-Request-ID response header: " + xRequestId
+                    ));
+                });
+            } else {
+                // If you get a 404 NotFound, the order might already be executed!
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
-     * This is an example of removing two orders from the book in one operation.
+     * This is an example of removing an order.
      * @return {void}
      */
     function cancelLastOrder() {
         fetch(
-            demo.apiUrl + "/trade/v2/orders/" + lastOrderId1 + "," + lastOrderId2 + "?AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            demo.apiUrl + "/trade/v2/orders/" + lastOrderId + "?AccountKey=" + encodeURIComponent(demo.user.accountKey),
             {
                 "method": "DELETE",
                 "headers": {
@@ -296,68 +286,12 @@
         });
     }
 
-    /**
-     * Order changes are broadcasted via ENS. Retrieve the overnight events to see what you can expect.
-     * @return {void}
-     */
-    function getHistoricalEnsEvents() {
-        const fromDate = new Date();
-        fromDate.setMinutes(fromDate.getMinutes() - 5);
-        fetch(
-            demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString(),
-            {
-                "method": "GET",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                }
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    console.log("Found " + responseJson.Data.length + " events in the last 5 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * Get the open orders, reflecting the created relation between the orders.
-     * @return {void}
-     */
-    function getOrders() {
-        fetch(
-            demo.apiUrl + "/port/v1/orders/me",
-            {
-                "method": "GET",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                }
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    console.log("Found " + responseJson.Data.length + " open orders:\n\n" + JSON.stringify(responseJson, null, 4));
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxStrategy", "func": selectStrategy, "funcsToDisplay": [selectStrategy]},
         {"evt": "click", "elmId": "idBtnGetStrategies", "func": getStrategies, "funcsToDisplay": [getStrategies]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
-        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
-        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]},
-        {"evt": "click", "elmId": "idBtnGetOrders", "func": getOrders, "funcsToDisplay": [getOrders]}
+        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]}
     ]);
     demo.displayVersion("trade");
 }());

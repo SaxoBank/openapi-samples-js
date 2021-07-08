@@ -29,7 +29,7 @@
 </div>
 <h1>Basics of an Algo Order</h1>
 An Algo order is a regular Order that has an AlgoOrderData section added in the Place Order or Change Order requests.<br />
-A description can be found in the <a href="https://developer.saxobank.com/openapi/learn/algo-orders" target="_blank">Developer Portal</a>.<br />
+Get the strategy guide <a href="algo-orders-guide.pdf">here</a> and the developer description at the <a href="https://developer.saxobank.com/openapi/learn/algo-orders" target="_blank">Developer Portal</a>.<br />
 Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.<br />
 <br />
 Important, Algo Orders don't work on SIM, but only on Live! When this sample is launched with a query parameter "?env=live", it can be used with a live token.
@@ -68,9 +68,6 @@ POST body containing order parameters:
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
-<br />
-<input type="button" class="action-button" value="Get ENS order events" id="idBtnHistoricalEnsEvents" />
-<input type="button" class="action-button" value="Get orders" id="idBtnGetOrders" />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
 <br />
