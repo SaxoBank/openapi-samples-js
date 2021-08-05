@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper ParserProtobuf protobuf */
 
 /**
@@ -770,13 +770,47 @@
     function findInstrumentsForAssetType() {
 
         /**
+         * Find futures by FutureSpaceId.
+         * @param {number} futureSpaceId ID from the search.
+         * @return {void}
+         */
+        function findFutureContracts(futureSpaceId) {
+            fetch(
+                demo.apiUrl + "/ref/v1/instruments/futuresspaces/" + futureSpaceId,
+                {
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    }
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const uics = [];
+                        responseJson.Elements.forEach(function (futureContract) {
+                            if (uics.length < 200) {
+                                // Max 200 subscriptions are allowed for default thirdparty apps.
+                                uics.push(futureContract.Uic);
+                            }
+                        });
+                        document.getElementById("idUics").value = uics.join();
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        /**
          * For options, the identifier is an OptionRoot. Convert this to a Uic.
          * @param {number} optionRootId The identifier from the instrument response
          * @return {void}
          */
-        function convertOptionRootIdToUic(optionRootId) {
+        function findOptionContracts(optionRootId) {
             fetch(
-                demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,  // Randomly pick first option root
+                demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,
                 {
                     "method": "GET",
                     "headers": {
@@ -789,7 +823,7 @@
                         const uics = [];
                         responseJson.OptionSpace[0].SpecificOptions.forEach(function (specificOption) {
                             if (uics.length < 200) {
-                                // Max 200 subscriptions are allowed.
+                                // Max 200 subscriptions are allowed for default thirdparty apps.
                                 uics.push(specificOption.Uic);
                             }
                         });
@@ -815,17 +849,22 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                     const identifiers = [];
+                    let instrument;
                     if (responseJson.Data.length === 0) {
                         console.error("No instrument of type " + assetType + " found.");
                     } else {
-                        responseJson.Data.forEach(function (instrument) {
-                            identifiers.push(instrument.Identifier);  // This might only be an OptionRootId!
-                        });
-                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                            convertOptionRootIdToUic(identifiers[0]);
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
+                        if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                            // We found an future root - get the series
+                            findFutureContracts(instrument.Identifier);
+                        } else if (instrument.SummaryType === "ContractOptionRoot") {
+                            // We found an option root - get the series
+                            findOptionContracts(instrument.Identifier);
                         } else {
+                            responseJson.Data.forEach(function (instrument) {
+                                identifiers.push(instrument.Identifier);
+                            });
                             document.getElementById("idUics").value = identifiers.join();
                         }
                         console.log("Changed object to asset of type " + assetType + ".");

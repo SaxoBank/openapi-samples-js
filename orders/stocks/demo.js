@@ -603,6 +603,7 @@
                     response.json().then(function (responseJson) {
                         const newOrderObject = getOrderObjectFromJson();
                         newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
+                        newOrderObject.ToOpenClose = "ToOpen";
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                     });
                 } else {
@@ -626,28 +627,27 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const newOrderObject = getOrderObjectFromJson();
-                    const options = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    let instrument;
                     if (responseJson.Data.length === 0) {
                         console.error("No instrument of type " + assetType + " found.");
                     } else {
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
                         newOrderObject.AssetType = assetType;
-                        newOrderObject.Uic = responseJson.Data[0].Identifier;  // This might only be an OptionRootId!
-                        if (options.indexOf(assetType) === -1) {
-                            delete newOrderObject.ToOpenClose;
-                        } else {
-                            newOrderObject.ToOpenClose = "ToOpen";
-                        }
+                        newOrderObject.Uic = instrument.Identifier;  // This might only be an OptionRootId!
                         if (assetType === "MutualFund") {
                             newOrderObject.AmountType = "Quantity";  // DurationType might be GoodTillCancel
                         } else {
                             delete newOrderObject.AmountType;
                         }
-                        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                            convertOptionRootIdToUic(responseJson.Data[0].Identifier);
+                        if (instrument.SummaryType === "Instrument") {
+                            delete newOrderObject.ToOpenClose;
                         }
+                        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                         console.log("Changed object to asset of type " + assetType + ".");
+                        if (instrument.SummaryType === "ContractOptionRoot") {
+                            // Get the first option of this option series.
+                            convertOptionRootIdToUic(instrument.Identifier);
+                        }
                     }
                 });
             } else {

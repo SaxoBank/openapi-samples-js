@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -105,13 +105,10 @@
             }
 
             let result = "";
-            let i;
-            let item;
             if (costs.hasOwnProperty("TradingCost")) {
                 result += "\n\nTransaction costs:";
                 if (costs.TradingCost.hasOwnProperty("Commissions")) {  // The commission structure for the selected instrument
-                    for (i = 0; i < costs.TradingCost.Commissions.length; i += 1) {
-                        item = costs.TradingCost.Commissions[i];
+                    costs.TradingCost.Commissions.forEach(function (item) {
                         result += "\nCommission: " + (
                             item.Rule.Currency === costs.Currency
                             ? ""
@@ -121,7 +118,7 @@
                             ? " (" + item.Pct + "%)"
                             : ""
                         );
-                    }
+                    });
                 }
                 result += getCostComponent("TicketFee", "Ticket fee", costs.TradingCost);  // Ticket fees are for FX (both spot and options) and applied if below the TicketFeeThreshold
                 // <Text LanguageCode="fr">Frais de ticket</Text>
@@ -158,10 +155,9 @@
                 result += getCostComponent("RolloverFee", "Roll-over of positions", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
                 // <Text LanguageCode="fr">Renouvellement de positions</Text>
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
-                    for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
-                        item = costs.HoldingCost.Tax[i];
+                    costs.HoldingCost.Tax.forEach(function (item) {
                         result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";
-                    }
+                    });
                 }
             }
             result += getCostComponent("TrailingCommission", "Trailing Commission", costs);  // Commission paid from the fund to Saxo
@@ -181,9 +177,8 @@
          */
         function getAssumptions(assumptions) {
             let result = "Assumption(s):";
-            let i;
-            for (i = 0; i < assumptions.length; i += 1) {
-                switch (assumptions[i]) {
+            assumptions.forEach(function (assumption) {
+                switch (assumption) {
                 case "IncludesOpenAndCloseCost":
                     result += "\n* Includes both open and close costs.";
                     // <Text LanguageCode="fr">Inclut les coûts à l'ouverture et à la clôture.</Text>
@@ -225,9 +220,9 @@
                     // <Text LanguageCode="fr">Marge hors remise OTM.</Text>
                     break;
                 default:
-                    console.debug("Unsupported assumption code: " + assumptions[i]);
+                    console.debug("Unsupported assumption code: " + assumption);
                 }
-            }
+            });
             // Add generic assumption:
             result += "\n* Any third party payments, investment service costs or financial instrument costs not listed above are 0 (0%). These can include one-off charges, ongoing charges, costs related to transactions, charges that are related to ancillary services and incidental costs.";
             // <Text LanguageCode="fr">Les coûts non décrits ci-avant (y compris forfaits, frais courants, coûts liés aux transactions, frais liés à des services accessoires et coûts indirects) s’élèvent à 0 (0 %).</Text>
@@ -343,8 +338,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let i;
-                    let documentDetail;
                     let fileName;
                     if (responseJson.Data.length === 0) {
                         console.log("There is no KID available for this instrument. Be aware that KIDs are only available on Live.");
@@ -357,15 +350,14 @@
                          */
                         // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
                         // Give option to download all the documents, if any:
-                        for (i = 0; i < responseJson.Data.length; i += 1) {
-                            documentDetail = responseJson.Data[i];
+                        responseJson.Data.forEach(function (documentDetail) {
                             // Note that DocumentTypes might have different translations, like "EID" in the Netherlands (https://www.afm.nl/nl-nl/consumenten/themas/advies/verplichte-info/eid).
                             // This means that you might consider a different file name, for example including the instrument name.
                             fileName = uic + "_" + assetType + "_" + documentDetail.DocumentType + "_(" + documentDetail.LanguageCode + ").pdf";
                             if (window.confirm("Do you want to download " + fileName + "?")) {
                                 downloadDocument(uic, assetType, documentDetail.DocumentType, documentDetail.LanguageCode, fileName);
                             }
-                        }
+                        });
                     }
                 });
             } else {
@@ -422,16 +414,18 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    let instrument;
                     if (responseJson.Data.length === 0) {
                         console.error("No instrument of type " + assetType + " found.");
                     } else {
-                        uic = responseJson.Data[0].Identifier;  // This might only be an OptionRootId!
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
+                        uic = instrument.Identifier;  // This might only be an OptionRootId!
                         document.getElementById("idUic").value = uic;
-                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                            convertOptionRootIdToUic(responseJson.Data[0].Identifier);
+                        if (instrument.SummaryType === "ContractOptionRoot") {
+                            convertOptionRootIdToUic(instrument.Identifier);
+                        } else {
+                            console.log("Found Uic " + uic + " for AssetType " + assetType + ".");
                         }
-                        console.log("Found Uic " + uic + " for AssetType " + assetType + ".");
                     }
                 });
             } else {

@@ -99,22 +99,30 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    let instrument;
                     if (responseJson.Data.length > 0) {
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
                         // Remember the first Uic for the details request
-                        if (responseJson.Data[0].hasOwnProperty("PrimaryListing") && assetType === "Stock") {
+                        if (instrument.hasOwnProperty("PrimaryListing") && assetType === "Stock") {
                             // Stocks might have a primary listing on another market - take that one
-                            instrumentId = responseJson.Data[0].PrimaryListing;
+                            instrumentId = instrument.PrimaryListing;
                         } else {
                             // This is not called "Uic", because it can identify an OptionRoot or FuturesSpace as well
-                            instrumentId = responseJson.Data[0].Identifier;
+                            instrumentId = instrument.Identifier;
                         }
-                        if (assetType === "ContractFutures" && responseJson.Data[0].hasOwnProperty("DisplayHint") && responseJson.Data[0].DisplayHint === "Continuous") {
-                            instrumentIdType = "futuresSpace";
-                        } else if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
+                        switch (instrument.SummaryType) {
+                        case "ContractOptionRoot":
                             instrumentIdType = "optionRoot";
-                        } else {
-                            instrumentIdType = "uic";
+                            break;
+                        case "Instrument":
+                            if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                                instrumentIdType = "futuresSpace";
+                            } else {
+                                instrumentIdType = "uic";
+                            }
+                            break;
+                        default:
+                            console.error("Unknown SummaryType: " + instrument.SummaryType);
                         }
                     }
                     // You can search for an ISIN. That will work. But due to market limitations the ISIN won't be in the response.

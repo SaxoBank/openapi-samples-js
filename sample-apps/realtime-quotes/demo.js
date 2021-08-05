@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper ParserProtobuf protobuf priceSubscriptionHelper InstrumentRow */
 
 /**
@@ -163,13 +163,16 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                     const instrumentList = [];
+                    let instrument;
                     if (responseJson.Data.length > 0) {
-                        if (assetType === "ContractFutures" && responseJson.Data[0].hasOwnProperty("DisplayHint") && responseJson.Data[0].DisplayHint === "Continuous") {
-                            findFutureContracts(responseJson.Data[0].Identifier);
-                        } else if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                            findOptionContracts(responseJson.Data[0].Identifier);
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
+                        if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                            // We found an future root - get the series
+                            findFutureContracts(instrument.Identifier);
+                        } else if (instrument.SummaryType === "ContractOptionRoot") {
+                            // We found an option root - get the series
+                            findOptionContracts(instrument.Identifier);
                         } else {
                             responseJson.Data.forEach(function (instrument) {
                                 instrumentList.push(instrument.Identifier);
