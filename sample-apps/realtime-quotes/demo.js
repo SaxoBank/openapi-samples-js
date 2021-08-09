@@ -47,6 +47,7 @@
                     responseJson.Elements.forEach(function (futureContract) {
                         instrumentList.push(futureContract.Uic);
                     });
+                    priceSubscription.clearList();  // Empty the instrument list
                     priceSubscription.subscribeToList(instrumentList, document.getElementById("idCbxAssetType").value);
                 });
             } else {
@@ -78,6 +79,7 @@
                     responseJson.OptionSpace[0].SpecificOptions.forEach(function (optionContract) {
                         instrumentList.push(optionContract.Uic);
                     });
+                    priceSubscription.clearList();  // Empty the instrument list
                     priceSubscription.subscribeToList(instrumentList, document.getElementById("idCbxAssetType").value);
                 });
             } else {
@@ -177,6 +179,7 @@
                             responseJson.Data.forEach(function (instrument) {
                                 instrumentList.push(instrument.Identifier);
                             });
+                            priceSubscription.clearList();  // Empty the instrument list
                             priceSubscription.subscribeToList(instrumentList, document.getElementById("idCbxAssetType").value);
                         }
                     } else {
