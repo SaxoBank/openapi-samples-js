@@ -1,4 +1,4 @@
-/*jslint browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -46,7 +46,7 @@
         switch (newOrderObject.OrderType) {
         case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
             fetch(
-                demo.apiUrl + "/trade/v1/infoprices?AssetType=StockOption&uic=" + newOrderObject.Uic,
+                demo.apiUrl + "/trade/v1/infoprices?AssetType=" + newOrderObject.AssetType + "&uic=" + newOrderObject.Uic,
                 {
                     "method": "GET",
                     "headers": {
@@ -177,7 +177,7 @@
                     populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
                     if (responseJson.hasOwnProperty("OptionSpace")) {
                         newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
-                        newOrderObject.AssetType = responseJson.AssetType;  // Can differ (StockOption, StockIndexOption)
+                        newOrderObject.AssetType = responseJson.AssetType;  // Can differ (FuturesOption, StockOption, StockIndexOption)
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                         console.log(JSON.stringify(responseJson, null, 4));
                     } else {
