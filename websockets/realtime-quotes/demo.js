@@ -114,6 +114,14 @@
                 "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
             }
         };
+        if (jsonListSubscription.isActive) {
+            // The reference id of a subscription for which the new subscription is a replacement.
+            // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+            // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+            // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+            // If no such subscription exists, the ReplaceReferenceId is ignored.
+            data.ReplaceReferenceId = jsonListSubscription.reference;
+        }
         fetch(
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
             // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
@@ -189,13 +197,14 @@
         // More info on batch requests: https://saxobank.github.io/openapi-samples-js/batch-request/
         uicList.forEach(function (uic) {
             const assetType = document.getElementById("idCbxAssetType").value;
-            const data = {
-                "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": (
+            const referenceId = (
                     format === "json"
                     ? jsonOrderTicketSubscriptionReferencePrefix
                     : protoBufOrderTicketSubscriptionReferencePrefix
-                ) + "_" + uic + "_" + assetType,
+                ) + "_" + uic + "_" + assetType;
+            const data = {
+                "ContextId": document.getElementById("idContextId").value,
+                "ReferenceId": referenceId,
                 "Arguments": {
                     "AccountKey": demo.user.accountKey,
                     "Uic": uic,
@@ -209,6 +218,14 @@
             if (format === "protoBuf") {
                 data.Format = "application/x-protobuf";  // This triggers ProtoBuf
             }
+//            if (isSubscriptionActive(referenceId)) {
+                // The reference id of a subscription for which the new subscription is a replacement.
+                // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+                // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+                // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+                // If no such subscription exists, the ReplaceReferenceId is ignored.
+//                data.ReplaceReferenceId = referenceId;
+//            }
             requestId += 1;
             postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
         });
@@ -313,6 +330,14 @@
                 "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
             }
         };
+        if (protoBufListSubscription.isActive) {
+            // The reference id of a subscription for which the new subscription is a replacement.
+            // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+            // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+            // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+            // If no such subscription exists, the ReplaceReferenceId is ignored.
+            data.ReplaceReferenceId = protoBufListSubscription.reference;
+        }
         fetch(
             demo.apiUrl + "/trade/v1/infoprices/subscriptions",
             {
@@ -406,7 +431,7 @@
         const contextId = document.getElementById("idContextId").value;
         const urlPathInfoPrices = "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(contextId);
         const urlPathPrices = "/trade/v1/prices/subscriptions/" + encodeURIComponent(contextId);
-        // Make sure this is done sequentially.
+        // Make sure this is done sequentially, to prevent throttling issues when new subscriptions are created.
         removeSubscription(jsonListSubscription.isActive || protoBufListSubscription.isActive, urlPathInfoPrices, function () {
             removeSubscription(orderTicketSubscriptions.length > 0, urlPathPrices, callbackOnSuccess);
         });
@@ -417,30 +442,27 @@
      * @return {void}
      */
     function recreateSubscriptions() {
-        unsubscribe(function () {
-            const uicsForJson = [];
-            const uicsForProtoBuf = [];
-            if (jsonListSubscription.isActive) {
-                subscribeListJson();
-            }
-            if (protoBufListSubscription.isActive) {
-                subscribeListProtoBuf();
-            }
-            orderTicketSubscriptions.forEach(function (subscription) {
-                if (subscription.format === "json") {
-                    uicsForJson.push(subscription.uic);
-                } else {
-                    uicsForProtoBuf.push(subscription.uic);
-                }
-            });
-            orderTicketSubscriptions.length = 0;
-            if (uicsForJson.length > 0) {
-                subscribeOrderTicket("json", uicsForJson);
-            }
-            if (uicsForProtoBuf.length > 0) {
-                subscribeOrderTicket("protoBuf", uicsForProtoBuf);
+        const uicsForJson = [];
+        const uicsForProtoBuf = [];
+        if (jsonListSubscription.isActive) {
+            subscribeListJson();
+        }
+        if (protoBufListSubscription.isActive) {
+            subscribeListProtoBuf();
+        }
+        orderTicketSubscriptions.forEach(function (subscription) {
+            if (subscription.format === "json") {
+                uicsForJson.push(subscription.uic);
+            } else {
+                uicsForProtoBuf.push(subscription.uic);
             }
         });
+        if (uicsForJson.length > 0) {
+            subscribeOrderTicket("json", uicsForJson);
+        }
+        if (uicsForProtoBuf.length > 0) {
+            subscribeOrderTicket("protoBuf", uicsForProtoBuf);
+        }
     }
 
     /**
