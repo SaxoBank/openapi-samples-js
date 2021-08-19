@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
+/*jslint this: true, browser: true, for: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper ParserProtobuf protobuf */
 
 /**
@@ -170,19 +170,33 @@
     }
 
     /**
+     * Convert an unsubscribe request for an individual price subscription to a text block to be used in a batch request.
+     * @param {number} newLength The new number of price subscriptions
+     * @return {string} Part of the batch request data
+     */
+    function addDeleteSubscriptionRequestsToBatchRequest(newLength, requestId) {
+        const host = "https://gateway.saxobank.com";
+        let fullPathPrefix = demo.apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value + "/";
+        let request = "";
+        let i;
+        fullPathPrefix = fullPathPrefix.substring(host.length);
+        for (i = newLength; i < orderTicketSubscriptions.length; i += 1) {
+            console.log("Deleting subscription with reference " + orderTicketSubscriptions[i].referenceId);
+            requestId += 1;
+            request += "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nDELETE " + fullPathPrefix + orderTicketSubscriptions[i].referenceId + " HTTP/1.1\r\nX-Request-Id:" + requestId + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
+        }
+        return request;
+    }
+
+    /**
      * Lookup the subscription in the list, to get Uic and AssetType.
      * @param {Array<Object>} subscriptions The list
      * @param {string} referenceId The reference id to lookup
      * @return {Object} The subscription
      */
     function getSubscriptionByReference(subscriptions, referenceId) {
-        let foundSubscription = null;
-        subscriptions.forEach(function (subscription) {
-            if (subscription.referenceId === referenceId) {
-                foundSubscription = subscription;
-            }
-        });
-        return foundSubscription;
+        // The referenceId is something like "MyPriceEventJson_4" - the second part is the index.
+        return subscriptions[parseInt(referenceId.substring(referenceId.indexOf("_") + 1), 10)];
     }
 
     /**
@@ -237,6 +251,11 @@
             requestId += 1;
             postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
         });
+        // There is the possibility that the new list is smaller than the current list. Then subscriptions can be deleted, instead of replaced.
+        // Maybe this is too complex, just for the example, but replacing subscriptions is an important topic.
+        if (orderTicketSubscriptions.length > orderTicketSubscriptionsRequested.length) {
+            postDataBatchRequest += addDeleteSubscriptionRequestsToBatchRequest(orderTicketSubscriptionsRequested.length, requestId);
+        }
         postDataBatchRequest += "--+--\r\n";  // Add the end tag
         fetch(
             demo.apiUrl + "/trade/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
@@ -258,6 +277,7 @@
                     let responseJson;
                     let requestedSubscription;
                     let smallestInactivityTimeout = Number.MAX_VALUE;
+                    orderTicketSubscriptions.length = 0;
                     responseArray.forEach(function (line) {
                         line = line.trim();
                         if (line.charAt(0) === "{") {
