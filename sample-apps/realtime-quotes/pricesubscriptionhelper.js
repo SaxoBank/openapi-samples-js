@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true, bitwise: true */
+/*jslint browser: true, long: true, bitwise: true, unordered: true */
 /*global console ParserProtobuf protobuf InstrumentRow */
 
 /**
@@ -119,13 +119,10 @@ function priceSubscriptionHelper(demo) {
         }
 
         const urlPathInfoPrices = "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(contextId);
-        // Make sure this is done sequentially.
+        // Make sure this is done sequentially, to prevent throttling issues when new subscriptions are created.
         removeSubscription(listSubscription.isActive, urlPathInfoPrices, function () {
-            // Delete all active subscriptions
-            rows.forEach(function (row) {
-                row.remove();
-            });
-            rows = [];
+            // Empty the list of instruments
+            clearList();
             callbackOnSuccess();
         });
     }
@@ -184,6 +181,14 @@ function priceSubscriptionHelper(demo) {
             "ContextId": encodeURIComponent(contextId),
             "ReferenceId": tradeLevelSubscription.reference
         };
+        if (tradeLevelSubscription.isActive) {
+            // The reference id of a subscription for which the new subscription is a replacement.
+            // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+            // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+            // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+            // If no such subscription exists, the ReplaceReferenceId is ignored.
+            data.ReplaceReferenceId = tradeLevelSubscription.reference;
+        }
         fetch(demo.apiUrl + "/root/v1/sessions/events/subscriptions", getFetchBody("POST", data)).then(function (response) {
             tradeLevelSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
             tradeLevelSubscription.isActive = true;
@@ -288,6 +293,14 @@ function priceSubscriptionHelper(demo) {
                 // https://www.saxoinvestor.fr/sim/openapi/trade/v1/prices/subscriptions
                 // {"Format":"application/x-protobuf","Arguments":{"AccountKey":"XIeV3EweQCO5pkSko8F3SA==","AssetType":"StockIndex","Uic":12999,"FieldGroups":["PriceInfo","PriceInfoDetails","InstrumentPriceDetails","HistoricalChanges","MarketDepth","Quote"]},"RefreshRate":500,"Tag":null,"ContextId":"7616225273","ReferenceId":"22","KnownSchemas":["Price-3.3.344+e533a2681c"]}
             };
+            if (listSubscription.isActive) {
+                // The reference id of a subscription for which the new subscription is a replacement.
+                // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+                // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+                // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+                // If no such subscription exists, the ReplaceReferenceId is ignored.
+                data.ReplaceReferenceId = listSubscription.reference;
+            }
             console.log("Subscribing to " + instrumentList.length + " instruments of AssetType " + assetType + "..");
             fetch(demo.apiUrl + "/trade/v1/infoprices/subscriptions", getFetchBody("POST", data)).then(function (response) {
                 if (response.ok) {
@@ -325,27 +338,31 @@ function priceSubscriptionHelper(demo) {
 
         listSubscription.instruments = instrumentList;
         listSubscription.assetType = assetType;
-        if (listSubscription.isActive) {
-            // First, unsubscribe to current list
-            unsubscribe(internalSubscribe);
-        } else {
-            internalSubscribe();
-        }
+        internalSubscribe();
     }
 
     /**
-     * Unsubscribe and subscribe again, with the selected/active account.
+     * Make the instrument list empty.
+     * @return {void}
+     */
+    function clearList() {
+        rows.forEach(function (row) {
+            row.remove();
+        });
+        rows = [];
+    }
+
+    /**
+     * Resubscribe, optionally with a different account.
      * @return {void}
      */
     function recreateSubscriptions() {
-        unsubscribe(function () {
-            if (listSubscription.isActive) {
-                subscribeToList(listSubscription.instruments, listSubscription.assetType);
-            }
-            if (tradeLevelSubscription.isActive) {
-                subscribeToTradeLevelChanges();
-            }
-        });
+        if (listSubscription.isActive) {
+            subscribeToList(listSubscription.instruments, listSubscription.assetType);
+        }
+        if (tradeLevelSubscription.isActive) {
+            subscribeToTradeLevelChanges();
+        }
     }
 
     /**
@@ -711,6 +728,7 @@ function priceSubscriptionHelper(demo) {
             connect,
             disconnect,
             subscribeToList,
+            clearList,
             extendSubscription,
             switchAccount,
             unsubscribeAndResetState
