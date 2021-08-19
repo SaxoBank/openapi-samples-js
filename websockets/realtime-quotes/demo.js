@@ -23,20 +23,20 @@
     const parserProtobuf = new ParserProtobuf("default", protobuf);
     // These objects contains the state of the subscriptions, so a reconnect can be processed and health can be monitored.
     const jsonListSubscription = {
-        "reference": "MyPriceListEvent_Json",
+        "referenceId": "MyPriceListEvent_Json",
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false
     };
     const protoBufListSubscription = {
-        "reference": "MyPriceListEvent_ProtoBuf",
+        "referenceId": "MyPriceListEvent_ProtoBuf",
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false
     };
     const orderTicketSubscriptions = [];
-    const jsonOrderTicketSubscriptionReferencePrefix = "MyPriceEventJsonOfUic";  // These references are used to determine the Uic when data is received
-    const protoBufOrderTicketSubscriptionReferencePrefix = "MyPriceEventProtoBufOfUic";
+    const jsonOrderTicketSubscriptionReferenceIdPrefix = "MyPriceEventJson";
+    const protoBufOrderTicketSubscriptionReferenceIdPrefix = "MyPriceEventProtoBuf";
     let schemaName;  // The ProtoBuf schema
     let connection;  // The websocket connection object
     let orderTicketSubscriptionsActivityMonitor = null;
@@ -89,10 +89,10 @@
     function monitorActivity(subscription) {
         if (subscription.isActive) {
             if (subscription.isRecentDataReceived) {
-                console.debug("Subscription " + subscription.reference + " is healthy..");
+                console.debug("Subscription " + subscription.referenceId + " is healthy..");
                 subscription.isRecentDataReceived = false;
             } else {
-                console.error("No recent network activity for subscription " + subscription.reference + ". You might want to reconnect.");
+                console.error("No recent network activity for subscription " + subscription.referenceId + ". You might want to reconnect.");
             }
         }
     }
@@ -104,7 +104,7 @@
     function subscribeListJson() {
         const data = {
             "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": jsonListSubscription.reference,
+            "ReferenceId": jsonListSubscription.referenceId,
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
@@ -120,7 +120,7 @@
             // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
             // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
             // If no such subscription exists, the ReplaceReferenceId is ignored.
-            data.ReplaceReferenceId = jsonListSubscription.reference;
+            data.ReplaceReferenceId = jsonListSubscription.referenceId;
         }
         fetch(
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
@@ -170,17 +170,19 @@
     }
 
     /**
-     * Convert an underscore-separated ReferenceId to an object containing the Uic and AssetType.
-     * @param {string} referenceId ReferenceId to parse
-     * @return {Object} Object containing the Uic and AssetType
+     * Lookup the subscription in the list, to get Uic and AssetType.
+     * @param {Array<Object>} subscriptions The list
+     * @param {string} referenceId The reference id to lookup
+     * @return {Object} The subscription
      */
-    function referenceIdToObject(referenceId) {
-        const referenceIdArray = referenceId.split("_");  // Example: protoBufOrderTicketSubscriptionReferencePrefix_21_FxSpot
-        return {
-            "prefix": referenceIdArray[0],
-            "uic": referenceIdArray[1],
-            "assetType": referenceIdArray[2]
-        };
+    function getSubscriptionByReference(subscriptions, referenceId) {
+        let foundSubscription = null;
+        subscriptions.forEach(function (subscription) {
+            if (subscription.referenceId === referenceId) {
+                foundSubscription = subscription;
+            }
+        });
+        return foundSubscription;
     }
 
     /**
@@ -191,17 +193,18 @@
      * @return {void}
      */
     function subscribeOrderTicket(format, uicList) {
+        const orderTicketSubscriptionsRequested = [];
         let postDataBatchRequest = "";
         let requestId = 0;
         // Create a batch request to create multiple subscriptions in one request.
         // More info on batch requests: https://saxobank.github.io/openapi-samples-js/batch-request/
-        uicList.forEach(function (uic) {
+        uicList.forEach(function (uic, i) {
             const assetType = document.getElementById("idCbxAssetType").value;
             const referenceId = (
-                    format === "json"
-                    ? jsonOrderTicketSubscriptionReferencePrefix
-                    : protoBufOrderTicketSubscriptionReferencePrefix
-                ) + "_" + uic + "_" + assetType;
+                format === "json"
+                ? jsonOrderTicketSubscriptionReferenceIdPrefix
+                : protoBufOrderTicketSubscriptionReferenceIdPrefix
+            ) + "_" + i;
             const data = {
                 "ContextId": document.getElementById("idContextId").value,
                 "ReferenceId": referenceId,
@@ -218,14 +221,19 @@
             if (format === "protoBuf") {
                 data.Format = "application/x-protobuf";  // This triggers ProtoBuf
             }
-//            if (isSubscriptionActive(referenceId)) {
+            orderTicketSubscriptionsRequested.push({
+                "referenceId": referenceId,
+                "uic": uic,
+                "assetType": assetType
+            });
+            if (orderTicketSubscriptions.length > i) {
                 // The reference id of a subscription for which the new subscription is a replacement.
                 // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
                 // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
                 // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
                 // If no such subscription exists, the ReplaceReferenceId is ignored.
-//                data.ReplaceReferenceId = referenceId;
-//            }
+                data.ReplaceReferenceId = referenceId;
+            }
             requestId += 1;
             postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
         });
@@ -247,34 +255,40 @@
             if (response.ok) {
                 response.text().then(function (responseText) {
                     const responseArray = responseText.split("\n");
-                    let responseCount = 0;
                     let responseJson;
+                    let requestedSubscription;
                     let smallestInactivityTimeout = Number.MAX_VALUE;
                     responseArray.forEach(function (line) {
                         line = line.trim();
                         if (line.charAt(0) === "{") {
                             try {
                                 responseJson = JSON.parse(line);
-                                console.debug(responseJson);
-                                smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
-                                orderTicketSubscriptions.push({
-                                    "reference": responseJson.ReferenceId,
-                                    "uic": referenceIdToObject(responseJson.ReferenceId).uic,
-                                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
-                                    "isActive": true,
-                                    "format": format
-                                });
-                                if (format === "protoBuf") {
-                                    // The schema to use when parsing the messages, is send together with the snapshot.
-                                    schemaName = responseJson.SchemaName;
-                                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                                        console.error("Adding schema to protobuf was not successful.");
-                                    }
-                                    console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema + "\n\nSnapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                if (responseJson.hasOwnProperty("ErrorCode")) {
+                                    // This can be something like "IllegalInstrumentId" - but this never happens in your app :-)
+                                    console.error(responseJson.Message);
                                 } else {
-                                    console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                    console.debug(responseJson);
+                                    smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
+                                    requestedSubscription = getSubscriptionByReference(orderTicketSubscriptionsRequested, responseJson.ReferenceId);
+                                    orderTicketSubscriptions.push({
+                                        "referenceId": responseJson.ReferenceId,
+                                        "uic": requestedSubscription.uic,
+                                        "assetType": requestedSubscription.assetType,
+                                        "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
+                                        "isActive": true,
+                                        "format": format
+                                    });
+                                    if (format === "protoBuf") {
+                                        // The schema to use when parsing the messages, is send together with the snapshot.
+                                        schemaName = responseJson.SchemaName;
+                                        if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
+                                            console.error("Adding schema to protobuf was not successful.");
+                                        }
+                                        console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema + "\n\nSnapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                    } else {
+                                        console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                    }
                                 }
-                                responseCount += 1;
                             } catch (error) {
                                 console.error(error);
                             }
@@ -319,7 +333,7 @@
         // See Github: https://github.com/SaxoBank/openapi-clientlib-js
         const data = {
             "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": protoBufListSubscription.reference,
+            "ReferenceId": protoBufListSubscription.referenceId,
             "Format": "application/x-protobuf",  // This triggers ProtoBuf
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
@@ -336,7 +350,7 @@
             // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
             // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
             // If no such subscription exists, the ReplaceReferenceId is ignored.
-            data.ReplaceReferenceId = protoBufListSubscription.reference;
+            data.ReplaceReferenceId = protoBufListSubscription.referenceId;
         }
         fetch(
             demo.apiUrl + "/trade/v1/infoprices/subscriptions",
@@ -530,15 +544,15 @@
                             break;
                         case "NoNewData":
                             switch (heartbeat.OriginatingReferenceId) {
-                            case jsonListSubscription.reference:
+                            case jsonListSubscription.referenceId:
                                 jsonListSubscription.isRecentDataReceived = true;
                                 break;
-                            case protoBufListSubscription.reference:
+                            case protoBufListSubscription.referenceId:
                                 protoBufListSubscription.isRecentDataReceived = true;
                                 break;
                             default:
                                 orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                                    if (orderTicketSubscription.reference === heartbeat.OriginatingReferenceId) {
+                                    if (orderTicketSubscription.referenceId === heartbeat.OriginatingReferenceId) {
                                         orderTicketSubscription.isRecentDataReceived = true;
                                     }
                                 });
@@ -556,9 +570,16 @@
             }
         }
 
+        /**
+         * This function processes the price update messages - the most important part.
+         * @param {Object} message The update
+         * @param {number} bundleId The bundle identifier
+         * @param {number} bundleCount The bundle number
+         * @return {void}
+         */
         function handlePriceUpdate(message, bundleId, bundleCount) {
-            const logLine = "Subscription " + message.referenceId + " - messageId " + message.messageId + " (bundle " + bundleId + "/" + bundleCount + "): " + JSON.stringify(message.payload);
-            console.info(logLine);
+            const subscription = getSubscriptionByReference(orderTicketSubscriptions, message.referenceId);
+            console.log("Individual price update event " + message.messageId + " received (" + bundleId + " of " + bundleCount + ") with reference id " + message.referenceId + ":\nUic " + subscription.uic + " " + subscription.assetType + "\n" + JSON.stringify(message.payload, null, 4));
         }
 
         /**
@@ -676,16 +697,16 @@
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message, i) {
                 switch (message.referenceId) {
-                case jsonListSubscription.reference:
+                case jsonListSubscription.referenceId:
                     jsonListSubscription.isRecentDataReceived = true;
                     // Notice that the format of the messages of the two list endpoints is different.
                     // The /prices contain no Uic, that must be derived from the referenceId.
                     // Since /infoprices is about lists, it always contains the Uic.
-                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference id " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     break;
-                case protoBufListSubscription.reference:
+                case protoBufListSubscription.referenceId:
                     protoBufListSubscription.isRecentDataReceived = true;
-                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference id " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
@@ -704,18 +725,17 @@
                     break;
                 default:
                     orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                        if (orderTicketSubscription.reference === message.referenceId) {
+                        if (orderTicketSubscription.referenceId === message.referenceId) {
                             orderTicketSubscription.isRecentDataReceived = true;
                         }
                     });
-                    if (referenceIdToObject(message.referenceId).prefix === jsonOrderTicketSubscriptionReferencePrefix || referenceIdToObject(message.referenceId).prefix === protoBufOrderTicketSubscriptionReferencePrefix) {
+                    if (message.referenceId.substr(0, jsonOrderTicketSubscriptionReferenceIdPrefix.length) === jsonOrderTicketSubscriptionReferenceIdPrefix || message.referenceId.substr(0, protoBufOrderTicketSubscriptionReferenceIdPrefix.length) === protoBufOrderTicketSubscriptionReferenceIdPrefix) {
                         // Notice that the format of the messages of the two endpoints is different.
                         // The /prices contain no Uic, that must be derived from the referenceId.
                         // Since /infoprices is about lists, it always contains the Uic.
                         handlePriceUpdate(message, i + 1, messages.length);
-                        console.log("Individual price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
-                        console.error("No processing implemented for message with reference " + message.referenceId);
+                        console.error("No processing implemented for message with reference id: " + message.referenceId);
                     }
                 }
             });
