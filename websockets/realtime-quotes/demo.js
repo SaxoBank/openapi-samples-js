@@ -171,10 +171,11 @@
 
     /**
      * Convert an unsubscribe request for an individual price subscription to a text block to be used in a batch request.
+     * Delete requests should be done before adding new subscriptions, to prevent reaching an unnecessary subscription limit.
      * @param {number} newLength The new number of price subscriptions
      * @return {string} Part of the batch request data
      */
-    function addDeleteSubscriptionRequestsToBatchRequest(newLength, requestId) {
+    function addDeleteSubscriptionRequestsToBatchRequest(newLength) {
         const host = "https://gateway.saxobank.com";
         let fullPathPrefix = demo.apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value + "/";
         let request = "";
@@ -182,8 +183,7 @@
         fullPathPrefix = fullPathPrefix.substring(host.length);
         for (i = newLength; i < orderTicketSubscriptions.length; i += 1) {
             console.log("Deleting subscription with reference " + orderTicketSubscriptions[i].referenceId);
-            requestId += 1;
-            request += "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nDELETE " + fullPathPrefix + orderTicketSubscriptions[i].referenceId + " HTTP/1.1\r\nX-Request-Id:" + requestId + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
+            request += "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nDELETE " + fullPathPrefix + orderTicketSubscriptions[i].referenceId + " HTTP/1.1\r\nX-Request-Id:DEL" + i + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
         }
         return request;
     }
@@ -251,10 +251,11 @@
             requestId += 1;
             postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
         });
-        // There is the possibility that the new list is smaller than the current list. Then subscriptions can be deleted, instead of replaced.
-        // Maybe this is too complex, just for the example, but replacing subscriptions is an important topic.
+        // There is a possibility that the new list is smaller than the current list. Then subscriptions must be deleted, instead of replaced.
+        // Maybe this is too complex and far beyond an example, but replacing subscriptions is an important topic.
         if (orderTicketSubscriptions.length > orderTicketSubscriptionsRequested.length) {
-            postDataBatchRequest += addDeleteSubscriptionRequestsToBatchRequest(orderTicketSubscriptionsRequested.length, requestId);
+            // The DELETE requests are added to the batch, BEFORE setting up the new subscriptions, to prevent reaching a subscription limit:
+            postDataBatchRequest = addDeleteSubscriptionRequestsToBatchRequest(orderTicketSubscriptionsRequested.length) + postDataBatchRequest;
         }
         postDataBatchRequest += "--+--\r\n";  // Add the end tag
         fetch(
