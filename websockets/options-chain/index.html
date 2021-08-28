@@ -36,7 +36,7 @@ This example shows how to subscribe to an option chain of a specific root id. Mo
 <br />
 <label>Option root ID: <input type="text" class="text-field" id="idOptionRootId" value="1" /></label>
 <label>
-    Expiries (beware of TooManyStrikesRequested): <select class="selector" id="idCbxExpiries">
+    Expiries (beware of TooManyStrikesRequested when &gt; 100): <select class="selector" id="idCbxExpiries">
         <option value="1">1</option>
         <option value="3" selected>3 (default)</option>
         <option value="4">4</option>
@@ -50,9 +50,19 @@ This example shows how to subscribe to an option chain of a specific root id. Mo
         <option value="4">4</option>
         <option value="6" selected>6</option>
         <option value="8">8</option>
+        <option value="10">10</option>
         <option value="12">12</option>
         <option value="24">24</option>
         <option value="100">All</option>
+    </select>
+</label>
+<label>
+    Strike start: <select class="selector" id="idCbxStrikeStart">
+        <option value="ATM" selected>At the money</option>
+        <option value="0">0</option>
+        <option value="2">2</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
     </select>
 </label>
 <br />
@@ -60,7 +70,8 @@ This example shows how to subscribe to an option chain of a specific root id. Mo
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
 <input type="button" class="action-button" value="Subscribe to options chain" id="idBtnSubscribeOptionsChain" />
-<input type="button" class="action-button" value="Update subscription with new expiries/strikes" id="idBtnUpdateSubscription" /><br />
+<input type="button" class="action-button" value="Update expiries/strikes" id="idBtnUpdateSubscription" />
+<input type="button" class="action-button" value="Reset 'At The Money'" id="idBtnResetSubscription" /><br />
 <input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
 <input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
 <input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />

@@ -75,18 +75,15 @@
     function handleOptionsChainEvent(optionsChain) {
         // In this example the original snapshot is updated with the new data - you can do smarter than this.
         snapshot.LastUpdated = optionsChain.LastUpdated;
-        if (optionsChain.hasOwnProperty("Expiries")) {
-            optionsChain.Expiries.forEach(function (expiry) {
-                const snapshotExpiry = snapshot.Expiries[expiry.Index];
-                if (snapshotExpiry.hasOwnProperty("Strikes")) {
-                    if (expiry.hasOwnProperty("Strikes")) {
+        try {
+            if (optionsChain.hasOwnProperty("Expiries")) {
+                optionsChain.Expiries.forEach(function (expiry) {
+                    const snapshotExpiry = snapshot.Expiries[expiry.Index];
+                    if (expiry.hasOwnProperty("Strikes") && expiry.Strikes !== null) {  // Seriously. It can be null (don't ask)
                         // Don't forget MidStrikePrice
                         expiry.Strikes.forEach(function (strike) {
                             const snapshotStrike = snapshotExpiry.Strikes[strike.Index];
                             if (strike.hasOwnProperty("Call")) {
-                                if (!snapshotStrike.hasOwnProperty("Call")) {
-                                    snapshotStrike.Call = {};
-                                }
                                 // Don't forget Bid, LastTraded (NetChange), Volume, Low, High - quite some work to make it complete!
                                 if (strike.Call.hasOwnProperty("Ask")) {
                                     snapshotStrike.Call.Ask = strike.Call.Ask;
@@ -96,9 +93,6 @@
                                 }
                             }
                             if (strike.hasOwnProperty("Put")) {
-                                if (!snapshotStrike.hasOwnProperty("Put")) {
-                                    snapshotStrike.Put = {};
-                                }
                                 if (strike.Put.hasOwnProperty("Ask")) {
                                     snapshotStrike.Put.Ask = strike.Put.Ask;
                                 }
@@ -108,13 +102,13 @@
                             }
                         });
                     }
-                } else {
-                    // There must be a subscription update. Update the snapshot accordingly:
-                    snapshotExpiry.Strikes = expiry.Strikes;
                     // Keep in mind that when decreasing the subscription to less series, the data can become outdated.
                     // This can be solved by displaying the LastUpdated timestamp for the shown strike.
-                }
-            });
+                });
+            }
+        }
+        catch (error) {
+            console.error("Error " + error + " happened in event object " + JSON.stringify(optionsChain, null, 2));
         }
     }
 
@@ -177,36 +171,67 @@
         snapshot.Expiries.forEach(function (expiry) {
             const expiryDate = new Date(expiry.Expiry);
             snapshotAsText += "Option series with expiry date " + expiryDate.toLocaleDateString();
-            if (expiry.hasOwnProperty("Strikes")) {
-                snapshotAsText += ":\n";
-                expiry.Strikes.forEach(function (strike) {
-                    snapshotAsText += " Strike " + strike.Strike;
-                    if (strike.hasOwnProperty("Call")) {
-                        // More prize info is available. Study the response of the subscribe request.
-                        snapshotAsText += ", call";
-                        if (strike.Call.hasOwnProperty("Ask")) {
-                            snapshotAsText += " with ask " + strike.Call.Ask;  // You will use the correct Format.Decimals from the /instrument/details endpoint?
-                        }
-                        if (strike.Call.hasOwnProperty("AskSize")) {
-                            snapshotAsText += " volume " + strike.Call.AskSize;
-                        }
+            snapshotAsText += ":\n";
+            expiry.Strikes.forEach(function (strike) {
+                snapshotAsText += " Strike " + (
+                    strike.hasOwnProperty("Strike")
+                    ? strike.Strike
+                    : "?"
+                );
+                // More prize info is available. Study the response of the subscribe request.
+                if (Object.keys(strike.Call).length > 0) {
+                    // Ignore empty objects
+                    snapshotAsText += ", call";
+                    if (strike.Call.hasOwnProperty("Ask")) {
+                        snapshotAsText += " with ask " + strike.Call.Ask;  // You will use the correct Format.Decimals from the /instrument/details endpoint?
                     }
-                    if (strike.hasOwnProperty("Put")) {
-                        snapshotAsText += ", put";
-                        if (strike.Put.hasOwnProperty("Ask")) {
-                            snapshotAsText += " with ask " + strike.Put.Ask;
-                        }
-                        if (strike.Put.hasOwnProperty("AskSize")) {
-                            snapshotAsText += " volume " + strike.Put.AskSize;
-                        }
+                    if (strike.Call.hasOwnProperty("AskSize")) {
+                        snapshotAsText += " volume " + strike.Call.AskSize;
                     }
-                    snapshotAsText += "\n";
-                });
-            } else {
-                snapshotAsText += " (no strikes in subscription)\n";
-            }
+                }
+                if (Object.keys(strike.Put).length > 0) {
+                    snapshotAsText += ", put";
+                    if (strike.Put.hasOwnProperty("Ask")) {
+                        snapshotAsText += " with ask " + strike.Put.Ask;
+                    }
+                    if (strike.Put.hasOwnProperty("AskSize")) {
+                        snapshotAsText += " volume " + strike.Put.AskSize;
+                    }
+                }
+                snapshotAsText += "\n";
+            });
         });
         return snapshotAsText;
+    }
+
+    /**
+     * The snapshot contains only relevant strikes. But updates might come in for strikes that are not available in the snapshot - just don't display empty strikes.
+     * @return {void}
+     */
+    function prepareSnapshotForWindowUpdates() {
+        snapshot.Expiries.forEach(function (expiry) {
+            let i;
+            if (expiry.hasOwnProperty("Strikes")) {
+                // Make sure all strikes contain a call/put object:
+                expiry.Strikes.forEach(function (strike) {
+                    if (!strike.hasOwnProperty("Call")) {
+                        strike.Call = {};
+                    }
+                    if (!strike.hasOwnProperty("Put")) {
+                        strike.Put = {};
+                    }
+                });
+            } else {
+                expiry.Strikes = [];
+                // Add empty strikes
+                for (i = 0; i < expiry.StrikeCount; i += 1) {
+                    expiry.Strikes.push({
+                        "Call": {},
+                        "Put": {}
+                    });
+                }
+            }
+        });
     }
 
     /**
@@ -214,15 +239,21 @@
      * @return {Array<Object>} The expiries to request
      */
     function addExpiries() {
+        const strikeStartIndex = document.getElementById("idCbxStrikeStart").value;
         const expiries = [];
         let i;
         for (i = 0; i < document.getElementById("idCbxExpiries").value; i += 1) {
             // Here you can supply the number of option series with an expiry date to add to the subscription.
             // Too many subscriptions lead to a 400 "TooManyStrikesRequested: Too many strikes requested" error.
             // You can also play with the StrikeStartIndex, to move the active part to a different StrikeWindowStartIndex.
-            expiries.push({
+            const expiry = {
                 "Index": i
-            });
+            };
+            if (strikeStartIndex !== "ATM") {
+                // This can differ per expiry, but for the demo, this is done for all expiries.
+                expiry.StrikeStartIndex = strikeStartIndex;
+            }
+            expiries.push(expiry);
         }
         return expiries;
     }
@@ -246,6 +277,10 @@
                     "Expiries": addExpiries()
                 }
             };
+            if (optionsChainSubscription.isActive) {
+                // There is an active subscription. Update that one, to spare a DELETE request.
+                data.ReplaceReferenceId = optionsChainSubscription.referenceId;
+            }
             fetch(
                 demo.apiUrl + "/trade/v1/optionschain/subscriptions",
                 {
@@ -268,6 +303,7 @@
                             }, responseJson.InactivityTimeout * 1000);
                         }
                         snapshot = responseJson.Snapshot;
+                        prepareSnapshotForWindowUpdates();
                         console.log("Subscription for options chain created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + "\n\nResponse: " + displayExpiries());
                     });
                 } else {
@@ -285,30 +321,20 @@
      * @return {void}
      */
     function updateSubscription() {
-        const contextId = document.getElementById("idContextId").value;
-        const data = {
-            "Expiries": addExpiries(),
-            "MaxStrikesPerExpiry": document.getElementById("idCbxMaxStrikesPerExpiry").value
-        };
-        fetch(
-            demo.apiUrl + "/trade/v1/optionschain/subscriptions/" + encodeURIComponent(contextId) + "/" + encodeURIComponent(optionsChainSubscription.referenceId),
-            {
-                "method": "PATCH",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                console.log("Successfully updated the subscription with data:\n" + JSON.stringify(data, null, 4));
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
+        // There is the option to PATCH the active subscription. However, a patch doesn't come with a snapshot.
+        // Matching incoming data with an old snapshot of a different window, leads to issues. So just update the active subscription by using the ReplaceReferenceId.
+        subscribeOptionsChain();
+    }
+
+    /**
+     * Reset an options chain subscription "At The Money".
+     * @return {void}
+     */
+    function resetSubscription() {
+        // There is the option to PUT the active subscription to /ResetATM. However, a put doesn't come with a snapshot.
+        // Matching incoming data with an old snapshot of a different window, leads to issues. So just update the active subscription by using the ReplaceReferenceId.
+        document.getElementById("idCbxStrikeStart").value = "ATM";
+        subscribeOptionsChain();
     }
 
     /**
@@ -648,7 +674,8 @@
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribeOptionsChain", "func": subscribeOptionsChain, "funcsToDisplay": [subscribeOptionsChain]},
-        {"evt": "click", "elmId": "idBtnUpdateSubscription", "func": updateSubscription, "funcsToDisplay": [updateSubscription]},
+        {"evt": "click", "elmId": "idBtnUpdateSubscription", "func": updateSubscription, "funcsToDisplay": [updateSubscription, subscribeOptionsChain]},
+        {"evt": "click", "elmId": "idBtnResetSubscription", "func": resetSubscription, "funcsToDisplay": [resetSubscription, subscribeOptionsChain]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
