@@ -106,8 +106,8 @@
                     // This can be solved by displaying the LastUpdated timestamp for the shown strike.
                 });
             }
-        }
-        catch (error) {
+        } catch (error) {
+            // Protect the software for messages with an out-of-scope index.
             console.error("Error " + error + " happened in event object " + JSON.stringify(optionsChain, null, 2));
         }
     }
