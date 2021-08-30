@@ -45,6 +45,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Realtime Quotes and Protocol Buffers](websockets/realtime-quotes)
    - [Trade Messages](websockets/trade-messages)
    - [Historical Market Data](websockets/historical-market-data)
+   - [Options chain](websockets/options-chain)
 7. Batch Requests
    - [Batch Request example](batch-request)
 

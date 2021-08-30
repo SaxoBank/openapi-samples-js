@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demo for streaming options chain</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Options Chain</h1>
+<h2 class="project-tagline">Subscribe to an options chain</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Options chain</h1>
+This example shows how to subscribe to an option chain of a specific root id. More info about option chains can be found in the <a href="https://www.developer.saxo/openapi/learn/options-chain" target="_blank">learn section</a>.
+<br />
+<br />
+<label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
+<br />
+<br />
+<label>Option root ID: <input type="text" class="text-field" id="idOptionRootId" value="1" /></label>
+<label>
+    Expiries (beware of TooManyStrikesRequested when &gt; 100): <select class="selector" id="idCbxExpiries">
+        <option value="1">1</option>
+        <option value="3" selected>3 (default)</option>
+        <option value="4">4</option>
+        <option value="7">7</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+    </select>
+</label>
+<label>
+    Strikes per expiry: <select class="selector" id="idCbxMaxStrikesPerExpiry">
+        <option value="4">4</option>
+        <option value="6" selected>6</option>
+        <option value="8">8</option>
+        <option value="10">10</option>
+        <option value="12">12</option>
+        <option value="24">24</option>
+        <option value="100">All</option>
+    </select>
+</label>
+<label>
+    Strike start: <select class="selector" id="idCbxStrikeStart">
+        <option value="ATM" selected>At the money</option>
+        <option value="0">0</option>
+        <option value="2">2</option>
+        <option value="5">5</option>
+        <option value="10">10</option>
+    </select>
+</label>
+<br />
+<br />
+<input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
+<input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
+<input type="button" class="action-button" value="Subscribe to options chain" id="idBtnSubscribeOptionsChain" />
+<input type="button" class="action-button" value="Update expiries/strikes" id="idBtnUpdateSubscription" />
+<input type="button" class="action-button" value="Reset 'At The Money'" id="idBtnResetSubscription" /><br />
+<input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
+<input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
+<input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
+<br />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>
