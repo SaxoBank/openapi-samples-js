@@ -36,6 +36,13 @@ This example shows how to subscribe to an option chain of a specific root id. Mo
 <br />
 <label>Option root ID: <input type="text" class="text-field" id="idOptionRootId" value="1" /></label>
 <label>
+    Asset type: <select class="selector" id="idCbxAssetType">
+        <option value="-" selected>Let app determine this</option>
+        <option value="FxNoTouchOption">FxNoTouchOption (FxBinaryOption)</option>
+        <option value="FxOneTouchOption">FxOneTouchOption (FxBinaryOption)</option>
+    </select>
+</label>
+<label>
     Expiries (beware of TooManyStrikesRequested when &gt; 100): <select class="selector" id="idCbxExpiries">
         <option value="1">1</option>
         <option value="3" selected>3 (default)</option>

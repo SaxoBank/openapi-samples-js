@@ -68,6 +68,14 @@
     }
 
     /**
+     * Determine if the option root is an FxBinaryOption (with OneTouch/NoTouch, or Put/Call sides).
+     * @return {boolean} When true, the AssetType is an FxBinaryOption, otherwise StockOption, StockIndexOption, FuturesOption, or FxVanillaOption
+     */
+    function isFxBinaryOption() {
+        return snapshot.AssetType === "FxOneTouchOption" || snapshot.AssetType === "FxNoTouchOption";
+    }
+
+    /**
      * Display option chain.
      * @param {Object} optionsChain The snapshot from the response, or the incoming messages
      * @return {void}
@@ -83,21 +91,35 @@
                         // Don't forget MidStrikePrice
                         expiry.Strikes.forEach(function (strike) {
                             const snapshotStrike = snapshotExpiry.Strikes[strike.Index];
-                            if (strike.hasOwnProperty("Call")) {
-                                // Don't forget Bid, LastTraded (NetChange), Volume, Low, High - quite some work to make it complete!
-                                if (strike.Call.hasOwnProperty("Ask")) {
-                                    snapshotStrike.Call.Ask = strike.Call.Ask;
+                            if (isFxBinaryOption()) {
+                                // See for the difference https://www.developer.saxo/openapi/learn/options-chain#OptionsChain-fields
+                                if (strike.hasOwnProperty("NoTouch")) {
+                                    if (strike.NoTouch.hasOwnProperty("Ask")) {
+                                        snapshotStrike.NoTouch.Ask = strike.NoTouch.Ask;
+                                    }
                                 }
-                                if (strike.Call.hasOwnProperty("AskSize")) {
-                                    snapshotStrike.Call.AskSize = strike.Call.AskSize;
+                                if (strike.hasOwnProperty("OneTouch")) {
+                                    if (strike.OneTouch.hasOwnProperty("Ask")) {
+                                        snapshotStrike.OneTouch.Ask = strike.OneTouch.Ask;
+                                    }
                                 }
-                            }
-                            if (strike.hasOwnProperty("Put")) {
-                                if (strike.Put.hasOwnProperty("Ask")) {
-                                    snapshotStrike.Put.Ask = strike.Put.Ask;
+                            } else {
+                                if (strike.hasOwnProperty("Call")) {
+                                    // Don't forget Bid, LastTraded (NetChange), Volume, Low, High - quite some work to make it complete!
+                                    if (strike.Call.hasOwnProperty("Ask")) {
+                                        snapshotStrike.Call.Ask = strike.Call.Ask;
+                                    }
+                                    if (strike.Call.hasOwnProperty("AskSize")) {
+                                        snapshotStrike.Call.AskSize = strike.Call.AskSize;
+                                    }
                                 }
-                                if (strike.Put.hasOwnProperty("AskSize")) {
-                                    snapshotStrike.Put.AskSize = strike.Put.AskSize;
+                                if (strike.hasOwnProperty("Put")) {
+                                    if (strike.Put.hasOwnProperty("Ask")) {
+                                        snapshotStrike.Put.Ask = strike.Put.Ask;
+                                    }
+                                    if (strike.Put.hasOwnProperty("AskSize")) {
+                                        snapshotStrike.Put.AskSize = strike.Put.AskSize;
+                                    }
                                 }
                             }
                         });
@@ -167,6 +189,11 @@
      * @return {string} The string respresentation of the options matrix
      */
     function displayExpiries() {
+        const nameOfStrike = (
+            isFxBinaryOption()
+            ? "Barrier"
+            : "Strike"
+        );
         let snapshotAsText = "";
         snapshot.Expiries.forEach(function (expiry) {
             const expiryDate = new Date(expiry.Expiry);
@@ -174,28 +201,44 @@
             snapshotAsText += ":\n";
             expiry.Strikes.forEach(function (strike) {
                 snapshotAsText += " Strike " + (
-                    strike.hasOwnProperty("Strike")
-                    ? strike.Strike
+                    strike.hasOwnProperty(nameOfStrike)
+                    ? strike[nameOfStrike]
                     : "?"
                 );
                 // More prize info is available. Study the response of the subscribe request.
-                if (Object.keys(strike.Call).length > 0) {
-                    // Ignore empty objects
-                    snapshotAsText += ", call";
-                    if (strike.Call.hasOwnProperty("Ask")) {
-                        snapshotAsText += " with ask " + strike.Call.Ask;  // You will use the correct Format.Decimals from the /instrument/details endpoint?
+                if (isFxBinaryOption()) {
+                    if (Object.keys(strike.NoTouch).length > 0) {
+                        // Ignore empty objects
+                        snapshotAsText += ", noTouch";
+                        if (strike.NoTouch.hasOwnProperty("Ask")) {
+                            snapshotAsText += " with ask " + strike.NoTouch.Ask;  // You will use the correct Format.Decimals from the /instrument/details endpoint?
+                        }
                     }
-                    if (strike.Call.hasOwnProperty("AskSize")) {
-                        snapshotAsText += " volume " + strike.Call.AskSize;
+                    if (Object.keys(strike.OneTouch).length > 0) {
+                        snapshotAsText += ", oneTouch";
+                        if (strike.OneTouch.hasOwnProperty("Ask")) {
+                            snapshotAsText += " with ask " + strike.OneTouch.Ask;
+                        }
                     }
-                }
-                if (Object.keys(strike.Put).length > 0) {
-                    snapshotAsText += ", put";
-                    if (strike.Put.hasOwnProperty("Ask")) {
-                        snapshotAsText += " with ask " + strike.Put.Ask;
+                } else {
+                    if (Object.keys(strike.Call).length > 0) {
+                        // Ignore empty objects
+                        snapshotAsText += ", call";
+                        if (strike.Call.hasOwnProperty("Ask")) {
+                            snapshotAsText += " with ask " + strike.Call.Ask;  // You will use the correct Format.Decimals from the /instrument/details endpoint?
+                        }
+                        if (strike.Call.hasOwnProperty("AskSize")) {
+                            snapshotAsText += " volume " + strike.Call.AskSize;
+                        }
                     }
-                    if (strike.Put.hasOwnProperty("AskSize")) {
-                        snapshotAsText += " volume " + strike.Put.AskSize;
+                    if (Object.keys(strike.Put).length > 0) {
+                        snapshotAsText += ", put";
+                        if (strike.Put.hasOwnProperty("Ask")) {
+                            snapshotAsText += " with ask " + strike.Put.Ask;
+                        }
+                        if (strike.Put.hasOwnProperty("AskSize")) {
+                            snapshotAsText += " volume " + strike.Put.AskSize;
+                        }
                     }
                 }
                 snapshotAsText += "\n";
@@ -210,15 +253,25 @@
      */
     function prepareSnapshotForWindowUpdates() {
         snapshot.Expiries.forEach(function (expiry) {
+            const nameOfSide1 = (
+                isFxBinaryOption()
+                ? "NoTouch"
+                : "Call"
+            );
+            const nameOfSide2 = (
+                isFxBinaryOption()
+                ? "OneTouch"
+                : "Put"
+            );
             let i;
             if (expiry.hasOwnProperty("Strikes")) {
-                // Make sure all strikes contain a call/put object:
+                // Make sure all strikes contain a call/put, or noTouch/oneTouch object:
                 expiry.Strikes.forEach(function (strike) {
-                    if (!strike.hasOwnProperty("Call")) {
-                        strike.Call = {};
+                    if (!strike.hasOwnProperty(nameOfSide1)) {
+                        strike[nameOfSide1] = {};
                     }
-                    if (!strike.hasOwnProperty("Put")) {
-                        strike.Put = {};
+                    if (!strike.hasOwnProperty(nameOfSide2)) {
+                        strike[nameOfSide2] = {};
                     }
                 });
             } else {
@@ -226,8 +279,8 @@
                 // Add empty strikes
                 for (i = 0; i < expiry.StrikeCount; i += 1) {
                     expiry.Strikes.push({
-                        "Call": {},
-                        "Put": {}
+                        [nameOfSide1]: {},
+                        [nameOfSide2]: {}
                     });
                 }
             }
@@ -263,9 +316,8 @@
      * @return {void}
      */
     function subscribeOptionsChain() {
-        const optionRootId = document.getElementById("idOptionRootId").value;
-        // First, determine the AssetType to be used:
-        getAssetTypeOfOptionRoot(optionRootId, function (assetType) {
+
+        function internalSubscribe(assetType) {
             const data = {
                 "ContextId": document.getElementById("idContextId").value,
                 "ReferenceId": optionsChainSubscription.referenceId,
@@ -312,7 +364,17 @@
             }).catch(function (error) {
                 console.error(error);
             });
-        });
+        }
+
+        const optionRootId = document.getElementById("idOptionRootId").value;
+        const isAssetTypeSuppied = document.getElementById("idCbxAssetType").value !== "-";
+        if (isAssetTypeSuppied) {
+            // The request GET /instruments/contractoptionspaces/21 doesn't work for some option types.
+            internalSubscribe(document.getElementById("idCbxAssetType").value);
+        } else {
+            // First, determine the AssetType to be used:
+            getAssetTypeOfOptionRoot(optionRootId, internalSubscribe);
+        }
     }
 
     /**
