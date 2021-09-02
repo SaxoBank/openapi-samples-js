@@ -1,4 +1,4 @@
-/*jslint browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -24,7 +24,20 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-            newOrderObject.AccountKey = demo.user.accountKey;
+            if (newOrderObject.hasOwnProperty("AccountKey")) {
+                // This is the case for single orders, or conditional/related orders
+                // This function is used for other order types as well, so more order types are considered
+                newOrderObject.AccountKey = demo.user.accountKey;
+            }
+            if (newOrderObject.hasOwnProperty("Orders")) {
+                // This is the case for OCO, related and conditional orders
+                newOrderObject.Orders.forEach(function (order) {
+                    if (order.hasOwnProperty("AccountKey")) {
+                        // Conditional orders don't need an account key in the condition
+                        order.AccountKey = demo.user.accountKey;
+                    }
+                });
+            }
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
