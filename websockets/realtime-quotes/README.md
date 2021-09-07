@@ -6,4 +6,6 @@ It contains an example using JSON messages and the more complex, but slightly fa
 
 For ProtoBuf, the library [protobuf.js](https://github.com/dcodeio/protobuf.js) is used.
 
+More on prices: https://www.developer.saxo/openapi/learn/pricing
+
 Live demo: https://saxobank.github.io/openapi-samples-js/websockets/realtime-quotes/

@@ -1,6 +1,7 @@
 # Sample for authentication using Certificate Based Authentication
 
 The Certificate Based Authentication (CBA) flow is suitable for server-to-server integrations where authentication must to be done without human intervention.
+
 JSON Web Token (JWT) is used to securely transmit information between the application and Saxobank.
 
 > **_NOTE:_** The CBA flow is not available for most apps. You need to contact SaxoBank to apply for approval.

@@ -2,4 +2,6 @@
 
 This is a demonstration on how to download a PDF or Excel report from the OpenApi and give it a file name.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/basics/download-reports/
+More on portfolio reports: https://www.developer.saxo/openapi/learn/portfolio-report
+
+Live demo: https://saxobank.github.io/openapi-samples-js/portfolio/download-reports/

@@ -2,7 +2,7 @@
 
 The Authorization Code is an OAuth 2.0 grant that regular web apps use in order to access an API.
 
-This is a demonstration on how do this.
+More on this flow: https://www.developer.saxo/openapi/learn/oauth-authorization-code-grant
 
 Live demo: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-code-flow/
 
