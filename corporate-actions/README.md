@@ -10,6 +10,7 @@ Conversion (CONV): Conversion of securities (generally convertible bonds or pref
 
 As for 2021, SAXO supports 73 types of events, The /ca/v2/events/eventtypes endpoint returns the full list of available event types.
 
+There is a live sample on [Events](https://saxobank.github.io/openapi-samples-js/corporate-actions/events/) and [Holdings](https://saxobank.github.io/openapi-samples-js/corporate-actions/holdings/).
 
 ## Corporate Action Types
 All the Corporate Actions or events can be simply categories into two types:
@@ -17,13 +18,14 @@ All the Corporate Actions or events can be simply categories into two types:
 - Mandatory events take effect automatically so that it is not necessary for the security holders to respond;
 - Voluntary events require security holders to respond. Together with the events, companies usually provides several options to the security holders to elect. 
 
-
 ## Elections
 During voluntary events, different options are given to all the share owners to pick. Once a shareholder makes his or her decision, an election must be made by the shareholder. An election is something has been chosen by a client in an Voluntary corporate action. 
 
+There is a live sample on [Elections](https://saxobank.github.io/openapi-samples-js/corporate-actions/elections/).
 
 ## Standing Instructions
 A reset rule about how an election should be automatically performed by an shareholder. 
 
+There is a live sample on [Standing Instructions](https://saxobank.github.io/openapi-samples-js/corporate-actions/standinginstructions/).
 
-Documentation: https://www.developer.saxo/openapi/referencedocs/ca
+Documentation: https://www.developer.saxo/openapi/learn/corporate-actions
