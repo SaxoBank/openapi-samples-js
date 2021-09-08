@@ -28,4 +28,4 @@ A reset rule about how an election should be automatically performed by an share
 
 There is a live sample on [Standing Instructions](https://saxobank.github.io/openapi-samples-js/corporate-actions/standinginstructions/).
 
-Documentation: https://www.developer.saxo/openapi/learn/corporate-actions
+Documentation can be found on the [Developer Portal](https://www.developer.saxo/openapi/learn/corporate-actions).
