@@ -84,6 +84,11 @@
             newOrderObject.TrailingStopStep = 0.1;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
+        case "TriggerBreakout":
+        case "TriggerLimit":
+        case "TriggerStop":
+            console.error("You've selected an ordertype for a conditional order, which is not covered by this sample.\nSee for conditional orders:\nhttps://saxobank.github.io/openapi-samples-js/orders/conditional-orders/");
+            break;
         default:
             console.error("Unsupported order type " + newOrderObject.OrderType);
         }
