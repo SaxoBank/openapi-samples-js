@@ -251,14 +251,65 @@
      */
     function getConditions() {
 
+        /**
+         * The instrument is tradable, but there might be limitations. If so, display them.
+         * @param {Object} detailsObject The response with the instrument details.
+         * @return {void}
+         */
+        function checkTradingStatus(detailsObject) {
+            let statusDescription = "This instrument has trading limitations:\n";
+            if (detailsObject.TradingStatus !== "Tradable") {
+                if (detailsObject.hasOwnProperty("NonTradableReason")) {
+                    switch (detailsObject.NonTradableReason) {
+                    case "ETFsWithoutKIIDs":
+                        statusDescription += "The issuer has not provided a Key Information Document (KID) for this instrument.";
+                        break;
+                    case "ExpiredInstrument":
+                        statusDescription += "This instrument has expired.";
+                        break;
+                    case "NonShortableInstrument":
+                        statusDescription += "Short selling is not available for this instrument.";
+                        break;
+                    case "NotOnlineClientTradable":
+                        statusDescription += "This instrument is not tradable online.";
+                        break;
+                    case "OfflineTradableBonds":
+                        statusDescription += "This instrument is tradable offline.";
+                        break;
+                    case "ReduceOnlyInstrument":
+                        statusDescription += "This instrument is reduce-only.";
+                        break;
+                    default:
+                        // There are reasons "OtherReason" and "None".
+                        statusDescription += "This instrument is not tradable.";
+                    }
+                    statusDescription += "\n(" + detailsObject.NonTradableReason + ")";
+                } else {
+                    // Somehow not reason was supplied.
+                    statusDescription += "Status: " + detailsObject.TradingStatus;
+                }
+                window.alert(statusDescription);
+            }
+        }
+
+        /**
+         * Verify if the selected OrderType is supported for the instrument.
+         * @param {Object} orderObject The object used to POST the new order.
+         * @param {Array<string>} orderTypes Array with supported order types (Market, Limit, etc).
+         * @return {void}
+         */
         function checkSupportedOrderTypes(orderObject, orderTypes) {
             if (orderTypes.indexOf(orderObject.OrderType) === -1) {
                 window.alert("The order type " + orderObject.OrderType + " is not supported for this instrument.");
             }
         }
 
+        /**
+         * Verify if the selected account is capable of handling this instrument.
+         * @param {Array<string>} tradableOn Supported account list.
+         * @return {void}
+         */
         function checkSupportedAccounts(tradableOn) {
-            // Verify if the selected account is capable of handling this instrument.
             // First, get the id of the active account:
             const activeAccountId = demo.user.accounts.find(function (i) {
                 return i.accountKey === demo.user.accountKey;
@@ -342,6 +393,7 @@
                         window.alert("This instrument is not tradable!");
                         // For demonstration purposes, the validation continues, but an order ticket shouldn't be shown!
                     }
+                    checkTradingStatus(responseJson);
                     checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
                     if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn") {
                         if (responseJson.hasOwnProperty("TickSizeScheme")) {
