@@ -48,6 +48,52 @@
     }
 
     /**
+     * This is an example of getting the trading settings of an instrument.
+     * There is a much more detailed example of this in the Stock sample.
+     * That sample checks amongst others the MinimumOrderSize, TradingStatus, SupportedAccounts.
+     * This one is just to verify the supported conditions.
+     * @return {void}
+     */
+    function getConditions() {
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&FieldGroups=OrderSetting",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const orderConditions = Array.from(document.getElementById("idCbxCondition").options).map(function (opt) {
+                        return opt.value;
+                    });
+                    const supportedConditions = [];
+                    let description = "";
+                    responseJson.SupportedOrderTypes.forEach(function (orderType) {
+                        if (orderConditions.indexOf(orderType) > -1) {
+                            supportedConditions.push(orderType);
+                        }
+                    });
+                    if (supportedConditions.length === 0) {
+                        description = "Conditional orders are not supported for this instrument and the selected account.";
+                    } else {
+                        description = "Supported conditions are: " + supportedConditions.join(", ");
+                        description += "\nSupported TriggerPriceTypes: " + responseJson.SupportedOrderTriggerPriceTypes.join(", ");
+                    }
+                    console.log(description + "\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of an order validation.
      * @return {void}
      */
@@ -355,6 +401,7 @@
         {"evt": "change", "elmId": "idCbxOperator", "func": changeOperator, "funcsToDisplay": [changeOperator, getConditionInText]},
         {"evt": "change", "elmId": "idCbxTrigger", "func": changeTrigger, "funcsToDisplay": [changeTrigger, getConditionInText]},
         {"evt": "change", "elmId": "idCbxExpiry", "func": changeExpiry, "funcsToDisplay": [changeExpiry, getConditionInText]},
+        {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
