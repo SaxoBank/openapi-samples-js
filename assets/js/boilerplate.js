@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.25
+ * boilerplate v1.26
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -30,10 +30,11 @@ function demonstrationHelper(settings) {
         "env": "sim",
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
-        "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
+        "apiHost": "gateway.saxobank.com",
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
-        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
+        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
         "appKey": {
+            // App management: https://www.developer.saxo/openapi/appmanagement#/
             "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
             //"defaultAssetTypes": "e125a21819334a78b4f02adcb362b060",  // This app has no trading rights - use this to test how it behaves when ordering
             "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
@@ -49,8 +50,24 @@ function demonstrationHelper(settings) {
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
         "appKey": {
-            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
-            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
+            // App management: https://www.developer.saxo/openapi/appmanagement#/
+            "defaultAssetTypes": "ae84ff08844e40d9a7e546bb1c4bdeb7",
+            "extendedAssetTypes": "4995383fd4b344e588eb784a7c666835"
+        }
+    };
+    const configDte231 = {
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "dte231",
+        "authUrl": "https://sso-tst231.cf.saxo/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
+        "apiHost": "stgo-tst231.cf.saxo",
+        "apiPath": "/openapi",
+        "streamerUrl": "wss://stgo-tst231.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
+        "appKey": {
+            // App management: https://developerportal-tst231.cf.saxo/openapi/appmanagement#/
+            "defaultAssetTypes": "91250b8fdceb4713b0bb54b0f0eeae56",  // No need to create your own app, unless you want to test on a different environment than SIM
+            //"defaultAssetTypes": "8ef6e513003e46618d501eec0e213221",  // This app has no trading rights - use this to test how it behaves when ordering
+            "extendedAssetTypes": "9f07eb9eaf5447469509a03260830990"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
     const user = {};
@@ -243,32 +260,33 @@ function demonstrationHelper(settings) {
      */
     function getConfig() {
         let urlParams;
-        let isRunningOnSim = true;
+        let env;
+        let envParam = "sim";  // By default, SIM is used as environment. If you want to experiment on Live (BE CAREFUL!), you can add a query param '?env=live' (or dte231, for Saxo devs)
         if (window.URLSearchParams) {
             urlParams = new window.URLSearchParams(
                 window.location.hash === ""
                 ? window.location.search
                 : window.location.hash.replace("#", "?")
             );
-
-            const envParam = urlParams.get("env");
-            if (envParam && envParam.toLowerCase() === "live") {
-                isRunningOnSim = false;
+            envParam = urlParams.get("env");
+            if (envParam) {
+                env = envParam.toLowerCase();
             } else if (urlParams.get("state") !== null) {
                 try {
-                    if (JSON.parse(window.atob(urlParams.get("state"))).env === "live") {
-                        isRunningOnSim = false;
-                    }
+                    env = JSON.parse(window.atob(urlParams.get("state"))).env;
                 } catch (ignore) {
                     console.error("Something went wrong unpacking the state parameter..");
                 }
             }
         }
-        return (
-            isRunningOnSim
-            ? configSim
-            : configLive
-        );
+        switch (env) {
+        case "live":
+            return configLive;
+        case "dte231":
+            return configDte231;
+        default:
+            return configSim;
+        }
     }
 
     /**
