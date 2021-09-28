@@ -32,10 +32,14 @@
     function getToken() {
         // A bookmark (or anchor) is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
         const urlParams = new URLSearchParams(window.location.hash.replace("#", "?"));
-        const expiresInSeconds = urlParams.get("expires_in");  // Note tat this doesn't work when the page is refreshed. To be sure, use a cookie, or sessionStorage
+        const expiresInSeconds = urlParams.get("expires_in");  // Note that this doesn't work when the page is refreshed. To be sure, use a cookie, or sessionStorage
         const accessTokenExpirationTime = new Date(pageDisplayTime.getTime() + expiresInSeconds * 1000);
         accessToken = urlParams.get("access_token");
-        console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + ").\nOnly use this token for API requests, don't send it to a backend, for security reasons:\n" + decodeURIComponent(accessToken));
+        if (accessToken === null) {
+            console.error("Not a valid token supplied via the query parameters of the URL.");
+        } else {
+            console.log("Found access_token (valid until " + accessTokenExpirationTime.toLocaleString() + ").\nOnly use this token for API requests, don't send it to a backend, for security reasons:\n" + decodeURIComponent(accessToken));
+        }
     }
 
     /**
@@ -48,7 +52,7 @@
         const state = urlParams.get("state");
         let stateUnencoded;
         if (state === null) {
-            console.log("No state found");
+            console.log("No state found.");
         } else {
             stateUnencoded = window.atob(state);
             try {

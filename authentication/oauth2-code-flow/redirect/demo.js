@@ -49,7 +49,7 @@
         const state = urlParams.get("state");
         let stateUnencoded;
         if (state === null) {
-            console.log("No state found");
+            console.log("No state found.");
         } else {
             stateUnencoded = window.atob(state);
             try {
