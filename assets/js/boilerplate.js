@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.26
+ * boilerplate v1.27
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -14,7 +14,7 @@
  *
  * The token is stored in the localStorage, so it remains available after a page refresh.
  *
- * Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
+ * Suggestions? Comments? Reach us via Github or OpenApiSupport@saxobank.com
  *
  */
 
@@ -27,7 +27,7 @@ function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
-        "env": "sim",
+        "env": "sim",  // The SaxoTraderGO app for Simulation can be found here: https://www.saxotrader.com/sim/ (Developer Portal https://www.developer.saxo/openapi/ and https://developer.saxobank.com/openapi/ from China)
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
@@ -35,15 +35,15 @@ function demonstrationHelper(settings) {
         "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
         "appKey": {
             // App management: https://www.developer.saxo/openapi/appmanagement#/
-            "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
-            //"defaultAssetTypes": "e125a21819334a78b4f02adcb362b060",  // This app has no trading rights - use this to test how it behaves when ordering
-            "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+            "defaultAssetTypes": "7194692c30db42efb2c675c6c0fb2a67",  // No need to create your own app, unless you want to test on a different environment than SIM
+            //"defaultAssetTypes": "67625f8ca809446aa10b08d6eae2c7ab",  // This app has no trading rights - use this to test how it behaves when ordering
+            "extendedAssetTypes": "1a6eb56ced7c4e04b1467e7e9be9bff7"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
-        "env": "live",
+        "env": "live",  // The SaxoTraderGO app for Live can be found here: https://www.saxotrader.com/
         "authUrl": "https://live.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
@@ -57,7 +57,7 @@ function demonstrationHelper(settings) {
     };
     const configDte231 = {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
-        "env": "dte231",
+        "env": "dte231",  // The SaxoTraderGO app for this DTE environment can be found here: https://stgo-tst231.cf.saxo/ (Developer Portal https://developerportal-tst231.cf.saxo/openapi/)
         "authUrl": "https://sso-tst231.cf.saxo/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "stgo-tst231.cf.saxo",
@@ -68,6 +68,21 @@ function demonstrationHelper(settings) {
             "defaultAssetTypes": "91250b8fdceb4713b0bb54b0f0eeae56",  // No need to create your own app, unless you want to test on a different environment than SIM
             //"defaultAssetTypes": "8ef6e513003e46618d501eec0e213221",  // This app has no trading rights - use this to test how it behaves when ordering
             "extendedAssetTypes": "9f07eb9eaf5447469509a03260830990"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        }
+    };
+    const configDte211 = {
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "dte211",  // The SaxoTraderGO app for this DTE environment can be found here: https://stgo-tst211.cf.saxo/ (Developer Portal https://developerportal-tst211.cf.saxo/openapi/)
+        "authUrl": "https://sso-tst211.cf.saxo/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
+        "apiHost": "stgo-tst211.cf.saxo",
+        "apiPath": "/openapi",
+        "streamerUrl": "wss://stgo-tst211.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
+        "appKey": {
+            // App management: https://developerportal-tst211.cf.saxo/openapi/appmanagement#/
+            "defaultAssetTypes": "1c66f4c529ec49cab9303371636fe3d8",  // No need to create your own app, unless you want to test on a different environment than SIM
+            //"defaultAssetTypes": "2c6e16c31a5b404190bc2c90b3bc75bc",  // This app has no trading rights - use this to test how it behaves when ordering
+            "extendedAssetTypes": "31eba2b4020c4185a93372a434373cb7"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         }
     };
     const user = {};
@@ -284,6 +299,8 @@ function demonstrationHelper(settings) {
             return configLive;
         case "dte231":
             return configDte231;
+        case "dte211":
+            return configDte211;
         default:
             return configSim;
         }
