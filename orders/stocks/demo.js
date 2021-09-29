@@ -728,6 +728,34 @@
         });
     }
 
+    /**
+     * Order changes are broadcasted via ENS. Retrieve the recent events to see what you can expect.
+     * @return {void}
+     */
+    function getHistoricalEnsEvents() {
+        const fromDate = new Date();
+        fromDate.setMinutes(fromDate.getMinutes() - 5);
+        fetch(
+            demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString(),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Found " + responseJson.Data.length + " events in the last 5 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
@@ -739,7 +767,8 @@
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
-        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]}
+        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
+        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]}
     ]);
     demo.displayVersion("trade");
 }());
