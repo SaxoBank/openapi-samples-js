@@ -101,7 +101,6 @@
         // The PreCheck only checks the order, not the trigger!
         // Bug: Preview doesn't check for limit outside market hours
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
             demo.apiUrl + "/trade/v2/orders/precheck",
@@ -123,17 +122,27 @@
                         // Order could be placed if the account had sufficient margin and funding.
                         // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
                         if (responseJson.hasOwnProperty("ErrorInfo")) {
+                            // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
                             console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4));
                         } else {
                             // The order can be placed
-                            console.log(JSON.stringify(responseJson, null, 4));
+                            console.log("The order can be placed:\n\n" + JSON.stringify(responseJson, null, 4));
                         }
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
-                        console.error(JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                        // This can be something like: {"ErrorInfo":{"ErrorCode":"IllegalInstrumentId","Message":"Instrument ID is invalid"},"EstimatedCashRequired":0.0,"PreCheckResult":"Error"}
+                        if (responseJson.hasOwnProperty("ErrorInfo")) {
+                            // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                            console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                        } else {
+                            // The order can be placed
+                            console.log("Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                        }
                     }
                 });
             } else {
+                // This can be something like: {"Message":"One or more properties of the request are invalid!","ModelState":{"Orders":["Stop leg of OCO order must have OrderType of either: TrailingStopIfTraded, StopIfTraded, StopLimit"]},"ErrorCode":"InvalidModelState"}
+                // The developer (you) must fix this.
                 demo.processError(response);
             }
         }).catch(function (error) {
