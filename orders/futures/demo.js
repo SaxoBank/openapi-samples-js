@@ -383,6 +383,24 @@
      */
     function preCheckNewOrder() {
         // Bug: Preview doesn't check for limit outside market hours
+
+        function getErrorMessage(responseJson, defaultMessage) {
+            let errorMessage;
+            if (responseJson.hasOwnProperty("ErrorInfo")) {
+                // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                errorMessage = responseJson.ErrorInfo.Message;
+                // There can be error messages per order. Try to add them.
+                if (responseJson.hasOwnProperty("Orders")) {
+                    responseJson.Orders.forEach(function (order) {
+                        errorMessage += "\n- " + getErrorMessage(order, "");
+                    });
+                }
+            } else {
+                errorMessage = defaultMessage;
+            }
+            return errorMessage;
+        }
+
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
@@ -406,7 +424,7 @@
                         // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
                         if (responseJson.hasOwnProperty("ErrorInfo")) {
                             // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                            console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4));
+                            console.error(getErrorMessage(responseJson, "") + "\n\n" + JSON.stringify(responseJson, null, 4));
                         } else {
                             // The order can be placed
                             console.log("The order can be placed:\n\n" + JSON.stringify(responseJson, null, 4));
@@ -414,13 +432,7 @@
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
                         // This can be something like: {"ErrorInfo":{"ErrorCode":"IllegalInstrumentId","Message":"Instrument ID is invalid"},"EstimatedCashRequired":0.0,"PreCheckResult":"Error"}
-                        if (responseJson.hasOwnProperty("ErrorInfo")) {
-                            // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                            console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
-                        } else {
-                            // The order can be placed
-                            console.log("Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
-                        }
+                        console.error(getErrorMessage(responseJson, "Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:") + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
                     }
                 });
             } else {
