@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -209,29 +209,34 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let list = "";
+                    let multiLegOrderId = 0;
                     responseJson.Data.forEach(function (order) {
-                        const conditionalOrderTypes = ["LimitTrigger", "BreakoutTrigger", "StopTrigger"];
-                        if (conditionalOrderTypes.indexOf(order.OpenOrderType) < 0) {
-                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + (
-                                order.OpenOrderType === "Market"  // This can be the case for conditional orders (Status = WaitCondition)
-                                ? " (Market)"
-                                : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
-                            );
-                            list += " (status " + order.Status + ")" + (
-                                order.hasOwnProperty("ExternalReference")
-                                ? " reference: " + order.ExternalReference
-                                : ""
-                            );
-                            list += (
-                                order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
-                                ? " partially filled: " + order.FilledAmount
-                                : ""
-                            ) + "\n";
-                            if (order.hasOwnProperty("SleepingOrderCondition")) {
-                                // When this object is available, the order is "sleeping", waiting for a condition to be reached.
-                                // This condition can be a price movement of a different instrument.
-                                list += getConditionInText(order.SleepingOrderCondition) + "\n"
+                        if (order.hasOwnProperty("MultiLegOrderDetails")) {
+                            if (order.MultiLegOrderDetails.MultiLegOrderId !== multiLegOrderId) {
+                                multiLegOrderId = order.MultiLegOrderDetails.MultiLegOrderId;
+                                list += order.MultiLegOrderDetails.Description + "\n";
                             }
+                            list += "- ";
+                        }
+                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + (
+                            order.OpenOrderType === "Market"  // This can be the case for conditional orders (Status = WaitCondition)
+                            ? " (Market)"
+                            : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
+                        );
+                        list += " (status " + order.Status + ")" + (
+                            order.hasOwnProperty("ExternalReference")
+                            ? " reference: " + order.ExternalReference
+                            : ""
+                        );
+                        list += (
+                            order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
+                            ? " partially filled: " + order.FilledAmount
+                            : ""
+                        ) + "\n";
+                        if (order.hasOwnProperty("SleepingOrderCondition")) {
+                            // When this object is available, the order is "sleeping", waiting for a condition to be reached.
+                            // This condition can be a price movement of a different instrument.
+                            list += getConditionInText(order.SleepingOrderCondition) + "\n";
                         }
                     });
                     console.log(msg + "\n\n" + (
