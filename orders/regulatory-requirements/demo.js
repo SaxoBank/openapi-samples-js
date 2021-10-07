@@ -15,7 +15,6 @@
         "selectedAssetType": "Stock",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
-    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
 
     /**
      * This is an example of the warning to be shown before trading a complex product.
@@ -232,9 +231,10 @@
         const uic = document.getElementById("idUic").value;
         const assetType = document.getElementById("idCbxAssetType").value;
         const amount = document.getElementById("idAmount").value;
+        const price = document.getElementById("idPrice").value;  // SIM doesn't allow calls to price endpoint for most instruments, so just enter it here
         // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
         fetch(
-            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + uic + "/" + assetType + "?Amount=" + amount + "&Price=" + fictivePrice + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=" + getHoldingPeriod(1),
+            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + uic + "/" + assetType + "?Amount=" + amount + "&Price=" + price + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=" + getHoldingPeriod(1),
             {
                 "method": "GET",
                 "headers": {
