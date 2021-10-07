@@ -137,45 +137,46 @@
     }
 
     /**
-     * Create a description of the condition in case of conditional orders.
-     * @return {void}
+     * Create a description of the condition in case of conditional orders (aka sleeping orders).
+     * @param {Object} condition The condition of the sleeping order.
+     * @return {string} Textual representation of the condition.
      */
-    function getConditionInText(conditionalOrder) {
+    function getConditionInText(condition) {
 
         function priceTypeInText() {
-            switch (conditionalOrder.TriggerPriceType) {
+            switch (condition.TriggerPriceType) {
             case "LastTraded":
                 return "last traded";
             default:
-                return conditionalOrder.TriggerPriceType.toLowerCase();
+                return condition.TriggerPriceType.toLowerCase();
             }
         }
 
         let description = "  - activated when the following condition is met: ";
         let expirationDate;
-        switch (conditionalOrder.OpenOrderType) {
+        switch (condition.OpenOrderType) {
         case "StopTrigger":  // Distance
-            description += conditionalOrder.DisplayAndFormat.Description + " " + priceTypeInText() + " price is " + conditionalOrder.TrailingStopDistanceToMarket + " " + (
-                conditionalOrder.BuySell === "Sell"
+            description += condition.DisplayAndFormat.Description + " " + priceTypeInText() + " price is " + condition.TrailingStopDistanceToMarket + " " + (
+                condition.BuySell === "Sell"
                 ? "above lowest "
                 : "below highest "
             ) + priceTypeInText() + " price";
             break;
         case "BreakoutTrigger":  // Breakout
-            description += conditionalOrder.DisplayAndFormat.Description + " " + priceTypeInText() + " price is outside " + conditionalOrder.BreakoutTriggerDownPrice + "-" + conditionalOrder.BreakoutTriggerUpPrice;
+            description += condition.DisplayAndFormat.Description + " " + priceTypeInText() + " price is outside " + condition.BreakoutTriggerDownPrice + "-" + condition.BreakoutTriggerUpPrice;
             break;
         case "LimitTrigger":  // Price
-            description += conditionalOrder.DisplayAndFormat.Description + " last traded price is at or " + (
-                conditionalOrder.BuySell === "Sell"
+            description += condition.DisplayAndFormat.Description + " last traded price is at or " + (
+                condition.BuySell === "Sell"
                 ? "above"
                 : "below"
-            ) + " " + conditionalOrder.Price;
+            ) + " " + condition.Price;
             break;
         }
         description += ". ";
-        switch (conditionalOrder.Duration.DurationType) {
+        switch (condition.Duration.DurationType) {
         case "GoodTillDate":
-            expirationDate = new Date(conditionalOrder.Duration.ExpirationDate);
+            expirationDate = new Date(condition.Duration.ExpirationDate);
             description += "Valid until trade day " + expirationDate.toLocaleDateString() + ".";
             break;
         case "DayOrder":
@@ -226,13 +227,10 @@
                                 ? " partially filled: " + order.FilledAmount
                                 : ""
                             ) + "\n";
-                            if (order.hasOwnProperty("TriggerParentOrderId")) {
-                                // This is the reference to the condition.
-                                responseJson.Data.forEach(function (conditionalOrder) {
-                                    if (conditionalOrder.OrderId === order.TriggerParentOrderId) {
-                                        list += getConditionInText(conditionalOrder) + "\n"
-                                    }
-                                });
+                            if (order.hasOwnProperty("SleepingOrderCondition")) {
+                                // When this object is available, the order is "sleeping", waiting for a condition to be reached.
+                                // This condition can be a price movement of a different instrument.
+                                list += getConditionInText(order.SleepingOrderCondition) + "\n"
                             }
                         }
                     });

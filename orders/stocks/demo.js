@@ -35,7 +35,6 @@
                 // This is the case for OCO, related and conditional orders
                 newOrderObject.Orders.forEach(function (order) {
                     if (order.hasOwnProperty("AccountKey")) {
-                        // Conditional orders don't need an account key in the condition
                         order.AccountKey = demo.user.accountKey;
                     }
                 });
