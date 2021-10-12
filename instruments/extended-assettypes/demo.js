@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -94,6 +94,9 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
+                    if (responseJson.Data.length > 0) {
+                        document.getElementById("idUic").value = responseJson.Data[0].Identifier;
+                    }
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -105,22 +108,37 @@
     }
 
     /**
-     * Example of getting the historical orders, with or without using Extended AssetTypes.
+     * Example of getting prices.
+     * @param {string} assetType The AssetType of the Uic.
      * @return {void}
      */
-    function getHistOrders() {
+    function getPrices(assetType) {
         const headers = {
-            "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+            "Content-Type": "application/json; charset=utf-8"
         };
         if (document.getElementById("idChkExtAsset").checked) {
             headers.Pragma = "oapi-x-extasset";
         }
-        // A better example of this request can be found here: https://saxobank.github.io/openapi-samples-js/portfolio/positions-orders/
+        const data = {
+            "ContextId": "MyContextId",
+            "ReferenceId": "MyReferenceId" + Date.now(),
+            "Arguments": {
+                "AccountKey": demo.user.accountKey,
+                "Uic": document.getElementById("idUic").value,
+                "AssetType": assetType,
+                "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
+                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
+                // MarketDepth gives the order book, when available.
+                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
+            }
+        };
         fetch(
-            demo.apiUrl + "/cs/v1/audit/orderactivities?FromDateTime=2020-10-11T00:00:00.000Z",
+            demo.apiUrl + "/trade/v1/prices/subscriptions",
             {
-                "method": "GET",
-                "headers": headers
+                "method": "POST",
+                "headers": headers,
+                "body": JSON.stringify(data)
             }
         ).then(function (response) {
             if (response.ok) {
@@ -135,11 +153,28 @@
         });
     }
 
+    /**
+     * Request prices and use the AssetType Etf.
+     * @return {void}
+     */
+    function getPricesAsEtf() {
+        getPrices("Etf");
+    }
+
+    /**
+     * Request prices and use the AssetType Stock. For a limited time that will be possible, to make the migration easier.
+     * @return {void}
+     */
+    function getPricesAsStock() {
+        getPrices("Stock");
+    }
+
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnGetLegalAssetTypes", "func": getLegalAssetTypes, "funcsToDisplay": [getLegalAssetTypes]},
         {"evt": "click", "elmId": "idBtnSearchIshares", "func": findIshares, "funcsToDisplay": [findIshares]},
         {"evt": "click", "elmId": "idBtnFindEtf", "func": findEtf, "funcsToDisplay": [findEtf]},
-        {"evt": "click", "elmId": "idBtnGetHistOrders", "func": getHistOrders, "funcsToDisplay": [getHistOrders]}
+        {"evt": "click", "elmId": "idBtnGetPrices", "func": getPricesAsEtf, "funcsToDisplay": [getPricesAsEtf, getPrices]},
+        {"evt": "click", "elmId": "idBtnGetPricesAsStock", "func": getPricesAsStock, "funcsToDisplay": [getPricesAsStock, getPrices]}
     ]);
     demo.displayVersion("ref");
 }());
