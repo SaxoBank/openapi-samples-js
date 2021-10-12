@@ -90,7 +90,7 @@
                     let result = "";
                     responseJson.Data.forEach(function (instrument) {
                         const entitlementDescription = getMatch(entitlementsResponse, instrument.Exchange.ExchangeId, assetType);
-                        result += instrument.Uic + ": " + instrument.AssetType + " " + instrument.Description + ": " + entitlementDescription + "\n";
+                        result += "Instrument " + instrument.Uic + "/" + instrument.AssetType + " (" + instrument.Description + "): " + entitlementDescription + "\n";
                     });
                     console.log(result);
                 });
