@@ -184,8 +184,6 @@
      */
     function getSeries() {
         const optionRootId = document.getElementById("idInstrumentId").value;
-        const newOrderObject = getOrderObjectFromJson();
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         fetch(
             demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
             {
@@ -201,6 +199,36 @@
                     populateOrderTypes(responseJson.SupportedOrderTypes);
                     selectOrderType();
                     console.log(JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of getting the price or the strategy.
+     * @return {void}
+     */
+    function getPrice() {
+        const newOrderObject = getOrderObjectFromJson();
+        newOrderObject.FieldGroups = ["Commissions", "DisplayAndFormat", "InstrumentPriceDetails", "MarginImpactBuySell", "Quote"];
+        fetch(
+            demo.apiUrl + "/trade/v1/prices/multileg",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(newOrderObject)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("This is the price data, including MarginImpactBuySell and commissions:\n\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -387,8 +415,9 @@
         {"evt": "change", "elmId": "idCbxOptionStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
         {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
         {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
-        {"evt": "click", "elmId": "idBtnGetStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
         {"evt": "click", "elmId": "idBtnGetSeries", "func": getSeries, "funcsToDisplay": [getSeries]},
+        {"evt": "click", "elmId": "idBtnGetStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
+        {"evt": "click", "elmId": "idBtnGetPrice", "func": getPrice, "funcsToDisplay": [getPrice]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
