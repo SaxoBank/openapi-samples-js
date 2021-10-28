@@ -255,7 +255,7 @@
                         description += "Short costs (" + responseJson.Cost.Short.Currency + "):" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Short);
                     }
                     description += "\n\n" + getAssumptions(responseJson.CostCalculationAssumptions);
-                    console.log(description + "\n\nReponse: " + JSON.stringify(responseJson, null, 4));
+                    console.log(description + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);

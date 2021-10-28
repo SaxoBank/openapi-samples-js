@@ -152,21 +152,31 @@
             }
         }
 
+        const orderType = (
+            condition.hasOwnProperty("OpenOrderType")
+            ? condition.OpenOrderType  // This is the case for /orders
+            : condition.OrderType  // This is the case for /activities
+        );
+        const symbol = (
+            condition.hasOwnProperty("DisplayAndFormat")
+            ? condition.DisplayAndFormat.Symbol  // This is the case for /orders
+            : condition.Symbol  // This is the case for /activities
+        );
         let description = "  - activated when the following condition is met: ";
         let expirationDate;
-        switch (condition.OpenOrderType) {
+        switch (orderType) {
         case "StopTrigger":  // Distance
-            description += condition.DisplayAndFormat.Description + " " + priceTypeInText() + " price is " + condition.TrailingStopDistanceToMarket + " " + (
+            description += symbol + " " + priceTypeInText() + " price is " + condition.TrailingStopDistanceToMarket + " " + (
                 condition.BuySell === "Sell"
                 ? "above lowest "
                 : "below highest "
             ) + priceTypeInText() + " price";
             break;
         case "BreakoutTrigger":  // Breakout
-            description += condition.DisplayAndFormat.Description + " " + priceTypeInText() + " price is outside " + condition.BreakoutTriggerDownPrice + "-" + condition.BreakoutTriggerUpPrice;
+            description += symbol + " " + priceTypeInText() + " price is outside " + condition.BreakoutTriggerDownPrice + "-" + condition.BreakoutTriggerUpPrice;
             break;
         case "LimitTrigger":  // Price
-            description += condition.DisplayAndFormat.Description + " last traded price is at or " + (
+            description += symbol + " last traded price is at or " + (
                 condition.BuySell === "Sell"
                 ? "above"
                 : "below"
@@ -329,20 +339,12 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
-                        switch (order.OrderType) {
-                        case "LimitTrigger":
-                            list += "Conditional order of type " + order.OrderType;
-                            break;
-                        case "BreakoutTrigger":
-                            list += "Conditional order of type " + order.OrderType;
-                            break;
-                        case "StopTrigger":
-                            list += "Conditional order of type " + order.OrderType;
-                            break;
-                        default:
-                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType;
-                        }
-                        list += " (status " + order.Status + " " + order.SubStatus + ")" + (
+                        const symbol = (
+                            order.hasOwnProperty("DisplayAndFormat")
+                            ? order.DisplayAndFormat.Symbol  // OrderActivities
+                            : order.Symbol  // Activities
+                        );
+                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + symbol + " (status " + order.Status + " " + order.SubStatus + ")" + (
                             order.hasOwnProperty("ExternalReference")
                             ? " reference: " + order.ExternalReference
                             : ""
@@ -351,6 +353,11 @@
                             ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
+                        if (order.hasOwnProperty("SleepingOrderCondition")) {
+                            // When this object is available, the order is "sleeping", waiting for a condition to be reached.
+                            // This condition can be a price movement of a different instrument.
+                            list += getConditionInText(order.SleepingOrderCondition) + "\n";
+                        }
                     });
                     console.log(msg + "\n\n" + (
                         list === ""
@@ -367,7 +374,7 @@
     }
 
     /**
-     * Example of getting historical orders for the selected account.
+     * Example of getting historical orders for the selected client.
      * @return {void}
      */
     function getHistoricalOrdersClient() {
@@ -380,7 +387,7 @@
     }
 
     /**
-     * Example of getting historical orders for the selected account.
+     * Example of getting historical orders for the selected account group.
      * @return {void}
      */
     function getHistoricalOrdersAccountGroup() {
