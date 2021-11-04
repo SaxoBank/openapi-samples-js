@@ -33,7 +33,6 @@
                 // This is the case for OCO, related and conditional orders
                 newOrderObject.Orders.forEach(function (order) {
                     if (order.hasOwnProperty("AccountKey")) {
-                        // Conditional orders don't need an account key in the condition
                         order.AccountKey = demo.user.accountKey;
                     }
                 });
@@ -43,6 +42,74 @@
             console.error(e);
         }
         return newOrderObject;
+    }
+
+    /**
+     * This is an example of an order validation.
+     * @return {void}
+     */
+    function preCheckNewOrder() {
+        // Bug: Preview doesn't check for limit outside market hours
+
+        function getErrorMessage(responseJson, defaultMessage) {
+            let errorMessage;
+            if (responseJson.hasOwnProperty("ErrorInfo")) {
+                // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                errorMessage = responseJson.ErrorInfo.Message;
+                // There can be error messages per order. Try to add them.
+                if (responseJson.hasOwnProperty("Orders")) {
+                    responseJson.Orders.forEach(function (order) {
+                        errorMessage += "\n- " + getErrorMessage(order, "");
+                    });
+                }
+            } else {
+                errorMessage = defaultMessage;
+            }
+            return errorMessage;
+        }
+
+        const newOrderObject = getOrderObjectFromJson();
+        newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
+        fetch(
+            demo.apiUrl + "/trade/v2/orders/precheck",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8",
+                    "X-Request-ID": Math.random()  // This prevents error 409 (Conflict) from identical previews within 15 seconds
+                },
+                "body": JSON.stringify(newOrderObject)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    // Response must have PreCheckResult property being "Ok"
+                    if (responseJson.PreCheckResult === "Ok") {
+                        // Secondly, you can have a PreCheckResult of "Ok", but still a (functional) error
+                        // Order could be placed if the account had sufficient margin and funding.
+                        // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
+                        if (responseJson.hasOwnProperty("ErrorInfo")) {
+                            // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                            console.error(getErrorMessage(responseJson, "") + "\n\n" + JSON.stringify(responseJson, null, 4));
+                        } else {
+                            // The order can be placed
+                            console.log("The order can be placed:\n\n" + JSON.stringify(responseJson, null, 4));
+                        }
+                    } else {
+                        // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
+                        // This can be something like: {"ErrorInfo":{"ErrorCode":"IllegalInstrumentId","Message":"Instrument ID is invalid"},"EstimatedCashRequired":0.0,"PreCheckResult":"Error"}
+                        console.error(getErrorMessage(responseJson, "Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:") + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                    }
+                });
+            } else {
+                // This can be something like: {"Message":"One or more properties of the request are invalid!","ModelState":{"Orders":["Stop leg of OCO order must have OrderType of either: TrailingStopIfTraded, StopIfTraded, StopLimit"]},"ErrorCode":"InvalidModelState"}
+                // The developer (you) must fix this.
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
@@ -165,7 +232,7 @@
     }
 
     /**
-     * Order changes are broadcasted via ENS. Retrieve the overnight events to see what you can expect.
+     * Order changes are broadcasted via ENS. Retrieve the recent events to see what you can expect.
      * @return {void}
      */
     function getHistoricalEnsEvents() {
@@ -219,6 +286,7 @@
     }
 
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
         {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
