@@ -27,21 +27,25 @@
     </select>
 </label>
 </div>
-<h1>Stocks become Stocks, ETFs, ETCs and ETNs</h1>
-<p>Currently, all apps are build for the "old" list of AssetTypes. Saxo plans to introduce more AssetTypes. This can be a breaking change, so this is not something just being released. Many endpoints use AssetTypes. The application must be flagged as "Ready for Extended AssetTypes".<br />
-You can test if this is the case by sending an extra header, the "Pragma" header oapi-x-extasset.<br />
-After a successful test, your app can be converted, so the AssetTypes are extended by default.<br />
-If you have no plans for your application to support the new asset types, then the only thing you have to do, is to properly handle the situations where a client has an order or position in an instrument, which is only represented by the new extended asset type, like SRD, or Warrant.<br />
-If you plan to migrate your application to support the extended asset types, there are certain steps you can take to make the migration as smooth as possible.
+<h1>Stocks were split into Stocks, ETFs, ETCs and ETNs</h1>
+<p>Since November 2021, newly created apps and the Explorer on the Delevoper Portal are on Extended AssetTypes.<br />
+This is quite a change, because Stocks for example, are split into Stocks, ETFs, ETCs and ETNs. More info: <a href="https://www.developer.saxo/openapi/learn/extended-assettypes" target="_blank">https://www.developer.saxo/openapi/learn/extended-assettypes</a>.<br />
+This sample demonstrates this change, and shows how to verify the new behavoir usings apps created before this date.<br />
+
+You can use your old app for Extended AssetTypes by sending an extra header, the "Pragma" header oapi-x-extasset. This header makes the app behave like it is on Extended AssetTypes.<br />
+After a successful test, you can create a new app, so the AssetTypes are extended by default.<br />
+If you have no plans for your application to support the new asset types, then the only thing is to keep in mind, that Explorer on the Developer Portal is on Extended AssetTypes, so responses between Explorer and your app can differ.<br />
 </p>
 <h2>Using the oapi-x-extasset header</h2>
 <p>
-It is possible for an application configured for the old definition of AssetType to instruct OpenAPI to act as if the application was configured for the extended asset type definition.<br />
-This is done by adding a header named 'Pragma' with the value 'oapi-x-extasset' in the request. Below are some examples of this.
+It is possible for an application created before November 2021 to instruct OpenApi to act as if the application was configured for the Extended AssetType definition.<br />
+This is done by adding a header named 'Pragma' with the value 'oapi-x-extasset' in the request. Below are some examples of this. This header can be used for validation, but also to have groups of customers on Extended AssetTypes, and others on the legacy AssetTypes.
 </p>
-More info: <a href="https://www.developer.saxo/openapi/learn/versioning-and-obsolescence-policy" target="_blank">https://www.developer.saxo/openapi/learn/versioning-and-obsolescence-policy</a>
+Keep in mind that we are gradually removing the legacy AssetTypes, so new developments should be using Extended AssetTypes only.
 <br />
 <br />
+<input type="button" class="action-button" value="Authenticate with app on legacy AssetTypes" id="idBtnGetTokenOnLegacyAssetTypes" />
+<input type="button" class="action-button" value="Authenticate with app on Extended AssetTypes" id="idBtnGetTokenOnExtendedAssetTypes" /><br />
 <label><input type="checkbox" id="idChkExtAsset" value="ExtAsset" checked> Add Pragma=oapi-x-extasset header</label>
 <br />
 <br />

@@ -14,6 +14,34 @@
     });
 
     /**
+     * Authenticate using an old app, created before November 1st, 2021.
+     * @return {void}
+     */
+    function getTokenOnLegacyAssetTypes() {
+        const stateObject = {
+            "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
+            "csrfToken": window.localStorage.getItem("csrfToken"),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
+            "env": "sim"
+        };
+        const redirectUrl = window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html";
+        const href = "https://sim.logonvalidation.net/authorize?response_type=token&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(redirectUrl) + "&client_id=7194692c30db42efb2c675c6c0fb2a67";
+        // Navigate to authentication of legacy app.
+        console.log("Redirectiong to " + href);
+        window.location.href = href;
+    }
+
+    /**
+     * Authenticate using an app on Extended AssetTypes.
+     * @return {void}
+     */
+    function getTokenOnExtendedAssetTypes() {
+        const href = document.getElementById("idHrefRetrieveToken").href;  // Just copy the regular redirect
+        // Navigate to authentication of modern app.
+        console.log("Redirectiong to " + href);
+        window.location.href = href;
+    }
+
+    /**
      * Example of getting the allowed AssetTypes for an account, with or without using Extended AssetTypes.
      * @return {void}
      */
@@ -170,6 +198,8 @@
     }
 
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetTokenOnLegacyAssetTypes", "func": getTokenOnLegacyAssetTypes, "funcsToDisplay": [getTokenOnLegacyAssetTypes]},
+        {"evt": "click", "elmId": "idBtnGetTokenOnExtendedAssetTypes", "func": getTokenOnExtendedAssetTypes, "funcsToDisplay": [getTokenOnExtendedAssetTypes]},
         {"evt": "click", "elmId": "idBtnGetLegalAssetTypes", "func": getLegalAssetTypes, "funcsToDisplay": [getLegalAssetTypes]},
         {"evt": "click", "elmId": "idBtnSearchIshares", "func": findIshares, "funcsToDisplay": [findIshares]},
         {"evt": "click", "elmId": "idBtnFindEtf", "func": findEtf, "funcsToDisplay": [findEtf]},
