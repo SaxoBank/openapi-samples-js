@@ -1,10 +1,9 @@
-/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, for: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -74,6 +73,7 @@
             return defaultEntitlement;
         }
 
+        // Step 2. Verify the subscription for one or more instruments
         const uics = document.getElementById("idUics").value;
         const assetType = document.getElementById("idCbxAssetType").value;
         fetch(

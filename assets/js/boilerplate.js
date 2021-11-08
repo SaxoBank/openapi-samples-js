@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.27
+ * boilerplate v1.28
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -33,12 +33,10 @@ function demonstrationHelper(settings) {
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
         "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
-        "appKey": {
-            // App management: https://www.developer.saxo/openapi/appmanagement#/
-            "defaultAssetTypes": "7194692c30db42efb2c675c6c0fb2a67",  // No need to create your own app, unless you want to test on a different environment than SIM
-            //"defaultAssetTypes": "67625f8ca809446aa10b08d6eae2c7ab",  // This app has no trading rights - use this to test how it behaves when ordering
-            "extendedAssetTypes": "1a6eb56ced7c4e04b1467e7e9be9bff7"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
-        }
+        // App management: https://www.developer.saxo/openapi/appmanagement#/
+        "appKey": "1a6eb56ced7c4e04b1467e7e9be9bff7"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "7194692c30db42efb2c675c6c0fb2a67"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        // "appKey": "67625f8ca809446aa10b08d6eae2c7ab"  // This app has no trading rights - use this to test how it behaves when ordering
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
@@ -49,11 +47,8 @@ function demonstrationHelper(settings) {
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
-        "appKey": {
-            // App management: https://www.developer.saxo/openapi/appmanagement#/
-            "defaultAssetTypes": "ae84ff08844e40d9a7e546bb1c4bdeb7",
-            "extendedAssetTypes": "4995383fd4b344e588eb784a7c666835"
-        }
+        "appKey": "4995383fd4b344e588eb784a7c666835"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "ae84ff08844e40d9a7e546bb1c4bdeb7"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
     };
     const configDte231 = {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
@@ -63,12 +58,9 @@ function demonstrationHelper(settings) {
         "apiHost": "stgo-tst231.cf.saxo",
         "apiPath": "/openapi",
         "streamerUrl": "wss://stgo-tst231.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
-        "appKey": {
-            // App management: https://developerportal-tst231.cf.saxo/openapi/appmanagement#/
-            "defaultAssetTypes": "91250b8fdceb4713b0bb54b0f0eeae56",  // No need to create your own app, unless you want to test on a different environment than SIM
-            //"defaultAssetTypes": "8ef6e513003e46618d501eec0e213221",  // This app has no trading rights - use this to test how it behaves when ordering
-            "extendedAssetTypes": "9f07eb9eaf5447469509a03260830990"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
-        }
+        "appKey": "9f07eb9eaf5447469509a03260830990"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "91250b8fdceb4713b0bb54b0f0eeae56"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        // "appKey": "8ef6e513003e46618d501eec0e213221"  // This app has no trading rights - use this to test how it behaves when ordering
     };
     const configDte211 = {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
@@ -78,12 +70,9 @@ function demonstrationHelper(settings) {
         "apiHost": "stgo-tst211.cf.saxo",
         "apiPath": "/openapi",
         "streamerUrl": "wss://stgo-tst211.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
-        "appKey": {
-            // App management: https://developerportal-tst211.cf.saxo/openapi/appmanagement#/
-            "defaultAssetTypes": "1c66f4c529ec49cab9303371636fe3d8",  // No need to create your own app, unless you want to test on a different environment than SIM
-            //"defaultAssetTypes": "2c6e16c31a5b404190bc2c90b3bc75bc",  // This app has no trading rights - use this to test how it behaves when ordering
-            "extendedAssetTypes": "31eba2b4020c4185a93372a434373cb7"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
-        }
+        "appKey": "31eba2b4020c4185a93372a434373cb7"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "1c66f4c529ec49cab9303371636fe3d8"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        // "appKey": "2c6e16c31a5b404190bc2c90b3bc75bc"  // This app has no trading rights - use this to test how it behaves when ordering
     };
     const user = {};
     const tokenKey = "saxoBearerToken";
@@ -802,10 +791,10 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * If this sample is run from a known location (https://saxobank.github.io, or http://localhost), the link to authenticate using an app on Extended AssetTypes can be provided.
+     * Create link with preconfigured redirect (run from https://saxobank.github.io or http://localhost) and store Csrf token.
      * @return {void}
      */
-    function addOptionalExtendedAssetTypesLoginLink() {
+    function prepareLoginLink() {
 
         /**
          * Store the CSRF token in localStorage or cookie.
@@ -833,12 +822,8 @@ function demonstrationHelper(settings) {
             // We can probably use the Implicit/Code Flow Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes
             urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
-            if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
-                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
-            } else {
-                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes;
-                settings.retrieveTokenHref.target = "_self";  // Back to default
-            }
+            settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey;
+            settings.retrieveTokenHref.target = "_self";  // Back to default
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
         }
     }
@@ -856,7 +841,7 @@ function demonstrationHelper(settings) {
         mirrorConsoleError();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
-            addOptionalExtendedAssetTypesLoginLink();
+            prepareLoginLink();
             activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
                 saveAccessToken(settings.accessTokenElm.value);
