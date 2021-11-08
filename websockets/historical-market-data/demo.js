@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -59,16 +59,15 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let i;
                     let foundSampleTime;
                     if (responseJson.Data.length > 0) {
                         oldestSampleTime = new Date();
-                        for (i = 0; i < responseJson.Data.length; i += 1) {
-                            foundSampleTime = new Date(responseJson.Data[i].Time);
+                        responseJson.Data.forEach(function (sample) {
+                            foundSampleTime = new Date(sample.Time);
                             if (foundSampleTime < oldestSampleTime) {
                                 oldestSampleTime = foundSampleTime;
                             }
-                        }
+                        });
                         console.log("Found " + responseJson.Data.length + " samples in response, dating back to " + oldestSampleTime.toLocaleString() + ". Response: " + JSON.stringify(responseJson, null, 4));
                     } else {
                         console.log("No older samples found. Response: " + JSON.stringify(responseJson, null, 4));

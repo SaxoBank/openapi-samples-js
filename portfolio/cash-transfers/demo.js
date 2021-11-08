@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -116,8 +116,8 @@
 
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxAccount", "func": getAccountCurrency, "funcsToDisplay": [getAccountCurrency], "isDelayedRun": true},
-        {"evt": "click", "elmId": "idBtnGetBeneficiaryInstructions", "func": getBeneficiaryInstructions, "funcsToDisplay": [getBeneficiaryInstructions]},//]);
-        {"evt": "click", "elmId": "idBtnTransferMoney", "func": transferMoney, "funcsToDisplay": [transferMoney]},//]);
+        {"evt": "click", "elmId": "idBtnGetBeneficiaryInstructions", "func": getBeneficiaryInstructions, "funcsToDisplay": [getBeneficiaryInstructions]},
+        {"evt": "click", "elmId": "idBtnTransferMoney", "func": transferMoney, "funcsToDisplay": [transferMoney]}
     ]);
     demo.displayVersion("atr");
 }());

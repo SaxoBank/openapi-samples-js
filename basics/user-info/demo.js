@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -96,11 +96,8 @@
                     const rep = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
                     let textToDisplay = "";
                     let currentAccountGroupName = "";
-                    let account;
-                    let i;
                     demo.groupAndSortAccountList(responseJson.Data);
-                    for (i = 0; i < responseJson.Data.length; i += 1) {
-                        account = responseJson.Data[i];
+                    responseJson.Data.forEach(function (account) {
                         // Loop through the data and collect the accountKeys:
                         if (account.hasOwnProperty("AccountGroupName") && account.AccountGroupName !== currentAccountGroupName) {
                             currentAccountGroupName = account.AccountGroupName;
@@ -117,7 +114,7 @@
                             textToDisplay += account.AccountId;
                         }
                         textToDisplay += " " + account.Currency + " - " + account.AccountKey + " (" + account.AccountType + ")\n";
-                    }
+                    });
                     console.log("Found " + responseJson.Data.length + " account(s) with accountKey(s):\n" + textToDisplay + req + rep);
                 });
             } else {
