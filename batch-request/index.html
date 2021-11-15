@@ -33,6 +33,10 @@ More info: <a href="https://www.developer.saxo/openapi/learn/batching-requests" 
 Looking for a way to unpack the batch requests? This is the example: <a href="https://saxobank.github.io/openapi-samples-js/batch-request/batch-request-decomposer/" target="_blank">https://saxobank.github.io/openapi-samples-js/batch-request/batch-request-decomposer/</a>.
 <br />
 <br />
+Saxobank is in the process of migrating to <a href="https://arstechnica.com/information-technology/2015/02/http2-finished-coming-to-browsers-within-weeks/" target="_blank">HTTP/2</a>. In HTTP/2, multiple bidirectional streams are multiplexed over a single TCP connection. Each stream can carry a request/response pair, and multiple requests to a server can be made by using multiple streams.<br />
+This defeats the purpose of batching requests. So batch requests become obsolete soon.
+<br />
+<br />
 POST body containing requests:
 <br />
 <textarea class="json-input" id="idRequestBody" rows="10" wrap="off">
