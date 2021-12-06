@@ -167,8 +167,8 @@
         case "StopTrigger":  // Distance
             description += symbol + " " + priceTypeInText() + " price is " + condition.TrailingStopDistanceToMarket + " " + (
                 condition.BuySell === "Sell"
-                ? "above lowest "
-                : "below highest "
+                ? "below highest "
+                : "above lowest "
             ) + priceTypeInText() + " price";
             break;
         case "BreakoutTrigger":  // Breakout
@@ -233,7 +233,7 @@
                             : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
                         );
                         list += " (status " + order.Status + ")" + (
-                            order.hasOwnProperty("ExternalReference")
+                            (order.hasOwnProperty("ExternalReference") && order.ExternalReference !== "")
                             ? " reference: " + order.ExternalReference
                             : ""
                         );
@@ -242,9 +242,9 @@
                             ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
-                        if (order.hasOwnProperty("SleepingOrderCondition")) {
-                            // When this object is available, the order is "sleeping", waiting for a condition to be reached.
-                            // This condition can be a price movement of a different instrument.
+                        if (order.Status === "WaitCondition") {
+                            // This status indicates that the order is waiting for a condition to be met, it is a "sleeping" order.
+                            // This condition can be a price movement on a different instrument and is represented in the SleepingOrderCondition object.
                             list += getConditionInText(order.SleepingOrderCondition) + "\n";
                         }
                     });
@@ -338,13 +338,14 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
+                        const activityTime = new Date(order.ActivityTime);
                         const symbol = (
                             order.hasOwnProperty("DisplayAndFormat")
                             ? order.DisplayAndFormat.Symbol  // OrderActivities
                             : order.Symbol  // Activities
                         );
-                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + symbol + " (status " + order.Status + " " + order.SubStatus + ")" + (
-                            order.hasOwnProperty("ExternalReference")
+                        list += activityTime.toLocaleString() + " " + order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + symbol + " (status " + order.Status + " " + order.SubStatus + ")" + (
+                            (order.hasOwnProperty("ExternalReference") && order.ExternalReference !== "")
                             ? " reference: " + order.ExternalReference
                             : ""
                         ) + (
@@ -352,10 +353,14 @@
                             ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
-                        if (order.hasOwnProperty("SleepingOrderCondition")) {
-                            // When this object is available, the order is "sleeping", waiting for a condition to be reached.
-                            // This condition can be a price movement of a different instrument.
-                            list += getConditionInText(order.SleepingOrderCondition) + "\n";
+                        if (order.SubStatus === "WaitCondition") {
+                            // This status indicates that the order is waiting for a condition to be met, it is a "sleeping" order.
+                            // This condition can be a price movement on a different instrument and is represented in the SleepingOrderCondition object.
+                            if (order.hasOwnProperty("SleepingOrderCondition")) {
+                                list += getConditionInText(order.SleepingOrderCondition) + "\n";
+                            } else {
+                                list += "  - condition couldn't be displayed." + "\n";
+                            }
                         }
                     });
                     console.log(msg + "\n\n" + (
