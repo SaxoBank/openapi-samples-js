@@ -11,42 +11,42 @@ Samples run against Saxo's simulation environment and require an **access token*
 ## Table of Contents
 
 1. Authentication
-   - [OAuth2 Code Flow example](authentication/oauth2-code-flow)
-   - [OAuth2 Implicit Flow example](authentication/oauth2-implicit-flow)
-   - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
-   - [Claims in Jwt Token](authentication/token-explained/)
+   - [OAuth2 Code Flow](authentication/oauth2-code-flow)
+   - [OAuth2 Implicit Flow](authentication/oauth2-implicit-flow)
+   - [OAuth2 PKCE Flow ](authentication/oauth2-pkce-flow)
+   - [JSON Web Token Debugger](authentication/token-explained/)
 2. Basics
-   - [Get user info](basics/user-info)
-   - [Query options $top, $skip and \_\_next](basics/query-options)
+   - [Basic Api Requests](basics/user-info)
+   - [OpenApi Query Options](basics/query-options)
    - [Error handling](error-handling)
-   - [Diagnostics and method override](basics/diagnostics)
+   - [Diagnose API connection](basics/diagnostics)
 3. Instruments
-   - [Instrument Search example](instruments/instrument-search)
+   - [Instrument Search](instruments/instrument-search)
    - [Extended AssetTypes](instruments/extended-assettypes)
-   - [Retrieve Universe](instruments/instrument-retrieval)
+   - [Download Instrument Universe](instruments/instrument-retrieval)
 4. Order Placement
-   - [Basic Order example (stocks, bonds, etf, etc.)](orders/stocks)
+   - [Stock Orders](orders/stocks)
    - [Option Order](orders/options)
-   - [Option Strategy Order](orders/option-strategies)
+   - [Multi-leg Orders](orders/option-strategies)
    - [Future Order](orders/futures)
    - [OCO Order](orders/oco-orders)
    - [Algorithmic Order](orders/algo-orders)
-   - [Conditional Order](orders/conditional-orders)
-   - [Regulatory requirements for order tickets](orders/regulatory-requirements)
+   - [Conditional or Sleeping Orders](orders/conditional-orders)
+   - [Regulatory Requirements](orders/regulatory-requirements)
 5. Portfolio
-   - [Display Positions and Order List](portfolio/positions-orders)
-   - [Netting (RealTime vs EndOfDay)](portfolio/netting)
-   - [Margin calculation](portfolio/margin)
-   - [Account statements and Export (PDF, Excel)](portfolio/download-reports)
+   - [Display prices](portfolio/positions-orders)
+   - [Netting mode](portfolio/netting)
+   - [Available Margin](portfolio/margin)
+   - [Downloading Reports](portfolio/download-reports)
 6. Using websockets
-   - [Retrieving Order Events](websockets/order-events-monitoring)
-   - [Monitoring Primary Status](websockets/primary-monitoring)
-   - [Realtime Quotes and Protocol Buffers](websockets/realtime-quotes)
-   - [Trade Messages](websockets/trade-messages)
+   - [Monitor Orders and Positions](websockets/order-events-monitoring)
+   - [Monitor Premium Price Feed Status](websockets/primary-monitoring)
+   - [Realtime quotes](websockets/realtime-quotes)
+   - [Monitor Trade Messages](websockets/trade-messages)
    - [Historical Market Data](websockets/historical-market-data)
    - [Options chain](websockets/options-chain)
 7. Batch Requests
-   - [Batch Request example](batch-request)
+   - [Batching Requests](batch-request)
 
 ## Sample Apps
 

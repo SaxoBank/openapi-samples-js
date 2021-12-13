@@ -817,7 +817,13 @@ function demonstrationHelper(settings) {
             "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
             "env": config.env
         };
-        let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        let warningMessage = (
+            config.env === "sim"
+            ? ""
+            : "You are testing against " + config.env + "!<br />"
+            );
+            let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
+            settings.retrieveTokenHref.parentElement.innerHTML = warningMessage + settings.retrieveTokenHref.parentElement.innerHTML;
         if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
             // We can probably use the Implicit/Code Flow Grant to get a token
             // Change the URL, to give the option to use Extended AssetTypes

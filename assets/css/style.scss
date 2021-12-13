@@ -9,30 +9,43 @@
   background-image: linear-gradient(120deg, #042eab, #000000);
 }
 
-.main-content h1, .main-content h2, .main-content h3, .main-content h4, .main-content h5, .main-content h6 {
+.main-content h1,
+.main-content h2,
+.main-content h3,
+.main-content h4,
+.main-content h5,
+.main-content h6 {
   color: #042eab;
 }
 
 .project-name:before {
-    display: inline-block;
-    width: 70px;
-    height: 56px;
-    content: "";
-    background-image: url(https://www.home.saxo/-/media/global/logos/saxobank/saxobank.svg?la=en);
-    margin-right: 1rem;
+  display: inline-block;
+  width: 70px;
+  height: 56px;
+  content: "";
+  background-image: url(https://www.home.saxo/-/media/global/logos/saxobank/saxobank.svg?la=en);
+  margin-right: 1rem;
 }
 
+.project-name {
+  font-size: 2.25rem;
+}
+
+body {
+  font-family: "Lucida Sans Unicode", "Helvetica Neue", Helvetica, Arial,
+    sans-serif;
+}
 .action-button {
-    background-color: white;
-    border-color: #0000002e;
-    border-style: solid;
-    border-width: 2px;
-    border-radius: 0.3rem;
-    transition: color 0.2s, background-color 0.2s, border-color 0.2s;
+  background-color: white;
+  border-color: #0000002e;
+  border-style: solid;
+  border-width: 2px;
+  border-radius: 0.3rem;
+  transition: color 0.2s, background-color 0.2s, border-color 0.2s;
 }
 
 .action-button:hover {
-    background-color: #042eab1c;
+  background-color: #042eab1c;
 }
 
 .main-content label {
@@ -43,10 +56,10 @@
 }
 
 .main-content .highlight label {
-    display: inline;
-    margin-top: 0.2rem;
-    margin-bottom: 0.2rem;
-    width: 100%
+  display: inline;
+  margin-top: 0.2rem;
+  margin-bottom: 0.2rem;
+  width: 100%;
 }
 
 .token-field {
