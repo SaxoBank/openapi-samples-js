@@ -34,7 +34,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Conditional or Sleeping Orders](orders/conditional-orders)
    - [Regulatory Requirements](orders/regulatory-requirements)
 5. Portfolio
-   - [Display prices](portfolio/positions-orders)
+   - [Display positions and orders](portfolio/positions-orders)
    - [Netting mode](portfolio/netting)
    - [Available Margin](portfolio/margin)
    - [Downloading Reports](portfolio/download-reports)
