@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.28
+ * boilerplate v1.29
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -817,18 +817,19 @@ function demonstrationHelper(settings) {
             "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
             "env": config.env
         };
-        let warningMessage = (
-            config.env === "sim" ? "" : "You are testing against " + config.env + "!<br />"
-        );
+        const urlLocalHost = "http://localhost/openapi-samples-js/";
+        const urlGithubPages = "https://saxobank.github.io/openapi-samples-js/";
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        settings.retrieveTokenHref.parentElement.innerHTML = warningMessage + settings.retrieveTokenHref.parentElement.innerHTML;
-        if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
+        if (urlWithoutParams.substring(0, urlLocalHost.length) === urlLocalHost || urlWithoutParams.substring(0, urlGithubPages.length) === urlGithubPages) {
             // We can probably use the Implicit/Code Flow Grant to get a token
-            // Change the URL, to give the option to use Extended AssetTypes
+            // Change the URL, to give the option to authenticate using the Github app on Extended AssetTypes
             urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
             settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey;
             settings.retrieveTokenHref.target = "_self";  // Back to default
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
+        }
+        if (config.env !== "sim") {
+            settings.retrieveTokenHref.parentElement.innerHTML = "The " + config.env + " environment is used for testing!<br /><br />" + settings.retrieveTokenHref.parentElement.innerHTML;
         }
     }
 
