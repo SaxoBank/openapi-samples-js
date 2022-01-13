@@ -900,8 +900,13 @@
         }
 
         const assetType = document.getElementById("idCbxAssetType").value;
+        const includeNonTradable = (
+            assetType === "StockIndex"
+            ? "true"
+            : "false"
+        );
         fetch(
-            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=5" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=" + includeNonTradable + "&$top=5" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
             {
                 "method": "GET",
                 "headers": {
