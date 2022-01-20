@@ -213,7 +213,7 @@
      */
     function getPrice() {
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.FieldGroups = ["Commissions", "DisplayAndFormat", "InstrumentPriceDetails", "MarginImpactBuySell", "Quote"];
+        newOrderObject.FieldGroups = ["Commissions", "DisplayAndFormat", "InstrumentPriceDetails", "MarginImpactBuySell", "Quote", "Greeks"];
         fetch(
             demo.apiUrl + "/trade/v1/prices/multileg",
             {
