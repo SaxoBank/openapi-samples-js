@@ -3,6 +3,7 @@
     "version": "1.0.0",
     "description": "Retrieve and refresh an OAuth2 Code Flow token for the Saxo OpenApi",
     "main": "server.js",
+    "type": "module",
     "license": "SEE LICENSE IN https://github.com/SaxoBank/openapi-samples-js/blob/master/LICENSE",
     "repository": {
         "type": "git",
@@ -12,9 +13,9 @@
         "name": "bas"
     },
     "dependencies": {
-        "express": "~4.17.1",
+        "express": "~4.17.2",
         "morgan": "~1.10.0",
-        "node-fetch": "^2.6.7",
-        "npm": "^7.1.2"
+        "node-fetch": "^3.2.0",
+        "npm": "^8.1.2"
     }
 }

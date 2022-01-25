@@ -1,7 +1,9 @@
-const express = require("express");
-const morgan = require("morgan");
-const path = require("path");
-const fetch = require("node-fetch");
+import express from "express";
+import morgan from "morgan";
+import {fileURLToPath} from "node:url";
+import path from "node:path";
+import fetch from "node-fetch";
+
 const port = process.env.PORT || 1337;
 
 /*
@@ -63,13 +65,13 @@ function apiHandler(request, response) {
                 "method": "POST",
                 "body": data
             }
-        ).then(function (response) {
-            if (response.ok) {
-                response.json().then(function (responseJson) {
-                    sendResponse(200, responseJson);
+        ).then(function (tokenResponse) {
+            if (tokenResponse.ok) {
+                tokenResponse.json().then(function (tokenResponseJson) {
+                    sendResponse(200, tokenResponseJson);
                 });
             } else {
-                returnError(response.status, "Unauthorized", response.statusText);
+                returnError(tokenResponse.status, "Unauthorized", tokenResponse.statusText);
             }
         }).catch(function (error) {
             returnError(401, "Unauthorized", error);
@@ -84,7 +86,8 @@ const server = express();
 server.use(morgan("combined"));  // The request logger
 server.use(express.json());
 // The redirect web page runs on http://localhost:1337/index.html
-server.use(express.static(path.join(__dirname, "..")));
+const staticPage = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+server.use(express.static(staticPage));
 // The backend is available for POST on http://localhost:1337/server
 server.post("/server", apiHandler);
 server.listen(port);
@@ -92,8 +95,9 @@ server.listen(port);
 console.log("Server listening on port %j", port);
 
 // Handle stop signals
-const exitfn = function () {
+function handleExit() {
     process.exit(0);
-};
-process.on("SIGINT", exitfn);
-process.on("SIGTERM", exitfn);
+}
+
+process.on("SIGINT", handleExit);
+process.on("SIGTERM", handleExit);
