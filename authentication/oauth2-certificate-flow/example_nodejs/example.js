@@ -16,9 +16,9 @@ const certThumbPrint = "Fingerprint of your certificate";
 const authProviderUrl = "https://sim.logonvalidation.net/token";  // On production, this will be "https://live.logonvalidation.net/token"
 const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production, this is "https://gateway.saxobank.com/openapi"
 
-const fs = require("fs");  // Used to load the certificate file
-const jwt = require("jsonwebtoken");  // A library used for signing the token
-const fetch = require("node-fetch");  // Used to request the token and call the API
+import fs from "fs";  // Used to load the certificate file
+import jwt from "jsonwebtoken";  // A library used for signing the token
+import fetch from "node-fetch";  // Used to request the token and call the API
 
 // The PEM file is created using OpenSSL:
 // openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
@@ -28,7 +28,7 @@ const privateKey = fs.readFileSync("private-key-with-cert.pem");
  * Create and sign the assertion.
  * @return {string} The signed JWT.
  */
-function createJwt() {
+function createJwtAssertion() {
     const payload = {
         "spurl": serviceProviderUrl  // On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL
     };
@@ -88,7 +88,7 @@ function requestToken(assertion, successCallback) {
             console.log(response);
             console.log("Response headers:");
             console.log(response.headers.raw());
-			console.log("Error getting token: " + response.status + " " + response.statusText);
+            console.log("Error getting token: " + response.status + " " + response.statusText);
             response.text().then(function (responseText) {
                 console.log(responseText);
             });
@@ -182,6 +182,6 @@ function requestApiData(tokenObject) {
 }
 
 // Create the JWT token:
-const assertion = createJwt();
+const jwtAssertion = createJwtAssertion();
 // Request the Bearer token and if successful, use it to call the API:
-requestToken(assertion, requestApiData);
+requestToken(jwtAssertion, requestApiData);
