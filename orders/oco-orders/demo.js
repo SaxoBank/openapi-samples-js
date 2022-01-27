@@ -12,8 +12,8 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let lastOrderId1 = 0;
-    let lastOrderId2 = 0;
+    let lastOrderId1 = "0";
+    let lastOrderId2 = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -54,7 +54,11 @@
             let errorMessage;
             if (responseJson.hasOwnProperty("ErrorInfo")) {
                 // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                errorMessage = responseJson.ErrorInfo.Message;
+                errorMessage = (
+                    responseJson.ErrorInfo.hasOwnProperty("Message")
+                    ? responseJson.ErrorInfo.Message
+                    : responseJson.ErrorInfo.ErrorCode  // In some cases (AllocationKeyDoesNotMatchAccount) the message is not available
+                );
                 // There can be error messages per order. Try to add them.
                 if (responseJson.hasOwnProperty("Orders")) {
                     responseJson.Orders.forEach(function (order) {

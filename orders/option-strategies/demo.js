@@ -13,7 +13,7 @@
         "footerElm": document.getElementById("idFooter")
     });
     const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
-    let lastOrderId = 0;
+    let lastOrderId = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -249,7 +249,11 @@
             let errorMessage;
             if (responseJson.hasOwnProperty("ErrorInfo")) {
                 // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                errorMessage = responseJson.ErrorInfo.Message;
+                errorMessage = (
+                    responseJson.ErrorInfo.hasOwnProperty("Message")
+                    ? responseJson.ErrorInfo.Message
+                    : responseJson.ErrorInfo.ErrorCode  // In some cases (AllocationKeyDoesNotMatchAccount) the message is not available
+                );
                 // There can be error messages per order. Try to add them.
                 if (responseJson.hasOwnProperty("Orders")) {
                     responseJson.Orders.forEach(function (order) {
