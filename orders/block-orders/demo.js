@@ -12,7 +12,6 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
     let lastAllocationKeyId = "1";
     let lastOrderId = "0";
 
@@ -63,47 +62,6 @@
     }
 
     /**
-     * This demo can be used for not only Stocks. You can change the model in the editor to Bond, SrdOnStock, etc.
-     * @param {Object} responseJson The response with the references.
-     * @return {string} A message pointing you at the feature to change the order object.
-     */
-    function getRelatedAssetTypesMessage(responseJson) {
-        let result = "";
-        let i;
-        let relatedInstrument;
-
-        function addAssetTypeToMessage(assetType) {
-            if (relatedInstrument.AssetType === assetType) {
-                result += (
-                    result === ""
-                    ? ""
-                    : "\n\n"
-                ) + "The response below indicates there is a related " + assetType + ".\nYou can change the order object to AssetType '" + assetType + "' and Uic '" + relatedInstrument.Uic + "' to test " + assetType + " orders.";
-            }
-        }
-
-        if (responseJson.hasOwnProperty("RelatedInstruments")) {
-            for (i = 0; i < responseJson.RelatedInstruments.length; i += 1) {
-                relatedInstrument = responseJson.RelatedInstruments[i];
-                addAssetTypeToMessage("Bond");
-                addAssetTypeToMessage("SrdOnStock");
-                // The other way around works as well. Show message for Stock.
-                addAssetTypeToMessage("Stock");
-            }
-        }
-        if (responseJson.hasOwnProperty("RelatedOptionRootsEnhanced")) {
-            // Don't loop. Just take the first, for demo purposes.
-            relatedInstrument = responseJson.RelatedOptionRootsEnhanced[0];
-            result += (
-                result === ""
-                ? ""
-                : "\n\n"
-            ) + "The response below indicates there are related options.\nYou can use OptionRootId '" + relatedInstrument.OptionRootId + "' in the options example.";
-        }
-        return result;
-    }
-
-    /**
      * Create an allocation key.
      * @return {void}
      */
@@ -132,6 +90,30 @@
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
                     console.log("Created key " + lastAllocationKeyId + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Delete an allocation key.
+     * @return {void}
+     */
+    function deleteAllocationKey() {
+        fetch(
+            demo.apiUrl + "/trade/v1/allocationkeys/" + lastAllocationKeyId,
+            {
+                "method": "DELETE",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                console.log("Allocation key " + lastAllocationKeyId + " has been deleted.");
             } else {
                 demo.processError(response);
             }
@@ -194,6 +176,36 @@
                         : responseJson.Data.length + " keys available."
                     ) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
                     console.log(responseText);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Get distributed amount for a given allocation key.
+     * @return {void}
+     */
+    function getDistributions() {
+        const newOrderObject = getOrderObjectFromJson();
+        if (newOrderObject === null) {
+            return;
+        }
+        fetch(
+            demo.apiUrl + "/trade/v1/allocationkeys/distributions/" + lastAllocationKeyId + "?Totalamount=" + newOrderObject.Amount + "&Uic=" + newOrderObject.Uic + "&AssetType=" + newOrderObject.AssetType,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Response: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -439,9 +451,10 @@
 
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCreateAllocationKey", "func": createAllocationKey, "funcsToDisplay": [createAllocationKey]},
+        {"evt": "click", "elmId": "idBtnDeleteAllocationKey", "func": deleteAllocationKey, "funcsToDisplay": [deleteAllocationKey]},
         {"evt": "click", "elmId": "idBtnGetAllocationKeys", "func": getAllocationKeys, "funcsToDisplay": [getAllocationKeys]},
         {"evt": "click", "elmId": "idBtnGetAllocationKeyDetails", "func": getAllocationKeyDetails, "funcsToDisplay": [getAllocationKeyDetails]},
-        
+        {"evt": "click", "elmId": "idBtnGetDistributedAmount", "func": getDistributions, "funcsToDisplay": [getDistributions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
