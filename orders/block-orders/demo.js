@@ -61,6 +61,23 @@
     }
 
     /**
+     * Update the AccountKey in the order and allocation object.
+     * @return {void}
+     */
+    function changeAccountKey() {
+        const accountKey = document.getElementById("idCbxAccount").value;
+        const newAllocationKeyObject = getAllocationKeyObjectFromJson();
+        const newOrderObject = getOrderObjectFromJson();
+        if (newAllocationKeyObject === null || newOrderObject === null) {
+            return;
+        }
+        newAllocationKeyObject.OwnerAccountKey = accountKey;
+        newOrderObject.AccountKey = accountKey;
+        document.getElementById("idNewAllocationKeyObject").value = JSON.stringify(newAllocationKeyObject, null, 4);
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+    }
+
+    /**
      * Update the AllocationUnitType.
      * @return {void}
      */
@@ -127,24 +144,29 @@
                 response.json().then(function (responseJson) {
                     const newAllocationKeyObject = getAllocationKeyObjectFromJson();
                     let priority = 1;
+                    let accountList = "";
+                    let ownerAccountList = "";
                     if (newAllocationKeyObject === null) {
                         return;
                     }
                     newAllocationKeyObject.ParticipatingAccountsInfo = [];
                     responseJson.Data.forEach(function (account) {
-                        if (account.ClientKey !== demo.user.clientKey) {
+                        if (account.ClientKey === demo.user.clientKey) {
+                            ownerAccountList += "AccountType " + account.AccountType + " (sub type " + account.AccountSubType + ") AccountKey " + account.AccountKey + "\n";
+                        } else if (account.Active) {
                             newAllocationKeyObject.ParticipatingAccountsInfo.push({
-                                "AcceptRemainderAmount": true,
+                                "AcceptRemainderAmount": true,  // All true, for spreading the remainder priority is used.
                                 "AccountKey": account.AccountKey,
                                 "Priority": priority,
                                 "UnitValue": 10
                             });
+                            accountList += "AccountType " + account.AccountType + " (sub type " + account.AccountSubType + ") ClientId " + account.ClientId + "\n";
                             priority += 1;
                         }
                     });
                     document.getElementById("idNewAllocationKeyObject").value = JSON.stringify(newAllocationKeyObject, null, 4);
                     changeAllocationUnitType();
-                    console.log("Added " + newAllocationKeyObject.ParticipatingAccountsInfo.length + " sub accounts.\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    console.log("Owner (choose the BlockTrading account):\n" + ownerAccountList + "\nAdded " + newAllocationKeyObject.ParticipatingAccountsInfo.length + " participating accounts:\n" + accountList + "\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -260,7 +282,8 @@
                         cbxAllocationKey.remove(i);
                     }
                     responseJson.Data.forEach(function (allocationKey) {
-                        addAllocationKeyToSelect(allocationKey.AllocationKeyId, allocationKey.AllocationKeyName + " (" + allocationKey.CreationTime + ")");
+                        const creationTime = new Date(allocationKey.CreationTime);
+                        addAllocationKeyToSelect(allocationKey.AllocationKeyId, allocationKey.AllocationKeyName + " (" + creationTime.toLocaleDateString() + " " + creationTime.toLocaleTimeString() + ")");
                     });
                     changeAllocationKey();
                     console.log(responseText);
@@ -572,6 +595,7 @@
     }
 
     demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxAccount", "func": changeAccountKey, "funcsToDisplay": [changeAccountKey]},
         {"evt": "change", "elmId": "idCbxAllocationUnitType", "func": changeAllocationUnitType, "funcsToDisplay": [changeAllocationUnitType]},
         {"evt": "change", "elmId": "idCbxAllocationKey", "func": changeAllocationKey, "funcsToDisplay": [changeAllocationKey]},
         {"evt": "click", "elmId": "idBtnGetAccountKeys", "func": getAccountKeys, "funcsToDisplay": [getAccountKeys]},
