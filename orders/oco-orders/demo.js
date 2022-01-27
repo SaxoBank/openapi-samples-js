@@ -12,8 +12,8 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let lastOrderId1 = 0;
-    let lastOrderId2 = 0;
+    let lastOrderId1 = "0";
+    let lastOrderId2 = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.

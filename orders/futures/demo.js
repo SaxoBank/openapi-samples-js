@@ -13,7 +13,7 @@
         "footerElm": document.getElementById("idFooter")
     });
     const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
-    let lastOrderId = 0;
+    let lastOrderId = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.

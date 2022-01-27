@@ -1,4 +1,4 @@
-/*jslint browser: true, long: true, unordered: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -10,12 +10,11 @@
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
-        "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
-        "selectedAssetType": "Stock",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
+    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
+    let lastAllocationKeyId = "1";
     let lastOrderId = "0";
-    let lastOrderIdCondition = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -46,16 +45,108 @@
     }
 
     /**
-     * This is an example of getting the trading settings of an instrument.
-     * There is a much more detailed example of this in the Stock sample.
-     * That sample checks amongst others the MinimumOrderSize, TradingStatus, SupportedAccounts.
-     * This one is just to verify the supported conditions.
+     * Helper function to convert the json string to an object, with error handling.
+     * @return {Object} The newAllocationKeyObject from the input field - null if invalid
+     */
+    function getAllocationKeyObjectFromJson() {
+        let newAllocationKeyObject = null;
+        try {
+            newAllocationKeyObject = JSON.parse(document.getElementById("idNewAllocationKeyObject").value);
+            if (newAllocationKeyObject.hasOwnProperty("OwnerAccountKey")) {
+                newAllocationKeyObject.OwnerAccountKey = demo.user.accountKey;
+            }
+            document.getElementById("idNewAllocationKeyObject").value = JSON.stringify(newAllocationKeyObject, null, 4);
+        } catch (e) {
+            console.error(e);
+        }
+        return newAllocationKeyObject;
+    }
+
+    /**
+     * This demo can be used for not only Stocks. You can change the model in the editor to Bond, SrdOnStock, etc.
+     * @param {Object} responseJson The response with the references.
+     * @return {string} A message pointing you at the feature to change the order object.
+     */
+    function getRelatedAssetTypesMessage(responseJson) {
+        let result = "";
+        let i;
+        let relatedInstrument;
+
+        function addAssetTypeToMessage(assetType) {
+            if (relatedInstrument.AssetType === assetType) {
+                result += (
+                    result === ""
+                    ? ""
+                    : "\n\n"
+                ) + "The response below indicates there is a related " + assetType + ".\nYou can change the order object to AssetType '" + assetType + "' and Uic '" + relatedInstrument.Uic + "' to test " + assetType + " orders.";
+            }
+        }
+
+        if (responseJson.hasOwnProperty("RelatedInstruments")) {
+            for (i = 0; i < responseJson.RelatedInstruments.length; i += 1) {
+                relatedInstrument = responseJson.RelatedInstruments[i];
+                addAssetTypeToMessage("Bond");
+                addAssetTypeToMessage("SrdOnStock");
+                // The other way around works as well. Show message for Stock.
+                addAssetTypeToMessage("Stock");
+            }
+        }
+        if (responseJson.hasOwnProperty("RelatedOptionRootsEnhanced")) {
+            // Don't loop. Just take the first, for demo purposes.
+            relatedInstrument = responseJson.RelatedOptionRootsEnhanced[0];
+            result += (
+                result === ""
+                ? ""
+                : "\n\n"
+            ) + "The response below indicates there are related options.\nYou can use OptionRootId '" + relatedInstrument.OptionRootId + "' in the options example.";
+        }
+        return result;
+    }
+
+    /**
+     * Create an allocation key.
      * @return {void}
      */
-    function getConditions() {
-        const newOrderObject = getOrderObjectFromJson();
+    function createAllocationKey() {
+        const newAllocationKeyObject = getAllocationKeyObjectFromJson();
+        if (newAllocationKeyObject === null) {
+            return;
+        }
         fetch(
-            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&FieldGroups=OrderSetting",
+            demo.apiUrl + "/trade/v1/allocationkeys",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(newAllocationKeyObject)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const newOrderObject = getOrderObjectFromJson();
+                    lastAllocationKeyId = responseJson.AllocationKeyId;
+                    // Add the new AllocationKeyId string to the order object and display this:
+                    newOrderObject.AllocationKeyId = lastAllocationKeyId;
+                    document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+                    console.log("Created key " + lastAllocationKeyId + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Get a list of existing allocation keys. By default only Active allocation keys for current client are returned.
+     * @return {void}
+     */
+    function getAllocationKeys() {
+        fetch(
+            demo.apiUrl + "/trade/v1/allocationkeys",
             {
                 "method": "GET",
                 "headers": {
@@ -65,23 +156,44 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const orderConditions = Array.from(document.getElementById("idCbxCondition").options).map(function (opt) {
-                        return opt.value;
-                    });
-                    const supportedConditions = [];
-                    let description;
-                    responseJson.SupportedOrderTypes.forEach(function (orderType) {
-                        if (orderConditions.indexOf(orderType) > -1) {
-                            supportedConditions.push(orderType);
-                        }
-                    });
-                    if (supportedConditions.length === 0) {
-                        description = "Conditional orders are not supported for this instrument and the selected account.";
-                    } else {
-                        description = "Supported conditions are: " + supportedConditions.join(", ");
-                        description += "\nSupported TriggerPriceTypes: " + responseJson.SupportedOrderTriggerPriceTypes.join(", ");
-                    }
-                    console.log(description + "\n\n" + JSON.stringify(responseJson, null, 4));
+                    const count = responseJson["__count"];
+                    const responseText = (
+                        count === 0
+                        ? "No allocation keys available."
+                        : count + " keys available."
+                    ) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    console.log(responseText);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Get detailed information about an allocation key.
+     * @return {void}
+     */
+    function getAllocationKeyDetails() {
+        fetch(
+            demo.apiUrl + "/trade/v1/allocationkeys/" + lastAllocationKeyId,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const responseText = (
+                        responseJson.Data.length === 0
+                        ? "No allocation keys available."
+                        : responseJson.Data.length + " keys available."
+                    ) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    console.log(responseText);
                 });
             } else {
                 demo.processError(response);
@@ -96,7 +208,6 @@
      * @return {void}
      */
     function preCheckNewOrder() {
-        // The PreCheck only checks the order, not the trigger!
         // Bug: Preview doesn't check for limit outside market hours
 
         function getErrorMessage(responseJson, defaultMessage) {
@@ -161,7 +272,7 @@
     }
 
     /**
-     * This is an example of placing a conditional order.
+     * This is an example of placing a single leg order.
      * @return {void}
      */
     function placeNewOrder() {
@@ -187,7 +298,6 @@
                         : "\nX-Request-ID response header: " + xRequestId
                     ));
                     lastOrderId = responseJson.OrderId;
-                    lastOrderIdCondition = responseJson.Orders[0].OrderId;
                 });
             } else {
                 console.debug(response);
@@ -206,7 +316,37 @@
     }
 
     /**
-     * This is an example of updating a conditional order.
+     * This is an example of getting detailed information of a specific order (in this case the last placed order).
+     * @return {void}
+     */
+    function getOrderDetails() {
+        fetch(
+            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "/details?ClientKey=" + demo.user.clientKey,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson === null) {
+                        console.error("The order wasn't found in the list of active orders. Is order " + lastOrderId + " still open?");
+                    } else {
+                        console.log("Response: " + JSON.stringify(responseJson, null, 4));
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of updating a single leg order.
      * @return {void}
      */
     function modifyLastOrder() {
@@ -216,7 +356,6 @@
             "Content-Type": "application/json; charset=utf-8"
         };
         newOrderObject.OrderId = lastOrderId;
-        newOrderObject.Orders[0].OrderId = lastOrderIdCondition;
         fetch(
             demo.apiUrl + "/trade/v2/orders",
             {
@@ -271,160 +410,44 @@
     }
 
     /**
-     * Create a description of the order with condition.
+     * Order changes are broadcasted via ENS. Retrieve the recent events to see what you can expect.
      * @return {void}
      */
-    function getConditionInText(conditionalOrder) {
-
-        function priceTypeInText() {
-            switch (conditionalOrder.TriggerOrderData.PriceType) {
-            case "LastTraded":
-                return "last traded";
-            default:
-                return conditionalOrder.TriggerOrderData.PriceType.toLowerCase();
+    function getHistoricalEnsEvents() {
+        const fromDate = new Date();
+        fromDate.setMinutes(fromDate.getMinutes() - 5);
+        fetch(
+            demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString(),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
             }
-        }
-
-        let description = "Activate this order when the following condition is met:\n";
-        let expirationDate;
-        switch (conditionalOrder.OrderType) {
-        case "TriggerStop":  // Distance
-            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " " + priceTypeInText() + " price is " + conditionalOrder.TrailingStopDistanceToMarket + " " + (
-                conditionalOrder.BuySell === "Sell"
-                ? "above lowest "
-                : "below highest "
-            ) + priceTypeInText() + " price";
-            break;
-        case "TriggerBreakout":  // Breakout
-            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " " + priceTypeInText() + " price is outside " + conditionalOrder.TriggerOrderData.LowerPrice + "-" + conditionalOrder.TriggerOrderData.UpperPrice;
-            break;
-        case "TriggerLimit":  // Price
-            description += conditionalOrder.AssetType + " " + conditionalOrder.Uic + " last traded price is at or " + (
-                conditionalOrder.BuySell === "Sell"
-                ? "above"
-                : "below"
-            ) + " " + conditionalOrder.TriggerOrderData.LowerPrice;
-            break;
-        }
-        description += ".\n";
-        switch (conditionalOrder.OrderDuration.DurationType) {
-        case "GoodTillDate":
-            expirationDate = new Date(conditionalOrder.OrderDuration.ExpirationDateTime);
-            description += "Valid until trade day " + expirationDate.toLocaleDateString() + ".";
-            break;
-        case "DayOrder":
-            description += "Valid for current trade day.";
-            break;
-        case "GoodTillCancel":
-            description += "Valid until met or canceled.";
-            break;
-        }
-        return description;
-    }
-
-    /**
-     * This function is called when the value of idCbxCondition is changed.
-     * @return {void}
-     */
-    function changeCondition() {
-        // Conditions are Price, Breakout and Distance.
-        // A price condition is met when the price of the trigger instrument reaches a certain value.
-        // Example of a price condition: Microsoft Corp. last traded price is at or below 250.00. Valid until met or cancelled.
-        //      .. of a breakout condition: EURUSD close price is outside 1.1500-1.1600. Valid until trade day 22-Dec-2022.
-        //      .. of a distance condition: DAX Index is 1,000 below highest open price. Valid for current trade day.
-        const newOrderObject = getOrderObjectFromJson();
-        const conditionalOrder = newOrderObject.Orders[0];
-        const newCondition = document.getElementById("idCbxCondition").value;
-        conditionalOrder.OrderType = newCondition;
-        delete conditionalOrder.TrailingStopStep;
-        delete conditionalOrder.TrailingStopDistanceToMarket;
-        delete conditionalOrder.TriggerOrderData.UpperPrice;
-        switch (newCondition) {
-        case "TriggerStop":  // Distance
-            conditionalOrder.TrailingStopStep = 0.05;
-            conditionalOrder.TrailingStopDistanceToMarket = 50;
-            conditionalOrder.TriggerOrderData.LowerPrice = 700;
-            conditionalOrder.BuySell = document.getElementById("idCbxOperator").value;
-            break;
-        case "TriggerBreakout":  // Breakout
-            conditionalOrder.TriggerOrderData.LowerPrice = 10;
-            conditionalOrder.TriggerOrderData.UpperPrice = 1500;
-            delete conditionalOrder.BuySell;
-            break;
-        case "TriggerLimit":  // Price
-            conditionalOrder.TriggerOrderData.LowerPrice = 1000;
-            conditionalOrder.BuySell = document.getElementById("idCbxOperator").value;
-            break;
-        }
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-        console.log(getConditionInText(conditionalOrder));
-    }
-
-    /**
-     * This function is called when the value of idCbxOperator is changed.
-     * @return {void}
-     */
-    function changeOperator() {
-        // Applicable for Limits. When "At or above": Sell, when "At or below": Buy.
-        const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.Orders[0].BuySell = document.getElementById("idCbxOperator").value;
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-        console.log(getConditionInText(newOrderObject.Orders[0]));
-    }
-
-    /**
-     * This function is called when the value of idCbxTrigger is changed.
-     * @return {void}
-     */
-    function changeTrigger() {
-        // Triggers differ per condition.
-        const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.Orders[0].TriggerOrderData.PriceType = document.getElementById("idCbxTrigger").value;
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-        console.log(getConditionInText(newOrderObject.Orders[0]));
-    }
-
-    /**
-     * This function is called when the value of idCbxExpiry is changed.
-     * @return {void}
-     */
-    function changeExpiry() {
-        const expiry = document.getElementById("idCbxExpiry").value;
-        const expiryDate = new Date();
-        const newOrderObject = getOrderObjectFromJson();
-        const conditionalOrder = newOrderObject.Orders[0];
-        switch (expiry) {
-        case "EOM":
-            conditionalOrder.OrderDuration.DurationType = "GoodTillDate";
-            expiryDate.setMonth(expiryDate.getMonth() + 1, 0);
-            conditionalOrder.OrderDuration.ExpirationDateTime = expiryDate.toISOString().split("T")[0];
-            conditionalOrder.OrderDuration.ExpirationDateContainsTime = false;
-            break;
-        case "EOY":
-            conditionalOrder.OrderDuration.DurationType = "GoodTillDate";
-            expiryDate.setFullYear(expiryDate.getFullYear() + 1, 0, 0);
-            conditionalOrder.OrderDuration.ExpirationDateTime = expiryDate.toISOString().split("T")[0];
-            conditionalOrder.OrderDuration.ExpirationDateContainsTime = false;
-            break;
-        default:
-            conditionalOrder.OrderDuration.DurationType = expiry;
-            delete conditionalOrder.OrderDuration.ExpirationDateTime;
-            delete conditionalOrder.OrderDuration.ExpirationDateContainsTime;
-        }
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-        console.log(getConditionInText(conditionalOrder));
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Found " + responseJson.Data.length + " events in the last 5 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxCondition", "func": changeCondition, "funcsToDisplay": [changeCondition, getConditionInText]},
-        {"evt": "change", "elmId": "idCbxOperator", "func": changeOperator, "funcsToDisplay": [changeOperator, getConditionInText]},
-        {"evt": "change", "elmId": "idCbxTrigger", "func": changeTrigger, "funcsToDisplay": [changeTrigger, getConditionInText]},
-        {"evt": "change", "elmId": "idCbxExpiry", "func": changeExpiry, "funcsToDisplay": [changeExpiry, getConditionInText]},
-        {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
+        {"evt": "click", "elmId": "idBtnCreateAllocationKey", "func": createAllocationKey, "funcsToDisplay": [createAllocationKey]},
+        {"evt": "click", "elmId": "idBtnGetAllocationKeys", "func": getAllocationKeys, "funcsToDisplay": [getAllocationKeys]},
+        {"evt": "click", "elmId": "idBtnGetAllocationKeyDetails", "func": getAllocationKeyDetails, "funcsToDisplay": [getAllocationKeyDetails]},
+        
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
+        {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
-        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]}
+        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
+        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]}
     ]);
     demo.displayVersion("trade");
 }());

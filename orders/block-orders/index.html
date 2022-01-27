@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Order Demo for Block Orders</title>
+<style type="text/css" media="screen">
+div.input-field {
+  width: 48%;
+  display: inline-block; 
+}
+</style>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Block Orders</h1>
+<h2 class="project-tagline">Example on Block Orders and Allocation</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Block orders and trade allocation</h1>
+This example shows how place a block order and allocate the position into a number of sub-accounts. Block trading is only available for specially configured accounts. To get an account configured for block trading, the account owner must contact their Saxo Bank account manager.
+<br />
+More info on block orders: <a href="https://www.developer.saxo/openapi/learn/allocation-keys" target="_blank">https://www.developer.saxo/openapi/learn/allocation-keys</a>
+<br />
+<br />
+<div>
+<div class="input-field">POST body with AllocationKey data:<br /><textarea class="json-input" id="idNewAllocationKeyObject" rows="13" wrap="off">
+{
+    "AllocationKeyName": "MyAllocationKeyName",
+    "AllocationKeyType": "DeactivateAfterOrderPlacement",
+    "AllocationUnitType": "Percentage",
+    "OwnerAccountKey": "(added on AllocationKey request)",
+    "Uic": 112809,
+    "AssetType": "Stock",
+    "BuySell": "Buy",
+    "ExternalReference": "MyBlockOrderCorrelationId",
+    "MarginHandling": "Reduce",
+    "OneTime": false,
+    "ParticipatingAccountsInfo": [
+        {
+            "AcceptRemainderAmount": true,
+            "AccountKey": "LZTc7DdejXODf-WSl2aCyQ==",
+            "Priority": 1,
+            "UnitValue": 10
+        },
+        {
+            "AcceptRemainderAmount": false,
+            "AccountKey": "LZTc7DdejXODf-WSl2aCyQ==",
+            "Priority": 1,
+            "UnitValue": 90
+        }
+    ]
+}
+</textarea></div>
+<div class="input-field">POST body with Order data:<br /><textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
+{
+    "AccountKey": "(added on order request)",
+    "Uic": 112809,
+    "OrderType": "Market",
+    "AssetType": "Stock",
+    "BuySell": "Buy",
+    "Amount": 100,
+    "AllocationKeyId": "0",
+    "ExternalReference": "MyBlockOrderCorrelationId",
+    "ManualOrder": true,
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    }
+}
+</textarea></div>
+</div>
+<input type="button" class="action-button" value="Get allocation keys" id="idBtnGetAllocationKeys" />
+<input type="button" class="action-button" value="Create allocation key" id="idBtnCreateAllocationKey" />
+<input type="button" class="action-button" value="Get allocaton key status" id="idBtnGetAllocationKeyDetails" />
+<br />
+<input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
+<input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
+<input type="button" class="action-button" value="Get order details" id="idBtnGetOrderDetails" />
+<input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
+<input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
+<br />
+<input type="button" class="action-button" value="Get ENS order events" id="idBtnHistoricalEnsEvents" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>
