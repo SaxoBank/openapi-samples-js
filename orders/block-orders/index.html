@@ -39,6 +39,12 @@ This example shows how place a block order and allocate the position into a numb
 More info on block orders: <a href="https://www.developer.saxo/openapi/learn/allocation-keys" target="_blank">https://www.developer.saxo/openapi/learn/allocation-keys</a>
 <br />
 <br />
+<label>
+  AllocationUnitType: <select class="selector" id="idCbxAllocationUnitType">
+    <option value="Percentage" selected>Percentage</option>
+    <option value="Unit">Unit</option>
+  </select>
+</label>
 <div>
 <div class="input-field">POST body with AllocationKey data:<br /><textarea class="json-input" id="idNewAllocationKeyObject" rows="13" wrap="off">
 {
@@ -62,7 +68,7 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
         {
             "AcceptRemainderAmount": false,
             "AccountKey": "LZTc7DdejXODf-WSl2aCyQ==",
-            "Priority": 1,
+            "Priority": 2,
             "UnitValue": 90
         }
     ]
@@ -86,8 +92,16 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
 </textarea></div>
 </div>
 Allocation key:<br />
+<input type="button" class="action-button" value="Get managed accounts" id="idBtnGetAccountKeys" />
 <input type="button" class="action-button" value="Get allocation keys" id="idBtnGetAllocationKeys" />
 <input type="button" class="action-button" value="Create key" id="idBtnCreateAllocationKey" />
+<br />
+<label>
+  AllocationKey: <select class="selector" id="idCbxAllocationKey">
+    <option value="-" selected>Press "Get Allocation Keys" to populate</option>
+  </select>
+</label>
+<br />
 <input type="button" class="action-button" value="Get key details" id="idBtnGetAllocationKeyDetails" />
 <input type="button" class="action-button" value="Get distributed amount" id="idBtnGetDistributedAmount" />
 <input type="button" class="action-button" value="Delete key" id="idBtnDeleteAllocationKey" />

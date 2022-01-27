@@ -12,7 +12,6 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let lastAllocationKeyId = "1";
     let lastOrderId = "0";
 
     /**
@@ -62,6 +61,115 @@
     }
 
     /**
+     * Update the AllocationUnitType.
+     * @return {void}
+     */
+    function changeAllocationUnitType() {
+        const allocationUnitType = document.getElementById("idCbxAllocationUnitType").value;
+        const newAllocationKeyObject = getAllocationKeyObjectFromJson();
+        const newOrderObject = getOrderObjectFromJson();
+        if (newAllocationKeyObject === null || newOrderObject === null) {
+            return;
+        }
+        newAllocationKeyObject.AllocationUnitType = allocationUnitType;
+        switch (allocationUnitType) {
+        case "Percentage":
+            // Distribution is done on a percentage basis. In this case the total sum of UnitValues in the ParticipatingAccounts array must add up to 100.
+            newAllocationKeyObject.ParticipatingAccountsInfo.forEach(function (accountInfo) {
+                // This is just an example. Up to you to make an algorithm to distribute the positions.
+                accountInfo.UnitValue = 100 / newAllocationKeyObject.ParticipatingAccountsInfo.length;
+            });
+            break;
+        case "Unit":
+            // Distribution is done using units allocation.
+            // In this case the total sum of UnitValues in the ParticipatingAccounts array must add up to the amount specified in the order,
+            // or at least one of the accounts in the ParticipatingAccounts must have the AcceptRemainderAmount field set to true.
+            newAllocationKeyObject.ParticipatingAccountsInfo.forEach(function (accountInfo) {
+                // This is just an example. Up to you to make an algorithm to distribute the positions.
+                accountInfo.UnitValue = newOrderObject.Amount / newAllocationKeyObject.ParticipatingAccountsInfo.length;
+            });
+            break;
+        default:
+            console.error("Unknown AllocationUnitType: " + allocationUnitType);
+        }
+        document.getElementById("idNewAllocationKeyObject").value = JSON.stringify(newAllocationKeyObject, null, 4);
+    }
+
+    /**
+     * Update the AllocationKey in the order object.
+     * @return {void}
+     */
+    function changeAllocationKey() {
+        const allocationKeyId = document.getElementById("idCbxAllocationKey").value;
+        const newOrderObject = getOrderObjectFromJson();
+        if (newOrderObject === null) {
+            return;
+        }
+        newOrderObject.AllocationKeyId = allocationKeyId;
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
+    }
+
+    /**
+     * Get details about clients under a particular owner.
+     * @return {void}
+     */
+    function getAccountKeys() {
+        fetch(
+            demo.apiUrl + "/port/v1/accounts?IncludeSubAccounts=true&ClientKey=" + encodeURIComponent(demo.user.clientKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const newAllocationKeyObject = getAllocationKeyObjectFromJson();
+                    let priority = 1;
+                    if (newAllocationKeyObject === null) {
+                        return;
+                    }
+                    newAllocationKeyObject.ParticipatingAccountsInfo = [];
+                    responseJson.Data.forEach(function (account) {
+                        if (account.ClientKey !== demo.user.clientKey) {
+                            newAllocationKeyObject.ParticipatingAccountsInfo.push({
+                                "AcceptRemainderAmount": true,
+                                "AccountKey": account.AccountKey,
+                                "Priority": priority,
+                                "UnitValue": 10
+                            });
+                            priority += 1;
+                        }
+                    });
+                    document.getElementById("idNewAllocationKeyObject").value = JSON.stringify(newAllocationKeyObject, null, 4);
+                    changeAllocationUnitType();
+                    console.log("Added " + newAllocationKeyObject.ParticipatingAccountsInfo.length + " sub accounts.\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Add an AllocationKeyId to the list.
+     * @param {string} allocationKeyId The allocation key to add.
+     * @param {string} allocationKeyName The name of the allocation key to add.
+     * @return {void}
+     */
+    function addAllocationKeyToSelect(allocationKeyId, allocationKeyName) {
+        const cbxAllocationKey = document.getElementById("idCbxAllocationKey");
+        const option = document.createElement("option");
+        option.text = allocationKeyId + ": " + allocationKeyName;
+        option.value = allocationKeyId;
+        cbxAllocationKey.add(option);
+        cbxAllocationKey.value = allocationKeyId;
+    }
+
+    /**
      * Create an allocation key.
      * @return {void}
      */
@@ -84,11 +192,11 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const newOrderObject = getOrderObjectFromJson();
-                    lastAllocationKeyId = responseJson.AllocationKeyId;
+                    addAllocationKeyToSelect(responseJson.AllocationKeyId, newAllocationKeyObject.AllocationKeyName);
                     // Add the new AllocationKeyId string to the order object and display this:
-                    newOrderObject.AllocationKeyId = lastAllocationKeyId;
+                    newOrderObject.AllocationKeyId = responseJson.AllocationKeyId;
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                    console.log("Created key " + lastAllocationKeyId + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    console.log("Created key " + responseJson.AllocationKeyId + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -103,8 +211,9 @@
      * @return {void}
      */
     function deleteAllocationKey() {
+        const allocationKeyId = document.getElementById("idCbxAllocationKey").value;
         fetch(
-            demo.apiUrl + "/trade/v1/allocationkeys/" + lastAllocationKeyId,
+            demo.apiUrl + "/trade/v1/allocationkeys/" + allocationKeyId,
             {
                 "method": "DELETE",
                 "headers": {
@@ -113,7 +222,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
-                console.log("Allocation key " + lastAllocationKeyId + " has been deleted.");
+                console.log("Allocation key " + allocationKeyId + " has been deleted.");
             } else {
                 demo.processError(response);
             }
@@ -128,7 +237,7 @@
      */
     function getAllocationKeys() {
         fetch(
-            demo.apiUrl + "/trade/v1/allocationkeys",
+            demo.apiUrl + "/trade/v1/allocationkeys?Statuses=Active,DeactivateAfterOrderPlacement,OneTime",
             {
                 "method": "GET",
                 "headers": {
@@ -142,8 +251,18 @@
                     const responseText = (
                         count === 0
                         ? "No allocation keys available."
-                        : count + " keys available."
+                        : count + " key(s) available."
                     ) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
+                    const cbxAllocationKey = document.getElementById("idCbxAllocationKey");
+                    let i;
+                    // Empty the list first..
+                    for (i = cbxAllocationKey.options.length - 1; i >= 0; i -= 1) {
+                        cbxAllocationKey.remove(i);
+                    }
+                    responseJson.Data.forEach(function (allocationKey) {
+                        addAllocationKeyToSelect(allocationKey.AllocationKeyId, allocationKey.AllocationKeyName + " (" + allocationKey.CreationTime + ")");
+                    });
+                    changeAllocationKey();
                     console.log(responseText);
                 });
             } else {
@@ -159,8 +278,9 @@
      * @return {void}
      */
     function getAllocationKeyDetails() {
+        const allocationKeyId = document.getElementById("idCbxAllocationKey").value;
         fetch(
-            demo.apiUrl + "/trade/v1/allocationkeys/" + lastAllocationKeyId,
+            demo.apiUrl + "/trade/v1/allocationkeys/" + allocationKeyId,
             {
                 "method": "GET",
                 "headers": {
@@ -170,12 +290,9 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const responseText = (
-                        responseJson.Data.length === 0
-                        ? "No allocation keys available."
-                        : responseJson.Data.length + " keys available."
-                    ) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
-                    console.log(responseText);
+                    const responseText = JSON.stringify(responseJson, null, 4);
+                    document.getElementById("idNewAllocationKeyObject").value = responseText;
+                    console.log("Response: " + responseText);
                 });
             } else {
                 demo.processError(response);
@@ -190,12 +307,13 @@
      * @return {void}
      */
     function getDistributions() {
+        const allocationKeyId = document.getElementById("idCbxAllocationKey").value;
         const newOrderObject = getOrderObjectFromJson();
         if (newOrderObject === null) {
             return;
         }
         fetch(
-            demo.apiUrl + "/trade/v1/allocationkeys/distributions/" + lastAllocationKeyId + "?Totalamount=" + newOrderObject.Amount + "&Uic=" + newOrderObject.Uic + "&AssetType=" + newOrderObject.AssetType,
+            demo.apiUrl + "/trade/v1/allocationkeys/distributions/" + allocationKeyId + "?Totalamount=" + newOrderObject.Amount + "&Uic=" + newOrderObject.Uic + "&AssetType=" + newOrderObject.AssetType,
             {
                 "method": "GET",
                 "headers": {
@@ -226,7 +344,11 @@
             let errorMessage;
             if (responseJson.hasOwnProperty("ErrorInfo")) {
                 // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                errorMessage = responseJson.ErrorInfo.Message;
+                errorMessage = (
+                    responseJson.ErrorInfo.hasOwnProperty("Message")
+                    ? responseJson.ErrorInfo.Message
+                    : responseJson.ErrorInfo.ErrorCode  // In some cases (AllocationKeyDoesNotMatchAccount) the message is not available
+                );
                 // There can be error messages per order. Try to add them.
                 if (responseJson.hasOwnProperty("Orders")) {
                     responseJson.Orders.forEach(function (order) {
@@ -450,6 +572,9 @@
     }
 
     demo.setupEvents([
+        {"evt": "change", "elmId": "idCbxAllocationUnitType", "func": changeAllocationUnitType, "funcsToDisplay": [changeAllocationUnitType]},
+        {"evt": "change", "elmId": "idCbxAllocationKey", "func": changeAllocationKey, "funcsToDisplay": [changeAllocationKey]},
+        {"evt": "click", "elmId": "idBtnGetAccountKeys", "func": getAccountKeys, "funcsToDisplay": [getAccountKeys]},
         {"evt": "click", "elmId": "idBtnCreateAllocationKey", "func": createAllocationKey, "funcsToDisplay": [createAllocationKey]},
         {"evt": "click", "elmId": "idBtnDeleteAllocationKey", "func": deleteAllocationKey, "funcsToDisplay": [deleteAllocationKey]},
         {"evt": "click", "elmId": "idBtnGetAllocationKeys", "func": getAllocationKeys, "funcsToDisplay": [getAllocationKeys]},
