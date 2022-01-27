@@ -45,7 +45,11 @@ The code flow requires a backend, so the app secret remains secret. This example
 <br />
 <br />
 <label>App Key: <input type="text" class="text-field" id="idEdtAppKey" value="faf2acbb48754413a043676b9c2c2bd5" placeholder="Paste App Key.." /> (Find your App Key <a href="https://www.developer.saxo/openapi/appmanagement" target="_blank">here</a>)</label><br />
-<label>Redirect URL: <input type="text" class="text-field" id="idEdtRedirectUrl" value="http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/" placeholder="Paste redirect URL.." /></label><br />
+<label>Redirect URL: <input type="text" class="text-field" id="idEdtRedirectUrl" value="http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/" placeholder="Paste redirect URL.." list="redirectOptions" /></label>
+<datalist id="redirectOptions">
+  <option value="http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/">
+  <option value="http://localhost:1337/">
+</datalist><br />
 <label>Optional data to use after login: <input type="text" class="text-field" id="idEdtState" value="This data is communicated via the 'state' parameter" /></label><br />
 <label>
     Login page language:
