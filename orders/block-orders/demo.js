@@ -152,7 +152,7 @@
                     newAllocationKeyObject.ParticipatingAccountsInfo = [];
                     responseJson.Data.forEach(function (account) {
                         if (account.ClientKey === demo.user.clientKey) {
-                            ownerAccountList += "AccountType " + account.AccountType + " (sub type " + account.AccountSubType + ") AccountKey " + account.AccountKey + "\n";
+                            ownerAccountList += "ClientId " + account.ClientId + " AccountType " + account.AccountType + " AccountKey " + account.AccountKey + " (" + account.AccountId + ")\n";
                         } else if (account.Active) {
                             newAllocationKeyObject.ParticipatingAccountsInfo.push({
                                 "AcceptRemainderAmount": true,  // All true, for spreading the remainder priority is used.
@@ -160,7 +160,7 @@
                                 "Priority": priority,
                                 "UnitValue": 10
                             });
-                            accountList += "AccountType " + account.AccountType + " (sub type " + account.AccountSubType + ") ClientId " + account.ClientId + "\n";
+                            accountList += "ClientId " + account.ClientId + " AccountType " + account.AccountType + " AccountKey " + account.AccountKey + " (" + account.AccountId + ")\n";
                             priority += 1;
                         }
                     });
@@ -283,7 +283,7 @@
                     }
                     responseJson.Data.forEach(function (allocationKey) {
                         const creationTime = new Date(allocationKey.CreationTime);
-                        addAllocationKeyToSelect(allocationKey.AllocationKeyId, allocationKey.AllocationKeyName + " (" + creationTime.toLocaleDateString() + " " + creationTime.toLocaleTimeString() + ")");
+                        addAllocationKeyToSelect(allocationKey.AllocationKeyId, allocationKey.AllocationKeyName + " (" + creationTime.toLocaleString() + ")");
                     });
                     changeAllocationKey();
                     console.log(responseText);
@@ -433,6 +433,7 @@
      * @return {void}
      */
     function placeNewOrder() {
+        // Full demo on ordering: https://saxobank.github.io/openapi-samples-js/orders/stocks/
         const headersObject = {
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
@@ -571,6 +572,7 @@
      * @return {void}
      */
     function getHistoricalEnsEvents() {
+        // Full demo on ENS: https://saxobank.github.io/openapi-samples-js/websockets/order-events-monitoring/
         const fromDate = new Date();
         fromDate.setMinutes(fromDate.getMinutes() - 5);
         fetch(
@@ -585,6 +587,37 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     console.log("Found " + responseJson.Data.length + " events in the last 5 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Get trade messages to show order progress.
+     * @return {void}
+     */
+    function getTradeMessages() {
+        // Full demo on trade messages: https://saxobank.github.io/openapi-samples-js/websockets/trade-messages/
+        fetch(
+            demo.apiUrl + "/trade/v1/messages",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    let tradeMessages = "";
+                    responseJson.forEach(function (tradeMessage) {
+                        tradeMessages += "[" + tradeMessage.MessageType + " @ " + new Date(tradeMessage.DateTime).toLocaleString() + "] " + tradeMessage.MessageHeader + ":\n" + tradeMessage.MessageBody + "\n\n";
+                    });
+                    console.log(tradeMessages + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -609,7 +642,8 @@
         {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
         {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
-        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]}
+        {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]},
+        {"evt": "click", "elmId": "idBtnGetTradeMessages", "func": getTradeMessages, "funcsToDisplay": [getTradeMessages]}
     ]);
     demo.displayVersion("trade");
 }());

@@ -41,15 +41,15 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
 <br />
 <label>
   AllocationUnitType: <select class="selector" id="idCbxAllocationUnitType">
-    <option value="Percentage" selected>Percentage</option>
-    <option value="Unit">Unit</option>
+    <option value="Percentage">Percentage (dangerous!)</option>
+    <option value="Unit" selected>Unit</option>
   </select>
 </label>
 <div>
 <div class="input-field">POST body with AllocationKey data:<br /><textarea class="json-input" id="idNewAllocationKeyObject" rows="13" wrap="off">
 {
     "AllocationKeyName": "MyAllocationKeyName",
-    "AllocationUnitType": "Percentage",
+    "AllocationUnitType": "Unit",
     "OwnerAccountKey": "(added on AllocationKey request)",
     "MarginHandling": "Reduce",
     "OneTime": false,
@@ -58,13 +58,13 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
             "AcceptRemainderAmount": true,
             "AccountKey": "(added on managed accounts request)",
             "Priority": 1,
-            "UnitValue": 10
+            "UnitValue": 70003
         },
         {
             "AcceptRemainderAmount": false,
             "AccountKey": "(added on managed accounts request)",
             "Priority": 2,
-            "UnitValue": 90
+            "UnitValue": 30000
         }
     ]
 }
@@ -76,7 +76,7 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
     "OrderType": "Market",
     "AssetType": "FxSpot",
     "BuySell": "Buy",
-    "Amount": 100000,
+    "Amount": 100003,
     "AllocationKeyId": "0",
     "ExternalReference": "MyBlockOrderCorrelationId",
     "ManualOrder": true,
@@ -107,7 +107,9 @@ Order:<br />
 <input type="button" class="action-button" value="Get order details" id="idBtnGetOrderDetails" />
 <input type="button" class="action-button" value="Modify" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel" id="idBtnCancelLastOrder" />
+<br />
 <input type="button" class="action-button" value="Get ENS events" id="idBtnHistoricalEnsEvents" />
+<input type="button" class="action-button" value="Get trade messages" id="idBtnGetTradeMessages" />
 <br />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
