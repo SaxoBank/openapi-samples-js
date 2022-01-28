@@ -56,13 +56,13 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
     "ParticipatingAccountsInfo": [
         {
             "AcceptRemainderAmount": true,
-            "AccountKey": "LZTc7DdejXODf-WSl2aCyQ==",
+            "AccountKey": "(added on managed accounts request)",
             "Priority": 1,
             "UnitValue": 10
         },
         {
             "AcceptRemainderAmount": false,
-            "AccountKey": "LZTc7DdejXODf-WSl2aCyQ==",
+            "AccountKey": "(added on managed accounts request)",
             "Priority": 2,
             "UnitValue": 90
         }
@@ -72,11 +72,11 @@ More info on block orders: <a href="https://www.developer.saxo/openapi/learn/all
 <div class="input-field">POST body with Order data:<br /><textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
 {
     "AccountKey": "(added on order request)",
-    "Uic": 112809,
+    "Uic": 21,
     "OrderType": "Market",
-    "AssetType": "Stock",
+    "AssetType": "FxSpot",
     "BuySell": "Buy",
-    "Amount": 100,
+    "Amount": 100000,
     "AllocationKeyId": "0",
     "ExternalReference": "MyBlockOrderCorrelationId",
     "ManualOrder": true,

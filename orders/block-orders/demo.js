@@ -491,7 +491,7 @@
                     if (responseJson === null) {
                         console.error("The order wasn't found in the list of active orders. Is order " + lastOrderId + " still open?");
                     } else {
-                        console.log("Response: " + JSON.stringify(responseJson, null, 4));
+                        console.log("Order correlation: " + responseJson.CorrelationKey + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                     }
                 });
             } else {
@@ -574,7 +574,7 @@
         const fromDate = new Date();
         fromDate.setMinutes(fromDate.getMinutes() - 5);
         fetch(
-            demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString(),
+            demo.apiUrl + "/ens/v1/activities?Activities=Orders,Positions&IncludeSubAccounts=true&FromDateTime=" + fromDate.toISOString(),
             {
                 "method": "GET",
                 "headers": {
