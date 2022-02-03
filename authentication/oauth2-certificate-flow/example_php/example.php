@@ -53,7 +53,7 @@ function createJwtAssertion() {
     $payload = [
         'iss' => $appKey,  // Issuer - Value should be AppKey of client application.
         'sub' => $userId,  // UserId - Value should be the user id for which token is needed.
-        'exp' => time() + 60,  // Expiry / Lifetime of assertion - keep this short, the token is generated directly afterwards.
+        'exp' => time() + 3,  // Expiry / Lifetime of assertion - keep this short, the token is generated directly afterwards.
         'aud' => $authProviderUrl,  // Audience - Value should be the AuthenticationUrl.
         'spurl' => $serviceProviderUrl  // AppUrl - On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL.
     ];

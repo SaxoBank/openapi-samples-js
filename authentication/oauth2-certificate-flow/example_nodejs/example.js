@@ -35,18 +35,18 @@ const privateKeyFile = "private-key-with-cert.pem";
  */
 function createJwtAssertion() {
     const payload = {
-        "spurl": serviceProviderUrl  // On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL
+        "spurl": serviceProviderUrl  // On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL.
     };
     const privateKey = readFileSync(privateKeyFile);
     const options = {
         "header": {
-            "x5t": certThumbPrint
+            "x5t": certThumbPrint  // Thumbprint of X509 certificate used for signing JWT.
         },
-        "algorithm": "RS256",
-        "issuer": appKey,
-        "expiresIn": "1 minute",  // Lifetime of assertion - keep this short, the token is generated directly afterwards
-        "subject": userId,
-        "audience": authProviderUrl
+        "algorithm": "RS256",  // Algorithm used to sign JWT. We only support RS256 at the moment.
+        "issuer": appKey,  // Value should be AppKey of client application.
+        "expiresIn": "3 seconds",  // Lifetime of assertion - keep this short, the token is generated directly afterwards.
+        "subject": userId,  // UserId - Value should be the user id for which token is needed.
+        "audience": authProviderUrl  // Audience - Value should be the AuthenticationUrl.
     };
     // The generated assertion/jwt can be validated using https://jwt.io
     // More info about using jsonwebtoken: https://github.com/auth0/node-jsonwebtoken
