@@ -187,7 +187,7 @@ function requestTokenRefresh($refreshToken) {
 }
 
 /**
- * Request a token using the JWT.
+ * Call an API endpoint to demonstrate the token is valid.
  * @param {string} token The Bearer token.
  * @return {void}
  */
@@ -243,6 +243,6 @@ if (!$tokenObject) {
     requestApiData($tokenObject -> access_token);
 
     // For demonstration purposes, we'll refresh the token..
-    $token = requestTokenRefresh($tokenObject -> refresh_token);
+    $tokenObject = requestTokenRefresh($tokenObject -> refresh_token);
     // Now you might want to refresh the websocket connections with the new token...
 }

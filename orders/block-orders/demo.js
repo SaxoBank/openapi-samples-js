@@ -314,8 +314,12 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const responseText = JSON.stringify(responseJson, null, 4);
+                    let totalUnitValue = 0;
+                    responseJson.ParticipatingAccountsInfo.forEach(function (participant) {
+                        totalUnitValue += participant.UnitValue;
+                    });
                     document.getElementById("idNewAllocationKeyObject").value = responseText;
-                    console.log("Response: " + responseText);
+                    console.log("Total UnitValue: " + totalUnitValue + "\n\nResponse: " + responseText);
                 });
             } else {
                 demo.processError(response);
@@ -614,10 +618,14 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let tradeMessages = "";
-                    responseJson.forEach(function (tradeMessage) {
-                        tradeMessages += "[" + tradeMessage.MessageType + " @ " + new Date(tradeMessage.DateTime).toLocaleString() + "] " + tradeMessage.MessageHeader + ":\n" + tradeMessage.MessageBody + "\n\n";
-                    });
-                    console.log(tradeMessages + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    if (responseJson.length > 0) {
+                        responseJson.forEach(function (tradeMessage) {
+                            tradeMessages += "[" + tradeMessage.MessageType + " @ " + new Date(tradeMessage.DateTime).toLocaleString() + "] " + tradeMessage.MessageHeader + ":\n" + tradeMessage.MessageBody + "\n\n";
+                        });
+                        console.log(tradeMessages + "\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    } else {
+                        console.log("No trade messages found.");
+                    }
                 });
             } else {
                 demo.processError(response);
