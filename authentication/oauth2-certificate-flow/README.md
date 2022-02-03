@@ -6,7 +6,8 @@ JSON Web Token (JWT) is used to securely transmit information between the applic
 
 > **_NOTE:_** The CBA flow is not available for most apps. You need to contact SaxoBank to apply for approval.
 
-In order to keep secrets private, JavaScript is not a good language for this flow, since everything is available via the browser. However, there is a NodeJs sample, availabe here: https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/oauth2-certificate-flow/example_nodejs
+In order to keep secrets private, JavaScript is not a good language for this flow, since everything is available via the browser.
+However, there is a [NodeJs sample](https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/oauth2-certificate-flow/example_nodejs) and [one for PHP](https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/oauth2-certificate-flow/example_php).
 
 A tutorial on this grant type: https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication
 

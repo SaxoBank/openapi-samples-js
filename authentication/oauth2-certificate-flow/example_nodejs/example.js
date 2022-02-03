@@ -1,7 +1,7 @@
-/*
-Learn sections:
-https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication
-https://www.developer.saxo/openapi/learn/managing-certificates-in-myaccount
+/**
+ * Learn sections:
+ * https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication
+ * https://www.developer.saxo/openapi/learn/managing-certificates-in-myaccount
 */
 
 // Change the configuration so all 5 constants contain your data:
@@ -16,13 +16,18 @@ const certThumbPrint = "Fingerprint of your certificate";
 const authProviderUrl = "https://sim.logonvalidation.net/token";  // On production, this will be "https://live.logonvalidation.net/token"
 const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production, this is "https://gateway.saxobank.com/openapi"
 
-import fs from "fs";  // Used to load the certificate file
-import jwt from "jsonwebtoken";  // A library used for signing the token
+import {readFileSync} from "fs";  // Used to load the certificate file
+import jsonwebtoken from "jsonwebtoken";  // A library used for signing the token
 import fetch from "node-fetch";  // Used to request the token and call the API
 
-// The PEM file is created using OpenSSL:
-// openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
-const privateKey = fs.readFileSync("private-key-with-cert.pem");
+/**
+ * The PEM file is created using OpenSSL:
+ * openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
+ *
+ * Make sure this file cannot be downloaded via internet!
+ * Store it in a folder not accessible from outside, or include the contents in your javascript.
+ */
+const privateKeyFile = "private-key-with-cert.pem";
 
 /**
  * Create and sign the assertion.
@@ -32,6 +37,7 @@ function createJwtAssertion() {
     const payload = {
         "spurl": serviceProviderUrl  // On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL
     };
+    const privateKey = readFileSync(privateKeyFile);
     const options = {
         "header": {
             "x5t": certThumbPrint
@@ -44,12 +50,11 @@ function createJwtAssertion() {
     };
     // The generated assertion/jwt can be validated using https://jwt.io
     // More info about using jsonwebtoken: https://github.com/auth0/node-jsonwebtoken
-    const assertion = jwt.sign(payload, privateKey, options);
+    const assertion = jsonwebtoken.sign(payload, privateKey, options);
     console.log("userId: " + userId);
     console.log("appKey: " + appKey);
     console.log("serviceProviderUrl: " + serviceProviderUrl);
     console.log("certThumbPrint: " + certThumbPrint);
-    console.log("Private key used to sign the JWT:\n" + privateKey);
     console.log("Assertion has been created:\n" + assertion);
     return assertion;
 }
@@ -61,6 +66,10 @@ function createJwtAssertion() {
  * @return {void}
  */
 function requestToken(assertion, successCallback) {
+    // If you run into a 401 NotAuthenticated, this might be caused by not accepting the terms and conditions.
+    // To fix this, you must use this app once with the Authorization Code Flow for your userId and accept the Disclaimer after signing in.
+    // You can use this URL, replacing the appKey with yours (add a new redirect URL http://127.0.0.1/):
+    // https://sim.logonvalidation.net/authorize?client_id= + appKey + &response_type=code&redirect_uri=http%3A%2F%2F127.0.0.1%2F
     const postData = new URLSearchParams();
     postData.append("assertion", assertion);
     postData.append("grant_type", "urn:saxobank:oauth:grant-type:personal-jwt");
@@ -108,10 +117,6 @@ function requestToken(assertion, successCallback) {
  * @return {void}
  */
 function requestTokenRefresh(tokenObject) {
-    // If you run into a 401 NotAuthenticated, this might be caused by not accepting the terms and conditions.
-    // To fix this, you must use this app once with the Authorization Code Flow for your userId and accept the Disclaimer after signing in.
-    // You can use this URL, replacing the appKey with yours (add a new redirect URL http://127.0.0.1/):
-    // https://sim.logonvalidation.net/authorize?client_id= + appKey + &response_type=code&redirect_uri=http%3A%2F%2F127.0.0.1%2F
     const postData = new URLSearchParams();
     postData.append("refresh_token", tokenObject.refresh_token);
     postData.append("grant_type", "refresh_token");
@@ -155,7 +160,7 @@ function requestApiData(tokenObject) {
     fetch(
         // The examples on Github (https://saxobank.github.io/openapi-samples-js/) are intended for individual logins.
         // This flow is intended for maintaining multiple customers, so it is recommended to explicitly specify clientKeys, accountKeys, etc.
-        // Get all users: apiUrl + "/port/v1/users?$inlinecount=AllPages&ClientKey={ClientKey}&IncludeSubUsers=true",
+        // Get all users: apiUrl + "/port/v1/users?ClientKey={ClientKey}&IncludeSubUsers=true",
         apiUrl + "/ref/v1/exchanges",
         {
             "headers": {
