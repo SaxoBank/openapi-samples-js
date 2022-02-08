@@ -3,5 +3,6 @@
 Examples on
 - Finding instruments,
 - Extended AssetTypes,
-- Entitlements
+- Entitlements,
+- Currency conversion,
 - Download the instruments universe, respecting the rate limit.
