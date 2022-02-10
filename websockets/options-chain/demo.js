@@ -735,7 +735,7 @@
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
-        {"evt": "click", "elmId": "idBtnSubscribeOptionsChain", "func": subscribeOptionsChain, "funcsToDisplay": [subscribeOptionsChain]},
+        {"evt": "click", "elmId": "idBtnSubscribeOptionsChain", "func": subscribeOptionsChain, "funcsToDisplay": [subscribeOptionsChain, addExpiries]},
         {"evt": "click", "elmId": "idBtnUpdateSubscription", "func": updateSubscription, "funcsToDisplay": [updateSubscription, subscribeOptionsChain]},
         {"evt": "click", "elmId": "idBtnResetSubscription", "func": resetSubscription, "funcsToDisplay": [resetSubscription, subscribeOptionsChain]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},

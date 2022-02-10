@@ -118,6 +118,20 @@
      * @return {void}
      */
     function selectOrderDuration() {
+
+        /**
+         * Prefix number with zero, if it has one digit.
+         * @param {number} n The one or two digit number representing day or month.
+         * @return {string} The formatted number.
+         */
+        function addLeadingZero(n) {
+            return (
+                n > 9
+                ? String(n)
+                : "0" + n
+            );
+        }
+
         const newOrderObject = getOrderObjectFromJson();
         const now = new Date();
         newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
@@ -132,7 +146,7 @@
         case "GoodTillDate":  // Requires an explicit date. Cancellation of the order happens at some point on that date.
             now.setDate(now.getDate() + 3);  // Add 3x24 hours to now
             now.setSeconds(0, 0);
-            newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate() + "T" + now.getHours() + ":" + now.getMinutes() + ":00";  // Example: 2020-03-20T14:00:00
+            newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + addLeadingZero(now.getMonth() + 1) + "-" + addLeadingZero(now.getDate()) + "T" + addLeadingZero(now.getHours()) + ":" + addLeadingZero(now.getMinutes()) + ":00";  // Example: 2020-03-20T14:00:00
             newOrderObject.OrderDuration.ExpirationDateContainsTime = true;
             break;
         default:
