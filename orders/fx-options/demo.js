@@ -12,6 +12,12 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
+    const tradeLevelSubscription = {
+        "referenceId": "TradeLevelEvent",
+        "isActive": false,
+        "activityMonitor": null,
+        "isRecentDataReceived": false
+    };
     const orderticketSubscription = {
         "referenceId": "",
         "isActive": false,
@@ -27,6 +33,7 @@
     let connection = null;  // The websocket connection object
     // This is just the default.
     let displayAndFormat = null;
+    let primarySessionRequestCount = 0;
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -95,6 +102,61 @@
         ).then(function (response) {
             if (response.ok) {
                 console.log("Requested FullTradingAndChat session capabilities, so prices are realtime.\nExample on monitoring and keeping FullTradingAndChat:\nhttps://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Subscribe to price session changes.
+     * @return {void}
+     */
+    function subscribeToTradeLevelChanges() {
+        const priceSubscriptionObject = getPriceSubscriptionObjectFromJson();
+        const data = {
+            "ContextId": priceSubscriptionObject.ContextId,
+            "ReferenceId": tradeLevelSubscription.referenceId
+        };
+        if (tradeLevelSubscription.isActive) {
+            // The reference id of a subscription for which the new subscription is a replacement.
+            // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+            // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+            // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+            // If no such subscription exists, the ReplaceReferenceId is ignored.
+            data.ReplaceReferenceId = tradeLevelSubscription.referenceId;
+        }
+        if (connection === null) {
+            createConnection(priceSubscriptionObject.ContextId);
+        }
+        fetch(
+            demo.apiUrl + "/root/v1/sessions/events/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            tradeLevelSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+            tradeLevelSubscription.isActive = true;
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (tradeLevelSubscription.activityMonitor === null) {
+                        tradeLevelSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(tradeLevelSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
+                    console.log("Subscribed to price session changes with response: " + JSON.stringify(responseJson, null, 4));
+                    if (responseJson.Snapshot.TradeLevel !== "FullTradingAndChat") {
+                        requestPrimaryPriceSession();
+                    }
+                });
             } else {
                 demo.processError(response);
             }
@@ -407,6 +469,60 @@
         }
 
         /**
+         * This is an example of making the current app primary, so real time prices can be shown again. Other apps are notified and get delayed prices.
+         * @return {void}
+         */
+        function requestPrimaryPriceSessionAgain() {
+            const data = {
+                "TradeLevel": "FullTradingAndChat"
+            };
+            const maxRequests = 4;
+            if (primarySessionRequestCount < maxRequests) {
+                // This check is to prevent a "Primary Session fight", after some retries the app must wait with requesting FullTradingAndChat again.
+                primarySessionRequestCount += 1;
+                fetch(
+                    demo.apiUrl + "/root/v1/sessions/capabilities",
+                    {
+                        "method": "PATCH",
+                        "headers": {
+                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                            "Content-Type": "application/json; charset=utf-8"
+                        },
+                        "body": JSON.stringify(data)
+                    }
+                ).then(function (response) {
+                    if (response.ok) {
+                        console.log("Requested FullTradingAndChat session capabilities again..");
+                    } else {
+                        demo.processError(response);
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                });
+            } else {
+                // Wait 30 seconds..
+                console.error("Wait 30 seconds with requesting FullTradingAndChat rights again, to prevent a fight with another app...");
+                window.setTimeout(function () {
+                    primarySessionRequestCount = 0;  // Reset
+                    requestPrimaryPriceSessionAgain();
+                }, 30 * 1000);
+            }
+        }
+
+        /**
+         * This function processes the trade level change messages.
+         * @param {Array<Object>} payload The list of messages
+         * @return {void}
+         */
+        function handleTradeLevelMessage(payload) {
+            if (payload.TradeLevel !== "FullTradingAndChat") {
+                requestPrimaryPriceSessionAgain();
+                demo.displaySourceCode([requestPrimaryPriceSessionAgain]);  // Show code, for demo purposes..
+            }
+            tradeLevelSubscription.isRecentDataReceived = true;
+        }
+
+        /**
          * This function processes the price update messages - the most important part.
          * @param {Object} message The update
          * @param {number} bundleId The bundle identifier
@@ -547,6 +663,10 @@
                     // The server has disconnected the client. This messages requires you to re-authenticate if you wish to continue receiving messages.
                     console.error("The server has disconnected the client! New login is required.\n\n" + JSON.stringify(message.payload, null, 4));
                     break;
+                case tradeLevelSubscription.referenceId:
+                    handleTradeLevelMessage(message.payload);
+                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    break;
                 case orderticketSubscription.referenceId:
                     orderticketSubscription.isRecentDataReceived = true;
                     handlePriceUpdate(message, i + 1, messages.length);
@@ -634,6 +754,22 @@
     }
 
     /**
+     * This function monitors the data going over the network for the different active subscriptions.
+     * @param {Object} subscription The subscription to monitor
+     * @returns {void}
+     */
+    function monitorActivity(subscription) {
+        if (subscription.isActive) {
+            if (subscription.isRecentDataReceived) {
+                console.debug("Subscription " + subscription.referenceId + " is healthy..");
+                subscription.isRecentDataReceived = false;
+            } else {
+                console.error("No recent network activity for subscription " + subscription.referenceId + ". You might want to reconnect.");
+            }
+        }
+    }
+
+    /**
      * Collect the strike prices for an expiry date using the options chain request.
      * More info: https://saxobank.github.io/openapi-samples-js/websockets/options-chain/
      * @return {void}
@@ -714,6 +850,9 @@
             getDisplayAndFormat(priceSubscriptionObject);
             return;
         }
+        if (connection === null) {
+            createConnection(priceSubscriptionObject.ContextId);
+        }
         fetch(
             demo.apiUrl + "/trade/v1/optionschain/subscriptions",
             {
@@ -726,11 +865,17 @@
             }
         ).then(function (response) {
             if (response.ok) {
+                optionsChainSubscription.referenceId = data.ReferenceId;
+                optionsChainSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+                optionsChainSubscription.isActive = true;
                 response.json().then(function (responseJson) {
                     let strikesPopulated = false;
-                    optionsChainSubscription.referenceId = data.ReferenceId;
-                    optionsChainSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                    optionsChainSubscription.isActive = true;
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (optionsChainSubscription.activityMonitor === null) {
+                        optionsChainSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(optionsChainSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
                     // For this demo: show the strikes of the nearest expiry date
                     responseJson.Snapshot.Expiries.forEach(function (expiry) {
                         if (!strikesPopulated && expiry.hasOwnProperty("Strikes")) {
@@ -780,13 +925,19 @@
             }
         ).then(function (response) {
             if (response.ok) {
+                orderticketSubscription.referenceId = priceSubscriptionObject.ReferenceId;
+                orderticketSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+                orderticketSubscription.isActive = true;
                 response.json().then(function (responseJson) {
                     const quote = responseJson.Snapshot.Quote;
                     const instrumentPriceDetails = responseJson.Snapshot.InstrumentPriceDetails;
                     displayAndFormat = responseJson.Snapshot.DisplayAndFormat;
-                    orderticketSubscription.referenceId = priceSubscriptionObject.ReferenceId;
-                    orderticketSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                    orderticketSubscription.isActive = true;
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (orderticketSubscription.activityMonitor === null) {
+                        orderticketSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(orderticketSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
                     // Log before the quote processing, because that processing has output too. With F12 you can see all log lines.
                     console.log("ExpiryDate " + instrumentPriceDetails.ExpiryDate + " and StrikePrice " + instrumentPriceDetails.StrikePrice + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                     processQuote(quote);
@@ -911,7 +1062,7 @@
         {"evt": "change", "elmId": "idCbxStrikePrice", "func": updateStrikePrice, "funcsToDisplay": [updateStrikePrice]},
         {"evt": "click", "elmId": "idBtnGetOptionsChain", "func": subscribeOptionsChain, "funcsToDisplay": [subscribeOptionsChain]},
         {"evt": "click", "elmId": "idBtnUpdatePriceSubscription", "func": subscribePriceSubscription, "funcsToDisplay": [subscribePriceSubscription]},
-        {"evt": "click", "elmId": "idBtnGetPrimarySession", "func": requestPrimaryPriceSession, "funcsToDisplay": [requestPrimaryPriceSession]},
+        {"evt": "click", "elmId": "idBtnGetPrimarySession", "func": subscribeToTradeLevelChanges, "funcsToDisplay": [subscribeToTradeLevelChanges, requestPrimaryPriceSession]},
         {"evt": "click", "elmId": "idBtnPlaceNewSellOrder", "func": placeNewSellOrder, "funcsToDisplay": [placeNewSellOrder, placeNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewBuyOrder", "func": placeNewBuyOrder, "funcsToDisplay": [placeNewBuyOrder, placeNewOrder]},
         {"evt": "click", "elmId": "idBtnGetPositions", "func": getPositions, "funcsToDisplay": [getPositions]}
