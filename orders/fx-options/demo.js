@@ -26,15 +26,7 @@
     };
     let connection = null;  // The websocket connection object
     // This is just the default.
-    let displayAndFormat = {
-        "Currency": "USD",
-        "Decimals": 4,
-        "Description": "Euro/US Dollar",
-        "Format": "AllowDecimalPips",
-        "StrikeDecimals": 4,
-        "StrikeFormat": "Normal",
-        "Symbol": "EURUSD"
-    };
+    let displayAndFormat = null;
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -648,6 +640,36 @@
      */
     function subscribeOptionsChain() {
 
+        function getDisplayAndFormat(priceSubscriptionObject) {
+            const uic = priceSubscriptionObject.Arguments.Uic;
+            const assetType = priceSubscriptionObject.Arguments.AssetType;
+            const accountKey = priceSubscriptionObject.Arguments.AccountKey;
+            fetch(
+                demo.apiUrl + "/ref/v1/instruments/details/" + uic + "/" + assetType + "?AccountKey=" + encodeURIComponent(accountKey) + "&ClientKey=" + encodeURIComponent(demo.user.clientKey),
+                {
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    }
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        displayAndFormat = responseJson.Format;
+                        // Add Currency to the object (not really consistent, @SaxoBank!)
+                        displayAndFormat.Currency = responseJson.CurrencyCode;
+                        // .. and request the options chain again:
+                        subscribeOptionsChain();
+                    });
+                } else {
+                    // If you get a 404 NotFound, the order might already be executed!
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
         function populateStrikes(strikes, strikeWindowStartIndex) {
             const cbxStrikePrice = document.getElementById("idCbxStrikePrice");
             let option;
@@ -685,6 +707,12 @@
         if (optionsChainSubscription.isActive) {
             // There is an active subscription. Update that one, to spare a DELETE request.
             data.ReplaceReferenceId = optionsChainSubscription.referenceId;
+        }
+        if (displayAndFormat === null) {
+            // First request. Displaying the StrikePrices uses the DisplayAndFormat. Get them.
+            // Your app probably already did this request..
+            getDisplayAndFormat(priceSubscriptionObject);
+            return;
         }
         fetch(
             demo.apiUrl + "/trade/v1/optionschain/subscriptions",
@@ -791,6 +819,7 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4));
+                    window.alert("New PositionId: " + responseJson.PositionId);
                 });
             } else {
                 demo.processError(response);
@@ -798,6 +827,7 @@
         }).catch(function (error) {
             console.error(error);
         });
+        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
     }
 
     /**
@@ -832,6 +862,50 @@
         addExpiryDateToPriceSubscriptionObject(inFourWeeks);
     }
 
+    /**
+     * This is an example of requesting the positions.
+     * @return {void}
+     */
+    function getPositions() {
+        fetch(
+            demo.apiUrl + "/port/v1/positions?FieldGroups=PositionIdOnly,PositionBase&ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const cbxPositions = document.getElementById("idCbxPosition");
+                    let option;
+                    let i;
+                    // Clear the combobox:
+                    for (i = cbxPositions.options.length - 1; i >= 0; i -= 1) {
+                        cbxPositions.remove(i);
+                    }
+                    responseJson.Data.forEach(function (position) {
+                        if (position.PositionBase.AssetType === "FxVanillaOption") {
+                            option = document.createElement("option");
+                            option.text = position.PositionId + (
+                                position.PositionBase.CanBeClosed
+                                ? " - can be closed"
+                                : " - cannot be closed"
+                            );
+                            option.value = position.PositionId;
+                            cbxPositions.add(option);
+                        }
+                    });
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
     updateExpiryDateToSomeFutureDate();
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxStrikePrice", "func": updateStrikePrice, "funcsToDisplay": [updateStrikePrice]},
@@ -839,7 +913,8 @@
         {"evt": "click", "elmId": "idBtnUpdatePriceSubscription", "func": subscribePriceSubscription, "funcsToDisplay": [subscribePriceSubscription]},
         {"evt": "click", "elmId": "idBtnGetPrimarySession", "func": requestPrimaryPriceSession, "funcsToDisplay": [requestPrimaryPriceSession]},
         {"evt": "click", "elmId": "idBtnPlaceNewSellOrder", "func": placeNewSellOrder, "funcsToDisplay": [placeNewSellOrder, placeNewOrder]},
-        {"evt": "click", "elmId": "idBtnPlaceNewBuyOrder", "func": placeNewBuyOrder, "funcsToDisplay": [placeNewBuyOrder, placeNewOrder]}
+        {"evt": "click", "elmId": "idBtnPlaceNewBuyOrder", "func": placeNewBuyOrder, "funcsToDisplay": [placeNewBuyOrder, placeNewOrder]},
+        {"evt": "click", "elmId": "idBtnGetPositions", "func": getPositions, "funcsToDisplay": [getPositions]}
     ]);
     demo.displayVersion("trade");
 }());
