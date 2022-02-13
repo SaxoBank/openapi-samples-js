@@ -178,7 +178,7 @@ function priceSubscriptionHelper(demo) {
      */
     function subscribeToTradeLevelChanges() {
         const data = {
-            "ContextId": encodeURIComponent(contextId),
+            "ContextId": contextId,
             "ReferenceId": tradeLevelSubscription.reference
         };
         if (tradeLevelSubscription.isActive) {
@@ -193,7 +193,6 @@ function priceSubscriptionHelper(demo) {
             tradeLevelSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
             tradeLevelSubscription.isActive = true;
             if (response.ok) {
-                requestPrimaryPriceSession();
                 response.json().then(function (responseJson) {
                     // Monitor connection every "InactivityTimeout" seconds.
                     if (tradeLevelSubscription.activityMonitor === null) {
@@ -202,6 +201,9 @@ function priceSubscriptionHelper(demo) {
                         }, responseJson.InactivityTimeout * 1000);
                     }
                     console.log("Subscription created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    if (responseJson.Snapshot.TradeLevel !== "FullTradingAndChat") {
+                        requestPrimaryPriceSession();
+                    }
                 });
             } else {
                 demo.processError(response);
@@ -501,7 +503,7 @@ function priceSubscriptionHelper(demo) {
         }
 
         /**
-         * This function processes the price messages.
+         * This function processes the trade level change messages.
          * @param {Array<Object>} payload The list of messages
          * @return {void}
          */

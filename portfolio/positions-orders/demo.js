@@ -357,17 +357,18 @@
          * @param {number} n The one or two digit number representing day or month.
          * @return {string} The formatted numer.
          */
-        function addLeadingZeroes(n) {
-            if (n <= 9) {
-                return "0" + n;
-            }
-            return n;
+        function addLeadingZero(n) {
+            return (
+                n > 9
+                ? String(n)
+                : "0" + n
+            );
         }
 
         const fromDate = new Date();
         let fromDateString;
         fromDate.setDate(fromDate.getDate() - daysInThePast);
-        fromDateString = fromDate.getFullYear() + "-" + addLeadingZeroes(fromDate.getMonth() + 1) + "-" + addLeadingZeroes(fromDate.getDate()) + "T00:00:00.000Z";
+        fromDateString = fromDate.getFullYear() + "-" + addLeadingZero(fromDate.getMonth() + 1) + "-" + addLeadingZero(fromDate.getDate()) + "T00:00:00.000Z";
         url += "&FromDateTime=" + encodeURIComponent(fromDateString);
         fetch(
             url,
