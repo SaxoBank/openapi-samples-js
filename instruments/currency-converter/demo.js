@@ -27,6 +27,8 @@
 
         /**
          * Round a value to a number of decimals.
+         * @param {number} valueToRound Input value.
+         * @param {number} decimalPlaces Number of decimals to round to.
          * @return {number} The rounded value.
          */
         function round(valueToRound, decimalPlaces) {
@@ -35,13 +37,25 @@
         }
 
         /**
-         * Return the value as a string, using the DecimalPips display format.
+         * Return the value as a string, rounded according to given decimals.
          * @return {string} The formatted value.
          */
-        function displayWithDecimalPips() {
+        function displayWithNormalFormatting() {
+            return value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + displayAndFormat.Currency;
+        }
+
+        /**
+         * Return the value as a string, using the DecimalPips display format.
+         * @param {number} numberOfPips Return with one or two smaller decimals.
+         * @return {string} The formatted value.
+         */
+        function displayWithDecimalPips(numberOfPips) {
+            // displayAndFormat = {"Currency":"USD","Decimals":4,"Description":"Example AllowDecimalPips","DisplayHint":"PreciousMetal","Format":"AllowDecimalPips","OrderDecimals":4,"Symbol":"XAGUSD"}
+            // value = 0.01084
+            // return = 0,0108 4
             const pipsCodes = [8304, 185, 178, 179, 8308, 8309, 8310, 8311, 8312, 8313];  // Unicode superscript codes of 0..9
             const positionOfDecimalSeparator = String(value).indexOf(".");
-            const roundedValue = round(value, displayAndFormat.Decimals + 1);  // Round, so the correct value is shown.
+            const roundedValue = round(value, displayAndFormat.Decimals + numberOfPips);  // Round, so the correct value is shown if input has more decimals.
             // Truncate value to allowed decimals:
             const truncatedValue = Math.trunc(roundedValue * Math.pow(10, displayAndFormat.Decimals)) / Math.pow(10, displayAndFormat.Decimals);
             const fractionPart = (
@@ -49,12 +63,14 @@
                 ? String(roundedValue)
                 : String(roundedValue).slice(positionOfDecimalSeparator + 1)
             );
-            const pipsSymbol = (
-                fractionPart.length > displayAndFormat.Decimals
-                ? String.fromCharCode(pipsCodes[parseInt(fractionPart.charAt(displayAndFormat.Decimals), 10)])
-                : String.fromCharCode(pipsCodes[0])
-            );
-            return truncatedValue.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals}) + pipsSymbol + " " + displayAndFormat.Currency;
+            let pipsPart = "";
+            let i;
+            if (fractionPart.length > displayAndFormat.Decimals) {
+                for (i = displayAndFormat.Decimals; i < fractionPart.length; i += 1) {
+                    pipsPart += String.fromCharCode(pipsCodes[parseInt(fractionPart.charAt(i), 10)]);
+                }
+            }
+            return truncatedValue.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals}) + pipsPart + " " + displayAndFormat.Currency;
         }
 
         /**
@@ -62,10 +78,18 @@
          * @return {string} The formatted value.
          */
         function displayWithFractions() {
+            // displayAndFormat = {"Currency":"USD","Decimals":5,"Description":"Example Fractions","Format":"Fractions","OrderDecimals":5,"Symbol":"UNITEDSTATES-2.5-15FEB45"}
+            // value = 101.44731
+            // return = 101 14/32 USD
             const integerPart = Math.trunc(value);
             const fractionPart = value - integerPart;
             const numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
-            const numeratorText = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
+            // In a few cases the value for the numerator can be a decimal number itself. The number of decimals on the numerator is then indicated by the NumeratorDecimals value.
+            const numeratorText = (
+                displayAndFormat.hasOwnProperty("NumeratorDecimals")
+                ? numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals})
+                : String(Math.round(numerator))
+            );
             return integerPart + " " + numeratorText + "/" + Math.pow(2, displayAndFormat.Decimals) + " " + displayAndFormat.Currency;
         }
 
@@ -74,15 +98,18 @@
          * @return {string} The formatted value.
          */
         function displayWithModernFractions() {
+            // displayAndFormat = {"Currency":"USD","Decimals":5,"Description":"Example ModernFractions","DisplayHint":"Continuous","Format":"ModernFractions","LotSizeText":"100000","NumeratorDecimals":1,"OrderDecimals":5,"Symbol":"TNc1"}
+            // value = 139.328125
+            // return = 139'10.5
             const integerPart = Math.trunc(value);
             const fractionPart = value - integerPart;
             const numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
-            const numeratorText = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
-            return integerPart + " " + numeratorText + "/" + (
-                displayAndFormat.Decimals === -5
-                ? "32"
-                : "128"
-            ) + " " + displayAndFormat.Currency;
+            const numeratorText = (
+                displayAndFormat.hasOwnProperty("NumeratorDecimals")
+                ? numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals})
+                : String(Math.round(numerator))
+            );
+            return integerPart + "'" + numeratorText + " " + displayAndFormat.Currency;
         }
 
         if (value === undefined || value === null) {
@@ -91,22 +118,24 @@
         if (displayAndFormat.hasOwnProperty("Format")) {
             switch (displayAndFormat.Format) {
             case "Normal":  // Standard decimal formatting is used with the Decimals field indicating the number of decimals.
-                return value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + displayAndFormat.Currency;
+                return displayWithNormalFormatting();
             case "Percentage":  // Display as percentage, e.g. 12.34%.
                 return value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + "%";
             case "AllowDecimalPips":  // Display the last digit smaller than the rest of the numbers. Note that this digit is not included in the number of decimals, effectively increasing the number of decimals by one. E.g. 12.345 when Decimals is 2 and DisplayFormat is AllowDecimalPips.
-                return displayWithDecimalPips();
+                return displayWithDecimalPips(1);
+            case "AllowTwoDecimalPips":  // Display the last 2 digits smaller than the rest of the numbers. Note that these digits are not included in the number of decimals, effectively increasing the number of decimals by two. E.g. 12.3453 when Decimals is 2 and DisplayFormat is AllowTwoDecimalPips.
+                return displayWithDecimalPips(2);
             case "Fractions":  // Display as regular fraction i.e. 3 1/4 where 1=numerator and 4=denominator.
                 return displayWithFractions();
             case "ModernFractions":  // Special US Bonds futures fractional format (1/32s or 1/128s without nominator). If PriceDecimals = -5 then the nominator is 32, else 128.
                 return displayWithModernFractions();
             default:
-                console.error("Unsupported format: " + displayAndFormat.Format);
+                console.error("Unsupported price format: " + displayAndFormat.Format);
                 throw "Unsupported format";
             }
         } else {
             // No format returned, use "Normal":
-            return value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + displayAndFormat.Currency;
+            return displayWithNormalFormatting();
         }
     }
 
