@@ -4,6 +4,8 @@ This document describes how a client application can subscribe to Saxo Bank's Ev
 
 Live demo: https://saxobank.github.io/openapi-samples-js/websockets/order-events-monitoring/
 
+Live demo for Corporate Action Activities on ENS: https://saxobank.github.io/openapi-samples-js/websockets/corporateaction-events-monitoring/
+
 ## Table of contents
 
 [Get realtime data using the Saxo API](#realtime)\

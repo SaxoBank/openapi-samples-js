@@ -29,3 +29,13 @@ A reset rule about how an election should be automatically performed by an share
 There is a live sample on [Standing Instructions](https://saxobank.github.io/openapi-samples-js/corporate-actions/standinginstructions/).
 
 Documentation can be found on the [Developer Portal](https://www.developer.saxo/openapi/learn/corporate-actions).
+
+## Corporare Action Activities through ENS
+SAXO provides 3 kinds of Corporate Action Activities through ENS 
+- Event Annoucement
+- Event Update
+- Payment  
+
+There is a live sample on [Corproate Action Activities by ENS](https://saxobank.github.io/openapi-samples-js/websockets/corporateaction-events-monitoring/).
+
+[More info](https://github.com/ayxue/openapi-samples-js/tree/master/websockets)
