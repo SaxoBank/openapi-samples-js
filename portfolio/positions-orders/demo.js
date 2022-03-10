@@ -237,17 +237,20 @@
         let description = "  - activated when the following condition is met: ";
         let expirationDate;
         switch (orderType) {
-        case "StopTrigger":  // Distance
+        case "TriggerStop":  // New version of Distance trigger order
+        case "StopTrigger":  // Old version (on GET /cs/v1/audit/orderactivities, before April, 2022)
             description += symbol + " " + priceTypeInText() + " price is " + condition.TrailingStopDistanceToMarket + " " + (
                 condition.BuySell === "Sell"
                 ? "below highest "
                 : "above lowest "
             ) + priceTypeInText() + " price";
             break;
-        case "BreakoutTrigger":  // Breakout
+        case "TriggerBreakout":  // New version of Breakout trigger order
+        case "BreakoutTrigger":  // Old version (on GET /cs/v1/audit/orderactivities, before April, 2022)
             description += symbol + " " + priceTypeInText() + " price is outside " + condition.BreakoutTriggerDownPrice + "-" + condition.BreakoutTriggerUpPrice;
             break;
-        case "LimitTrigger":  // Price
+        case "TriggerLimit":  // New version of Price trigger order
+        case "LimitTrigger":  // Old version (on GET /cs/v1/audit/orderactivities, before April, 2022)
             description += symbol + " last traded price is at or " + (
                 condition.BuySell === "Sell"
                 ? "above"
