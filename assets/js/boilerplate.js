@@ -410,6 +410,23 @@ function demonstrationHelper(settings) {
          */
         function getDataFromApi() {
 
+            function showWelcomeMessage(responseJson) {
+                const lastLoginTime = new Date(responseJson.LastLoginTime);
+                let message = "Welcome " + responseJson.Name + ".";
+                switch (responseJson.LastLoginStatus) {
+                case "Successful":
+                    message += " Your last visit was " + lastLoginTime.toLocaleString();
+                    break;
+                case "Unsuccessful":
+                    message += " Your last login failed @ " + lastLoginTime.toLocaleString();
+                    break;
+                default:
+                    throw "Unknown LastLoginStatus: " + responseJson.LastLoginStatus;
+                }
+                // Display message for security reasons - so the customer can verify if this is correct:
+                console.log(message);
+            }
+
             function processBatchResponse(responseArray) {
                 const requestIdMarker = "X-Request-Id:";
                 let requestId = "";
@@ -428,6 +445,7 @@ function demonstrationHelper(settings) {
                                 user.culture = responseJson.Culture;
                                 user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
                                 userId = responseJson.UserId;
+                                showWelcomeMessage(responseJson);
                                 if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
                                     // This is only an issue for Live - SIM supports only FX prices.
                                     console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
