@@ -847,7 +847,7 @@ function demonstrationHelper(settings) {
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
         }
         if (config.env !== "sim") {
-            settings.retrieveTokenHref.parentElement.innerHTML = "The " + config.env + " environment is used for testing!<br /><br />" + settings.retrieveTokenHref.parentElement.innerHTML;
+            settings.retrieveTokenHref.parentElement.innerHTML = "The " + config.env + " environment is being used for testing!<br /><br />" + settings.retrieveTokenHref.parentElement.innerHTML;
         }
     }
 
