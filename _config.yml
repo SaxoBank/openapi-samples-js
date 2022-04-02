@@ -1,3 +1,9 @@
 theme: jekyll-theme-cayman
 show_downloads: true
-google_analytics: UA-18970399-2
+favicon: "/assets/favicon.ico"
+title: OpenAPI JavaScript Sample Repository
+tagline: Saxo Bank OpenAPI samples in JavaScript
+author: Saxo Bank
+email: openapisupport@saxobank.com
+description: "This repository contains samples demonstrating OpenAPI interactions in JavaScript that can be run in the browser. Each of the included samples is designed as standalone HTML with vanilla JS and no dependencies."
+keywords: "Saxo Bank OpenAPI JavaScript Samples Examples"

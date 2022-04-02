@@ -47,8 +47,6 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Monitor Trade Messages](websockets/trade-messages)
    - [Historical Market Data](websockets/historical-market-data)
    - [Options chain](websockets/options-chain)
-7. Batch Requests
-   - [Batching Requests](batch-request)
 
 ## Sample Apps
 
