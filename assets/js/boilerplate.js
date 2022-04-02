@@ -444,6 +444,8 @@ function demonstrationHelper(settings) {
                             case "1":  // Response of GET /users/me
                                 user.culture = responseJson.Culture;
                                 user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
+                                user.name = responseJson.Name;
+                                user.userKey = responseJson.UserKey;
                                 userId = responseJson.UserId;
                                 showWelcomeMessage(responseJson);
                                 if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
@@ -454,7 +456,6 @@ function demonstrationHelper(settings) {
                             case "2":  // Response of GET /clients/me
                                 user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                 user.clientKey = responseJson.ClientKey;
-                                user.name = responseJson.Name;
                                 clientId = responseJson.ClientId;
                                 break;
                             case "3":  // Response of GET /accounts/me
