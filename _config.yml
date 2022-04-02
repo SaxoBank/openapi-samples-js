@@ -1,6 +1,5 @@
 theme: jekyll-theme-cayman
 show_downloads: true
-favicon: "/assets/favicon.ico"
 title: OpenAPI JavaScript Sample Repository
 tagline: Saxo Bank OpenAPI samples in JavaScript
 author: Saxo Bank
