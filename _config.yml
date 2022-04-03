@@ -4,5 +4,6 @@ title: OpenAPI JavaScript Sample Repository
 tagline: Saxo Bank OpenAPI samples in JavaScript
 author: Saxo Bank
 email: openapisupport@saxobank.com
-description: "This repository contains samples demonstrating OpenAPI interactions in JavaScript that can be run in the browser. Each of the included samples is designed as standalone HTML with vanilla JS and no dependencies."
+description: "Examples of OpenAPI interactions in JavaScript demonstrating common usage patterns"
 keywords: "Saxo Bank OpenAPI JavaScript Samples Examples"
+favicon: "/openapi-samples-js/favicon.ico"
