@@ -13,9 +13,8 @@
         "name": "bas"
     },
     "dependencies": {
-        "express": "~4.17.2",
+        "express": "~4.17.3",
         "morgan": "~1.10.0",
-        "node-fetch": "^3.2.0",
-        "npm": "^8.1.2"
+        "node-fetch": "^3.2.3"
     }
 }
