@@ -34,7 +34,7 @@
     };
     const orderTicketSubscriptions = [];
     const orderTicketSubscriptionReferenceIdPrefix = "MyPriceEvent";
-    let connection;  // The websocket connection object
+    let connection = null;  // The websocket connection object
     let orderTicketSubscriptionsActivityMonitor = null;
     let primarySessionRequestCount = 0;
 
@@ -49,6 +49,36 @@
             Boolean(window.Uint8Array) &&
             Boolean(window.TextDecoder)
         );
+    }
+
+    /**
+     * Only applicable on Live: verify if customer accepted the OpenAPI Market Data Terms.
+     * @return {void}
+     */
+    function getMarketDataTermsAccepted() {
+        fetch(
+            demo.apiUrl + "/port/v1/users/me",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson.MarketDataViaOpenApiTermsAccepted) {
+                        console.log("The customer accepted the OpenAPI Market Data Terms.\nThis means realtime prices, when available, can be retrieved by a thirdparty app.");
+                    } else {
+                        console.error("User didn't accept the terms for market data via the OpenApi.\nThis is required for instrument prices on Live via the OpenAPI.\n\n!!! This is not an issue on SIM, which has only realtime prices for Fx instruments.");
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
@@ -143,7 +173,11 @@
                             monitorActivity(listSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription created (readyState " + connection.readyState + ") with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                    console.log("Subscription created " + (
+                        connection === null
+                        ? ""
+                        : "(readyState " + connection.readyState + ") "
+                    ) + "with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -277,7 +311,6 @@
                                     // This can be something like "IllegalInstrumentId" - but this never happens in your app :-)
                                     console.error(responseJson.Message);
                                 } else {
-                                    console.debug(responseJson);
                                     smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
                                     requestedSubscription = getSubscriptionByReference(orderTicketSubscriptionsRequested, responseJson.ReferenceId);
                                     orderTicketSubscriptions.push({
@@ -337,7 +370,11 @@
                     }
                 ).then(function (response) {
                     if (response.ok) {
-                        console.log("Unsubscribed to " + demo.apiUrl + urlPath + ".\nReadyState " + connection.readyState + ".");
+                        console.log("Unsubscribed to " + demo.apiUrl + urlPath + "." + (
+                            connection === null
+                            ? ""
+                            : "\nReadyState " + connection.readyState + "."
+                        ));
                         internalCallbackOnSuccess();
                     } else {
                         demo.processError(response);
@@ -346,6 +383,7 @@
                     console.error(error);
                 });
             } else {
+                console.log("Subscription not active: " + urlPath);
                 internalCallbackOnSuccess();
             }
         }
@@ -435,7 +473,6 @@
          */
         function handleHeartbeat(payload) {
             // Heartbeat messages are sent every 20 seconds. If there is a minute without messages, this is an error.
-            // 
             if (Array.isArray(payload)) {
                 payload.forEach(function (heartbeatMessages) {
                     heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
@@ -753,7 +790,11 @@
      */
     function disconnect() {
         const NORMAL_CLOSURE = 1000;
-        connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
+        if (connection !== null) {
+            connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
+        } else {
+            console.error("Connection not active.   ");
+        }
         // Activity monitoring can be stopped.
         window.clearInterval(tradeLevelSubscription.activityMonitor);
         window.clearInterval(orderTicketSubscriptionsActivityMonitor);
@@ -828,7 +869,11 @@
                             monitorActivity(tradeLevelSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription created with readyState " + connection.readyState + " and data: " + JSON.stringify(data, null, 4) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    console.log("Subscription created " + (
+                        connection === null
+                        ? ""
+                        : "(readyState " + connection.readyState + ") "
+                    ) + "with data " + JSON.stringify(data, null, 4) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                     if (responseJson.Snapshot.TradeLevel !== "FullTradingAndChat") {
                         requestPrimaryPriceSession();
                     }
@@ -849,10 +894,10 @@
         fetch(
             demo.apiUrl + "/root/v1/user",
             {
-                    "method": "GET",
-                    "headers": {
-                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
-                    }
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
             }
         ).then(function (response) {
             if (response.ok) {
@@ -997,6 +1042,7 @@
         {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
+        {"evt": "click", "elmId": "idBtnGetMarketDataTerms", "func": getMarketDataTermsAccepted, "funcsToDisplay": [getMarketDataTermsAccepted]},
         {"evt": "click", "elmId": "idBtnRequestPrimarySession", "func": getAndKeepPrimarySession, "funcsToDisplay": [getAndKeepPrimarySession, subscribeToTradeLevelChanges, requestPrimaryPriceSession]},
         {"evt": "click", "elmId": "idBtnSubscribeList", "func": subscribeList, "funcsToDisplay": [subscribeList]},
         {"evt": "click", "elmId": "idBtnSubscribeOrderTicket", "func": subscribeOrderTicket, "funcsToDisplay": [subscribeOrderTicket]},
