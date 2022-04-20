@@ -90,11 +90,46 @@
         });
     }
 
+    /**
+     * Create a link to the OAuth2 server, including the client_id of the app, a state and the flow.
+     * @return {void}
+     */
+    function generateRefreshLink() {
+        // State contains a unique number, which must be stored in the client and compared with the incoming state after authentication
+        // It is passed as base64 encoded string
+        // https://auth0.com/docs/protocols/oauth2/oauth-state
+        const stateString = window.btoa(JSON.stringify({
+            // Token is a random number - other data can be added as well
+            "csrfToken": Math.random(),
+            "state": "MyRefreshExample"
+        }));
+        const currentUrl = window.location.href;
+        const redirectUrl = currentUrl.substr(0, currentUrl.indexOf("#"));
+        let url = demo.authUrl +
+            "?client_id=1a6eb56ced7c4e04b1467e7e9be9bff7" +
+            "&response_type=token" +
+            "&state=" + stateString +
+            "&redirect_uri=" + encodeURIComponent(redirectUrl);
+        return url;
+    }
+
+    /**
+     * Demonstrate how to refresh the token within the session time.
+     * @return {void}
+     */
+    function refreshToken() {
+        // This involves a page refresh. Doing this via an iframe is not an option.
+        // The authentication server uses the X-Frame-Options header to prevent this.
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options
+        window.location.replace(generateRefreshLink());
+    }
+
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCheckErrors", "func": checkErrors, "funcsToDisplay": [checkErrors]},
         {"evt": "click", "elmId": "idBtnGetToken", "func": getToken, "funcsToDisplay": [getToken]},
         {"evt": "click", "elmId": "idBtnGetState", "func": getState, "funcsToDisplay": [getState]},
-        {"evt": "click", "elmId": "idBtnGetUserData", "func": getUserData, "funcsToDisplay": [getUserData]}
+        {"evt": "click", "elmId": "idBtnGetUserData", "func": getUserData, "funcsToDisplay": [getUserData]},
+        {"evt": "click", "elmId": "idBtnRefreshToken", "func": refreshToken, "funcsToDisplay": [refreshToken, generateRefreshLink]}
     ]);
     demo.displayVersion("cs");
 }());

@@ -9,6 +9,10 @@
         "footerElm": document.getElementById("idFooter")
     });
 
+    /**
+     * Create a link to the OAuth2 server, including the client_id of the app, a state and the flow.
+     * @return {void}
+     */
     function generateLoginLink() {
         // State contains a unique number, which must be stored in the client and compared with the incoming state after authentication
         // It is passed as base64 encoded string
