@@ -1,5 +1,5 @@
-# Client-side Samples for placing Option Orders
+# Client-side Samples for placing Future Orders
 
-This is a demonstration on how to place an option order with different conditions (durations and order types).
+This is a demonstration on how to place an future order with different conditions (durations and order types).
 
-Live demo: https://saxobank.github.io/openapi-samples-js/orders/options/
+Live demo: https://saxobank.github.io/openapi-samples-js/orders/futures/
