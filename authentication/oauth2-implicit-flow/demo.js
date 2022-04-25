@@ -19,7 +19,7 @@
         try {
             window.localStorage.setItem("csrfToken", csrfToken);
         } catch (ignore) {
-            console.error("Unable to remember token (LocalStorage not supported).");
+            console.error("Unable to remember token (LocalStorage not supported).");  // As an alternative, a cookie can be used
         }
         return csrfToken;
     }

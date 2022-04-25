@@ -138,7 +138,6 @@
      * @return {void}
      */
     function verifyCsrfToken() {
-        // On page load the token is retrieved from local storage. When creating it, it was saved there.
         isCsrfTokenOk(window.location.hash.replace("#", "?"));
     }
 
