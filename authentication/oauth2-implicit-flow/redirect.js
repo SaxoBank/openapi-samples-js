@@ -25,6 +25,9 @@
             return false;
         }
         console.error("Found error: " + error + " (" + urlParams.get("error_description") + ")");
+        // The error "login_required" can mean the authentication cookie is expired, or, in case of Firefox, "Enhanced Tracking Protection" was set to "Strict".
+        // The solution is to change this for the affected page: https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop?as=u#w_what-to-do-if-a-site-seems-broken
+        // This must be done by the customer.
         return true;
     }
 
@@ -111,21 +114,32 @@
     }
 
     /**
+     * Compare the expected with retrieved CSRF token.
+     * @param {string} hash The hash part of the URL containing the auth result.
+     * @return {boolean} True when the CSRF token is expected.
+     */
+    function isCsrfTokenOk(hash) {
+        const receivedStateObject = getStateObject(hash);
+        const expectedCsrfToken = window.localStorage.getItem("csrfToken");
+        if (expectedCsrfToken === null || receivedStateObject === null) {
+            console.error("Something messed with the input data, because the csrfToken can't be verified.");
+        } else if (receivedStateObject.csrfToken !== expectedCsrfToken) {
+            console.error("The generated csrfToken (" + expectedCsrfToken + ") differs from the csrfToken in the response (" + receivedStateObject.csrfToken + ").\nThis can indicate a malicious request. Stop further processing and redirect back to the authentication.");
+        } else {
+            // All fine!
+            console.log("This looks good. The csrfToken supplied in the response is the expected one.");
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * A CSRF (Cross Site Request Forgery) Token is a secret, unique and unpredictable value an application generates in order to protect CSRF vulnerable resources.
      * @return {void}
      */
     function verifyCsrfToken() {
         // On page load the token is retrieved from local storage. When creating it, it was saved there.
-        const stateObject = getStateObject(window.location.hash.replace("#", "?"));
-        const storedCsrfToken = window.localStorage.getItem("csrfToken");
-        if (storedCsrfToken === null || stateObject === null) {
-            console.error("Something messed with the input data, because the csrfToken can't be verified.");
-        } else if (stateObject.csrfToken !== storedCsrfToken) {
-            console.error("The stored csrfToken (" + storedCsrfToken + ") differs from the csrfToken in the response (" + stateObject.csrfToken + ").\nThis can indicate malicious usage. Stop further processing and redirect back to the authentication.");
-        } else {
-            // All fine!
-            console.log("This looks good. The csrfToken supplied in the response is the expected one.");
-        }
+        isCsrfTokenOk(window.location.hash.replace("#", "?"));
     }
 
     /**
@@ -160,29 +174,6 @@
      * @return {void}
      */
     function refreshToken() {
-        const stateObject = {
-            // Token is a random number - other data can be added as well
-            "csrfToken": "",
-            "state": "MyRefreshExample"
-        };
-
-        /**
-         * Compare the expected with retrieved CSRF token.
-         * @return {void}
-         */
-        function isCsrfTokenOk(hash) {
-            const receivedStateObject = getStateObject(hash);
-            if (receivedStateObject === null) {
-                console.error("Something was messing with the input data, because the csrfToken cannot be verified.");
-            } else if (receivedStateObject.csrfToken !== stateObject.csrfToken) {
-                console.error("The stored csrfToken (" + stateObject.csrfToken + ") differs from the csrfToken in the response (" + stateObject.csrfToken + ").\nThis can indicate malicious usage. Stop further processing and redirect back to the authentication.");
-            } else {
-                // All fine!
-                console.log("This looks good. The csrfToken supplied in the response is the expected one.");
-                return true;
-            }
-            return false;
-        }
 
         /**
          * Listen to messages broadcasted by the iframe.
@@ -196,6 +187,9 @@
                     return;
                 }
                 console.log("Incoming message from expected iframe: " + event.data);
+                // If you are using Firefox with "Enhanced Tracking Protection" set to "Strict" then you get an error "login_required".
+                // The solution is to change this for the affected page: https://support.mozilla.org/en-US/kb/enhanced-tracking-protection-firefox-desktop?as=u#w_what-to-do-if-a-site-seems-broken
+                // This must be done by the customer.
                 if (!hasErrors(event.data) && isCsrfTokenOk(event.data)) {
                     // No errors found. Is there a token?
                     processToken(event.data);
@@ -235,7 +229,13 @@
             // State contains a unique number, which must be stored in the client and compared with the incoming state after authentication
             // It is passed as base64 encoded string
             // https://auth0.com/docs/protocols/oauth2/oauth-state
-            const stateString = window.btoa(JSON.stringify(stateObject));
+            const csrfToken = Math.random() + "-refresh";
+            const stateString = window.btoa(JSON.stringify({
+                // Token is a random number - other data can be added as well
+                "csrfToken": csrfToken,
+                "state": "MyRefreshExample"
+            }));
+            window.localStorage.setItem("csrfToken", csrfToken);  // Save it for verification..
             let url = demo.authUrl +
                 "?client_id=1a6eb56ced7c4e04b1467e7e9be9bff7" +
                 "&response_type=token" +
@@ -249,7 +249,6 @@
             setupMessageReceiver();
             createIframe();
         }
-        stateObject.csrfToken = Math.random() + "-refresh";
         iFrameForTokenRefresh.setAttribute("src", generateRefreshLink());
         pageDisplayTime = new Date();
     }
