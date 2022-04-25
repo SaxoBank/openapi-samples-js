@@ -221,6 +221,17 @@
         }
 
         /**
+         * This function generates a cryptographically strong random value.
+         * https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+         * @return {string} A 'real' random value
+         */
+        function getRandomValue() {
+            const randomValues = new Uint32Array(1);
+            window.crypto.getRandomValues(randomValues);
+            return randomValues[0].toString();
+        }
+
+        /**
          * Create a link to the OAuth2 server, including the client_id of the app, a state and the flow.
          * @return {void}
          */
@@ -228,7 +239,7 @@
             // State contains a unique number, which must be stored in the client and compared with the incoming state after authentication
             // It is passed as base64 encoded string
             // https://auth0.com/docs/protocols/oauth2/oauth-state
-            const csrfToken = Math.random() + "-refresh";
+            const csrfToken = getRandomValue();
             const stateString = window.btoa(JSON.stringify({
                 // Token is a random number - other data can be added as well
                 "csrfToken": csrfToken,

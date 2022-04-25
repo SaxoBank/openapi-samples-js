@@ -830,10 +830,21 @@ function demonstrationHelper(settings) {
             }
         }
 
+        /**
+         * This function generates a cryptographically strong random value.
+         * https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+         * @return {string} A 'real' random value
+         */
+        function getRandomValue() {
+            const randomValues = new Uint32Array(1);
+            window.crypto.getRandomValues(randomValues);
+            return randomValues[0].toString();
+        }
+
         const config = getConfig();
         const stateObject = {
             "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
-            "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
+            "csrfToken": getRandomValue(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
             "env": config.env
         };
         const urlLocalHost = "http://localhost/openapi-samples-js/";

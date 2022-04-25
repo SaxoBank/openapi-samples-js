@@ -56,11 +56,22 @@
     }
 
     /**
+     * This function generates a cryptographically strong random value.
+     * https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+     * @return {string} A 'real' random value
+     */
+    function getRandomValue() {
+        const randomValues = new Uint32Array(1);
+        window.crypto.getRandomValues(randomValues);
+        return randomValues[0].toString();
+    }
+
+    /**
      * A CSRF (Cross Site Request Forgery) Token is a secret, unique and unpredictable value an application generates in order to protect CSRF vulnerable resources.
      * @return {string} The CSRF token
      */
     function createCsrfToken() {
-        const csrfToken = Math.random() + "-sample";
+        const csrfToken = getRandomValue();
         // Save the token to local storage, so after authentication this can be compared with the incoming token:
         try {
             window.localStorage.setItem("csrfToken", csrfToken);
