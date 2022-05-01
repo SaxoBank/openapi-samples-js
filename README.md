@@ -22,6 +22,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Diagnose API connection](basics/diagnostics)
 3. Instruments
    - [Instrument Search](instruments/instrument-search)
+   - [Exchanges and Trading Sessions](instruments/exchanges)
    - [Extended AssetTypes](instruments/extended-assettypes)
    - [Currency Conversion](instruments/currency-converter)
    - [Download Instrument Universe](instruments/instrument-retrieval)
