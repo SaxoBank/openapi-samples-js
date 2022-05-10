@@ -46,7 +46,11 @@
             return timeZone.TimeZoneId === exchange.TimeZone.toString();  // Requested to be fixed at Saxo side (type & name), because this shouldn't be nessesary.
         });
         if (timeZoneObject === undefined) {
-            console.error("Exchange " + exchange.ExchangeId + " refers to TimeZone " + exchange.TimeZone + ", which is not available in /ref/v1/timezones.");
+            console.error(exchange.Name + " (MIC " + exchange.Mic + ") refers to TimeZone " + exchange.TimeZone + ", which is not available in /ref/v1/timezones - TimeZoneOffset: " + exchange.TimeZoneOffset + (
+                (exchange.hasOwnProperty("TimeZoneAbbreviation") && exchange.TimeZoneAbbreviation !== "")
+                ? " and TimeZoneAbbreviation: " + exchange.TimeZoneAbbreviation
+                : ""
+            ) + " (country " + getCountry(exchange.CountryCode).Name + " - " + exchange.CountryCode + ").");
             return {
                 "DisplayName": "???",
                 "TimeZoneAbbreviation": exchange.TimeZoneAbbreviation,
@@ -62,26 +66,46 @@
      */
     function populateDropdowns() {
 
-        function emptyList(list) {
+        /**
+         * Remove all items from a combo box.
+         * @param {Object} listElement The combo box element.
+         * @return {void}
+         */
+        function clearList(listElement) {
             let i;
-            for (i = list.options.length - 1; i >= 0; i -= 1) {
-                list.remove(i);
+            for (i = listElement.options.length - 1; i >= 0; i -= 1) {
+                listElement.remove(i);
             }
         }
 
-        function addOption(list, name, value, isSelected) {
+        /**
+         * Add an option to a combo box.
+         * @param {Object} listElement The combo box element.
+         * @param {string} displayText The text that will be visible.
+         * @param {string} value The value.
+         * @param {boolean} isSelected Default selected option.
+         * @return {void}
+         */
+        function addOption(listElement, name, value, isSelected) {
             const option = document.createElement("option");
             option.text = name;
             option.value = value;
             if (isSelected) {
                 option.setAttribute("selected", true);
             }
-            list.add(option);
+            listElement.add(option);
         }
 
+        /**
+         * Sort list and add to a combo box.
+         * @param {Array[Array<string>}} arr The array with options.
+         * @param {string} elmId The id of the element.
+         * @param {string} selectedValue The value to select.
+         * @return {void}
+         */
         function populateSelect(arr, elmId, selectedValue) {
             const listElement = document.getElementById(elmId);
-            emptyList(listElement);
+            clearList(listElement);
             arr.sort();
             arr.forEach(function (values) {
                 addOption(listElement, values[0], values[1], values[1] === selectedValue);
