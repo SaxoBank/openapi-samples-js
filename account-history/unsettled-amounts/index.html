@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demonstration of unsettled amounts endpoints</title>
+</head>
+
+<body>
+    <section class="page-header">
+        <h1 class="project-name">Unsettled Amounts</h1>
+        <h2 class="project-tagline">Unsettled Amounts Report</h2>
+        <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+        <a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+    </section>
+    <section class="main-content">
+        <p
+            style="border: 1px solid rgb(204, 82, 0); border-image: none; background-color: rgb(255, 209, 179);padding:1px;">
+            <strong>NOTE: </strong> This is a BETA version. It is currently only made available to select partners.
+        </p>
+        <div class="highlight">
+            <label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank"
+                        id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+                <input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.."
+                    autofocus /></label>
+            <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+            <label>
+                Account: <select class="selector" id="idCbxAccount">
+                    <option value="-">Click Validate to populate</option>
+                </select>
+            </label>
+        </div>
+        <h1>Value-Dated Unsettled Amounts </h1>
+
+        See the <a href="https://www.developer.saxo/openapi/learn/unsettled-amounts" target="_blank">learn section</a>
+        and <a href="https://www.developer.saxo/openapi/referencedocs/hist/v1/unsettledamounts"
+            target="_blank">reference documentation</a> for more details.
+        <br />
+        <br />
+
+
+        <label>
+            AmountTypeSource Enumerator: <select class="selector" id="idCbxAmountTypeSource">
+                <option value="All">All (Default)</option>
+                <option value="TransactionsNotBooked">TransactionsNotBooked</option>
+                <option value="CorporateAction">CorporateAction</option>
+                <option value="Financing">Financing</option>
+            </select>
+        </label>
+        <i>Optional filter, to only return amounts from a certain AmountTypeSource.</i>
+
+        <br />
+
+        <h3>By Currency</h3>
+        <input type="button" class="action-button" value="Get amounts by currency"
+            id="idBtnGetUnsettledAmountsByCurrency" />
+        <input type="button" class="action-button" value="Get amounts by amount type"
+            id="idBtnGetUnsettledAmountsByAmountType" />
+        <br />
+
+
+
+        <h3>By Exchange:</h3>
+        <input type="button" class="action-button" value="Get amounts by exchange"
+            id="idBtnGetUnsettledAmountsByExchange" />
+
+        <br />
+        <br />
+        <div>
+            <label>
+                ExchangeId: <select class="selector" id="idCbxExchangeId">
+                    <option value="-">Click "Get amounts by exchange" to populate</option>
+                </select>
+            </label>
+            <i>Is populated by the "Get amounts by exchange"</i>
+            <br />
+            <input type="button" class="action-button" value="Get amounts for exchange ExchangeId"
+                id="idBtnGetUnsettledAmountsForExchange" disabled />
+            <br>
+            <i>Can only be executed once an ExchangeId is selected</i>
+
+        </div>
+
+        <br />
+
+        Response:
+        <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+        <br />
+        JS code:
+        <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+        <footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+    </section>
+</body>
+
+</html>
