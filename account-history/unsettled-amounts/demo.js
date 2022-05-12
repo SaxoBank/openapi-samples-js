@@ -8,29 +8,29 @@
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
-        "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
+        "tokenValidateButton": document.getElementById("idBtnValidate"),
         "footerElm": document.getElementById("idFooter")
     });
-    var AmountTypeSource = readAmountTypeSource()
+    var AmountTypeSource = read("AmountTypeSource")
 
-    function readAmountTypeSource() {
-        return document.getElementById("idCbxAmountTypeSource").selectedOptions[0].value
+    function read(identifier) {
+        return document.getElementById("idCbx" + identifier).selectedOptions[0].value
     }
-    function readExchangeId() {
-        return document.getElementById("idCbxExchangeId").selectedOptions[0].value
-    }
-    function setExchangeIds(response) {
-        document.getElementById("idBtnGetUnsettledAmountsForExchange").disabled = false
-        var select = document.getElementById("idCbxExchangeId");
+    function setDropdown(response, identifier, field) {
+        var select = document.getElementById("idCbx" + identifier);
         var sel_len = select.length
-        for (var i = 0; i < sel_len; i++) {
+        if (identifier !== "AmountTypeId") {
+            for (var i = 0; i < sel_len; i++) {
+                select.remove(0)
+            }
+        } else if (select.children[0].value === "-") {
             select.remove(0)
         }
-        response.Exchanges.forEach(entry => {
+        response[field].forEach(entry => {
             var opt = document.createElement("option");
-            opt.value = entry.ExchangeId
-            opt.text = entry.ExchangeId
+            opt.value = entry[identifier]
+            opt.text = entry[identifier]
             select.appendChild(opt)
         })
     }
@@ -38,10 +38,10 @@
      * Get the unsettled amounts for a specific client, by currency or amount types
      * @return {void}
      */
-    function getUnsettledAmountsByCurrency(entity_key, scope) {
+    function getUnsettledAmountsByCurrency(scope) {
 
-        let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey)
-        AmountTypeSource = readAmountTypeSource()
+        let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&Scope=" + scope
+        AmountTypeSource = read("AmountTypeSource")
         if (AmountTypeSource !== "All") parameters += "&AmountTypeSource=" + AmountTypeSource
         fetch(
             demo.apiUrl + "/hist/v1/unsettledamounts" + parameters,
@@ -54,7 +54,13 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log("/hist/v1/unsettledamounts\n" + parameters + "\n\n" + JSON.stringify(responseJson, null, 2))
+                    console.log(JSON.stringify(responseJson, null, 2))
+                    if (scope === "AmountTypes") {
+                        setDropdown(responseJson, "Currency", "Currencies")
+                        responseJson.Currencies.forEach(elem => {
+                            setDropdown(elem, "AmountTypeId", "AmountTypes")
+                        })
+                    }
                 });
             } else {
                 demo.processError(response);
@@ -67,10 +73,10 @@
      * Get the unsettled amounts for a specific client, by exchange
      * @return {void}
      */
-    function getUnsettledAmountsByExchange(entity_key, scope) {
+    function getUnsettledAmountsByExchange() {
 
         let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey)
-        AmountTypeSource = readAmountTypeSource()
+        AmountTypeSource = read("AmountTypeSource")
         if (AmountTypeSource !== "All") parameters += "&AmountTypeSource=" + AmountTypeSource
         fetch(
             demo.apiUrl + "/hist/v1/unsettledamounts/exchanges" + parameters,
@@ -83,8 +89,8 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    setExchangeIds(responseJson)
-                    console.log("/hist/v1/unsettledamounts/exchanges\n" + parameters + "\n" + JSON.stringify(responseJson, null, 2))
+                    setDropdown(responseJson, "ExchangeId", "Exchanges")
+                    console.log(JSON.stringify(responseJson, null, 2))
                 });
             } else {
                 demo.processError(response);
@@ -98,13 +104,17 @@
      * Get the unsettled amounts for a specific client, for a specific exchange
      * @return {void}
      */
-    function getUnsettledAmountsForExchange(entity_key, scope) {
+    function getUnsettledAmountsForExchange() {
 
         let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey)
-        AmountTypeSource = readAmountTypeSource()
+        AmountTypeSource = read("AmountTypeSource")
+        if (read("ExchangeId") === "-") {
+            console.log("You must select an ExchangeId. \n If the dropdown is empty, execute the 'Get amounts by exchange' first")
+            return
+        }
         if (AmountTypeSource !== "All") parameters += "&AmountTypeSource=" + AmountTypeSource
         fetch(
-            demo.apiUrl + "/hist/v1/unsettledamounts/exchanges/" + readExchangeId() + parameters,
+            demo.apiUrl + "/hist/v1/unsettledamounts/exchanges/" + read("ExchangeId") + parameters,
             {
                 "method": "GET",
                 "headers": {
@@ -114,8 +124,39 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    JSON.stringify(responseJson)
-                    console.log("/hist/v1/unsettledamounts/exchanges/" + readExchangeId() + "\n" + parameters + "\n" + JSON.stringify(responseJson, null, 2))
+                    console.log(JSON.stringify(responseJson, null, 2))
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+    /**
+     * Get the unsettled isntruments for which amounts are owed, for a specific client, currency, and amount type.
+     * @return {void}
+     */
+    function getUnsettledAmountsByInstruments() {
+        if (read("AmountTypeId") === "-" || read("Currency") === "-") {
+            console.log("")
+            console.log("You must select a Currency and AmountTypeId first. \nIf the dropdowns are empty, execute the 'Get amounts by amount type' first")
+
+            return
+        }
+        let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&Currency=" + read("Currency") + "&AmountTypeId=" + read("AmountTypeId")
+        fetch(
+            demo.apiUrl + "/hist/v1/unsettledamounts/instruments" + parameters,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log(JSON.stringify(responseJson, null, 2))
                 });
             } else {
                 demo.processError(response);
@@ -134,10 +175,11 @@
     // }
 
     demo.setupEvents([
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByCurrency", "func": function () { getUnsettledAmountsByCurrency("ClientKey", "AmountTypes") }, "funcsToDisplay": [getUnsettledAmountsByCurrency], "functionToRun": getUnsettledAmountsByCurrency },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByAmountType", "func": function () { getUnsettledAmountsByCurrency("ClientKey", "Currencies") }, "funcsToDisplay": [getUnsettledAmountsByCurrency], "functionToRun": getUnsettledAmountsByCurrency },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByExchange", "func": function () { getUnsettledAmountsByExchange("ClientKey") }, "funcsToDisplay": [getUnsettledAmountsByExchange], "functionToRun": getUnsettledAmountsByExchange },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsForExchange", "func": function () { getUnsettledAmountsForExchange("ClientKey", "NYSE") }, "funcsToDisplay": [getUnsettledAmountsForExchange], "functionToRun": getUnsettledAmountsForExchange },
+        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByCurrency", "func": function () { getUnsettledAmountsByCurrency("Currencies") }, "funcsToDisplay": [getUnsettledAmountsByCurrency], "functionToRun": getUnsettledAmountsByCurrency },
+        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByAmountType", "func": function () { getUnsettledAmountsByCurrency("AmountTypes") }, "funcsToDisplay": [getUnsettledAmountsByCurrency], "functionToRun": getUnsettledAmountsByCurrency },
+        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByInstruments", "func": function () { getUnsettledAmountsByInstruments() }, "funcsToDisplay": [getUnsettledAmountsByInstruments], "functionToRun": getUnsettledAmountsByInstruments },
+        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByExchange", "func": function () { getUnsettledAmountsByExchange() }, "funcsToDisplay": [getUnsettledAmountsByExchange], "functionToRun": getUnsettledAmountsByExchange },
+        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsForExchange", "func": function () { getUnsettledAmountsForExchange() }, "funcsToDisplay": [getUnsettledAmountsForExchange], "functionToRun": getUnsettledAmountsForExchange },
     ]);
     demo.displayVersion("atr");
 }());

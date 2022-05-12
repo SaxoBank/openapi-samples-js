@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Demonstration of unsettled amounts endpoints</title>
+    <title>Demonstration of the unsettled amounts endpoints</title>
 </head>
 
 <body>
@@ -29,62 +29,96 @@
                 <input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.."
                     autofocus /></label>
             <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
-            <label>
+            <label style="display: none">
                 Account: <select class="selector" id="idCbxAccount">
                     <option value="-">Click Validate to populate</option>
                 </select>
             </label>
         </div>
-        <h1>Value-Dated Unsettled Amounts </h1>
+        <h1>Unsettled Amounts</h1>
 
         See the <a href="https://www.developer.saxo/openapi/learn/unsettled-amounts" target="_blank">learn section</a>
         and <a href="https://www.developer.saxo/openapi/referencedocs/hist/v1/unsettledamounts"
             target="_blank">reference documentation</a> for more details.
         <br />
-        <br />
-
-
+        <p
+            style="border: 1px solid rgb(240, 209, 107); border-image: none; background-color: rgb(240, 209, 107);padding:1px;">
+            <strong>NOTE: </strong> The Simulation Enviornment only has limited mock data.
+        </p>
         <label>
-            AmountTypeSource Enumerator: <select class="selector" id="idCbxAmountTypeSource">
+            <h3>Filter</h3>
+
+            AmountTypeSource: <select class="selector" id="idCbxAmountTypeSource">
                 <option value="All">All (Default)</option>
                 <option value="TransactionsNotBooked">TransactionsNotBooked</option>
                 <option value="CorporateAction">CorporateAction</option>
                 <option value="Financing">Financing</option>
             </select>
         </label>
-        <i>Optional filter, to only return amounts from a certain AmountTypeSource.</i>
+        <h2>Endpoints</h2>
 
         <br />
+        <div class="row" style=" display: flex;">
+            <div class=" column" style="width:50%">
 
-        <h3>By Currency</h3>
-        <input type="button" class="action-button" value="Get amounts by currency"
-            id="idBtnGetUnsettledAmountsByCurrency" />
-        <input type="button" class="action-button" value="Get amounts by amount type"
-            id="idBtnGetUnsettledAmountsByAmountType" />
-        <br />
+                <h3>By Currency</h3>
+                <h5>/hist/v1/unsettledamounts</h5>
+
+                <input type="button" class="action-button" value="Get amounts by currency"
+                    id="idBtnGetUnsettledAmountsByCurrency" />
+                <input type="button" class="action-button" value="Get amounts by amount type"
+                    id="idBtnGetUnsettledAmountsByAmountType" />
+                <br />
+            </div>
+            <div class=" column" style="width:50%">
+                <h3>By Exchange:</h3>
+                <h5>/hist/v1/unsettledamounts/exchanges</h5>
+
+                <input type="button" class="action-button" value="Get amounts by exchange"
+                    id="idBtnGetUnsettledAmountsByExchange" />
 
 
-
-        <h3>By Exchange:</h3>
-        <input type="button" class="action-button" value="Get amounts by exchange"
-            id="idBtnGetUnsettledAmountsByExchange" />
-
-        <br />
-        <br />
-        <div>
-            <label>
-                ExchangeId: <select class="selector" id="idCbxExchangeId">
-                    <option value="-">Click "Get amounts by exchange" to populate</option>
-                </select>
-            </label>
-            <i>Is populated by the "Get amounts by exchange"</i>
-            <br />
-            <input type="button" class="action-button" value="Get amounts for exchange ExchangeId"
-                id="idBtnGetUnsettledAmountsForExchange" disabled />
-            <br>
-            <i>Can only be executed once an ExchangeId is selected</i>
-
+            </div>
         </div>
+        <br />
+        <div class="row" style=" display: flex;">
+
+
+            <div class="column" style="width:50%">
+                <h5>/hist/v1/unsettledamounts/instruments</h5>
+
+                <label>
+                    Currency: <select class="selector" id="idCbxCurrency">
+                        <option value="-">Click "Get amounts by amount type</option>
+                    </select>
+                </label>
+                <label>
+                    AmountTypeId: <select class="selector" id="idCbxAmountTypeId">
+                        <option value="-">Click "Get amounts by amount type</option>
+                    </select>
+                </label>
+                <input type="button" class="action-button" value="Get instruments of amount type and currency"
+                    id="idBtnGetUnsettledAmountsByInstruments" />
+                <br />
+            </div>
+            <div class="column" style="width:50%">
+
+                <h5>/hist/v1/unsettledamounts/exchanges/{ExchangeId}</h5>
+                <label>
+                    ExchangeId: <select class="selector" id="idCbxExchangeId">
+                        <option value="-">Click "Get amounts by exchange" to populate</option>
+                    </select>
+                </label>
+                <input type="button" class="action-button" value="Get amounts for exchange ExchangeId"
+                    id="idBtnGetUnsettledAmountsForExchange" />
+                <br>
+
+                <br />
+            </div>
+        </div>
+        </div>
+
+
 
         <br />
 
