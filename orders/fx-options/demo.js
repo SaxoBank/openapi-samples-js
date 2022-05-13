@@ -82,6 +82,33 @@
     }
 
     /**
+     * Get a list of FX option expiry dates .
+     * @return {void}
+     */
+    function getExpiryDates() {
+        const priceSubscriptionObject = getPriceSubscriptionObjectFromJson();
+        fetch(
+            demo.apiUrl + "/ref/v1/standarddates/fxoptionexpiry/" + priceSubscriptionObject.Arguments.Uic,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Response:\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of making the current app primary, so real time prices can be shown. Other apps are notified and get delayed prices.
      * Info on keeping this: https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/
      * @return {void}
@@ -1089,6 +1116,7 @@
     updateExpiryDateToSomeFutureDate();
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxStrikePrice", "func": updateStrikePrice, "funcsToDisplay": [updateStrikePrice]},
+        {"evt": "click", "elmId": "idBtnGetExpiryDates", "func": getExpiryDates, "funcsToDisplay": [getExpiryDates]},
         {"evt": "click", "elmId": "idBtnGetOptionsChain", "func": subscribeOptionsChain, "funcsToDisplay": [subscribeOptionsChain]},
         {"evt": "click", "elmId": "idBtnUpdatePriceSubscription", "func": subscribePriceSubscription, "funcsToDisplay": [subscribePriceSubscription]},
         {"evt": "click", "elmId": "idBtnGetPrimarySession", "func": subscribeToTradeLevelChanges, "funcsToDisplay": [subscribeToTradeLevelChanges, requestPrimaryPriceSession]},
