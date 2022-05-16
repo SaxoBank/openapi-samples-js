@@ -95,8 +95,8 @@ function demonstrationHelper(settings) {
         // Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
         let result = "\n" + (
             errorInfo.hasOwnProperty("ErrorCode")
-            ? errorInfo.ErrorCode + ": "
-            : ""
+                ? errorInfo.ErrorCode + ": "
+                : ""
         ) + errorInfo.Message;
         if (errorInfo.hasOwnProperty("ModelState")) {
             // Not all ErrorCodes contain a ModelState. See for the list:
@@ -119,8 +119,8 @@ function demonstrationHelper(settings) {
         const correlationInfo = "\n\nX-Correlation header (for troubleshooting with Saxo): " + errorObject.headers.get("X-Correlation");
         let textToDisplay = "Error with status " + errorObject.status + " " + errorObject.statusText + (
             extraMessageToShow === undefined
-            ? ""
-            : "\n" + extraMessageToShow
+                ? ""
+                : "\n" + extraMessageToShow
         );
         // Some errors have a JSON-response, containing explanation of what went wrong.
         errorObject.json().then(function (errorObjectJson) {
@@ -167,8 +167,8 @@ function demonstrationHelper(settings) {
             const correlationInfo = "\n\nX-Correlation header (for troubleshooting with Saxo): " + correlationId;
             let textToDisplay = "Error with status " + httpError + (
                 extraMessageToShow === undefined
-                ? ""
-                : "\n" + extraMessageToShow
+                    ? ""
+                    : "\n" + extraMessageToShow
             );
             let errorObjectJson;
             // Some errors have a JSON-response, containing explanation of what went wrong.
@@ -234,8 +234,8 @@ function demonstrationHelper(settings) {
             function getAccountGroupDisplayNameForSorting(account) {
                 let result = (
                     account.AccountType === "Normal"
-                    ? "1"  // Normal account before special ones like TaxFavoredAccount
-                    : "2"
+                        ? "1"  // Normal account before special ones like TaxFavoredAccount
+                        : "2"
                 );
                 if (account.hasOwnProperty("AccountGroupName")) {  // Group by AccountGroupName
                     result += account.AccountGroupName;
@@ -269,8 +269,8 @@ function demonstrationHelper(settings) {
         if (window.URLSearchParams) {
             urlParams = new window.URLSearchParams(
                 window.location.hash === ""
-                ? window.location.search
-                : window.location.hash.replace("#", "?")
+                    ? window.location.search
+                    : window.location.hash.replace("#", "?")
             );
             envParam = urlParams.get("env");
             if (envParam) {
@@ -284,14 +284,14 @@ function demonstrationHelper(settings) {
             }
         }
         switch (env) {
-        case "live":
-            return configLive;
-        case "dte231":
-            return configDte231;
-        case "dte211":
-            return configDte211;
-        default:
-            return configSim;
+            case "live":
+                return configLive;
+            case "dte231":
+                return configDte231;
+            case "dte211":
+                return configDte211;
+            default:
+                return configSim;
         }
     }
 
@@ -325,8 +325,8 @@ function demonstrationHelper(settings) {
                 const option = document.createElement("option");
                 option.text = (
                     legalAssetType === "-"
-                    ? "No filter on AssetType"
-                    : legalAssetType
+                        ? "No filter on AssetType"
+                        : legalAssetType
                 );
                 option.value = legalAssetType;
                 if (option.value === settings.selectedAssetType) {
@@ -360,8 +360,8 @@ function demonstrationHelper(settings) {
                     const option = document.createElement("option");
                     option.text = (
                         account.hasOwnProperty("DisplayName")
-                        ? account.DisplayName + " "
-                        : ""
+                            ? account.DisplayName + " "
+                            : ""
                     ) + account.AccountId + " " + account.Currency;
                     option.value = account.AccountKey;
                     // Remember the LegalAssetTypes for every account, so the dropdown can be populated after switching accounts
@@ -414,14 +414,14 @@ function demonstrationHelper(settings) {
                 const lastLoginTime = new Date(responseJson.LastLoginTime);
                 let message = "Welcome " + responseJson.Name + ".";
                 switch (responseJson.LastLoginStatus) {
-                case "Successful":
-                    message += " Your last visit was " + lastLoginTime.toLocaleString();
-                    break;
-                case "Unsuccessful":
-                    message += " Your last login failed @ " + lastLoginTime.toLocaleString();
-                    break;
-                default:
-                    throw "Unknown LastLoginStatus: " + responseJson.LastLoginStatus;
+                    case "Successful":
+                        message += " Your last visit was " + lastLoginTime.toLocaleString();
+                        break;
+                    case "Unsuccessful":
+                        message += " Your last login failed @ " + lastLoginTime.toLocaleString();
+                        break;
+                    default:
+                        throw "Unknown LastLoginStatus: " + responseJson.LastLoginStatus;
                 }
                 // Display message for security reasons - so the customer can verify if this is correct:
                 console.log(message);
@@ -441,25 +441,25 @@ function demonstrationHelper(settings) {
                         try {
                             responseJson = JSON.parse(line);
                             switch (requestId) {
-                            case "1":  // Response of GET /users/me
-                                user.culture = responseJson.Culture;
-                                user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
-                                userId = responseJson.UserId;
-                                showWelcomeMessage(responseJson);
-                                if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
-                                    // This is only an issue for Live - SIM supports only FX prices.
-                                    console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
-                                }
-                                break;
-                            case "2":  // Response of GET /clients/me
-                                user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                user.clientKey = responseJson.ClientKey;
-                                user.name = responseJson.Name;
-                                clientId = responseJson.ClientId;
-                                break;
-                            case "3":  // Response of GET /accounts/me
-                                populateAccountSelection(responseJson.Data);
-                                break;
+                                case "1":  // Response of GET /users/me
+                                    user.culture = responseJson.Culture;
+                                    user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
+                                    userId = responseJson.UserId;
+                                    showWelcomeMessage(responseJson);
+                                    if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
+                                        // This is only an issue for Live - SIM supports only FX prices.
+                                        console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
+                                    }
+                                    break;
+                                case "2":  // Response of GET /clients/me
+                                    user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
+                                    user.clientKey = responseJson.ClientKey;
+                                    user.name = responseJson.Name;
+                                    clientId = responseJson.ClientId;
+                                    break;
+                                case "3":  // Response of GET /accounts/me
+                                    populateAccountSelection(responseJson.Data);
+                                    break;
                             }
                         } catch (error) {
                             console.error(error);
@@ -793,8 +793,8 @@ function demonstrationHelper(settings) {
         if (window.URLSearchParams) {
             urlParams = new window.URLSearchParams(
                 config.grantType === "code"
-                ? window.location.search
-                : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
+                    ? window.location.search
+                    : window.location.hash.replace("#", "?")  // A bookmark/anchor is used, because the access_token doesn't leave the browser this way, so it doesn't end up in logfiles.
             );
             const errorDescription = urlParams.get("error_description");
             if (errorDescription !== null) {
@@ -847,7 +847,7 @@ function demonstrationHelper(settings) {
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
         }
         if (config.env !== "sim") {
-            settings.retrieveTokenHref.parentElement.innerHTML = "The " + config.env + " environment is being used for testing!<br /><br />" + settings.retrieveTokenHref.parentElement.innerHTML;
+            settings.retrieveTokenHref.parentElement.innerHTML = "The <span style='color: red'>" + config.env + " </span> environment is being used for testing!<br /><br />" + settings.retrieveTokenHref.parentElement.innerHTML;
         }
     }
 

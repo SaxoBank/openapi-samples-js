@@ -40,7 +40,6 @@
         })
     }
 
-
     function resetDropdownOptions(identifier) {
         var select = document.getElementById("idCbx" + identifier)
         var sel_len = select.length
