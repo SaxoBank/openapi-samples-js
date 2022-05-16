@@ -14,25 +14,39 @@
     });
     var AmountTypeSource = read("AmountTypeSource")
 
+    //reads the selected value of the dropdowns with relevant Currency-AmountTypeId, ExchangeId, or AmountTypeSource values. 
     function read(identifier) {
         return document.getElementById("idCbx" + identifier).selectedOptions[0].value
     }
+
     function setDropdown(response, identifier, field) {
         var select = document.getElementById("idCbx" + identifier);
-        var sel_len = select.length
-        if (identifier !== "AmountTypeId") {
-            for (var i = 0; i < sel_len; i++) {
-                select.remove(0)
-            }
-        } else if (select.children[0].value === "-") {
-            select.remove(0)
-        }
         response[field].forEach(entry => {
             var opt = document.createElement("option");
             opt.value = entry[identifier]
             opt.text = entry[identifier]
             select.appendChild(opt)
         })
+    }
+
+    function setDropdownForInstrument(response) {
+        var select = document.getElementById("idCbxCurrencyAndAmountType");
+        var currency = response.Currency
+        response["AmountTypes"].forEach(entry => {
+            var opt = document.createElement("option");
+            opt.value = currency + "-" + entry["AmountTypeId"]
+            opt.text = currency + "-" + entry["AmountTypeId"]
+            select.appendChild(opt)
+        })
+    }
+
+
+    function resetDropdownOptions(identifier) {
+        var select = document.getElementById("idCbx" + identifier)
+        var sel_len = select.length
+        for (var i = 0; i < sel_len; i++) {
+            select.remove(0)
+        }
     }
     /**
      * Get the unsettled amounts for a specific client, by currency or amount types
@@ -55,10 +69,10 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     console.log(JSON.stringify(responseJson, null, 2))
+                    resetDropdownOptions("CurrencyAndAmountType")
                     if (scope === "AmountTypes") {
-                        setDropdown(responseJson, "Currency", "Currencies")
                         responseJson.Currencies.forEach(elem => {
-                            setDropdown(elem, "AmountTypeId", "AmountTypes")
+                            setDropdownForInstrument(elem)
                         })
                     }
                 });
@@ -89,6 +103,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
+                    resetDropdownOptions("ExchangeId")
                     setDropdown(responseJson, "ExchangeId", "Exchanges")
                     console.log(JSON.stringify(responseJson, null, 2))
                 });
@@ -109,7 +124,7 @@
         let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey)
         AmountTypeSource = read("AmountTypeSource")
         if (read("ExchangeId") === "-") {
-            console.log("You must select an ExchangeId. \n If the dropdown is empty, execute the 'Get amounts by exchange' first")
+            console.log("You must select an ExchangeId. \nIf the dropdown is empty, execute the 'Get amounts by exchange' first")
             return
         }
         if (AmountTypeSource !== "All") parameters += "&AmountTypeSource=" + AmountTypeSource
@@ -138,13 +153,15 @@
      * @return {void}
      */
     function getUnsettledAmountsByInstruments() {
-        if (read("AmountTypeId") === "-" || read("Currency") === "-") {
+        if (read("CurrencyAndAmountType") === "-") {
             console.log("")
-            console.log("You must select a Currency and AmountTypeId first. \nIf the dropdowns are empty, execute the 'Get amounts by amount type' first")
-
+            console.log("You must select a Currency and AmountTypeId first.\nIf the dropdown is empty, execute the 'Get amounts by amount type' first")
             return
         }
-        let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&Currency=" + read("Currency") + "&AmountTypeId=" + read("AmountTypeId")
+        var currency = read("CurrencyAndAmountType").split("-")[0]
+        var AmountTypeId = read("CurrencyAndAmountType").split("-")[1]
+
+        let parameters = "?ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&Currency=" + currency + "&AmountTypeId=" + AmountTypeId
         fetch(
             demo.apiUrl + "/hist/v1/unsettledamounts/instruments" + parameters,
             {
@@ -181,5 +198,5 @@
         { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByExchange", "func": function () { getUnsettledAmountsByExchange() }, "funcsToDisplay": [getUnsettledAmountsByExchange], "functionToRun": getUnsettledAmountsByExchange },
         { "evt": "click", "elmId": "idBtnGetUnsettledAmountsForExchange", "func": function () { getUnsettledAmountsForExchange() }, "funcsToDisplay": [getUnsettledAmountsForExchange], "functionToRun": getUnsettledAmountsForExchange },
     ]);
-    demo.displayVersion("atr");
+    demo.displayVersion("hist");
 }());

@@ -29,7 +29,7 @@
                 <input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.."
                     autofocus /></label>
             <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
-            <label style="display: none">
+            <label>
                 Account: <select class="selector" id="idCbxAccount">
                     <option value="-">Click Validate to populate</option>
                 </select>
@@ -88,12 +88,7 @@
                 <h5>/hist/v1/unsettledamounts/instruments</h5>
 
                 <label>
-                    Currency: <select class="selector" id="idCbxCurrency">
-                        <option value="-">Click "Get amounts by amount type</option>
-                    </select>
-                </label>
-                <label>
-                    AmountTypeId: <select class="selector" id="idCbxAmountTypeId">
+                    Currency and AmountTypeId: <select class="selector" id="idCbxCurrencyAndAmountType">
                         <option value="-">Click "Get amounts by amount type</option>
                     </select>
                 </label>
