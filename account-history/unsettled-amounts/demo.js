@@ -35,7 +35,7 @@
         response["AmountTypes"].forEach(entry => {
             var opt = document.createElement("option");
             opt.value = currency + "-" + entry["AmountTypeId"]
-            opt.text = currency + "-" + entry["AmountTypeId"]
+            opt.text = currency + " - " + entry["AmountType"] + " (" + entry["AmountTypeId"] + ")"
             select.appendChild(opt)
         })
     }
@@ -46,6 +46,30 @@
         for (var i = 0; i < sel_len; i++) {
             select.remove(0)
         }
+    }
+
+    function parseResponse(response, requestType, requestUrl, params) {
+        if (requestType === "Instruments") {
+            return "Instruments for which amounts are owed\n" + "Endpoint: \n\t" + requestUrl + "\nParameters: \n\t" + params + "\n"
+        } else if (response === null || response.CashFlows[0] === undefined) {
+            return "No Amounts Owed\n" + "Endpoint: \n\t" + requestUrl + "\nParameters: \n\t" + params + "\n"
+        }
+        var details = []
+        var dateRange = "Date Range is: \n\t"
+            + response.CashFlows[0].ValueDate + " => "
+            + response.CashFlows[response.CashFlows.length - 1].ValueDate
+        var total = response.Total + " " + response.Currency
+
+        response = response[requestType]
+        response.forEach(elem => { details.push(elem.ExchangeId || elem.Currency) })
+        total = "Total (estimated) amount owed is: \n\t" + total
+        if (requestType === "Currencies") {
+            details = "Owed Currencies: \n\t" + details.toString()
+        } else {
+            details = "Exchanges: \n\t" + details.toString()
+        }
+        return "Endpoint: \n\t" + requestUrl + "\nParameters: \n\t" + params + "\n" + total + "\n" + dateRange + "\n" + details + "\n\n"
+
     }
     /**
      * Get the unsettled amounts for a specific client, by currency or amount types
@@ -67,13 +91,14 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(JSON.stringify(responseJson, null, 2))
-                    resetDropdownOptions("CurrencyAndAmountType")
-                    if (scope === "AmountTypes") {
+                    if (scope === "AmountTypes" && responseJson.Currencies.length > 0) {
+                        resetDropdownOptions("CurrencyAndAmountType")
                         responseJson.Currencies.forEach(elem => {
                             setDropdownForInstrument(elem)
                         })
                     }
+                    console.log(parseResponse(responseJson, "Currencies", "/hist/v1/unsettledamounts", parameters) + JSON.stringify(responseJson, null, 2))
+
                 });
             } else {
                 demo.processError(response);
@@ -102,9 +127,12 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    resetDropdownOptions("ExchangeId")
-                    setDropdown(responseJson, "ExchangeId", "Exchanges")
-                    console.log(JSON.stringify(responseJson, null, 2))
+                    if (responseJson.Exchanges.length > 0) {
+                        resetDropdownOptions("ExchangeId")
+                        setDropdown(responseJson, "ExchangeId", "Exchanges")
+                    }
+                    console.log(parseResponse(responseJson, "Exchanges", "/hist/v1/unsettledamounts/exchanges", parameters) + JSON.stringify(responseJson, null, 2))
+
                 });
             } else {
                 demo.processError(response);
@@ -138,7 +166,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(JSON.stringify(responseJson, null, 2))
+                    console.log(parseResponse(responseJson, "Currencies", "/hist/v1/unsettledamounts/exchanges/" + read("ExchangeId"), parameters) + JSON.stringify(responseJson, null, 2))
                 });
             } else {
                 demo.processError(response);
@@ -172,7 +200,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(JSON.stringify(responseJson, null, 2))
+                    console.log(parseResponse(responseJson, "Instruments", "/hist/v1/unsettledamounts/instruments", parameters) + JSON.stringify(responseJson, null, 2))
                 });
             } else {
                 demo.processError(response);
