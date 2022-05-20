@@ -25,6 +25,10 @@
         if (selected.length > 1) {
             var fieldGroups = ""
             for (var i = 0; i < selected.length; i++) {
+                if (selected[i].value === "All") {
+                    fieldGroups = "All"
+                    break
+                }
                 fieldGroups += selected[i].value + ","
             }
             return fieldGroups.slice(0, -1)
@@ -102,7 +106,7 @@
      * @return {void}
      */
     function getAccountSummary() {
-        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey + "AccountKey=" + demo.user.accountKey)
+        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey)
     }
     /**
      * Get the performance summary for an entity in the specified date range
