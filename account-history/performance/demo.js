@@ -25,12 +25,13 @@
         if (selected.length > 1) {
             var fieldGroups = ""
             for (var i = 0; i < selected.length; i++) {
-                console.log(selected[i].value)
                 fieldGroups += selected[i].value + ","
             }
             return fieldGroups.slice(0, -1)
-        } else {
+        } else if (document.getElementById("idCbx" + identifier).selectedOptions[0]) {
             return document.getElementById("idCbx" + identifier).selectedOptions[0].value
+        } else {
+            return "All"
         }
     }
 
