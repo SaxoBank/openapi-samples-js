@@ -1,60 +1,137 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8" />
-    <meta name="ROBOTS" content="INDEX, FOLLOW" />
-    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
-    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
-    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
-    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
-    <script type="text/javascript" src="demo.js" defer></script>
-    <title>Demonstration of cash transfers</title>
+  <meta charset="UTF-8" />
+  <meta name="ROBOTS" content="INDEX, FOLLOW" />
+  <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+  <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+  <script type="text/javascript" src="demo.js" defer></script>
+  <title>Demonstration of the performance endpoints</title>
 </head>
+
 <body>
-<section class="page-header">
-<h1 class="project-name">Cash Transfers</h1>
-<h2 class="project-tagline">Withdrawals</h2>
-<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/portfolio/cash-transfers" class="btn">View on GitHub</a>
-</section>
-<section class="main-content">
-<div class="highlight">
-<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
-<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
-<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
-<label>
-    Account: <select class="selector" id="idCbxAccount">
-        <option value="-">Click Validate to populate</option>
-    </select>
-</label>
-</div>
-<h1>Demonstrate cash transfers</h1>
-<p>Spoiler: this feature is unavailable for most apps (required Operation: OAPI.OP.ManageCashTransfers). And another one: when trying this on SIM, the response is static and identical for all accounts.</p>
-<br />
-<br />
-<label>
-  Beneficiary account: <select class="selector" id="idCbxBeneficiaryAccount">
-    <option value="-" selected>Press "GET beneficiary instructions" to populate</option>
-  </select>
-</label>
-<br />
-<label>
-  Amount: <input type="text" id="idEdtAmount" value="10" placeholder="Enter amount here.." /></label>
-</label>
-<label>
-  Currency: <input type="text" id="idEdtCurrency" value="" placeholder="Enter currency here.." /></label>
-</label>
-<br />
-<br />
-<textarea class="json-input" id="idEdtDescription" rows="5">Description of the money transfer..</textarea><br />
-<br />
-<input type="button" class="action-button" value="Get beneficiary instructions" id="idBtnGetBeneficiaryInstructions" />
-<input type="button" class="action-button" value="Transfer money (withdrawal)" id="idBtnTransferMoney" />
-<br />
-Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
-<br />
-JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
-<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
-</section>
+  <section class="page-header">
+    <h1 class="project-name">Performance</h1>
+    <h2 class="project-tagline">Performance</h2>
+    <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+    <a href="https://github.com/SaxoBank/openapi-samples-js/account-history/performance" class="btn">View on
+      GitHub</a>
+  </section>
+  <section class="main-content" style="max-width: 68rem !important">
+    <div class="highlight">
+      <label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank"
+            id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+        <input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.."
+          autofocus /></label>
+      <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+      <label>
+        Account: <select class="selector" id="idCbxAccount" <option value="-">Click Validate to populate</option>
+        </select>
+      </label>
+    </div>
+    <h1>Unsettled Amounts</h1>
+    <p>
+      Get historical, day by day, performance metrics relating to client or account value, and key metrics related to
+      trade performance. The amounts returned are in the primary currency of the requesting entity (Client or Account). 
+    </p>
+    Read the <a href="https://www.developer.saxo/openapi/learn/performance" target="_blank">learn section</a>
+    and <a href="https://www.developer.saxo/openapi/referencedocs/hist/v4/performance" target="_blank">reference
+      documentation</a> for additional details.
+    <br />
+    <p
+      style="border: 1px solid rgb(202, 176, 91); border-image: none; background-color: rgb(240, 209, 107);padding:1px;">
+      <strong>NOTE: </strong> The Simulation Enviornment only has limited mock data.<br />
+      Add the parameter "?env=live" to the url of this page, if you wish to use the live
+      environment.
+    </p>
+
+
+    <h1>Endpoints</h1>
+    <br />
+    <div class="row" style=" display: flex;">
+      <div class=" column" style="width:50%">
+
+        <h2>Timeseries</h2>
+        <h5>/hist/v4/performance/timeseries</h5>
+        <label>
+          <h4>StandardPeriod:
+            <select class="selector" id="idCbxTimeseriesStandardPeriod">
+              <option value="Month"> Month</option>
+              <option value="Quarter"> Quarter</option>
+              <option value="Year"> Year</option>
+              <option value="AllTime"> AllTime</option>
+            </select>
+          </h4>
+        </label>
+        <br />
+        <label>
+          <h4>FieldGroups</h4>
+          <i style="font-size: 10px;">Hold control while clicking field groups, to select multiple field groups</i>
+
+          <select multiple class="selector" id="idCbxTimeseriesFieldGroups">
+            <option value="All"> All (Default)</option>
+            <option value="Balance"> Balance</option>
+            <option value="Balance_AccountBalance"> Balance_AccountBalance</option>
+            <option value="Balance_AccountValue"> Balance_AccountValue</option>
+            <option value="Balance_CashTransfer"> Balance_CashTransfer</option>
+            <option value="Balance_MonthlyProfitLoss"> Balance_MonthlyProfitLoss</option>
+            <option value="Balance_SecurityTransfer"> Balance_SecurityTransfer</option>
+            <option value="Balance_YearlyProfitLoss"> Balance_YearlyProfitLoss</option>
+            <option value="Benchmark"> Benchmark</option>
+            <option value="KeyFigures"> KeyFigures</option>
+            <option value="TimeWeighted"> TimeWeighted</option>
+            <option value="TimeWeighted_Accumulated"> TimeWeighted_Accumulated</option>
+            <option value="TimeWeighted_MonthlyReturn"> TimeWeighted_MonthlyReturn</option>
+            <option value="TimeWeighted_YearlyReturn"> TimeWeighted_YearlyReturn</option>
+          </select>
+        </label>
+        <br>
+        <input type="button" class="action-button" value="Get timeseries for Client"
+          id="idBtnGetClientTimeseries" /><br />
+        <input type="button" class="action-button" value="Get timeseries for Account" id="idBtnGetAccountTimeseries" />
+        <br />
+      </div>
+      <div class=" column" style="width:50%">
+        <h2>Summary</h2>
+        <h5>/hist/v4/performance/summary</h5>
+        <label>
+          <h4>StandardPeriod: <select class="selector" id="idCbxSummaryStandardPeriod">
+              <option value="Month"> Month</option>
+              <option value="Quarter"> Quarter</option>
+              <option value="Year"> Year</option>
+              <option value="AllTime"> AllTime</option>
+            </select></h4>
+        </label>
+        <br />
+        <label>
+          <h4>FieldGroups</h4>
+          <i style="font-size: 10px;">Hold control while clicking field groups, to select multiple field groups</i>
+
+          <select multiple class="selector" id="idCbxSummaryFieldGroups">
+            <option value="All">All (Default)</option>
+            <option value="Allocation">Allocation</option>
+            <option value="BenchMark">BenchMark</option>
+            <option value="TradeActivity">TradeActivity</option>
+            <option value="TradeSummary">TradeSummary</option>
+          </select>
+        </label>
+        <br>
+        <input type="button" class="action-button" value="Get summary for Client" id="idBtnGetClientSummary" /><br />
+        <input type="button" class="action-button" value="Get summary for Account" id="idBtnGetAccountSummary" />
+        <br />
+      </div>
+    </div>
+    <br />
+    <br />
+    Response:
+    <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+    <br />
+    JS code:
+    <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+    <footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+  </section>
 </body>
+
 </html>
