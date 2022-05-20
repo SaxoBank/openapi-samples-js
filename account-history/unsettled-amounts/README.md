@@ -1,5 +1,7 @@
-# Client-side Sample for extracting 
+# Client-side Sample for Unsettled Amounts 
 
-This is a demonstration on withdrawals. For regular accounts this feature is not available, cash transfer rights must be in place.
+This is a demonstration on requesting value dated unsettled amounts.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/portfolio/cash-transfers
+This is a Beta endpoint, and only is available to select partners. 
+
+Live demo: https://saxobank.github.io/openapi-samples-js/account-history/unsettled-amounts
