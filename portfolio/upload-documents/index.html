@@ -30,13 +30,17 @@
 </div>
 <h1>Upload documents via Base64 encoded JSON</h1>
 DISCLAIMER: the CM endpoints on SIM give 404 errors. The endpoints only work on Live, if you have the rights.<br />
-To test on production: add '?env=live' to the URL of this page.
+To test on production: add <i>'?env=live'</i> to the URL of this page.
 <br />
 <br />
-Select one or more documents:
-<input type="file" class="action-button" value="Select file(s) to upload" id="idBtnSelectFile" accept=".doc,.docx,.pdf" multiple><br />
+Select one document:<br />
+<input type="file" class="action-button" value="Select single file to upload" id="idBtnSelectFile" accept=".doc,.docx,.pdf"><br />
+<input type="button" class="action-button" value="Upload single file" id="idBtnUploadFile" />
 <br />
-<input type="button" class="action-button" value="Upload as JSON" id="idBtnUploadDocuments" />
+<br />
+Select one or more documents:<br />
+<input type="file" class="action-button" value="Select file(s) to upload" id="idBtnSelectFiles" accept=".doc,.docx,.pdf" multiple><br />
+<input type="button" class="action-button" value="Upload multiple files" id="idBtnUploadFiles" />
 <br />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
