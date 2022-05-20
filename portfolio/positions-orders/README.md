@@ -1,4 +1,4 @@
-# Client-side Sample for displaying instrument prices
+# Client-side Sample for formatting instrument prices in positions and orders list
 
 This is a demonstration on how to format prices in the portfolio and order list, using the DisplayAndFormat object.
 

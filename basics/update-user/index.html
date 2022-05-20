@@ -1,0 +1,63 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demonstration of Basic Api PATCH Requests</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Basic Api PATCH Request</h1>
+<h2 class="project-tagline">How to update user preferences?</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/basics/update-user-info" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Update user preferences</h1>
+This example shows how to do a PATCH request to update the user preference.<br />
+<br />
+<label>
+  Language: <select class="selector" id="idCbxLanguage">
+    <option value="-" selected>Press "Get available options" to populate</option>
+  </select>
+</label>
+<label>
+<label>
+  Culture: <select class="selector" id="idCbxCulture">
+    <option value="-" selected>Press "Get available options" to populate</option>
+  </select>
+</label>
+<label>
+<label>
+  TimeZone: <select class="selector" id="idCbxTimeZone">
+    <option value="-" selected>Press "Get available options" to populate</option>
+  </select>
+</label>
+<label>
+<br />
+<input type="button" class="action-button" value="Get user info" id="idBtnGetUser" />
+<input type="button" class="action-button" value="Get available options" id="idBtnGetLanguagesCulturesTimeZones" />
+<input type="button" class="action-button" value="Update user" id="idBtnUpdateUser" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

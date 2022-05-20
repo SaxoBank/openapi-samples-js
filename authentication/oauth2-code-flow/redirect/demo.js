@@ -40,23 +40,53 @@
     }
 
     /**
-     * After a successful authentication, the state entered before authentication is passed as query parameter.
-     * @return {void}
+     * After a successful authentication, the csrf token in the state must be the expected one.
+     * @return {Object} The object with the state.
      */
-    function getState() {
+    function getStateObject() {
         // https://auth0.com/docs/protocols/oauth2/oauth-state
         const urlParams = new window.URLSearchParams(window.location.search);
         const state = urlParams.get("state");
         let stateUnencoded;
+        let stateObject = null;
         if (state === null) {
-            console.log("No state found.");
+            console.error("No state found - don't try to get the token, but redirect the user back to the authentication.");
         } else {
-            stateUnencoded = window.atob(state);
             try {
-                console.log("Found state: " + JSON.stringify(JSON.parse(stateUnencoded), null, 4));
+                stateUnencoded = window.atob(state);
+                stateObject = JSON.parse(stateUnencoded);
             } catch (ignore) {
                 console.error("State returned in the URL parameter is invalid.");
             }
+        }
+        return stateObject;
+    }
+
+    /**
+     * After a successful authentication, the state entered before authentication is passed as query parameter.
+     * @return {void}
+     */
+    function getState() {
+        const stateObject = getStateObject();
+        if (stateObject !== null) {
+            console.log("Found state: " + JSON.stringify(stateObject, null, 4));
+        }
+    }
+
+    /**
+     * A CSRF (Cross Site Request Forgery) Token is a secret, unique and unpredictable value an application generates in order to protect CSRF vulnerable resources.
+     * @return {void}
+     */
+    function verifyCsrfToken() {
+        const receivedStateObject = getStateObject();
+        const expectedCsrfToken = window.localStorage.getItem("csrfToken");
+        if (expectedCsrfToken === null || receivedStateObject === null) {
+            console.error("Something messed with the input data, because the csrfToken can't be verified.");
+        } else if (receivedStateObject.csrfToken !== expectedCsrfToken) {
+            console.error("The generated csrfToken (" + expectedCsrfToken + ") differs from the csrfToken in the response (" + receivedStateObject.csrfToken + ").\nThis can indicate a malicious request. Stop further processing and redirect back to the authentication.");
+        } else {
+            // All fine!
+            console.log("This looks good. The csrfToken supplied in the response is the expected one.");
         }
     }
 
@@ -241,7 +271,8 @@
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCheckErrors", "func": checkErrors, "funcsToDisplay": [checkErrors]},
         {"evt": "click", "elmId": "idBtnGetCode", "func": getCode, "funcsToDisplay": [getCode]},
-        {"evt": "click", "elmId": "idBtnGetState", "func": getState, "funcsToDisplay": [getState]},
+        {"evt": "click", "elmId": "idBtnGetState", "func": getState, "funcsToDisplay": [getState, getStateObject]},
+        {"evt": "click", "elmId": "idBtnVerifyCsrfToken", "func": verifyCsrfToken, "funcsToDisplay": [verifyCsrfToken]},
         {"evt": "click", "elmId": "idBtnGetTokenPhp", "func": getTokenPhp, "funcsToDisplay": [getTokenPhp]},
         {"evt": "click", "elmId": "idBtnGetTokenNodeJs", "func": getTokenNodeJs, "funcsToDisplay": [getTokenNodeJs]},
         {"evt": "click", "elmId": "idBtnGetUserData", "func": getUserData, "funcsToDisplay": [getUserData]},

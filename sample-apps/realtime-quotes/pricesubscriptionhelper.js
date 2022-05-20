@@ -138,7 +138,7 @@ function priceSubscriptionHelper(demo) {
     }
 
     /**
-     * This is an example of making the current app primary, so real time prices can be shown. Other apps are notified and get delayed prices.
+     * Only one app can retrieve realtime prices. This is the primary app. This function makes this app the primary one. Other apps are notified and get delayed prices.
      * @return {void}
      */
     function requestPrimaryPriceSession() {

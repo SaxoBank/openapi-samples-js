@@ -367,13 +367,13 @@
         }
 
         const optionRootId = document.getElementById("idOptionRootId").value;
-        const isAssetTypeSuppied = document.getElementById("idCbxAssetType").value !== "-";
-        if (isAssetTypeSuppied) {
-            // The request GET /instruments/contractoptionspaces/21 doesn't work for some option types.
-            internalSubscribe(document.getElementById("idCbxAssetType").value);
-        } else {
+        const assetTypeSuppied = document.getElementById("idCbxAssetType").value;
+        if (assetTypeSuppied === "-") {
             // First, determine the AssetType to be used:
             getAssetTypeOfOptionRoot(optionRootId, internalSubscribe);
+        } else {
+            // The request GET /instruments/contractoptionspaces/21 doesn't work for some option types.
+            internalSubscribe(assetTypeSuppied);
         }
     }
 

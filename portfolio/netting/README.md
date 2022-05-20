@@ -1,4 +1,4 @@
-# Client-side Sample for displaying instrument prices
+# Client-side Sample for the two netting modes
 
 This is a demonstration on how to handle netting mode in the portfolio and order list.
 

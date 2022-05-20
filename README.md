@@ -22,14 +22,16 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Diagnose API connection](basics/diagnostics)
 3. Instruments
    - [Instrument Search](instruments/instrument-search)
+   - [Exchanges and Trading Sessions](instruments/exchanges)
    - [Extended AssetTypes](instruments/extended-assettypes)
    - [Currency Conversion](instruments/currency-converter)
    - [Download Instrument Universe](instruments/instrument-retrieval)
 4. Order Placement
    - [Stock Orders](orders/stocks)
-   - [Option Order](orders/options)
+   - [Option Orders](orders/options)
    - [Multi-leg Orders](orders/option-strategies)
    - [Future Orders](orders/futures)
+   - [Fx Option Orders](orders/fx-options)
    - [OCO Orders](orders/oco-orders)
    - [Algorithmic Orders](orders/algo-orders)
    - [Conditional or Sleeping Orders](orders/conditional-orders)
@@ -47,8 +49,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Monitor Trade Messages](websockets/trade-messages)
    - [Historical Market Data](websockets/historical-market-data)
    - [Options chain](websockets/options-chain)
-7. Batch Requests
-   - [Batching Requests](batch-request)
+   - [Protobuf protocol](websockets/protobuf)
 
 ## Sample Apps
 

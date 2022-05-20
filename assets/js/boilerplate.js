@@ -444,6 +444,8 @@ function demonstrationHelper(settings) {
                                 case "1":  // Response of GET /users/me
                                     user.culture = responseJson.Culture;
                                     user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
+                                    user.name = responseJson.Name;
+                                    user.userKey = responseJson.UserKey;
                                     userId = responseJson.UserId;
                                     showWelcomeMessage(responseJson);
                                     if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
@@ -454,7 +456,6 @@ function demonstrationHelper(settings) {
                                 case "2":  // Response of GET /clients/me
                                     user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
                                     user.clientKey = responseJson.ClientKey;
-                                    user.name = responseJson.Name;
                                     clientId = responseJson.ClientId;
                                     break;
                                 case "3":  // Response of GET /accounts/me
@@ -829,10 +830,21 @@ function demonstrationHelper(settings) {
             }
         }
 
+        /**
+         * This function generates a cryptographically strong random value.
+         * https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+         * @return {string} A 'real' random value
+         */
+        function getRandomValue() {
+            const randomValues = new Uint32Array(1);
+            window.crypto.getRandomValues(randomValues);
+            return randomValues[0].toString();
+        }
+
         const config = getConfig();
         const stateObject = {
             "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
-            "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
+            "csrfToken": getRandomValue(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
             "env": config.env
         };
         const urlLocalHost = "http://localhost/openapi-samples-js/";

@@ -26,7 +26,7 @@
         const cbxExchange = document.getElementById("idCbxExchange");
         cbxExchange.options.length = 1;  // Remove all, except the first
         fetch(
-            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
+            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 225 exchanges available)
             {
                 "method": "GET",
                 "headers": {
