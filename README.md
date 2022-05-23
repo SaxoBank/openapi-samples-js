@@ -2,7 +2,7 @@
 
 This repository contains sample files demonstrating OpenAPI interactions in JavaScript that can be run in the browser. Each of the included samples is designed as standalone HTML with vanilla JS and no dependencies.
 
-To try these samples yourself, download/clone this repo and load the HTML files locally, or navigate to [this interactive page](https://saxobank.github.io/openapi-samples-js/) to run the samples directly online.
+To try these samples yourself, download/clone this repo and load the HTML files locally on your browser. You can alternatively navigate to [this interactive page](https://saxobank.github.io/openapi-samples-js/) to select the samples hosted directly online.
 
 ## Requirements
 
@@ -13,7 +13,7 @@ Samples run against Saxo's simulation environment and require an **access token*
 1. Authentication
    - [OAuth2 Code Flow](authentication/oauth2-code-flow)
    - [OAuth2 Implicit Flow](authentication/oauth2-implicit-flow)
-   - [OAuth2 PKCE Flow ](authentication/oauth2-pkce-flow)
+   - [OAuth2 PKCE Flow](authentication/oauth2-pkce-flow)
    - [JSON Web Token Debugger](authentication/token-explained/)
 2. Basics
    - [Basic Api Requests](basics/user-info)
@@ -42,7 +42,10 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Netting mode](portfolio/netting)
    - [Available Margin](portfolio/margin)
    - [Downloading Reports](portfolio/download-reports)
-6. Using websockets
+6. Account History
+   - [Performance](account-history/performance)
+   - [Unsettled Amounts](account-history/unsettled-amounts)
+7. Using websockets
    - [Monitor Orders and Positions](websockets/order-events-monitoring)
    - [Monitor Premium Price Feed Status](websockets/primary-monitoring)
    - [Realtime quotes](websockets/realtime-quotes)
