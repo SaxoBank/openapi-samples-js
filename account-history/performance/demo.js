@@ -13,43 +13,41 @@
         "footerElm": document.getElementById("idFooter")
     });
 
-
-
     /**
-     * Reads the selected value of the dropdowns with relevant Currency-AmountTypeId, ExchangeId, or AmountTypeSource values. 
-     * @param {*} identifier 
+     * Reads the selected value of the dropdowns to return the relevant input for the request. 
+     * @param {string} identifier 
      * @returns 
      */
     function read(identifier) {
-        var selected = document.getElementById("idCbx" + identifier).selectedOptions
+        let selected = document.getElementById("idCbx" + identifier).selectedOptions;
         if (selected.length > 1) {
-            var fieldGroups = ""
-            for (var i = 0; i < selected.length; i++) {
-                if (selected[i].value === "All") {
-                    fieldGroups = "All"
-                    break
-                }
+            let fieldGroups = "";
+            // forEach cannot be applied to this object, for reasons. 
+            for (let i = 0; i < selected.length; i++) {
+                //if All is included in selected, only return that entry. 
+                if (selected[i].value === "All") return "All";
                 fieldGroups += selected[i].value + ","
             }
-            return fieldGroups.slice(0, -1)
+            return fieldGroups.slice(0, -1);
         } else if (document.getElementById("idCbx" + identifier).selectedOptions[0]) {
-            return document.getElementById("idCbx" + identifier).selectedOptions[0].value
+            return document.getElementById("idCbx" + identifier).selectedOptions[0].value;
         } else {
-            return "All"
+            //default All case
+            return "All";
         }
     }
 
     /**
-     * Parse key information out of response and format for display
-     * @param {*} response 
-     * @param {*} requestType 
-     * @param {*} requestUrl 
-     * @param {*} params 
+     * Parse key information out of response and return formatted text for display
+     * @param {Object} response 
+     * @param {string} requestType 
+     * @param {string} requestUrl 
+     * @param {string} params 
      * @returns 
      */
-    function parseResponse(response, requestUrl) {
-        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] + "\nParameters: \n\t?" + requestUrl.split("?")[1] + "\n"
-
+    function parseResponse(requestUrl) {
+        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] +
+            "\nParameters: \n\t?" + requestUrl.split("?")[1] + "\n";
     }
 
     /**
@@ -57,21 +55,26 @@
      * @return {void}
      */
     function getClientTimeseries() {
-        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey)
+        getTimeseries(demo.apiUrl +
+            "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey);
     }
+
     /**
      * Get the performance summary for an account entity in the specified date range
      * @return {void}
      */
     function getAccountTimeseries() {
-        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey)
+        getTimeseries(demo.apiUrl +
+            "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey +
+            "&AccountKey=" + demo.user.accountKey);
     }
+
     /**
      * Get the performance summary for an entity in the specified date range
      * @return {void}
      */
     function getTimeseries(url) {
-        var param = "&StandardPeriod=" + read("TimeseriesStandardPeriod") + "&FieldGroups=" + read("TimeseriesFieldGroups")
+        let param = "&StandardPeriod=" + read("TimeseriesStandardPeriod") + "&FieldGroups=" + read("TimeseriesFieldGroups")
         fetch(
             url + param,
             {
@@ -83,7 +86,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(parseResponse(responseJson, url + param) + JSON.stringify(responseJson, null, 2))
+                    console.log(parseResponse(url + param) + JSON.stringify(responseJson, null, 2));
                 });
             } else {
                 demo.processError(response);
@@ -93,27 +96,31 @@
         });
     }
 
-
     /**
      * Get the performance summary for a client entity in the specified date range
      * @return {void}
      */
     function getClientSummary() {
-        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey)
+        getSummary(demo.apiUrl +
+            "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey);
     }
+
     /**
      * Get the performance summary for an account entity in the specified date range
      * @return {void}
      */
     function getAccountSummary() {
-        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey)
+        getSummary(demo.apiUrl +
+            "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey +
+            "&AccountKey=" + demo.user.accountKey);
     }
+
     /**
      * Get the performance summary for an entity in the specified date range
      * @return {void}
      */
     function getSummary(url) {
-        var param = "&StandardPeriod=" + read("SummaryStandardPeriod") + "&FieldGroups=" + read("SummaryFieldGroups")
+        let param = "&StandardPeriod=" + read("SummaryStandardPeriod") + "&FieldGroups=" + read("SummaryFieldGroups");
         fetch(
             url + param,
             {
@@ -125,7 +132,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log(parseResponse(responseJson, url + param) + JSON.stringify(responseJson, null, 2))
+                    console.log(parseResponse(url + param) + JSON.stringify(responseJson, null, 2));
                 });
             } else {
                 demo.processError(response);
