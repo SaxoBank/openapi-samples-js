@@ -38,4 +38,4 @@ SAXO provides 3 kinds of Corporate Action Activities through ENS
 
 There is a live sample on [Corproate Action Activities by ENS](https://saxobank.github.io/openapi-samples-js/websockets/corporateaction-events-monitoring/).
 
-[More info](https://github.com/ayxue/openapi-samples-js/tree/master/websockets)
+[More info](https://github.com/SaxoBank/openapi-samples-js/tree/main/websockets)
