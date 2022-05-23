@@ -14,40 +14,42 @@
     });
 
     /**
-     * Reads the selected value of the dropdowns to return the relevant input for the request. 
-     * @param {string} identifier 
-     * @returns 
+     * Reads the selected value of the dropdowns to return the relevant input for the request.
+     * @param {string} identifier
+     * @returns
      */
     function read(identifier) {
-        let selected = document.getElementById("idCbx" + identifier).selectedOptions;
+        const selected = document.getElementById("idCbx" + identifier).selectedOptions;
         if (selected.length > 1) {
             let fieldGroups = "";
-            // forEach cannot be applied to this object, for reasons. 
-            for (let i = 0; i < selected.length; i++) {
-                //if All is included in selected, only return that entry. 
-                if (selected[i].value === "All") return "All";
-                fieldGroups += selected[i].value + ","
+            let i;
+            // forEach cannot be applied to this object, for reasons.
+            for (i = 0; i < selected.length; i += 1) {
+                //if All is included in selected, only return that entry.
+                if (selected[i].value === "All") {
+                    return "All";
+                }
+                fieldGroups += selected[i].value + ",";
             }
             return fieldGroups.slice(0, -1);
-        } else if (document.getElementById("idCbx" + identifier).selectedOptions[0]) {
-            return document.getElementById("idCbx" + identifier).selectedOptions[0].value;
-        } else {
-            //default All case
-            return "All";
         }
+        if (document.getElementById("idCbx" + identifier).selectedOptions[0]) {
+            return document.getElementById("idCbx" + identifier).selectedOptions[0].value;
+        }
+        //default All case
+        return "All";
     }
 
     /**
      * Parse key information out of response and return formatted text for display
-     * @param {Object} response 
-     * @param {string} requestType 
-     * @param {string} requestUrl 
-     * @param {string} params 
-     * @returns 
+     * @param {Object} response
+     * @param {string} requestType
+     * @param {string} requestUrl
+     * @param {string} params
+     * @returns
      */
     function parseResponse(requestUrl) {
-        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] +
-            "\nParameters: \n\t?" + requestUrl.split("?")[1] + "\n";
+        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] + "\nParameters: \n\t?" + requestUrl.split("?")[1] + "\n";
     }
 
     /**
@@ -55,8 +57,7 @@
      * @return {void}
      */
     function getClientTimeseries() {
-        getTimeseries(demo.apiUrl +
-            "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey);
+        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey);
     }
 
     /**
@@ -64,9 +65,7 @@
      * @return {void}
      */
     function getAccountTimeseries() {
-        getTimeseries(demo.apiUrl +
-            "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey +
-            "&AccountKey=" + demo.user.accountKey);
+        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey);
     }
 
     /**
@@ -74,7 +73,7 @@
      * @return {void}
      */
     function getTimeseries(url) {
-        let param = "&StandardPeriod=" + read("TimeseriesStandardPeriod") + "&FieldGroups=" + read("TimeseriesFieldGroups")
+        const param = "&StandardPeriod=" + read("TimeseriesStandardPeriod") + "&FieldGroups=" + read("TimeseriesFieldGroups");
         fetch(
             url + param,
             {
@@ -101,8 +100,7 @@
      * @return {void}
      */
     function getClientSummary() {
-        getSummary(demo.apiUrl +
-            "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey);
+        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey);
     }
 
     /**
@@ -110,9 +108,7 @@
      * @return {void}
      */
     function getAccountSummary() {
-        getSummary(demo.apiUrl +
-            "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey +
-            "&AccountKey=" + demo.user.accountKey);
+        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey);
     }
 
     /**
@@ -120,7 +116,7 @@
      * @return {void}
      */
     function getSummary(url) {
-        let param = "&StandardPeriod=" + read("SummaryStandardPeriod") + "&FieldGroups=" + read("SummaryFieldGroups");
+        const param = "&StandardPeriod=" + read("SummaryStandardPeriod") + "&FieldGroups=" + read("SummaryFieldGroups");
         fetch(
             url + param,
             {
@@ -143,10 +139,10 @@
     }
 
     demo.setupEvents([
-        { "evt": "click", "elmId": "idBtnGetClientSummary", "func": getClientSummary, "funcsToDisplay": [getClientSummary] },
-        { "evt": "click", "elmId": "idBtnGetAccountSummary", "func": getAccountSummary, "funcsToDisplay": [getAccountSummary] },
-        { "evt": "click", "elmId": "idBtnGetClientTimeseries", "func": getClientTimeseries, "funcsToDisplay": [getClientTimeseries] },
-        { "evt": "click", "elmId": "idBtnGetAccountTimeseries", "func": getAccountTimeseries, "funcsToDisplay": [getAccountTimeseries] },
+        {"evt": "click", "elmId": "idBtnGetClientSummary", "func": getClientSummary, "funcsToDisplay": [getClientSummary]},
+        {"evt": "click", "elmId": "idBtnGetAccountSummary", "func": getAccountSummary, "funcsToDisplay": [getAccountSummary]},
+        {"evt": "click", "elmId": "idBtnGetClientTimeseries", "func": getClientTimeseries, "funcsToDisplay": [getClientTimeseries]},
+        {"evt": "click", "elmId": "idBtnGetAccountTimeseries", "func": getAccountTimeseries, "funcsToDisplay": [getAccountTimeseries]}
     ]);
     demo.displayVersion("hist");
 }());
