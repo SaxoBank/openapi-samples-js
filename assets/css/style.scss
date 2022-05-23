@@ -32,9 +32,9 @@
 }
 
 body {
-  font-family: "Lucida Sans Unicode", "Helvetica Neue", Helvetica, Arial,
-    sans-serif;
+  font-family: "Lucida Sans Unicode", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+
 .action-button {
   background-color: white;
   border-color: #0000002e;
@@ -46,6 +46,10 @@ body {
 
 .action-button:hover {
   background-color: #042eab1c;
+}
+
+.main-content {
+  max-width: 68rem !important;
 }
 
 .main-content label {
@@ -69,4 +73,18 @@ body {
 
 textarea {
   width: 100%;
+}
+
+.warning {
+  border: 1px solid rgb(204, 82, 0);
+  border-image: none;
+  background-color: rgb(255, 209, 179);
+  padding: 1px;
+}
+
+.note {
+  border: 1px solid rgb(202, 176, 91);
+  border-image: none;
+  background-color: rgb(240, 209, 107);
+  padding: 1px;
 }

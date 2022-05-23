@@ -18,7 +18,7 @@
     <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
     <a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/account-history/performance" class="btn">View on GitHub</a>
   </section>
-  <section class="main-content" style="max-width: 68rem !important">
+  <section class="main-content">
     <div class="highlight">
       <label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank"
             id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
@@ -26,8 +26,7 @@
           autofocus /></label>
       <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
       <label>
-        Account: <select class="selector" id="idCbxAccount" <option value="-">Click Validate to populate</option>
-        </select>
+        Account: <select class="selector" id="idCbxAccount"><option value="-">Click Validate to populate</option></select>
       </label>
     </div>
     <h1>Performance</h1>
@@ -39,13 +38,11 @@
     and <a href="https://www.developer.saxo/openapi/referencedocs/hist/v4/performance" target="_blank">reference
       documentation</a> for additional details.
     <br />
-    <p
-      style="border: 1px solid rgb(202, 176, 91); border-image: none; background-color: rgb(240, 209, 107);padding:1px;">
-      <strong>NOTE: </strong> The Simulation Enviornment only has limited mock data.<br />
+    <p class="note">
+      <strong>NOTE: </strong> The Simulation Environment only has limited mock data.<br />
       Add the parameter "?env=live" to the url of this page, if you wish to use the live
       environment.
     </p>
-
 
     <h1>Endpoints</h1>
     <br />
@@ -95,7 +92,7 @@
         <input type="button" class="action-button" value="Get timeseries for Account" id="idBtnGetAccountTimeseries" />
         <br />
       </div>
-      <div class=" column" style="width:50%">
+      <div class="column" style="width:50%">
         <h2>Summary</h2>
         <h5>/hist/v4/performance/summary</h5>
         <label>
