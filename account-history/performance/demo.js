@@ -13,10 +13,15 @@
         "footerElm": document.getElementById("idFooter")
     });
 
-    let pastFiveDays = addDateParam(-6, -1, "pastFiveDays")
-    let pastTenDays = addDateParam(-11, -1, "pastTenDays")
+    addDateParam(-6, -1, "pastFiveDays")
+    addDateParam(-11, -1, "pastTenDays")
 
-
+    /**
+     * Returns query parameters within the from and to range, for the named option
+     * @param {number} from 
+     * @param {number} to 
+     * @param {string} name 
+     */
     function addDateParam(from, to, name) {
         var dateParam = ""
         var toDate = new Date()
@@ -28,7 +33,6 @@
         document.getElementsByName(name).forEach(function (option) {
             option.value = dateParam
         })
-        return dateParam
     }
     /**
      * Reads the selected value of the dropdowns to return the relevant input for the request.
@@ -68,7 +72,7 @@
      * @returns {string}
      */
     function parseResponse(requestUrl) {
-        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] + "?\nParameters: \n\t" + requestUrl.split("?")[1].replaceAll("&", "&\n\t") + "\n";
+        return "Endpoint: \n\t" + requestUrl.split("?")[0].split("openapi")[1] + "?\nParameters: \n\t" + requestUrl.split("?")[1].replaceAll("&", "&\n\t") + "\n";
     }
 
     /**
