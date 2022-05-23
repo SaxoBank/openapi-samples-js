@@ -32,10 +32,10 @@
      */
     function setExchangeDropdown(response) {
         var select = document.getElementById("idCbxExchangeId");
-        response.Exchanges.forEach(entry => {
+        response.Exchanges.forEach(exchange => {
             var opt = document.createElement("option");
-            opt.value = entry.ExchangeId;
-            opt.text = entry.ExchangeId;
+            opt.value = exchange.ExchangeId;
+            opt.text = exchange.ExchangeId;
             select.appendChild(opt);
         });
     }
