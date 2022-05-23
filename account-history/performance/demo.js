@@ -33,10 +33,11 @@
     /**
      * Reads the selected value of the dropdowns to return the relevant input for the request.
      * @param {string} identifier
-     * @returns
+     * @returns {string}
      */
     function read(identifier) {
         const selected = document.getElementById("idCbx" + identifier).selectedOptions;
+        //if set is returned(only FieldGroup), get all inputs
         if (selected.length > 1) {
             let fieldGroups = "";
             let i;
@@ -50,10 +51,11 @@
             }
             return fieldGroups.slice(0, -1);
         }
+        //or get the single selected input
         if (document.getElementById("idCbx" + identifier).selectedOptions[0]) {
             return document.getElementById("idCbx" + identifier).selectedOptions[0].value;
         }
-        //default All case
+        //default All case, if nothing was selected.
         return "All";
     }
 
@@ -63,7 +65,7 @@
      * @param {string} requestType
      * @param {string} requestUrl
      * @param {string} params
-     * @returns
+     * @returns {string}
      */
     function parseResponse(requestUrl) {
         return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] + "?\nParameters: \n\t" + requestUrl.split("?")[1].replaceAll("&", "&\n\t") + "\n";
