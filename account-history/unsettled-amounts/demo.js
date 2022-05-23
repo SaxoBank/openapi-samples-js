@@ -47,10 +47,10 @@
     function setDropdownForInstrument(response) {
         var select = document.getElementById("idCbxCurrencyAndAmountType");
         var currency = response.Currency
-        response.AmountTypes.forEach(entry => {
+        response.AmountTypes.forEach(amountType => {
             var opt = document.createElement("option");
-            opt.value = currency + "-" + entry["AmountTypeId"];
-            opt.text = currency + " - " + entry["AmountType"] + " (" + entry["AmountTypeId"] + ")";
+            opt.value = currency + "-" + amountType["AmountTypeId"];
+            opt.text = currency + " - " + amountType["AmountType"] + " (" + amountType["AmountTypeId"] + ")";
             select.appendChild(opt);
         })
     }
