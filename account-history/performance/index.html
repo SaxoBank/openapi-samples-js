@@ -56,14 +56,18 @@
         <h2>Timeseries</h2>
         <h5>/hist/v4/performance/timeseries</h5>
         <label>
-          <h4>StandardPeriod:
-            <select class="selector" id="idCbxTimeseriesStandardPeriod">
-              <option value="Month"> Month</option>
-              <option value="Quarter"> Quarter</option>
-              <option value="Year"> Year</option>
-              <option value="AllTime"> AllTime</option>
-            </select>
-          </h4>
+          <h4>Date Range:</h4>
+          <select class="selector" id="idCbxTimeseriesDateRange">
+            <option name="pastFiveDays" value="">Past 5 Days </option>
+            <option name="pastTenDays" value="">Past 10 Days </option>
+            <option value="&StandardPeriod=Month"> StandardPeriod.Month</option>
+            <option value="&StandardPeriod=Quarter"> StandardPeriod.Quarter</option>
+            <option value="&StandardPeriod=Year"> StandardPeriod.Year</option>
+            <option value="&StandardPeriod=AllTime"> StandardPeriod.AllTime</option>
+          </select><br />
+          <i style="font-size: 10px;">Date ranges can use either predefined StandardPeriod values, or a specfic date
+            range</i>
+
         </label>
         <br />
         <label>
@@ -96,12 +100,18 @@
         <h2>Summary</h2>
         <h5>/hist/v4/performance/summary</h5>
         <label>
-          <h4>StandardPeriod: <select class="selector" id="idCbxSummaryStandardPeriod">
-              <option value="Month"> Month</option>
-              <option value="Quarter"> Quarter</option>
-              <option value="Year"> Year</option>
-              <option value="AllTime"> AllTime</option>
-            </select></h4>
+          <h4>Date Range:</h4>
+          <select class="selector" id="idCbxSummaryDateRange">
+            <option name="pastFiveDays" value="">Past 5 Days </option>
+            <option name="pastTenDays" value="">Past 10 Days </option>
+            <option value="&StandardPeriod=Month"> StandardPeriod.Month</option>
+            <option value="&StandardPeriod=Quarter"> StandardPeriod.Quarter</option>
+            <option value="&StandardPeriod=Year"> StandardPeriod.Year</option>
+            <option value="&StandardPeriod=AllTime"> StandardPeriod.AllTime</option>
+          </select><br />
+          <i style="font-size: 10px;">Date ranges can use either predefined StandardPeriod values, or a specfic date
+            range</i>
+
         </label>
         <br />
         <label>

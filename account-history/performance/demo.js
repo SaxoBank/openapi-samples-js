@@ -13,6 +13,23 @@
         "footerElm": document.getElementById("idFooter")
     });
 
+    let pastFiveDays = addDateParam(-6, -1, "pastFiveDays")
+    let pastTenDays = addDateParam(-11, -1, "pastTenDays")
+
+
+    function addDateParam(from, to, name) {
+        var dateParam = ""
+        var toDate = new Date()
+        toDate.setDate(toDate.getDate() + to)
+        var fromDate = new Date()
+        fromDate.setDate(fromDate.getDate() + from)
+        dateParam = "&FromDate=" + fromDate.toISOString().split("T")[0] + "&ToDate="
+        dateParam += toDate.toISOString().split("T")[0]
+        document.getElementsByName(name).forEach(function (option) {
+            option.value = dateParam
+        })
+        return dateParam
+    }
     /**
      * Reads the selected value of the dropdowns to return the relevant input for the request.
      * @param {string} identifier
@@ -49,7 +66,7 @@
      * @returns
      */
     function parseResponse(requestUrl) {
-        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] + "\nParameters: \n\t?" + requestUrl.split("?")[1] + "\n";
+        return "Endpoint: \n\t" + requestUrl.split("?")[0].split(".com")[1] + "?\nParameters: \n\t" + requestUrl.split("?")[1].replaceAll("&", "&\n\t") + "\n";
     }
 
     /**
@@ -73,7 +90,7 @@
      * @return {void}
      */
     function getTimeseries(url) {
-        const param = "&StandardPeriod=" + read("TimeseriesStandardPeriod") + "&FieldGroups=" + read("TimeseriesFieldGroups");
+        const param = read("TimeseriesDateRange") + "&FieldGroups=" + read("TimeseriesFieldGroups");
         fetch(
             url + param,
             {
@@ -116,7 +133,7 @@
      * @return {void}
      */
     function getSummary(url) {
-        const param = "&StandardPeriod=" + read("SummaryStandardPeriod") + "&FieldGroups=" + read("SummaryFieldGroups");
+        const param = read("SummaryDateRange") + "&FieldGroups=" + read("SummaryFieldGroups");
         fetch(
             url + param,
             {
@@ -139,10 +156,10 @@
     }
 
     demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnGetClientSummary", "func": getClientSummary, "funcsToDisplay": [getClientSummary]},
-        {"evt": "click", "elmId": "idBtnGetAccountSummary", "func": getAccountSummary, "funcsToDisplay": [getAccountSummary]},
-        {"evt": "click", "elmId": "idBtnGetClientTimeseries", "func": getClientTimeseries, "funcsToDisplay": [getClientTimeseries]},
-        {"evt": "click", "elmId": "idBtnGetAccountTimeseries", "func": getAccountTimeseries, "funcsToDisplay": [getAccountTimeseries]}
+        { "evt": "click", "elmId": "idBtnGetClientSummary", "func": getClientSummary, "funcsToDisplay": [getSummary, getClientSummary] },
+        { "evt": "click", "elmId": "idBtnGetAccountSummary", "func": getAccountSummary, "funcsToDisplay": [getSummary, getAccountSummary] },
+        { "evt": "click", "elmId": "idBtnGetClientTimeseries", "func": getClientTimeseries, "funcsToDisplay": [getTimeseries, getClientTimeseries] },
+        { "evt": "click", "elmId": "idBtnGetAccountTimeseries", "func": getAccountTimeseries, "funcsToDisplay": [getTimeseries, getAccountTimeseries] }
     ]);
     demo.displayVersion("hist");
 }());
