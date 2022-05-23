@@ -119,9 +119,9 @@
                 response.json().then(function (responseJson) {
                     if (scope === "AmountTypes" && responseJson.Currencies.length > 0) {
                         resetDropdownOptions("CurrencyAndAmountType");
-                        responseJson.Currencies.forEach(elem => {
-                            setDropdownForInstrument(elem);
-                        })
+                        responseJson.Currencies.forEach(currency => {
+                            setDropdownForInstrument(currency);
+                        });
                     }
                     console.log(parseResponse(responseJson, "Currencies", "/hist/v1/unsettledamounts", parameters) + JSON.stringify(responseJson, null, 2));
                 });
