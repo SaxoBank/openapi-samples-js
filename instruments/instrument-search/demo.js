@@ -70,9 +70,9 @@
     function getGroupedDisplayList(instrumentList) {
         // More info: https://openapi.help.saxo/hc/en-us/articles/4468535563037-What-is-the-purpose-of-GroupId-in-the-instruments-resource-
         let items = [];
-        let currentGroupId = NaN;
+        let currentGroupId = 0;  // "0" is used for ungrouped data.
         instrumentList.forEach(function (instrument) {
-            if (instrument.GroupId !== currentGroupId) {
+            if (instrument.GroupId === 0 || instrument.GroupId !== currentGroupId) {
                 currentGroupId = instrument.GroupId;
                 items.push("+" + instrument.AssetType + " " + instrument.Description);
             } else {
