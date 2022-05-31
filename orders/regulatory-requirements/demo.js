@@ -217,8 +217,11 @@
                     result += "\n* Margin excl. OTM discount.";
                     // <Text LanguageCode="fr">Marge hors remise OTM.</Text>
                     break;
+                case "ImplicitCostsNotChargedOnAccount":
+                    result += "\n* The implicit costs not charged on account.";
+                    break;
                 default:
-                    console.debug("Unsupported assumption code: " + assumption);
+                    console.error("Unsupported assumption code: " + assumption);
                 }
             });
             // Add generic assumption:
