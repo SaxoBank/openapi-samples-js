@@ -118,6 +118,7 @@
                         );
                     });
                 }
+                result += getCostComponent("ServiceFee", "Service fee", costs.TradingCost);  // Service fee per year for holding cash positions
                 result += getCostComponent("TicketFee", "Ticket fee", costs.TradingCost);  // Ticket fees are for FX (both spot and options) and applied if below the TicketFeeThreshold
                 // <Text LanguageCode="fr">Frais de ticket</Text>
                 result += getCostComponent("ExchangeFee", "Exchange fee", costs.TradingCost);  // Futures - Exchange fee if applied separately
@@ -135,6 +136,8 @@
                 // <Text LanguageCode="fr">Coûts récurrents</Text>
                 result += getCostComponent("SwitchCommission", "Switch commission", costs.FundCost);  // Commission paid for a switch trade between two mutual funds
                 // <Text LanguageCode="fr">Commission de transfert</Text>
+                result += getCostComponent("EntryCost", "Entry commission", costs.FundCost);  // Commission paid for buying a fund
+                result += getCostComponent("ExitCost", "Exit commission", costs.FundCost);  // Commission paid for selling a fund
             }
             if (costs.hasOwnProperty("HoldingCost")) {
                 result += "\n\nOngoing charges:";
@@ -146,8 +149,8 @@
                 // <Text LanguageCode="fr">Coût de portage</Text>
                 result += getCostComponent("HoldingFee", "Holding fee", costs.HoldingCost);  // Holding fee if applied
                 // <Text LanguageCode="fr">Frais de détention</Text>
-                result += getCostComponent("TomNext", "Tom/Next", costs.HoldingCost);  // Swap interest markup
-                // <Text LanguageCode="fr">Tom/Next</Text>
+                result += getCostComponent("LoanInterestCost", "Loan interest cost", costs.HoldingCost);
+                result += getCostComponent("SwapPoints", "SwapPoints", costs.HoldingCost);  // Swap interest markup
                 result += getCostComponent("InterestFee", "Interest/day", costs.HoldingCost);  // Interest per day for for SRDs
                 // <Text LanguageCode="fr">Intérêts/jour</Text>
                 result += getCostComponent("RolloverFee", "Roll-over of positions", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
