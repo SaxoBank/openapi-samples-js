@@ -35,10 +35,8 @@ div.input-field {
 </label>
 </div>
 <h1>Give advice on orders</h1>
-
 <p class="note">The order advice flow is only for advisors. The example here is not an advice, but shows how to integrate the flow in your apps. To get a SIM-account configured for order advices, contact your Saxo Bank account manager.</p>
-<br />
-Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
+See other samples for <a href="../../instruments/instrument-search/">finding instruments</a>, trading in <a href="../options/">complex instruments</a> and <a href="../regulatory-requirements/">compliance requirements</a>.
 <br />
 <br />
 <label>
@@ -69,7 +67,7 @@ Order tickets must warn before trading a complex product, provide a KID download
     <option value="Abort">Abort</option>
   </select>
 </label>
-<textarea class="json-input" id="idNewOrderObject" rows="13">
+<textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
 {
     "AccountKey": "(added on first request)",
     "BuySell": "Buy",
@@ -80,7 +78,6 @@ Order tickets must warn before trading a complex product, provide a KID download
     "OrderDuration": {
         "DurationType": "DayOrder"
     },
-    "WithAdvice": true,
     "Triggers": [{
         "TriggerType": "Advice",
         "ApprovalAction": "RequestApproval",
@@ -105,7 +102,7 @@ Order tickets must warn before trading a complex product, provide a KID download
     <option value="Approve" selected>Approve</option>
   </select>
 </label>
-<textarea class="json-input" id="idChangeOrderObject" rows="13" wrap="off">
+<textarea class="json-input" id="idChangeOrderObject" rows="13" wrap="off" wrap="off">
 This edit will be populated after selecting
 an order, or creating a new one.
 </textarea>
