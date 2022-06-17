@@ -182,10 +182,14 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const responseText = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
-                    if (responseJson.AccessRights.CanTrade) {
-                        console.log("You are allowed to place orders." + responseText);
+                    if (responseJson.Operations.indexOf("OAPI.OP.CanAdviseOnOrdersOnOwnedClients") > -1) {
+                        console.log("You are allowed to create advices on owned clients." + responseText);
+                    } else if (responseJson.Operations.indexOf("OAPI.OP.CanAdviseOnOrders") > -1) {
+                        console.log("You are allowed to place order advices." + responseText);
+                    } else if (responseJson.Operations.indexOf("OAPI.OP.CanAdviseOnOrdersOnRestrictedClients") > -1) {
+                        console.log("You are allowed to place order advices on restricted clients." + responseText);
                     } else {
-                        console.error("You are not allowed to place orders." + responseText);
+                        console.error("You are NOT allowed to place advice orders." + responseText);
                     }
                 });
             } else {
