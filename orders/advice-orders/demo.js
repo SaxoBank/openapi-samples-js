@@ -265,7 +265,7 @@
             // First, get the id of the active account:
             const activeAccountId = managedAccountsResponseData.find(function (i) {
                 return i.AccountKey === accountKey;
-            }).accountId;
+            }).AccountId;
             // Next, check if instrument is allowed on this account:
             if (tradableOn.length === 0) {
                 window.alert("This instrument cannot be traded on any of your accounts.");
@@ -526,7 +526,7 @@
 
         function copyOptionalProperty(source, dest, propertyName) {
             if (source.hasOwnProperty("propertyName")) {
-                dest[propertyName] = responseJson[propertyName];
+                dest[propertyName] = source[propertyName];
             }
         }
 
@@ -548,38 +548,15 @@
                     if (responseJson === null) {
                         console.error("The order wasn't found in the list of active orders. Is order " + orderId + " still open?");
                     } else {
-                        // Only simple stock orders are considered here. Make your own logic for ContractOptions etc.
+                        // For the PATCH a limited set of fields is required. Feel free to add those fields you'd like to update.
                         orderObject = {
                             "AccountKey": accountKey,
                             "OrderId": orderId,
-                            "BuySell": responseJson.BuySell,
-                            "Amount": responseJson.Amount,  // Check for OrderAmountType!
                             "AssetType": responseJson.AssetType,
-                            "Uic": responseJson.Uic,
                             "OrderType": responseJson.OpenOrderType,
                             "OrderDuration": responseJson.Duration
                         };
-                        switch (responseJson.OpenOrderType) {
-                        case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
-                        case "StopIfBid":  // A buy order will be executed when the bid price increases to the provided price point; a sell order when the price falls below.
-                        case "StopIfOffered":  // A buy order will be executed when the ask price increases to the provided price point; a sell order when the price falls below.
-                        case "StopIfTraded":  // A buy order will be executed when the last price increases to the provided price point; a sell order when the price falls below.
-                            orderObject.OrderPrice = responseJson.Price;
-                            break;
-                        case "StopLimit":  // A buy StopLimit order will turn in to a regular limit order once the price goes beyond the OrderPrice. The limit order will have a OrderPrice of the StopLimitPrice.
-                            orderObject.OrderPrice = responseJson.Price;
-                            orderObject.StopLimitPrice = responseJson.StopLimitPrice;
-                            break;
-                        case "TrailingStop":  // A trailing stop order type is used to guard a position against a potential loss, but the order price follows that of the position when the price goes up. It does so in steps, trying to keep a fixed distance to the current price.
-                        case "TrailingStopIfBid":
-                        case "TrailingStopIfOffered":
-                        case "TrailingStopIfTraded":
-                            orderObject.OrderPrice = responseJson.Price;
-                            orderObject.TrailingstopDistanceToMarket = responseJson.TrailingStopDistanceToMarket;
-                            orderObject.TrailingStopStep = responseJson.TrailingStopStep;
-                        }
                         copyOptionalProperty(responseJson, orderObject, "Triggers");
-                        copyOptionalProperty(responseJson, orderObject, "ExternalReference");
                         document.getElementById("idChangeOrderObject").value = JSON.stringify(orderObject, null, 4);
                         console.log("Response: " + JSON.stringify(responseJson, null, 4));
                     }
@@ -664,10 +641,11 @@
      * @return {void}
      */
     function getHistoricalEnsEvents() {
+        const accountKey = document.getElementById("idCbxManagedAccountKey").value;
         const fromDate = new Date();
-        fromDate.setMinutes(fromDate.getMinutes() - 5);
+        fromDate.setMinutes(fromDate.getMinutes() - 10);
         fetch(
-            demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString(),
+            demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString() + "&AccountKey=" + encodeURIComponent(accountKey),
             {
                 "method": "GET",
                 "headers": {
@@ -677,7 +655,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log("Found " + responseJson.Data.length + " events in the last 5 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
+                    console.log("Found " + responseJson.Data.length + " event(s) in the last 10 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -721,9 +699,43 @@
         });
     }
 
+    /**
+     * Reflect the new status in the new order advice edit.
+     * @return {void}
+     */
+    function updateCreateOrderEdit() {
+        const newStatus = document.getElementById("idCbxAdviceCreateAction").value;
+        const orderObject = getOrderObjectFromJson(true);
+        if (!orderObject.hasOwnProperty("Triggers")) {
+            orderObject.Triggers = [{
+                "TriggerType": "Advice"
+            }];
+        }
+        orderObject.Triggers[0].ApprovalAction = newStatus;
+        document.getElementById("idNewOrderObject").value = JSON.stringify(orderObject, null, 4);
+    }
+
+    /**
+     * Reflect the new status in the modify order advice edit.
+     * @return {void}
+     */
+    function updateModifyOrderEdit() {
+        const newStatus = document.getElementById("idCbxAdviceModifyAction").value;
+        const orderObject = getOrderObjectFromJson(false);
+        if (!orderObject.hasOwnProperty("Triggers")) {
+            orderObject.Triggers = [{
+                "TriggerType": "Advice"
+            }];
+        }
+        orderObject.Triggers[0].ApprovalAction = newStatus;
+        document.getElementById("idChangeOrderObject").value = JSON.stringify(orderObject, null, 4);
+    }
+
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxManagedAccountKey", "func": updateNewOrderEdit, "funcsToDisplay": [updateNewOrderEdit]},
         {"evt": "change", "elmId": "idCbxOrderId", "func": getOrderDetailsAndUpdateModifyOrderEdit, "funcsToDisplay": [getOrderDetailsAndUpdateModifyOrderEdit]},
+        {"evt": "change", "elmId": "idCbxAdviceCreateAction", "func": updateCreateOrderEdit, "funcsToDisplay": [updateCreateOrderEdit]},
+        {"evt": "change", "elmId": "idCbxAdviceModifyAction", "func": updateModifyOrderEdit, "funcsToDisplay": [updateModifyOrderEdit]},
         {"evt": "click", "elmId": "idBtnGetAccountKeys", "func": getAccountKeys, "funcsToDisplay": [getAccountKeys]},
         {"evt": "click", "elmId": "idBtnGetAccessRights", "func": getAccessRights, "funcsToDisplay": [getAccessRights]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
