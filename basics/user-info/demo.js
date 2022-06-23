@@ -160,6 +160,8 @@
      * @return {void}
      */
     function getAccessRights() {
+        // Don't be scared by this list. It just contains all possible operations a user can have.
+        // The list is long, because whitelabels can use it for their app, asset managers, advisors and thirdparty apps.
         const operations = {
             "OAPI.OP.Admin": "Call one of the admin endpoints.",
             "OAPI.OP.ApproveModels": "User can approve the model.",
@@ -177,13 +179,13 @@
             "OAPI.OP.CanManageFundInducements": "Manage Fund Inducements.",
             "OAPI.OP.CanManageKID": "Can Read and Update Key Information Documents (PRIIPS/KIID).",
             "OAPI.OP.CanTradeOnBehalfOfUser": "Can trade on behalf of users.",
-            "OAPI.OP.CanUpdatePriceForUnlistedInstrument": "User can update prices for unlisted Instruments.",
+            "OAPI.OP.CanUpdatePriceForUnlistedInstrument": "User can update prices for unlisted instruments.",
             "OAPI.OP.CanViewAllInstrumentDocuments": "User can read all instrument documents.",
             "OAPI.OP.CreateSupportTicket": "User can create a support ticket.",
             "OAPI.OP.DealCapture": "Allow deal capture trades.",
             "OAPI.OP.DeleteAccountsFromModels": "User can delete accounts linked to model.",
             "OAPI.OP.DiagnoseStreaming": "Allows diagnosis of streaming connections.",
-            "OAPI.OP.EditBenchmarks": "User can edit the benchmark.",
+            "OAPI.OP.EditBenchmarks": "User can edit benchmarks.",
             "OAPI.OP.EditModels": "User can create and edit the model.",
             "OAPI.OP.EditPartnerSettings": "User can edit partner settings data.",
             "OAPI.OP.EmployeeOnlyLogs": "Can view employee only activity logs.",
@@ -209,7 +211,7 @@
             "OAPI.OP.ManagePIIOwnedClients": "Manage PII for clients in hierarchy.",
             "OAPI.OP.ManageSecuritiesTransfers": "Can request your security transfers.",
             "OAPI.OP.ManageSecuritiesTransfersOnOwnedClients": "Can request security transfers for clients in hierarchy.",
-            "OAPI.OP.ManageSubAccountSecuritiesTransfers": "Manage Sub-Account Security Transfer.",
+            "OAPI.OP.ManageSubAccountSecuritiesTransfers": "Manage sub-account security transfers.",
             "OAPI.OP.ManageSuitability": "Manage your asset type suitability.",
             "OAPI.OP.ManageSuitabilityOnOwnedClients": "Manage asset type suitability for clients in hierarchy.",
             "OAPI.OP.ManageSuitabilityOnRestrictedClients": "Manage asset type suitability for linked clients.",
@@ -223,8 +225,8 @@
             "OAPI.OP.PlatformConfigurationOnAnyClient": "Allow changes to Investor layout for IB clients.",
             "OAPI.OP.PlatformExportScreenContent": "User can export screen content to file.",
             "OAPI.OP.PrebookFundingFromExternalSource": "Partner to pre-book funds on a client account.",
-            "OAPI.OP.RebalanceAccount": "User can rebalance the Account.",
-            "OAPI.OP.RebalanceModel": "User can rebalance the Model.",
+            "OAPI.OP.RebalanceAccount": "User can rebalance the account.",
+            "OAPI.OP.RebalanceModel": "User can rebalance the model.",
             "OAPI.OP.SMSG.ClientOnboarding.Reply": "Reply to secure messaging thread on onboarding.",
             "OAPI.OP.SMSG.ClientOnboarding.View": "View secure messaging thread on onboarding.",
             "OAPI.OP.SMSG.PCM.Reply": "Reply to your messages on cases.",
@@ -273,7 +275,7 @@
         const roles = {
             "OAPI.Roles.AnonymousSaxoApplication": "You are signed in using a Saxobank application.",
             "OAPI.Roles.AnonymousThirdPartyApplication": "You are signed in with a thirdparty application.",
-            "OAPI.Roles.ApproveModels": "Can approve Models created by other users.",
+            "OAPI.Roles.ApproveModels": "Can approve models created by other users.",
             "OAPI.Roles.CommunityAccessApplication": "You are signed in using a community application.",
             "OAPI.Roles.ContentEditor": "You can edit the layout and media used in the Saxo Investor Platform.",
             "OAPI.Roles.Default": "Regular customer.",
@@ -286,9 +288,9 @@
             "OAPI.Roles.RetailClientNotFullyFunded": "Retail client, but not yet fully funded.",
             "OAPI.Roles.Trader": "Trader.",
             "OAPI.Roles.ViewAnyClient": "Allows users to view all clients.",
-            "OAPI.Roles.ViewAnyInstrument": "Allows users to search any instrument",
-            "OAPI.Roles.ViewModelsandBenchmarks": "Can view Models & Benchmarks",
-            "OAPI.Roles.ViewPII": "Access to PII data of all available clients"
+            "OAPI.Roles.ViewAnyInstrument": "Allows users to search any instrument.",
+            "OAPI.Roles.ViewModelsandBenchmarks": "Can view models & benchmarks.",
+            "OAPI.Roles.ViewPII": "Access to PII data of all available clients."
         };
         fetch(
             demo.apiUrl + "/root/v1/user",
