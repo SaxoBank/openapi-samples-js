@@ -538,7 +538,7 @@
         const clientKey = getClientKeyOfSelectedAccount();
         const orderId = document.getElementById("idCbxOrderId").value;
         fetch(
-            demo.apiUrl + "/port/v1/orders/" + orderId + "/details?ClientKey=" + encodeURIComponent(clientKey),
+            demo.apiUrl + "/port/v1/orders/" + orderId + "?ClientKey=" + encodeURIComponent(clientKey),
             {
                 "method": "GET",
                 "headers": {
