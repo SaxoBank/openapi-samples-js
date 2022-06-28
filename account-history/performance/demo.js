@@ -13,26 +13,26 @@
         "footerElm": document.getElementById("idFooter")
     });
 
-    addDateParam(-6, -1, "pastFiveDays")
-    addDateParam(-11, -1, "pastTenDays")
+    addDateParam(-6, -1, "pastFiveDays");
+    addDateParam(-11, -1, "pastTenDays");
 
     /**
      * Returns query parameters within the from and to range, for the named option
-     * @param {number} from 
-     * @param {number} to 
-     * @param {string} name 
+     * @param {number} from
+     * @param {number} to
+     * @param {string} name
      */
     function addDateParam(from, to, name) {
-        var dateParam = ""
-        var toDate = new Date()
-        toDate.setDate(toDate.getDate() + to)
-        var fromDate = new Date()
-        fromDate.setDate(fromDate.getDate() + from)
-        dateParam = "&FromDate=" + fromDate.toISOString().split("T")[0] + "&ToDate="
-        dateParam += toDate.toISOString().split("T")[0]
+        var dateParam = "";
+        var toDate = new Date();
+        var fromDate = new Date();
+        toDate.setDate(toDate.getDate() + to);
+        fromDate.setDate(fromDate.getDate() + from);
+        dateParam = "&FromDate=" + fromDate.toISOString().split("T")[0] + "&ToDate=";
+        dateParam += toDate.toISOString().split("T")[0];
         document.getElementsByName(name).forEach(function (option) {
-            option.value = dateParam
-        })
+            option.value = dateParam;
+        });
     }
     /**
      * Reads the selected value of the dropdowns to return the relevant input for the request.
@@ -41,10 +41,10 @@
      */
     function read(identifier) {
         const selected = document.getElementById("idCbx" + identifier).selectedOptions;
+        var fieldGroups = "";
+        var i;
         //if set is returned(only FieldGroup), get all inputs
         if (selected.length > 1) {
-            let fieldGroups = "";
-            let i;
             // forEach cannot be applied to this object, for reasons.
             for (i = 0; i < selected.length; i += 1) {
                 //if All is included in selected, only return that entry.
@@ -162,10 +162,10 @@
     }
 
     demo.setupEvents([
-        { "evt": "click", "elmId": "idBtnGetClientSummary", "func": getClientSummary, "funcsToDisplay": [getSummary, getClientSummary] },
-        { "evt": "click", "elmId": "idBtnGetAccountSummary", "func": getAccountSummary, "funcsToDisplay": [getSummary, getAccountSummary] },
-        { "evt": "click", "elmId": "idBtnGetClientTimeseries", "func": getClientTimeseries, "funcsToDisplay": [getTimeseries, getClientTimeseries] },
-        { "evt": "click", "elmId": "idBtnGetAccountTimeseries", "func": getAccountTimeseries, "funcsToDisplay": [getTimeseries, getAccountTimeseries] }
+        {"evt": "click", "elmId": "idBtnGetClientSummary", "func": getClientSummary, "funcsToDisplay": [getSummary, getClientSummary]},
+        {"evt": "click", "elmId": "idBtnGetAccountSummary", "func": getAccountSummary, "funcsToDisplay": [getSummary, getAccountSummary]},
+        {"evt": "click", "elmId": "idBtnGetClientTimeseries", "func": getClientTimeseries, "funcsToDisplay": [getTimeseries, getClientTimeseries]},
+        {"evt": "click", "elmId": "idBtnGetAccountTimeseries", "func": getAccountTimeseries, "funcsToDisplay": [getTimeseries, getAccountTimeseries]}
     ]);
     demo.displayVersion("hist");
 }());
