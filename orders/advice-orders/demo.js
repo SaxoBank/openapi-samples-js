@@ -549,7 +549,7 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let orderObject;
-                    if (responseJson === null) {
+                    if (responseJson.Data.length === 0) {
                         console.error("The order wasn't found in the list of active orders. Is order " + orderId + " still open?");
                     } else {
                         // For the PATCH a limited set of fields is required. Feel free to add those fields you'd like to update.
