@@ -594,7 +594,7 @@
      */
     function getOrderDetails() {
         fetch(
-            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "?ClientKey=" + demo.user.clientKey,
+            demo.apiUrl + "/port/v1/orders/" + encodeURIComponent(demo.user.clientKey) + "/" + lastOrderId,
             {
                 "method": "GET",
                 "headers": {

@@ -80,7 +80,7 @@
      * @return {void}
      */
     function getClientTimeseries() {
-        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey);
+        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + encodeURIComponent(demo.user.clientKey));
     }
 
     /**
@@ -88,7 +88,7 @@
      * @return {void}
      */
     function getAccountTimeseries() {
-        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey);
+        getTimeseries(demo.apiUrl + "/hist/v4/performance/timeseries?ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey));
     }
 
     /**
@@ -123,7 +123,7 @@
      * @return {void}
      */
     function getClientSummary() {
-        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey);
+        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + encodeURIComponent(demo.user.clientKey));
     }
 
     /**
@@ -131,7 +131,7 @@
      * @return {void}
      */
     function getAccountSummary() {
-        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + demo.user.clientKey + "&AccountKey=" + demo.user.accountKey);
+        getSummary(demo.apiUrl + "/hist/v4/performance/summary?ClientKey=" + encodeURIComponent(demo.user.clientKey) + "&AccountKey=" + encodeURIComponent(demo.user.accountKey));
     }
 
     /**

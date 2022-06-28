@@ -46,8 +46,48 @@
      * Returns trading schedule for a given uic and asset type.
      * @return {void}
      */
-    function getTradingSchedule() {
+    function getTradingSessions(sessions) {
+        const now = new Date();
+        let currentTradingSession = "Undefined";
+        let responseText = "Current local time: " + now.toLocaleTimeString() + "\n";
+        sessions.forEach(function (session) {
+            const startTime = new Date(session.StartTime);
+            const endTime = new Date(session.EndTime);
+            if (now >= startTime && now < endTime) {
+                // This is the session we are in now, usually the first.
+                currentTradingSession = session.State;
+                responseText += "--> ";
+            }
+            responseText += "'" + session.State + "' from " + startTime.toLocaleString() + " to " + endTime.toLocaleString() + "\n";
+        });
+        switch (currentTradingSession) {
+        case "PreMarket":
+        case "PostMarket":
+        //case "PreTrading":
+        //case "PostTrading":
+        //case "PreAutomatedTrading":
+        //case "PostAutomatedTrading":
+            responseText += "\nWe are outside the AutomatedTrading session, but trading is possible because market is in an extended trading session.";
+            break;
+        case "AutomatedTrading":
+            responseText += "\nWe are in the regular 'AutomatedTrading' session.";
+            break;
+        case "Undefined":
+            responseText += "\nWe are in an unknown trading session. Please report this to Saxo, because this is wrong!";
+            break;
+        default:
+            responseText += "\nThe market is closed with state: " + currentTradingSession;
+        }
+        console.log(responseText);
+    }
+
+    /**
+     * Returns trading schedule for a given uic and asset type by using the TradingSchedule endpoint.
+     * @return {void}
+     */
+    function getTradingSessionsFromTradingSchedule() {
         const newOrderObject = getOrderObjectFromJson();
+        // Saxo has two endpoints serving the trading sessions. Choice is yours.
         fetch(
             demo.apiUrl + "/ref/v1/instruments/tradingschedule/" + newOrderObject.Uic + "/" + newOrderObject.AssetType,
             {
@@ -59,18 +99,35 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const now = new Date();
-                    let responseText = "Current local time: " + now.toLocaleTimeString() + "\n";
-                    responseJson.Sessions.forEach(function (session) {
-                        const startTime = new Date(session.StartTime);
-                        const endTime = new Date(session.EndTime);
-                        if (now >= startTime && now < endTime) {
-                            // This is the session we are in now, usually the first.
-                            responseText += "--> ";
-                        }
-                        responseText += session.State + " from " + startTime.toLocaleString() + " to " + endTime.toLocaleString() + "\n";
-                    });
-                    console.log(responseText);
+                    getTradingSessions(responseJson.Sessions);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Returns trading schedule for a given uic and asset type by using the instrument details.
+     * @return {void}
+     */
+    function getTradingSessionsFromInstrument() {
+        const newOrderObject = getOrderObjectFromJson();
+        // Saxo has two endpoints serving the trading sessions. Choice is yours.
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?FieldGroups=TradingSessions",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    getTradingSessions(responseJson.TradingSessions.Sessions);
                 });
             } else {
                 demo.processError(response);
@@ -202,7 +259,7 @@
      */
     function getOrderDetails() {
         fetch(
-            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "?ClientKey=" + demo.user.clientKey,
+            demo.apiUrl + "/port/v1/orders/" + encodeURIComponent(demo.user.clientKey) + "/" + lastOrderId,
             {
                 "method": "GET",
                 "headers": {
@@ -319,7 +376,8 @@
     }
 
     demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnGetTradingSchedule", "func": getTradingSchedule, "funcsToDisplay": [getTradingSchedule]},
+        {"evt": "click", "elmId": "idBtnGetSessionsFromTradingSchedule", "func": getTradingSessionsFromTradingSchedule, "funcsToDisplay": [getTradingSessionsFromTradingSchedule, getTradingSessions]},
+        {"evt": "click", "elmId": "idBtnGetSessionsFromInstrument", "func": getTradingSessionsFromInstrument, "funcsToDisplay": [getTradingSessionsFromInstrument, getTradingSessions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
