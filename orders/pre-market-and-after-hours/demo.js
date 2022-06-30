@@ -43,6 +43,51 @@
     }
 
     /**
+     * Retrieve all exchanges and filter the ones with 'PreMarket' and 'PostMarket' trading sessions.
+     * @return {void}
+     */
+    function getSupportedExchanges() {
+        fetch(
+            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const now = new Date();
+                    let responseText = "";
+                    responseJson.Data.forEach(function (exchange) {
+                        exchange.ExchangeSessions.forEach(function (session) {
+                            const startTime = new Date(session.StartTime);
+                            const endTime = new Date(session.EndTime);
+                            if (session.State === "PreMarket" || session.State === "PostMarket") {
+                                if (now >= startTime && now < endTime) {
+                                    // This is the session we are in now.
+                                    responseText += "--> ";
+                                }
+                                responseText += exchange.Name + " (" + exchange.ExchangeId + ") has state '" + session.State + "' from " + startTime.toLocaleString() + " to " + endTime.toLocaleString() + "\n";
+                            }
+                        });
+                    });
+                    if (responseText === "") {
+                        console.log("No exchanges found with support for Pre-, or PostMarket trading.");
+                    } else {
+                        console.log(responseText);
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * Returns trading schedule for a given uic and asset type.
      * @return {void}
      */
@@ -376,6 +421,7 @@
     }
 
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnGetSupportedExchanges", "func": getSupportedExchanges, "funcsToDisplay": [getSupportedExchanges]},
         {"evt": "click", "elmId": "idBtnGetSessionsFromTradingSchedule", "func": getTradingSessionsFromTradingSchedule, "funcsToDisplay": [getTradingSessionsFromTradingSchedule, getTradingSessions]},
         {"evt": "click", "elmId": "idBtnGetSessionsFromInstrument", "func": getTradingSessionsFromInstrument, "funcsToDisplay": [getTradingSessionsFromInstrument, getTradingSessions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
