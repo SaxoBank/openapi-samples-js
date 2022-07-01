@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -379,11 +379,12 @@
         /**
          * This function processes the heartbeat messages, containing info about system health.
          * https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
+         * @param {number} messageId The message sequence number
          * @param {Array<Object>} payload The list of messages
          * @return {void}
          */
-        function handleHeartbeat(payload) {
-            // Heartbeat messages are sent every 20 seconds. If there is a minute without messages, this is an error.
+        function handleHeartbeat(messageId, payload) {
+            // Heartbeat messages are sent every "responseJson.InactivityTimeout" seconds. If there is a minute without messages, this indicates an error.
             if (Array.isArray(payload)) {
                 payload.forEach(function (heartbeatMessages) {
                     heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
@@ -398,7 +399,7 @@
                                 tradeMessageSubscription.isRecentDataReceived = true;
                                 break;
                             }
-                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
+                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString() + " (#" + messageId + ")");
                             break;
                         default:
                             console.error("Unknown heartbeat message received: " + JSON.stringify(payload));
@@ -530,11 +531,11 @@
                     tradeMessageSubscription.isRecentDataReceived = true;
                     handleTradeMessages(message.payload);
                     demo.displaySourceCode([handleTradeMessages]);
-                    console.log("Streaming trade message(s) " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming trade message(s) #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-                    handleHeartbeat(message.payload);
+                    handleHeartbeat(message.messageId, message.payload);
                     break;
                 case "_resetsubscriptions":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages

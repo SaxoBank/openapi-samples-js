@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -222,11 +222,11 @@
             messages.forEach(function (message) {
                 switch (message.referenceId) {
                 case "MyTradeLevelChangeEvent":
-                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming trade level change event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    console.debug("Heartbeat event #" + message.messageId + " received: " + JSON.stringify(message.payload));
                     break;
                 case "_resetsubscriptions":
                     // The server is not able to send messages and client needs to reset subscriptions by recreating them.

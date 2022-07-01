@@ -256,10 +256,10 @@
             messages.forEach(function (message) {
                 switch (message.referenceId) {
                 case "MyChartDataEvent":
-                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming chart data event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
-                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    console.debug("Heartbeat event #" + message.messageId + " received: " + JSON.stringify(message.payload));
                     break;
                 case "_resetsubscriptions":
                     // The server is not able to send messages and client needs to reset subscriptions by recreating them.
