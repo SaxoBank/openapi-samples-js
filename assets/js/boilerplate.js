@@ -625,7 +625,7 @@ function demonstrationHelper(settings) {
             // The JWT contains an header, payload and checksum
             // Payload is a base64 encoded JSON string
             payload = JSON.parse(window.atob(tokenArray[1]));
-            // An example about the different claims can be found here: authentication/token-explained/
+            // An example on getting the different claims can be found here: https://saxobank.github.io/openapi-samples-js/authentication/token-explained/
             return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
         } catch (error) {
             console.error("Error getting expiration time of token: " + token);
