@@ -49,10 +49,10 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const responseText = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
-                    if (responseJson.AccessRights.CanTrade) {
-                        console.log("You can take the Price Session!" + responseText);
+                    if (responseJson.Operations.indexOf("OAPI.OP.TakeTradeSession") === -1) {
+                        console.error("You are not allowed to upgrade your session to FullTradingAndChat." + responseText);
                     } else {
-                        console.error("You are not allowed to take the price session." + responseText);
+                        console.log("Session has operation 'OAPI.OP.TakeTradeSession':\nYou can upgrade your session to FullTradingAndChat!" + responseText);
                     }
                 });
             } else {
@@ -275,6 +275,32 @@
     }
 
     /**
+     * This is an example of requesting the active session capabilities.
+     * @return {void}
+     */
+    function getSessionCapabilities() {
+        fetch(
+            demo.apiUrl + "/root/v1/sessions/capabilities",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Response: " + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of making the current app primary, so real time prices can be shown. Other apps are notified and get delayed prices.
      * @return {void}
      */
@@ -398,6 +424,7 @@
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribe", "func": subscribe, "funcsToDisplay": [subscribe]},
+        {"evt": "click", "elmId": "idBtnGetSessionCapabilities", "func": getSessionCapabilities, "funcsToDisplay": [getSessionCapabilities]},
         {"evt": "click", "elmId": "idBtnBecomePrimary", "func": requestPrimaryPriceSession, "funcsToDisplay": [requestPrimaryPriceSession]},
         {"evt": "click", "elmId": "idBtnBecomePrimaryAgain", "func": requestPrimaryPriceSessionAgain, "funcsToDisplay": [requestPrimaryPriceSessionAgain]},
         {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription, demo.getSecondsUntilTokenExpiry]},
