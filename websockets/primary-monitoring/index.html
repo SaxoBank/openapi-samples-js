@@ -8,12 +8,12 @@
     <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Demo for Monitoring the Premium Price Feed Status</title>
+    <title>Demo for Monitoring the TradeLevel Status</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Monitor Premium Price Feed Status</h1>
-<h2 class="project-tagline">Subscribe to Status Events for Realtime Prices</h2>
+<h1 class="project-name">Monitor TradeLevel Status</h1>
+<h2 class="project-tagline">Subscribe to TradeLevel Status Update Events for Realtime Prices</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/websockets/primary-monitoring" class="btn">View on GitHub</a>
 </section>
@@ -28,19 +28,20 @@
     </select>
 </label>
 </div>
-<h1>Monitor 'Premium Price Feed' status</h1>
-Only one application is allowed to show real time quotes. This is the 'Primary' application. This example shows how to get and keep this status.<br />
-In order to monitor the status, you can subscribe to changes, or keep track of the heartbeat messages broadcasting the change as well.
+<h1>Upgrade and monitor 'TradeLevel' status</h1>
+Only one application is allowed to show real time quotes. This is the 'Primary' application and is handled by the TradeLevel status being 'FullTradingAndChat'. This example shows how to get and keep this status.<br />
+In order to monitor the status, you must subscribe to changes, or keep track of the heartbeat messages broadcasting the change as well.
 <br />
 <br />
 <label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
 <br />
 <br />
-<input type="button" class="action-button" value="Get access rights" id="idBtnGetAccessRights" />
+<input type="button" class="action-button" value="Get access rights" id="idBtnGetAccessRights" /><br />
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" />
-<input type="button" class="action-button" value="Subscribe to updates" id="idBtnSubscribe" />
-<input type="button" class="action-button" value="Take Price Session" id="idBtnBecomePrimary" />
+<input type="button" class="action-button" value="Subscribe to updates" id="idBtnSubscribe" /><br />
+<input type="button" class="action-button" value="Get Price Session" id="idBtnGetSessionCapabilities" />
+<input type="button" class="action-button" value="Take Price Session" id="idBtnBecomePrimary" /><br />
 Launch <a href="https://www.saxotrader.com/sim" target="_blank">SaxoTraderGO</a> as primary
 <input type="button" class="action-button" value="Take Price Session again" id="idBtnBecomePrimaryAgain" /><br />
 <input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" />

@@ -483,7 +483,7 @@
      */
     function getOrderDetails() {
         fetch(
-            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "/details?ClientKey=" + demo.user.clientKey,
+            demo.apiUrl + "/port/v1/orders/" + encodeURIComponent(demo.user.clientKey) + "/" + lastOrderId,
             {
                 "method": "GET",
                 "headers": {
@@ -493,7 +493,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    if (responseJson === null) {
+                    if (responseJson.Data.length === 0) {
                         console.error("The order wasn't found in the list of active orders. Is order " + lastOrderId + " still open?");
                     } else {
                         console.log("Order correlation: " + responseJson.CorrelationKey + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));

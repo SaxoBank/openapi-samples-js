@@ -47,11 +47,11 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Unsettled Amounts](account-history/unsettled-amounts/)
 7. Using websockets
    - [Monitor Orders and Positions](websockets/order-events-monitoring/)
-   - [Monitor Premium Price Feed Status](websockets/primary-monitoring/)
-   - [Realtime quotes](websockets/realtime-quotes/)
+   - [Monitor TradeLevel Status for Realtime Prices](websockets/primary-monitoring/)
+   - [Realtime Quotes](websockets/realtime-quotes/)
    - [Monitor Trade Messages](websockets/trade-messages/)
    - [Historical Market Data](websockets/historical-market-data/)
-   - [Options chain](websockets/options-chain/)
+   - [Options Chain](websockets/options-chain/)
    - [Protobuf protocol](websockets/protobuf/)
 
 ## Sample Apps

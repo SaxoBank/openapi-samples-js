@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -83,7 +83,6 @@
         }
     }
 
-
     /**
      * This is an example of subscribing to ENS, which notifies about corporate action activities: Announcement, update and payment
      * @return {void}
@@ -99,9 +98,9 @@
                 ],
                 "CorporateActionEventFilter": {
                     "CANotificationTypes": [
-                      "Announcement",
-                      "Update",
-                      "Payment"
+                        "Announcement",
+                        "Update",
+                        "Payment"
                     ]
                 },
                 "FieldGroups": [
@@ -110,7 +109,6 @@
                 ]
             }
         };
-        
         if (ensSubscription.lastSequenceId !== null) {
             // If specified and message with SequenceId available in ENS cache, streaming of events start from SequenceId.
             // If sequenceId not found in ENS system, Subscription Error with "Sequence id unavailable".
@@ -190,9 +188,7 @@
 
         const contextId = document.getElementById("idContextId").value;
         const urlPathEns = "/ens/v1/activities/subscriptions/" + encodeURIComponent(contextId);
-        removeSubscription(ensSubscription.isActive, urlPathEns, function () {
-            console.log("ENS unsubscribed.");
-        });
+        removeSubscription(ensSubscription.isActive, urlPathEns, callbackOnSuccess);
     }
 
     /**
@@ -201,6 +197,7 @@
      */
     function recreateSubscriptions() {
         unsubscribe(function () {
+            console.log("ENS unsubscribed.");
             if (ensSubscription.isActive) {
                 subscribeEns();  // Resubscribe and retrieve missed messages, if any
             }
@@ -257,11 +254,12 @@
         /**
          * This function processes the heartbeat messages, containing info about system health.
          * https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
+         * @param {number} messageId The message sequence number
          * @param {Array<Object>} payload The list of messages
          * @return {void}
          */
-        function handleHeartbeat(payload) {
-            // Heartbeat messages are sent every 20 seconds. If there is a minute without messages, this is an error.
+        function handleHeartbeat(messageId, payload) {
+            // Heartbeat messages are sent every "responseJson.InactivityTimeout" seconds. If there is a minute without messages, this indicates an error.
             if (Array.isArray(payload)) {
                 payload.forEach(function (heartbeatMessages) {
                     heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
@@ -276,7 +274,7 @@
                                 ensSubscription.isRecentDataReceived = true;
                                 break;
                             }
-                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
+                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString() + " (#" + messageId + ")");
                             break;
                         default:
                             console.error("Unknown heartbeat message received: " + JSON.stringify(payload));
@@ -425,11 +423,11 @@
                     // Remember the last SequenceId. This can be used to retrieve the gap after an unwanted disconnect.
                     getNewLastSequenceId(message.payload);
                     ensSubscription.isRecentDataReceived = true;
-                    console.log("Streaming corporate action activities from ENS " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming corporate action activities from ENS #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-                    handleHeartbeat(message.payload);
+                    handleHeartbeat(message.messageId, message.payload);
                     break;
                 case "_resetsubscriptions":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
@@ -456,21 +454,26 @@
     }
 
     /**
-     * This is an example of extending the websocket session, when a token refresh took place.
+     * This is an example of extending the websocket session, after a token refresh took place.
      * @return {void}
      */
     function extendSubscription() {
+        // Be sure to refresh the token first, using the OAuth2 server (not included in this sample).
+        // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
+        const token = document.getElementById("idBearerToken").value;
         fetch(
             demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    "Authorization": "Bearer " + token
                 }
             }
         ).then(function (response) {
+            const newExpirationTime = new Date();
+            newExpirationTime.setSeconds(newExpirationTime.getSeconds() + demo.getSecondsUntilTokenExpiry(token));
             if (response.ok) {
-                console.log("Subscription extended.");
+                console.log("Subscription extended until " + newExpirationTime.toLocaleString() + ".");
             } else {
                 demo.processError(response);
             }
@@ -480,20 +483,13 @@
     }
 
     /**
-     * When you want to use a different account, there is no need to setup a different connection. Just delete the existing subscription and open a new subscription.
-     * @return {void}
-     */
-    function switchAccount() {
-        recreateSubscriptions();
-    }
-
-    /**
      * This is an example of unsubscribing, including a reset of the state.
      * @return {void}
      */
     function unsubscribeAndResetState() {
         unsubscribe(function () {
             ensSubscription.isActive = false;
+            console.log("ENS unsubscribed.");
         });
     }
 
@@ -508,13 +504,13 @@
         window.clearInterval(ensSubscription.activityMonitor);
     }
 
-    document.getElementById("idContextId").value = "MyApp_CoAc_" + Date.now();  // Some unique 
+    document.getElementById("idContextId").value = "MyApp_CoAc_" + Date.now();  // Some unique value
     document.getElementById("idReferenceId").value = ensSubscription.reference; // Display reference id
     demo.setupEvents([
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribeEns", "func": subscribeEns, "funcsToDisplay": [subscribeEns]},
-        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription, demo.getSecondsUntilTokenExpiry]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);

@@ -72,6 +72,13 @@
     }
 
     function processDetailsListResponse(assetType, responseJson) {
+        // We have the Uic - collect the details
+        responseJson.Data.forEach(function (instrument) {
+            const filterOnExchangeId = document.getElementById("idCbxExchange").value;
+            if (filterOnExchangeId === "-" || filterOnExchangeId === instrument.Exchange.ExchangeId) {
+                instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId + ",\"" + instrument.Description.trim() + "\"");
+            }
+        });
         if (responseJson.hasOwnProperty("__next")) {
             // Recursively get next bulk
             console.debug("Found '__next': " + responseJson.__next);
@@ -81,13 +88,6 @@
                 "callback": processDetailsListResponse
             });
         }
-        // We have the Uic - collect the details
-        responseJson.Data.forEach(function (instrument) {
-            const filterOnExchangeId = document.getElementById("idCbxExchange").value;
-            if (filterOnExchangeId === "-" || filterOnExchangeId === instrument.Exchange.ExchangeId) {
-                instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId + ",\"" + instrument.Description.trim() + "\"");
-            }
-        });
     }
 
     function processOptionSearchResponse(assetType, responseJson) {

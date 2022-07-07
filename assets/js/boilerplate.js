@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.29
+ * boilerplate v1.30
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -410,6 +410,10 @@ function demonstrationHelper(settings) {
          */
         function getDataFromApi() {
 
+            /**
+             * For security reasons a welcome message can be displayed. The customer can verify if this is as expected.
+             * @return {void}
+             */
             function showWelcomeMessage(responseJson) {
                 const lastLoginTime = new Date(responseJson.LastLoginTime);
                 let message = "Welcome " + responseJson.Name + ".";
@@ -427,6 +431,19 @@ function demonstrationHelper(settings) {
                 console.log(message);
             }
 
+            /**
+             * Fire an event to let possible subscribers (in demo.js) know that accountKey, clientKey and userKey are available.
+             * @return {void}
+             */
+            function triggerDemoDataLoadedEvent() {
+                const demoDataLoadedEvent = new Event("demoDataLoaded");
+                document.dispatchEvent(demoDataLoadedEvent);
+            }
+
+            /**
+             * Response is received. It is a BATCH response (https://github.com/SaxoBank/openapi-samples-js/tree/main/batch-request). Unpack it, and populate required fields.
+             * @return {void}
+             */
             function processBatchResponse(responseArray) {
                 const requestIdMarker = "X-Request-Id:";
                 let requestId = "";
@@ -468,6 +485,7 @@ function demonstrationHelper(settings) {
                     }
                 });
                 console.log("The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId);
+                triggerDemoDataLoadedEvent();
                 functionToRun();  // Run the function
             }
 
@@ -552,7 +570,12 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function setupEvent(eventToSetup) {
-            document.getElementById(eventToSetup.elmId).addEventListener(eventToSetup.evt, function () {
+            const elm = (
+                eventToSetup.elmId === ""
+                ? document
+                : document.getElementById(eventToSetup.elmId)
+            );
+            elm.addEventListener(eventToSetup.evt, function () {
                 run(eventToSetup.func);
                 displaySourceCode(eventToSetup.funcsToDisplay);
             });
@@ -602,7 +625,7 @@ function demonstrationHelper(settings) {
             // The JWT contains an header, payload and checksum
             // Payload is a base64 encoded JSON string
             payload = JSON.parse(window.atob(tokenArray[1]));
-            // An example about the different claims can be found here: authentication/token-explained/
+            // An example on getting the different claims can be found here: https://saxobank.github.io/openapi-samples-js/authentication/token-explained/
             return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
         } catch (error) {
             console.error("Error getting expiration time of token: " + token);

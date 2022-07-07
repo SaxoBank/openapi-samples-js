@@ -221,11 +221,12 @@ function priceSubscriptionHelper(demo) {
         fetch(demo.apiUrl + "/root/v1/user", getFetchBody("GET")).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    if (responseJson.AccessRights.CanTakePriceSession) {
-                        console.log("You can request the primary price session. Proceeding to request..");
-                        subscribeToTradeLevelChanges();
+                    // More info about the user operations can be found @ https://saxobank.github.io/openapi-samples-js/basics/user-info/
+                    if (responseJson.Operations.indexOf("OAPI.OP.TakeTradeSession") === -1) {
+                        console.error("You are not allowed to upgrade your TradeLevel to FullTradingAndChat.");
                     } else {
-                        console.error("You are not allowed to request a primary session for realtime prices.");
+                        console.log("Session has operation 'OAPI.OP.TakeTradeSession':\nYou can upgrade your session to FullTradingAndChat!\n\nProceeding to request..");
+                        subscribeToTradeLevelChanges();
                     }
                 });
             } else {

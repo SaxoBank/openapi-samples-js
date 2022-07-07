@@ -594,7 +594,7 @@
      */
     function getOrderDetails() {
         fetch(
-            demo.apiUrl + "/port/v1/orders/" + lastOrderId + "/details?ClientKey=" + demo.user.clientKey,
+            demo.apiUrl + "/port/v1/orders/" + encodeURIComponent(demo.user.clientKey) + "/" + lastOrderId,
             {
                 "method": "GET",
                 "headers": {
@@ -604,7 +604,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    if (responseJson === null) {
+                    if (responseJson.Data.length === 0) {
                         console.error("The order wasn't found in the list of active orders. Is order " + lastOrderId + " still open?");
                     } else {
                         console.log("Response: " + JSON.stringify(responseJson, null, 4));
@@ -771,7 +771,7 @@
      */
     function getHistoricalEnsEvents() {
         const fromDate = new Date();
-        fromDate.setMinutes(fromDate.getMinutes() - 5);
+        fromDate.setMinutes(fromDate.getMinutes() - 10);
         fetch(
             demo.apiUrl + "/ens/v1/activities?Activities=Orders&FromDateTime=" + fromDate.toISOString(),
             {
@@ -783,7 +783,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    console.log("Found " + responseJson.Data.length + " events in the last 5 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
+                    console.log("Found " + responseJson.Data.length + " event(s) in the last 10 minutes:\n\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);

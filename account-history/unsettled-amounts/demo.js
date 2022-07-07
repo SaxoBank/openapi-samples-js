@@ -74,10 +74,10 @@
      * @returns {string}
      */
     function parseResponse(response, requestType, requestUrl) {
-        console.log(requestUrl)
+        console.log(requestUrl);
         let endpointDisplay = "Endpoint: \n\t" + requestUrl.split("?")[0].split("openapi")[1] + "?\nParameters: \n\t" + requestUrl.split("?")[1].replaceAll("&", "&\n\t") + "\n";
         if (requestType === "Instruments") {
-            return "Instruments for which amounts are owed\n" + endpointDisplay
+            return "Instruments for which amounts are owed\n" + endpointDisplay;
         }
 
         let details = [];
@@ -127,7 +127,7 @@
         if (amountTypeSource !== "All") {
             parameters += "&AmountTypeSource=" + amountTypeSource;
         }
-        let endpoint = demo.apiUrl + "/hist/v1/unsettledamounts" + parameters
+        let endpoint = demo.apiUrl + "/hist/v1/unsettledamounts" + parameters;
         fetch(
             endpoint,
             {
@@ -167,7 +167,7 @@
             console.log("You must select a Currency and AmountTypeId first.\nIf the dropdown is empty, execute the 'Get amounts by amount type' first");
             return;
         }
-        let endpoint = demo.apiUrl + "/hist/v1/unsettledamounts/instruments" + parameters
+        let endpoint = demo.apiUrl + "/hist/v1/unsettledamounts/instruments" + parameters;
         fetch(
             endpoint,
             {
@@ -261,15 +261,12 @@
         });
     }
 
-
-
-
     demo.setupEvents([
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByCurrency", "func": getUnsettledAmountsByCurrencyClick, "funcsToDisplay": [getUnsettledAmountsByCurrencyClick, getUnsettledAmountsByCurrency] },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByAmountType", "func": getUnsettledAmountsByAmountTypeClick, "funcsToDisplay": [getUnsettledAmountsByAmountTypeClick, getUnsettledAmountsByCurrency] },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByInstruments", "func": getUnsettledAmountsByInstruments, "funcsToDisplay": [getUnsettledAmountsByInstruments] },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsByExchange", "func": getUnsettledAmountsByExchange, "funcsToDisplay": [getUnsettledAmountsByExchange] },
-        { "evt": "click", "elmId": "idBtnGetUnsettledAmountsForExchange", "func": getUnsettledAmountsForExchange, "funcsToDisplay": [getUnsettledAmountsForExchange] }
+        {"evt": "click", "elmId": "idBtnGetUnsettledAmountsByCurrency", "func": getUnsettledAmountsByCurrencyClick, "funcsToDisplay": [getUnsettledAmountsByCurrencyClick, getUnsettledAmountsByCurrency]},
+        {"evt": "click", "elmId": "idBtnGetUnsettledAmountsByAmountType", "func": getUnsettledAmountsByAmountTypeClick, "funcsToDisplay": [getUnsettledAmountsByAmountTypeClick, getUnsettledAmountsByCurrency]},
+        {"evt": "click", "elmId": "idBtnGetUnsettledAmountsByInstruments", "func": getUnsettledAmountsByInstruments, "funcsToDisplay": [getUnsettledAmountsByInstruments]},
+        {"evt": "click", "elmId": "idBtnGetUnsettledAmountsByExchange", "func": getUnsettledAmountsByExchange, "funcsToDisplay": [getUnsettledAmountsByExchange]},
+        {"evt": "click", "elmId": "idBtnGetUnsettledAmountsForExchange", "func": getUnsettledAmountsForExchange, "funcsToDisplay": [getUnsettledAmountsForExchange]}
     ]);
     demo.displayVersion("hist");
 }());

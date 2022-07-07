@@ -468,11 +468,12 @@
         /**
          * This function processes the heartbeat messages, containing info about system health.
          * https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
+         * @param {number} messageId The message sequence number
          * @param {Array<Object>} payload The list of messages
          * @return {void}
          */
-        function handleHeartbeat(payload) {
-            // Heartbeat messages are sent every 20 seconds. If there is a minute without messages, this is an error.
+        function handleHeartbeat(messageId, payload) {
+            // Heartbeat messages are sent every "responseJson.InactivityTimeout" seconds. If there is a minute without messages, this indicates an error.
             if (Array.isArray(payload)) {
                 payload.forEach(function (heartbeatMessages) {
                     heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
@@ -496,7 +497,7 @@
                                     }
                                 });
                             }
-                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
+                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString() + " (#" + messageId + ")");
                             break;
                         default:
                             console.error("Unknown heartbeat message received: " + JSON.stringify(payload));
@@ -572,7 +573,7 @@
          */
         function handlePriceUpdate(message, bundleId, bundleCount) {
             const subscription = getSubscriptionByReference(orderTicketSubscriptions, message.referenceId);
-            console.log("Individual price update event " + message.messageId + " received (" + bundleId + " of " + bundleCount + ") with reference id " + message.referenceId + ":\nUic " + subscription.uic + " " + subscription.assetType + "\n" + JSON.stringify(message.payload, null, 4));
+            console.log("Individual price update event #" + message.messageId + " received (" + bundleId + " of " + bundleCount + ") with reference id " + message.referenceId + ":\nUic " + subscription.uic + " " + subscription.assetType + "\n" + JSON.stringify(message.payload, null, 4));
         }
 
         /**
@@ -695,11 +696,11 @@
                     // Notice that the format of the messages of the two list endpoints is different.
                     // The /prices contain no Uic, that must be derived from the referenceId.
                     // Since /infoprices is about lists, it always contains the Uic.
-                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference id " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                    console.log("Price list update event #" + message.messageId + " received in bundle of " + messages.length + " (reference id " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-                    handleHeartbeat(message.payload);
+                    handleHeartbeat(message.messageId, message.payload);
                     break;
                 case "_resetsubscriptions":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
@@ -714,7 +715,7 @@
                     break;
                 case tradeLevelSubscription.referenceId:
                     handleTradeLevelMessage(message.payload);
-                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming trade level change event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 default:
                     orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
@@ -742,21 +743,26 @@
     }
 
     /**
-     * This is an example of extending the websocket session, when a token refresh took place.
+     * This is an example of extending the websocket session, after a token refresh took place.
      * @return {void}
      */
     function extendSubscription() {
+        // Be sure to refresh the token first, using the OAuth2 server (not included in this sample).
+        // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
+        const token = document.getElementById("idBearerToken").value;
         fetch(
             demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    "Authorization": "Bearer " + token
                 }
             }
         ).then(function (response) {
+            const newExpirationTime = new Date();
+            newExpirationTime.setSeconds(newExpirationTime.getSeconds() + demo.getSecondsUntilTokenExpiry(token));
             if (response.ok) {
-                console.log("Subscription extended.");
+                console.log("Subscription extended until " + newExpirationTime.toLocaleString() + ".");
             } else {
                 demo.processError(response);
             }
@@ -902,11 +908,12 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    if (responseJson.AccessRights.CanTakePriceSession) {
-                        console.log("You can request the primary price session. Proceeding to request..");
-                        subscribeToTradeLevelChanges();
+                    // More info about the user operations can be found @ https://saxobank.github.io/openapi-samples-js/basics/user-info/
+                    if (responseJson.Operations.indexOf("OAPI.OP.TakeTradeSession") === -1) {
+                        console.error("You are not allowed to upgrade your TradeLevel to FullTradingAndChat.");
                     } else {
-                        console.error("You are not allowed to request a primary session for realtime prices.");
+                        console.log("Session has operation 'OAPI.OP.TakeTradeSession':\nYou can upgrade your session to FullTradingAndChat!\n\nProceeding to request..");
+                        subscribeToTradeLevelChanges();
                     }
                 });
             } else {
@@ -1047,7 +1054,7 @@
         {"evt": "click", "elmId": "idBtnSubscribeList", "func": subscribeList, "funcsToDisplay": [subscribeList]},
         {"evt": "click", "elmId": "idBtnSubscribeOrderTicket", "func": subscribeOrderTicket, "funcsToDisplay": [subscribeOrderTicket]},
         {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount, recreateSubscriptions]},
-        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription, demo.getSecondsUntilTokenExpiry]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState, unsubscribe]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);
