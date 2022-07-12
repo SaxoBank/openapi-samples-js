@@ -200,8 +200,15 @@
             ? " (" + currencyObject.Symbol + ")"
             : ""
         ) + "\n";
-        details += "TimeZone: " + timeZoneObject.DisplayName + " (" + timeZoneObject.TimeZoneAbbreviation + ")\n";
-        details += "\nExchange Sessions (converted to your time, " + (
+        if (timeZoneObject.DisplayName !== "") {
+            details += "TimeZone: " + timeZoneObject.DisplayName + " ";
+        }
+        if (timeZoneObject.TimeZoneAbbreviation !== "") {
+            details += "(" + timeZoneObject.TimeZoneAbbreviation + ")";
+        } else {
+            details += "ZoneName: " + timeZoneObject.ZoneName;
+        }
+        details += "\n\nExchange Sessions (converted to your time, " + (
             exchangeObject.AllDay
             ? ""
             : "not "
