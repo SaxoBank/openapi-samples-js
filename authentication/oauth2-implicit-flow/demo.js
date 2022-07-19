@@ -45,10 +45,11 @@
         const h2 = document.createElement("h2");
         const a = document.createElement("a");
         h2.appendChild(document.createTextNode("Follow this link to continue with step 2:"));
-        a.appendChild(document.createTextNode(url));
+        a.appendChild(document.createTextNode(demo.authUrl + urlParams));
         a.title = "Click on the link to sign in with your SIM user.";
         a.href = demo.authUrl + urlParams;
         container.innerText = "";
+        container.appendChild(h2);
         container.appendChild(a);
     }
 
