@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper CryptoJS */
 
 (function () {
@@ -8,7 +8,7 @@
         "javaScriptElm": document.getElementById("idJavaScript"),
         "footerElm": document.getElementById("idFooter")
     });
-    let codeVerifier = "";
+    let codeVerifier;
     let codeChallenge;
 
     /**
@@ -18,7 +18,8 @@
     function testRedirectUrl() {
         const redirectUrl = document.getElementById("idEdtRedirectUrl").value;
         fetch(
-            redirectUrl, {
+            redirectUrl,
+            {
                 "method": "GET",
                 "mode": "no-cors",
                 "cache": "reload"
@@ -37,17 +38,18 @@
     function generateCodeVerifier() {
 
         function base64UrlEncode(str) {
-            return str.toString(CryptoJS.enc.Base64).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+            return str.toString(CryptoJS.enc.Base64).replace(/\+/g, "-").replace(/\//g, "_").replace(/\=/g, "");
         }
 
         const allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         let i;
+        codeVerifier = "";
         for (i = 0; i < 32; i += 1) {
             codeVerifier += allowedChars.charAt(Math.floor(Math.random() * allowedChars.length));
         }
         codeVerifier = base64UrlEncode(codeVerifier);
         codeChallenge = base64UrlEncode(CryptoJS.SHA256(codeVerifier));
-        console.log("Verifier: " + codeVerifier + "\r\nChallenge: " + codeChallenge);
+        console.log("Verifier: " + codeVerifier + "\nChallenge: " + codeChallenge);
     }
 
     /**
@@ -59,9 +61,9 @@
         // It is passed as base64 encoded string
         // https://auth0.com/docs/protocols/oauth2/oauth-state
         const stateString = window.btoa(JSON.stringify({
-                // Token is a random number - other data can be added as well
-                "csrfToken": Math.random(),
-                "state": document.getElementById("idEdtState").value
+            // Token is a random number - other data can be added as well
+            "csrfToken": Math.random(),
+            "state": document.getElementById("idEdtState").value
         }));
         let url = demo.authUrl +
             "?client_id=" + document.getElementById("idEdtAppKey").value +
@@ -73,7 +75,7 @@
         if (document.getElementById("idCbxCulture").value !== "-") {
             url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
         }
-        document.getElementById("idResponse").innerHTML = '<h2>Follow this link to continue with step 2:</h2><a href="' + url + '" target="_blank">' + url + "</a><br /><br />Remember the verifier: " + codeVerifier;
+        document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\" target=\"_blank\">" + url + "</a><br /><br />Remember the verifier: " + codeVerifier;
     }
 
     demo.setupEvents([
