@@ -36,6 +36,23 @@
     }
 
     /**
+     * Insert the link in the response element.
+     * @param {string} url The URL to be added as link.
+     * @return {void}
+     */
+    function displayUrl(url) {
+        const container = document.getElementById("idResponse");
+        const h2 = document.createElement("h2");
+        const a = document.createElement("a");
+        h2.appendChild(document.createTextNode("Follow this link to continue with step 2:"));
+        a.appendChild(document.createTextNode(url));
+        a.title = "Click on the link to sign in with your SIM user.";
+        a.href = url;
+        container.innerText = "";
+        container.appendChild(a);
+    }
+
+    /**
      * Create a link to the OAuth2 server, including the client_id of the app, a state and the flow.
      * @return {void}
      */
@@ -57,10 +74,11 @@
         if (document.getElementById("idCbxCulture").value !== "-") {
             url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
         }
-        document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\">" + url + "</a>";
+        displayUrl(url);
+        //document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\">" + url + "</a>";
     }
 
     demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnGenerateLink", "func": generateLoginLink, "funcsToDisplay": [generateLoginLink]}
+        {"evt": "click", "elmId": "idBtnGenerateLink", "func": generateLoginLink, "funcsToDisplay": [generateLoginLink, displayUrl]}
     ]);
 }());
