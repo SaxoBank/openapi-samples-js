@@ -37,17 +37,17 @@
 
     /**
      * Insert the link in the response element.
-     * @param {string} url The URL to be added as link.
+     * @param {string} urlParams The URL to be added as link.
      * @return {void}
      */
-    function displayUrl(url) {
+    function displayUrl(urlParams) {
         const container = document.getElementById("idResponse");
         const h2 = document.createElement("h2");
         const a = document.createElement("a");
         h2.appendChild(document.createTextNode("Follow this link to continue with step 2:"));
         a.appendChild(document.createTextNode(url));
         a.title = "Click on the link to sign in with your SIM user.";
-        a.href = url;
+        a.href = demo.authUrl + urlParams;
         container.innerText = "";
         container.appendChild(a);
     }
@@ -66,15 +66,15 @@
             "csrfToken": csrfToken,
             "state": document.getElementById("idEdtState").value
         }));
-        let url = demo.authUrl +
+        let urlParams = 
             "?client_id=" + document.getElementById("idEdtAppKey").value +
             "&response_type=token" +
-            "&state=" + stateString +
+            "&state=" + encodeURIComponent(stateString) +
             "&redirect_uri=" + encodeURIComponent(document.getElementById("idEdtRedirectUrl").value);
         if (document.getElementById("idCbxCulture").value !== "-") {
-            url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
+            urlParams += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
         }
-        displayUrl(url);
+        displayUrl(urlParams);
         //document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\">" + url + "</a>";
     }
 
