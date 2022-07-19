@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -12,6 +12,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
+    const invalidBearerToken = "ignore";
 
     /**
      * Example of handling a 404 error.
@@ -42,7 +43,7 @@
             {
                 "method": "GET",
                 "headers": {
-                    "Authorization": "Bearer is.invalid.here"
+                    "Authorization": "Bearer " + invalidBearerToken
                 }
             }
         ).then(function (response) {
