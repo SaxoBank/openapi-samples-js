@@ -68,7 +68,7 @@
             "state": document.getElementById("idEdtState").value
         }));
         let urlParams = 
-            "?client_id=" + document.getElementById("idEdtAppKey").value +
+            "?client_id=" + encodeURIComponent(document.getElementById("idEdtAppKey").value) +
             "&response_type=token" +
             "&state=" + encodeURIComponent(stateString) +
             "&redirect_uri=" + encodeURIComponent(document.getElementById("idEdtRedirectUrl").value);
