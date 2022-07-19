@@ -12,7 +12,6 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    const invalidBearerToken = "ignore";
 
     /**
      * Example of handling a 404 error.
@@ -38,6 +37,7 @@
      * @return {void}
      */
     function trigger401Unauthorized() {
+        const invalidBearerToken = Math.random();
         fetch(
             demo.apiUrl + "/port/v1/orders",
             {
