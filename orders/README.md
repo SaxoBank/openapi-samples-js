@@ -2,6 +2,4 @@
 
 After finding an instrument, here you find examples on placing orders.
 
-More on order placement: https://www.developer.saxo/openapi/learn/order-placement
-
-Documentation: https://www.developer.saxo/openapi/learn/order-placement
+More on order placement: <https://www.developer.saxo/openapi/learn/order-placement>
