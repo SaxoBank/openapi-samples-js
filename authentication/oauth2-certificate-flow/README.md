@@ -9,7 +9,7 @@ JSON Web Token (JWT) is used to securely transmit information between the applic
 In order to keep secrets private, JavaScript is not a good language for this flow, since everything is available via the browser.
 However, there is a [NodeJs sample](https://github.com/SaxoBank/openapi-samples-js/tree/main/authentication/oauth2-certificate-flow/example_nodejs) and [one for PHP](https://github.com/SaxoBank/openapi-samples-js/tree/main/authentication/oauth2-certificate-flow/example_php).
 
-A tutorial on this grant type: https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication
+A tutorial on this grant type: <https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication>
 
 Steps:
 1. You already have an account on SIM. With the CBA you'll sign in with this account.

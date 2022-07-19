@@ -4,4 +4,4 @@ This is a demonstration on how to place a stock order with different conditions 
 
 This sample can be used for bonds, leveraged products and SRDs as well.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/orders/stocks/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/orders/stocks/>

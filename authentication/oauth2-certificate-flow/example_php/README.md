@@ -6,7 +6,7 @@ JSON Web Token (JWT) is used to securely transmit information between the applic
 
 > **_NOTE:_** The CBA flow is not available for most apps. You need to contact SaxoBank to apply for approval.
 
-A tutorial on this grant type: https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication
+A tutorial on this grant type: <https://www.developer.saxo/openapi/learn/oauth-certificate-based-authentication>
 
 Steps:
 1. You already have an account on SIM. With the CBA you'll sign in with this account.

@@ -251,7 +251,7 @@
                 "?client_id=1a6eb56ced7c4e04b1467e7e9be9bff7" +
                 "&response_type=token" +
                 "&prompt=none" +  // This token prevents putting an x-frame-options header to "deny" by the server, so it can be loaded into a frame
-                "&state=" + stateString +
+                "&state=" + encodeURIComponent(stateString) +
                 "&redirect_uri=" + encodeURIComponent(getRedirectUrl());
             return url;
         }

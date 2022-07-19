@@ -2,4 +2,4 @@
 
 This is a demonstration on how to upload documents using the required base64 encoded strings.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/portfolio/upload-documents/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/portfolio/upload-documents/>

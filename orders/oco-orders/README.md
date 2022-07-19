@@ -2,4 +2,4 @@
 
 This is a demonstration on how to create a One-Cancels-the-Other (OCO) Order.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/orders/oco-orders/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/orders/oco-orders/>
