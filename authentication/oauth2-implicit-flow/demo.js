@@ -49,7 +49,7 @@
             "csrfToken": csrfToken,
             "state": document.getElementById("idEdtState").value
         }));
-        let url = 
+        let url = demo.authUrl +
             "?client_id=" + encodeURIComponent(document.getElementById("idEdtAppKey").value) +
             "&response_type=token" +
             "&state=" + encodeURIComponent(stateString) +
