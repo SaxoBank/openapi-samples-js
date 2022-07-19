@@ -20,6 +20,7 @@
     function hasErrors(hash) {
         const urlParams = new URLSearchParams(hash);
         const error = urlParams.get("error");
+        // Example: ?error=access_denied&error_description=Disclaimers+not+accepted+during+login.&state=eyJjc3Jm
         if (error === null) {
             console.log("No error found.");
             return false;

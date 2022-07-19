@@ -20,7 +20,7 @@ $apiUrl = 'https://gateway.saxobank.com/sim/openapi';  // On production, this is
 
 /**
  * The PEM file is created using OpenSSL:
- * openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
+ * openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem.php -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
  *
  * Make sure this file cannot be downloaded via internet!
  * Store it in a folder not accessible from outside, or use the PHP extension so it cannot be downloaded.

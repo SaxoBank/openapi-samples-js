@@ -37,7 +37,7 @@
      * @return {void}
      */
     function trigger401Unauthorized() {
-        const invalidBearerToken = Math.random();
+        const invalidBearerToken = Math.random();  // This token is intentionally invalid.
         fetch(
             demo.apiUrl + "/port/v1/orders",
             {

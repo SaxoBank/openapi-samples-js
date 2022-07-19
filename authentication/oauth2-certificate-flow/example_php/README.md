@@ -17,7 +17,7 @@ Steps:
 6. Convert the p12 certificate to a PEM file by using this command (it is renamed to .PHP, to prevent it from being downloaded in case you mistakenly(!) place it on a webserver):
 
 ```cmd
-  openssl pkcs12 -in 6B000007CA3413AA65FEA7F1230002000007CA.p12 -out private-key-with-cert.php -clcerts -nodes -passin pass:GdhqABCD
+  openssl pkcs12 -in 6B000007CA3413AA65FEA7F1230002000007CA.p12 -out private-key-with-cert.pem.php -clcerts -nodes -passin pass:GdhqABCD
 ```
 
 The password is provided when generating the p12 file.

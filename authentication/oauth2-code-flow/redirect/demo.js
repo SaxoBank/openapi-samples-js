@@ -18,6 +18,7 @@
     function checkErrors() {
         const urlParams = new window.URLSearchParams(window.location.search);
         const error = urlParams.get("error");
+        // Example: ?error=access_denied&error_description=Disclaimers+not+accepted+during+login.&state=eyJjc3Jm
         if (error === null) {
             console.log("No error found.");
         } else {
