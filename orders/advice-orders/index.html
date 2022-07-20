@@ -69,11 +69,9 @@ See other samples for <a href="../../instruments/instrument-search/">finding ins
 </label>
 <textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
 {
-    "Triggers": [{
-        "TriggerType": "Advice",
-        "ApprovalAction": "RequestApproval",
-        "ExternalReference": "CorrelationToAdvice"
-    }],
+    "WaitForApproval": true,
+    "AdviceReference": "CorrelationToExternalAdvice",
+    "ExternalReference": "CorrelationToExternalOrder",
     "AccountKey": "(added on first request)",
     "BuySell": "Buy",
     "Amount": 100,
@@ -83,7 +81,6 @@ See other samples for <a href="../../instruments/instrument-search/">finding ins
     "OrderDuration": {
         "DurationType": "DayOrder"
     },
-    "ExternalReference": "MyOrderCorrelationId",
     "ManualOrder": true
 }
 </textarea>
