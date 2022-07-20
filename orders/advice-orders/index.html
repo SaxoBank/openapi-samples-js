@@ -55,18 +55,6 @@ See other samples for <a href="../../instruments/instrument-search/">finding ins
 <br />
 <div>
 <div class="input-field">New order advice:<br />
-<label>
-  AdviceCreateAction: <select class="selector" id="idCbxAdviceCreateAction">
-    <!-- Create  (done by advisor). The order gets a 'Parked' state, but the advice is not effective yet. -->
-    <option value="Initial">Initial</option>
-    <!-- Advice the customer to place the order (done by advisor). The order gets a 'Parked' state. -->
-    <option value="RequestApproval" selected>RequestApproval</option>
-    <!-- Place the advised order (done by advisor on behalf of the client). The order gets an 'Active' state, like a regular order. End clients can use this action to activate the parked order by modifying it. -->
-    <option value="Approve">Approve</option>
-    <!-- End customer doesn't want to follow the advice. Order will be canceled directly, but response contains an OrderId. -->
-    <option value="Abort">Abort</option>
-  </select>
-</label>
 <textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
 {
     "WaitForApproval": true,
@@ -94,29 +82,31 @@ See other samples for <a href="../../instruments/instrument-search/">finding ins
 <label>
   AdviceModifyAction: <select class="selector" id="idCbxAdviceModifyAction">
     <!-- Advice the customer to place the order (done by advisor). This can be done when the advice had an Initial state. The order keept the 'Parked' state. -->
-    <option value="RequestApproval">RequestApproval</option>
-    <!-- Place the advised order (done by end client). The order gets an 'Active' state, like a regular order. -->
-    <option value="Approve" selected>Approve</option>
+    <option value="RequestApproval" selected>RequestApproval</option>
+    <!-- Place the advised order (done by end client, or by advisor on behalf of the client). The order gets an 'Active' state, like a regular order. -->
+    <option value="Approve">Approve</option>
   </select>
 </label>
-<textarea class="json-input" id="idChangeOrderObject" rows="13" wrap="off" wrap="off">
-This edit will be populated after selecting
-an order, or creating a new one.
+<textarea class="json-input" id="idChangeAdviceObject" rows="13" wrap="off" wrap="off">
+{
+    "AdviceAction": "RequestApproval",
+    "RelatedOrderIds": []
+}
 </textarea>
 <input type="button" class="action-button" value="Get order details" id="idBtnGetOrderDetails" />
 <br />
-<input type="button" class="action-button" value="Modify order advice" id="idBtnModifyLastOrder" />
+<input type="button" class="action-button" value="Update order advice" id="idBtnUpdateAdvice" />
 </div>
 </div>
 <br />
 <label>
   AdviceDeleteAction: <select class="selector" id="idCbxAdviceDeleteAction">
     <!-- Cancel the advice (done by advisor). -->
-    <option value="CancelAdvice">CancelAdvice</option>
+    <option value="RevokeAdvice">RevokeAdvice</option>
     <!-- End customer doesn't want to follow the advice. Can be done by advisor as well, on behalf of the client. -->
     <option value="RejectAdvice">RejectAdvice</option>
   </select>
-<input type="button" class="action-button" value="Cancel order advice" id="idBtnCancelLastOrder" />
+<input type="button" class="action-button" value="Cancel order advice" id="idBtnCancelOrderAdvice" />
 </label>
 <br />
 <br />

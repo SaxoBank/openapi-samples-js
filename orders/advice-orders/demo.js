@@ -17,15 +17,10 @@
 
     /**
      * Helper function to convert the json string to an object, with error handling.
-     * @param {boolean} isFromNewOrderEdit Use new order object, or the one for order modifications.
      * @return {Object} The newOrderObject from the input field - null if invalid
      */
-    function getOrderObjectFromJson(isFromNewOrderEdit) {
-        const orderObjectId = (
-            isFromNewOrderEdit
-            ? "idNewOrderObject"
-            : "idChangeOrderObject"
-        );
+    function getOrderObjectFromJson() {
+        const orderObjectId = "idNewOrderObject";
         const accountKey = document.getElementById("idCbxManagedAccountKey").value;
         let newOrderObject = null;
         try {
@@ -51,6 +46,20 @@
     }
 
     /**
+     * Helper function to convert the json string to an object, with error handling.
+     * @return {Object} The newAdviceObject from the input field - null if invalid
+     */
+    function getAdviceObjectFromJson() {
+        let newAdviceObject = null;
+        try {
+            newAdviceObject = JSON.parse(document.getElementById("idChangeAdviceObject").value);
+        } catch (e) {
+            console.error(e);
+        }
+        return newAdviceObject;
+    }
+
+    /**
      * Add an accountKey to the list.
      * @param {string} accountKey The value.
      * @param {string} description Description to display.
@@ -70,7 +79,7 @@
      * @return {void}
      */
     function updateNewOrderEdit() {
-        getOrderObjectFromJson(true);
+        getOrderObjectFromJson();
     }
 
     /**
@@ -331,7 +340,7 @@
             }
         }
 
-        const newOrderObject = getOrderObjectFromJson(true);
+        const newOrderObject = getOrderObjectFromJson();
         const accountKey = document.getElementById("idCbxManagedAccountKey").value;
         fetch(
             demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(accountKey) + "&FieldGroups=OrderSetting",
@@ -403,7 +412,7 @@
             return errorMessage;
         }
 
-        const newOrderObject = getOrderObjectFromJson(true);
+        const newOrderObject = getOrderObjectFromJson();
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
             demo.apiUrl + "/trade/v2/orders/precheck",
@@ -469,9 +478,10 @@
     function placeNewOrder() {
         const headersObject = {
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-            "Content-Type": "application/json; charset=utf-8"
+            "Content-Type": "application/json; charset=utf-8",
+            "X-Request-ID": Math.random()  // This prevents error 409 (Conflict) from identical previews within 15 seconds
         };
-        const newOrderObject = getOrderObjectFromJson(true);
+        const newOrderObject = getOrderObjectFromJson();
         fetch(
             demo.apiUrl + "/trade/v2/orders",
             {
@@ -489,7 +499,7 @@
                         : "\nX-Request-ID response header: " + xRequestId
                     ));
                     addOrderToOrdersList(responseJson.OrderId, "New order " + responseJson.OrderId).value = responseJson.OrderId;
-                    getOrderDetailsAndUpdateModifyOrderEdit();
+                    getOrderDetails();
                 });
             } else {
                 console.debug(response);
@@ -523,22 +533,28 @@
     }
 
     /**
-     * Retrieve order details and display them in the PATCH /order editor.
+     * Helper function to determine if OrderId is a number.
+     * @param {string} n The value.
+     * @return {boolean} True is the parameter is numeric.
+     */
+    function isNumeric(n) {
+        // Source https://stackoverflow.com/questions/18082/validate-decimal-numbers-in-javascript-isnumeric
+        return !Number.isNaN(parseFloat(n)) && Number.isFinite(n);
+    }
+
+    /**
+     * Retrieve order details.
      * @return {void}
      */
-    function getOrderDetailsAndUpdateModifyOrderEdit() {
-
-        function copyOptionalProperty(source, dest, propertyName) {
-            if (source.hasOwnProperty("propertyName")) {
-                dest[propertyName] = source[propertyName];
-            }
-        }
-
-        const accountKey = document.getElementById("idCbxManagedAccountKey").value;
+    function getOrderDetails() {
         const clientKey = getClientKeyOfSelectedAccount();
         const orderId = document.getElementById("idCbxOrderId").value;
+        if (isNumeric(orderId)) {
+            console.error("An OrderId must be selected first.");
+            return;
+        }
         fetch(
-            demo.apiUrl + "/port/v1/orders/" + encodeURIComponent(demo.user.clientKey) + "/" + orderId,
+            demo.apiUrl + "/port/v1/orders/" + encodeURIComponent(clientKey) + "/" + orderId,
             {
                 "method": "GET",
                 "headers": {
@@ -548,22 +564,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let orderObject;
-                    if (responseJson.Data.length === 0) {
-                        console.error("The order wasn't found in the list of active orders. Is order " + orderId + " still open?");
-                    } else {
-                        // For the PATCH a limited set of fields is required. Feel free to add those fields you'd like to update.
-                        orderObject = {
-                            "AccountKey": accountKey,
-                            "OrderId": orderId,
-                            "AssetType": responseJson.AssetType,
-                            "OrderType": responseJson.OpenOrderType,
-                            "OrderDuration": responseJson.Duration
-                        };
-                        copyOptionalProperty(responseJson, orderObject, "Triggers");
-                        document.getElementById("idChangeOrderObject").value = JSON.stringify(orderObject, null, 4);
-                        console.log("Response: " + JSON.stringify(responseJson, null, 4));
-                    }
+                    console.log("Response: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -574,31 +575,31 @@
     }
 
     /**
-     * This is an example of updating a single leg order.
+     * This is an example of updating an advice.
      * @return {void}
      */
-    function modifyLastOrder() {
-        const newOrderObject = getOrderObjectFromJson(false);
+    function updateAdvice() {
+        const orderId = document.getElementById("idCbxOrderId").value;
+        const newAdviceObject = getAdviceObjectFromJson();
         const headersObject = {
             "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
             "Content-Type": "application/json; charset=utf-8"
         };
+        if (isNumeric(orderId)) {
+            console.error("An OrderId must be selected first.");
+            return;
+        }
         fetch(
-            demo.apiUrl + "/trade/v2/orders",
+            demo.apiUrl + "/trade/v2/orders/" + orderId + "/advice",
             {
-                "method": "PATCH",
+                "method": "PUT",
                 "headers": headersObject,
-                "body": JSON.stringify(newOrderObject)
+                "body": JSON.stringify(newAdviceObject)
             }
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const xRequestId = response.headers.get("X-Request-ID");
-                    console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4) + (
-                        xRequestId === null
-                        ? ""
-                        : "\nX-Request-ID response header: " + xRequestId
-                    ));
+                    console.log("Successful request:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 // If you get a 404 NotFound, the order might already be executed!
@@ -610,16 +611,19 @@
     }
 
     /**
-     * This is an example of removing an order from the book.
+     * This is an example of cancelling an advice, leading to an order cancel.
      * @return {void}
      */
-    function cancelLastOrder() {
+    function cancelOrderAdvice() {
         const adviceDeleteAction = document.getElementById("idCbxAdviceDeleteAction").value;
         const orderId = document.getElementById("idCbxOrderId").value;
-        const accountKey = document.getElementById("idCbxManagedAccountKey").value;
-        // DELETE /trade/v2/orders/123?AdviceDeleteAction=CancelAdvice
+        if (isNumeric(orderId)) {
+            console.error("An OrderId must be selected first.");
+            return;
+        }
+        // DELETE /trade/v2/orders/123/advice?AdviceDeleteAction=RejectAdvice
         fetch(
-            demo.apiUrl + "/trade/v2/orders/" + orderId + "?AccountKey=" + encodeURIComponent(accountKey) + "&AdviceDeleteAction=" + adviceDeleteAction,
+            demo.apiUrl + "/trade/v2/orders/" + orderId + "/advice?AdviceDeleteAction=" + adviceDeleteAction,
             {
                 "method": "DELETE",
                 "headers": {
@@ -629,7 +633,7 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    // Response must have an OrderId
+                    // Response will echo the OrderId
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -689,11 +693,15 @@
                 response.json().then(function (responseJson) {
                     // Empty order list:
                     clearCombobox("idCbxOrderId");
-                    responseJson.Data.forEach(function (order) {
-                        addOrderToOrdersList(order.OrderId, order.OrderId + " (" + order.Status + ")");
-                    });
-                    getOrderDetailsAndUpdateModifyOrderEdit();
-                    console.log("All open orders for account '" + accountKey + "'.\n\n" + JSON.stringify(responseJson, null, 4));
+                    if (responseJson.Data.length === 0) {
+                        console.error("No orders found on account " + accountKey);
+                    } else {
+                        responseJson.Data.forEach(function (order) {
+                            addOrderToOrdersList(order.OrderId, order.OrderId + " (" + order.Status + ")");
+                        });
+                        getOrderDetails();
+                        console.log("All open orders for account '" + accountKey + "'.\n\n" + JSON.stringify(responseJson, null, 4));
+                    }
                 });
             } else {
                 demo.processError(response);
@@ -704,50 +712,28 @@
     }
 
     /**
-     * Reflect the new status in the new order advice edit.
-     * @return {void}
-     */
-    function updateCreateOrderEdit() {
-        const newStatus = document.getElementById("idCbxAdviceCreateAction").value;
-        const orderObject = getOrderObjectFromJson(true);
-        if (!orderObject.hasOwnProperty("Triggers")) {
-            orderObject.Triggers = [{
-                "TriggerType": "Advice"
-            }];
-        }
-        orderObject.Triggers[0].ApprovalAction = newStatus;
-        document.getElementById("idNewOrderObject").value = JSON.stringify(orderObject, null, 4);
-    }
-
-    /**
      * Reflect the new status in the modify order advice edit.
      * @return {void}
      */
     function updateModifyOrderEdit() {
         const newStatus = document.getElementById("idCbxAdviceModifyAction").value;
-        const orderObject = getOrderObjectFromJson(false);
-        if (!orderObject.hasOwnProperty("Triggers")) {
-            orderObject.Triggers = [{
-                "TriggerType": "Advice"
-            }];
-        }
-        orderObject.Triggers[0].ApprovalAction = newStatus;
-        document.getElementById("idChangeOrderObject").value = JSON.stringify(orderObject, null, 4);
+        const adviceObject = getAdviceObjectFromJson();
+        adviceObject.AdviceAction = newStatus;
+        document.getElementById("idChangeAdviceObject").value = JSON.stringify(adviceObject, null, 4);
     }
 
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxManagedAccountKey", "func": updateNewOrderEdit, "funcsToDisplay": [updateNewOrderEdit]},
-        {"evt": "change", "elmId": "idCbxOrderId", "func": getOrderDetailsAndUpdateModifyOrderEdit, "funcsToDisplay": [getOrderDetailsAndUpdateModifyOrderEdit]},
-        {"evt": "change", "elmId": "idCbxAdviceCreateAction", "func": updateCreateOrderEdit, "funcsToDisplay": [updateCreateOrderEdit]},
+        {"evt": "change", "elmId": "idCbxOrderId", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "change", "elmId": "idCbxAdviceModifyAction", "func": updateModifyOrderEdit, "funcsToDisplay": [updateModifyOrderEdit]},
         {"evt": "click", "elmId": "idBtnGetAccountKeys", "func": getAccountKeys, "funcsToDisplay": [getAccountKeys]},
         {"evt": "click", "elmId": "idBtnGetAccessRights", "func": getAccessRights, "funcsToDisplay": [getAccessRights]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
-        {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetailsAndUpdateModifyOrderEdit, "funcsToDisplay": [getOrderDetailsAndUpdateModifyOrderEdit]},
-        {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},
-        {"evt": "click", "elmId": "idBtnCancelLastOrder", "func": cancelLastOrder, "funcsToDisplay": [cancelLastOrder]},
+        {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
+        {"evt": "click", "elmId": "idBtnUpdateAdvice", "func": updateAdvice, "funcsToDisplay": [updateAdvice]},
+        {"evt": "click", "elmId": "idBtnCancelOrderAdvice", "func": cancelOrderAdvice, "funcsToDisplay": [cancelOrderAdvice]},
         {"evt": "click", "elmId": "idBtnGetOrders", "func": getOrders, "funcsToDisplay": [getOrders]},
         {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]}
     ]);
