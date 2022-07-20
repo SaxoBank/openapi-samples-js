@@ -2,4 +2,4 @@
 
 This is a demonstration on how to ungroup requests.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/batch-request/batch-request-decomposer/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/batch-request/batch-request-decomposer/>

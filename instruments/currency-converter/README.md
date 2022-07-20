@@ -2,4 +2,4 @@
 
 FxSpot instruments can be used for currency conversion.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/instruments/currency-converter/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/instruments/currency-converter/>

@@ -95,9 +95,9 @@
             "state": document.getElementById("idEdtState").value
         }));
         let url = demo.authUrl +
-            "?client_id=" + document.getElementById("idEdtAppKey").value +
+            "?client_id=" + encodeURIComponent(document.getElementById("idEdtAppKey").value) +
             "&response_type=code" +
-            "&state=" + stateString +
+            "&state=" + encodeURIComponent(stateString) +
             "&redirect_uri=" + encodeURIComponent(document.getElementById("idEdtRedirectUrl").value);
         if (document.getElementById("idCbxCulture").value !== "-") {
             url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);

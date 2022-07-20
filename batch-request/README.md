@@ -4,6 +4,10 @@ For clients not supporting [HTTP/2](https://http2.akamai.com/), but the slower H
 
 This is a demonstration on how to group requests, if you support this as a fallback.
 
-More on batch requests: https://www.developer.saxo/openapi/learn/batching-requests
+Examples on
+- [Batch Request](index.html)
+- [Batch Request Decomposer](batch-request-decomposer)
 
-Live demo: https://saxobank.github.io/openapi-samples-js/batch-request/
+More on batch requests: <https://www.developer.saxo/openapi/learn/batching-requests>
+
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/batch-request/>

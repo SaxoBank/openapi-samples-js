@@ -2,9 +2,15 @@
 
 This document describes how a client application can subscribe to Saxo Bank's Event Notification Service (ENS).
 
-Live demo: https://saxobank.github.io/openapi-samples-js/websockets/order-events-monitoring/
-
-Live demo for Corporate Action Activities on ENS: https://saxobank.github.io/openapi-samples-js/websockets/corporateaction-events-monitoring/
+Examples on
+- [Order Events Monitoring (ENS)](order-events-monitoring)
+- [Realtime Quotes](realtime-quotes)
+- [Primary Session Monitoring](primary-monitoring)
+- [Options Chain](options-chain)
+- [Trade Messages](trade-messages)
+- [Historical Market Data (Charts)](historical-market-data)
+- [Protobuf](protobuf)
+- [Corporate Action Events](corporateaction-events-monitoring)
 
 ## Table of contents
 

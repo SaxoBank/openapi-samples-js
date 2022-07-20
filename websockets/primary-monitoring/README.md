@@ -4,4 +4,4 @@ At Saxobank, only one application can display realtime prices, if the customer i
 
 This example shows how to become "Primary" and how to monitor this status. When Saxo Trader Go is launched, this app will become "Primary". This can be verified with this example.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/>

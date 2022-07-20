@@ -8,8 +8,8 @@ This example shows three important things which need to be in place for order ti
 2. The customer must have the option to examine a cost breakdown of the transaction and holding the asset for 1 year.
 3. If there is documentation about the asset (PRIIPS / KIID), the customer must have the option to download this (testing only possible with Live token).
 
-More on KIIDS: https://www.developer.saxo/openapi/learn/market-overview
+More on KIIDS: <https://www.developer.saxo/openapi/learn/market-overview>
 
-More on Costs: https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
+More on Costs: <https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting>
 
-Live demo: https://saxobank.github.io/openapi-samples-js/orders/regulatory-requirements/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/orders/regulatory-requirements/>

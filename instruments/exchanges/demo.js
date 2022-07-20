@@ -54,6 +54,7 @@
             return {
                 "DisplayName": "???",
                 "TimeZoneAbbreviation": exchange.TimeZoneAbbreviation,
+                "ZoneName": "???",
                 "TimeZoneOffset": exchange.TimeZoneOffset
             };
         }
@@ -106,7 +107,9 @@
         function populateSelect(arr, elmId, selectedValue) {
             const listElement = document.getElementById(elmId);
             clearList(listElement);
-            arr.sort();
+            arr.sort(function (a, b) {
+                return a[0].localeCompare(b[0], undefined, {sensitivity: "base"});
+            });
             arr.forEach(function (values) {
                 addOption(listElement, values[0], values[1], values[1] === selectedValue);
             });
@@ -200,8 +203,15 @@
             ? " (" + currencyObject.Symbol + ")"
             : ""
         ) + "\n";
-        details += "TimeZone: " + timeZoneObject.DisplayName + " (" + timeZoneObject.TimeZoneAbbreviation + ")\n";
-        details += "\nExchange Sessions (converted to your time, " + (
+        if (timeZoneObject.DisplayName !== "") {
+            details += "TimeZone: " + timeZoneObject.DisplayName + " ";
+        }
+        if (timeZoneObject.TimeZoneAbbreviation !== "") {
+            details += "(" + timeZoneObject.TimeZoneAbbreviation + ")";
+        } else {
+            details += "ZoneName: " + timeZoneObject.ZoneName;
+        }
+        details += "\n\nExchange Sessions (converted to your time, " + (
             exchangeObject.AllDay
             ? ""
             : "not "

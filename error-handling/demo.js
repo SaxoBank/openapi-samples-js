@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -37,12 +37,13 @@
      * @return {void}
      */
     function trigger401Unauthorized() {
+        const invalidBearerToken = Math.random();  // This token is intentionally invalid.
         fetch(
             demo.apiUrl + "/port/v1/orders",
             {
                 "method": "GET",
                 "headers": {
-                    "Authorization": "Bearer is.invalid.here"
+                    "Authorization": "Bearer " + invalidBearerToken
                 }
             }
         ).then(function (response) {
