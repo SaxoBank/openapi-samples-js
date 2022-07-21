@@ -1,5 +1,5 @@
 # Client-side Samples for Advice Orders
 
-This is a demonstration on how to create an order advice for an end customer.
+This is a demonstration on how to create and update an order advice for an end customer.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/orders/advice-orders/
+Live demo: <https://saxobank.github.io/openapi-samples-js/orders/advice-orders/>
