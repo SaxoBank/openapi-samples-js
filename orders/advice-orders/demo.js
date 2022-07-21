@@ -50,9 +50,12 @@
      * @return {Object} The newAdviceObject from the input field - null if invalid
      */
     function getAdviceObjectFromJson() {
+        const accountKey = document.getElementById("idCbxManagedAccountKey").value;
         let newAdviceObject = null;
         try {
             newAdviceObject = JSON.parse(document.getElementById("idChangeAdviceObject").value);
+            newAdviceObject.AccountKey = accountKey;
+            document.getElementById("idChangeAdviceObject").value = JSON.stringify(newAdviceObject, null, 4);
         } catch (e) {
             console.error(e);
         }
@@ -75,11 +78,12 @@
     }
 
     /**
-     * Display the active end client AccountKey in the POST /order editor.
+     * Display the active end client AccountKey in the edits.
      * @return {void}
      */
-    function updateNewOrderEdit() {
+    function addSelectedAccountKeyToEdits() {
         getOrderObjectFromJson();
+        getAdviceObjectFromJson();
     }
 
     /**
@@ -123,7 +127,7 @@
                     });
                     managedAccountsResponseData = responseJson.Data;  // Keep, so ClientKeys can be looked up by AccountKey
                     console.log("Found " + accountCount + " managed accounts.\nResponse: " + JSON.stringify(responseJson, null, 4));
-                    updateNewOrderEdit();
+                    addSelectedAccountKeyToEdits();
                 });
             } else {
                 demo.processError(response);
@@ -616,14 +620,15 @@
      */
     function cancelOrderAdvice() {
         const adviceDeleteAction = document.getElementById("idCbxAdviceDeleteAction").value;
+        const accountKey = document.getElementById("idCbxManagedAccountKey").value;
         const orderId = document.getElementById("idCbxOrderId").value;
         if (isNumeric(orderId)) {
             console.error("An OrderId must be selected first.");
             return;
         }
-        // DELETE /trade/v2/orders/123/advice?AdviceDeleteAction=RejectAdvice
+        // DELETE /trade/v2/orders/123/advice?AdviceDeleteAction={Reject/Revoke}&AccountKey={AccountKey}
         fetch(
-            demo.apiUrl + "/trade/v2/orders/" + orderId + "/advice?AdviceDeleteAction=" + adviceDeleteAction,
+            demo.apiUrl + "/trade/v2/orders/" + orderId + "/advice?AdviceDeleteAction=" + adviceDeleteAction + "&AccountKey=" + encodeURIComponent(accountKey),
             {
                 "method": "DELETE",
                 "headers": {
@@ -723,7 +728,7 @@
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxManagedAccountKey", "func": updateNewOrderEdit, "funcsToDisplay": [updateNewOrderEdit]},
+        {"evt": "change", "elmId": "idCbxManagedAccountKey", "func": addSelectedAccountKeyToEdits, "funcsToDisplay": [addSelectedAccountKeyToEdits]},
         {"evt": "change", "elmId": "idCbxOrderId", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},
         {"evt": "change", "elmId": "idCbxAdviceModifyAction", "func": updateModifyOrderEdit, "funcsToDisplay": [updateModifyOrderEdit]},
         {"evt": "click", "elmId": "idBtnGetAccountKeys", "func": getAccountKeys, "funcsToDisplay": [getAccountKeys]},
