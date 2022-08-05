@@ -13,7 +13,6 @@ Samples run against Saxo's simulation environment and require an **access token*
 1. Authentication
    - [OAuth2 Code Flow](authentication/oauth2-code-flow/)
    - [OAuth2 Implicit Flow](authentication/oauth2-implicit-flow/)
-   - [OAuth2 PKCE Flow](authentication/oauth2-pkce-flow/)
    - [JSON Web Token Debugger](authentication/token-explained/)
 2. Basics
    - [Basic Api Requests](basics/user-info/)
