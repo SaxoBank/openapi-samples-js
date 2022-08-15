@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -174,6 +174,19 @@
     }
 
     /**
+     * It is a good practice to remove the used code from the URL, to prevent (1) people sharing the link and (2) the app looks better without.
+     * @return {void}
+     */
+    function hideCodeFromUrl() {
+        window.history.replaceState(
+            {},  // state
+            "",  // unused
+            window.location.pathname  // url
+        );
+        console.log("See URL. Removed the code flow parameters there.");
+    }
+
+    /**
      * Demonstrate a basic request to the Api, to show the token is valid.
      * @return {void}
      */
@@ -276,6 +289,7 @@
         {"evt": "click", "elmId": "idBtnVerifyCsrfToken", "func": verifyCsrfToken, "funcsToDisplay": [verifyCsrfToken]},
         {"evt": "click", "elmId": "idBtnGetTokenPhp", "func": getTokenPhp, "funcsToDisplay": [getTokenPhp]},
         {"evt": "click", "elmId": "idBtnGetTokenNodeJs", "func": getTokenNodeJs, "funcsToDisplay": [getTokenNodeJs]},
+        {"evt": "click", "elmId": "idBtnHideCode", "func": hideCodeFromUrl, "funcsToDisplay": [hideCodeFromUrl]},
         {"evt": "click", "elmId": "idBtnGetUserData", "func": getUserData, "funcsToDisplay": [getUserData]},
         {"evt": "click", "elmId": "idBtnRefreshTokenPhp", "func": refreshTokenPhp, "funcsToDisplay": [refreshTokenPhp]},
         {"evt": "click", "elmId": "idBtnRefreshTokenNodeJs", "func": refreshTokenNodeJs, "funcsToDisplay": [refreshTokenNodeJs]}
