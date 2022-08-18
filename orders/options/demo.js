@@ -134,7 +134,10 @@
         let now;
         newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
         switch (newOrderObject.OrderDuration.DurationType) {
+        case "AtTheClose":
+        case "AtTheOpening":
         case "DayOrder":
+        case "GoodForPeriod":
         case "GoodTillCancel":
         case "FillOrKill":
         case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and CFDs.

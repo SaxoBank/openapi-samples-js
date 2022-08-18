@@ -40,23 +40,26 @@ More info on handling error responses: <a href="https://www.developer.saxo/opena
 <br />
 <br />
 <label>
-  Asset type: <select class="selector" id="idCbxAssetType">
-    <option value="-">Click "Validate" to populate</option>
-  </select>
+    Asset type: <select class="selector" id="idCbxAssetType">
+        <option value="-">Click "Validate" to populate</option>
+    </select>
 </label>
 <label>
-  Order type: <select class="selector" id="idCbxOrderType">
-    <option value="-" selected>Press "Check conditions" to populate</option>
-  </select>
+    Order type: <select class="selector" id="idCbxOrderType">
+        <option value="-" selected>Press "Check conditions" to populate</option>
+    </select>
 </label>
 <label>
-  Order duration: <select class="selector" id="idCbxOrderDuration">
-    <option value="DayOrder" selected>DayOrder</option>
-    <option value="FillOrKill">FillOrKill</option>
-    <option value="GoodTillCancel">GoodTillCancel</option>
-    <option value="GoodTillDate">GoodTillDate</option>
-    <option value="ImmediateOrCancel">ImmediateOrCancel</option>
-  </select>
+    Order duration: <select class="selector" id="idCbxOrderDuration">
+        <option value="AtTheClose">AtTheClose (at the close of the trading session)</option>
+        <option value="AtTheOpening">AtTheOpening (at the opening of the trading session)</option>
+        <option value="DayOrder" selected>DayOrder (valid for the trading session)</option>
+        <option value="FillOrKill">FillOrKill</option>
+        <option value="GoodForPeriod">GoodForPeriod</option>
+        <option value="GoodTillCancel">GoodTillCancel</option>
+        <option value="GoodTillDate">GoodTillDate</option>
+        <option value="ImmediateOrCancel">ImmediateOrCancel</option>
+    </select>
 </label>
 <br />
 <br />
