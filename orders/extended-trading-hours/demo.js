@@ -43,6 +43,41 @@
     }
 
     /**
+     * Not all accounts support ETH trading.
+     * @return {void}
+     */
+    function getCheckAccountSupport() {
+        fetch(
+            demo.apiUrl + "/port/v1/accounts/" + encodeURIComponent(demo.user.accountKey),
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    switch (responseJson.AllowedTradingSessions) {
+                    case "Regular":
+                        console.error("The selected account only supports the regular trading sessions.");
+                        break;
+                    case "All":
+                        console.log("The selected account supports ETH trading sessions.");
+                        break;
+                    default:
+                        console.error("Unrecognized AllowedTradingSessions value found: " + responseJson.AllowedTradingSessions);
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * Retrieve all exchanges and filter the ones with 'PreMarket' and 'PostMarket' trading sessions.
      * @return {void}
      */
@@ -77,6 +112,42 @@
                         console.log("No exchanges found with support for Pre-, or PostMarket trading.");
                     } else {
                         console.log(responseText);
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Not all instruments support ETH trading.
+     * @return {void}
+     */
+    function getCheckInstrumentSupport() {
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    switch (responseJson.SupportedTradingSessions) {
+                    case "Regular":
+                        console.error("The selected instrument only supports the regular trading sessions.");
+                        break;
+                    case "All":
+                        console.log("The selected instrument supports ETH trading sessions. You can combine the AccountCheck and this InstrumentCheck by providing an AccountKey in this tequest.");
+                        break;
+                    default:
+                        console.error("Unrecognized SupportedTradingSessions value found: " + responseJson.AllowedTradingSessions);
                     }
                 });
             } else {
@@ -173,6 +244,40 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     getTradingSessions(responseJson.TradingSessions.Sessions);
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * The regular instrument prices stop after the AutomatedTradingSession. The PreMarket and PostMarket sessions have their own prices.
+     * @return {void}
+     */
+    function getEthPrices() {
+        // The regular instrument prices stop after the AutomatedTradingSession. The PreMarket and PostMarket sessions have their own prices.
+        // Retrieve them:
+        const newOrderObject = getOrderObjectFromJson();
+        let url = demo.apiUrl + "/trade/v1/infoprices?Uic=" + newOrderObject.Uic + "&AssetType=" + newOrderObject.AssetType;
+        // With the AccountKey, the price is specific for your account
+        url += "&AccountKey=" + newOrderObject.AccountKey;
+        // The FieldGroup "ExtendedTradingHoursPriceData" requests ETH prices
+        url += "&FieldGroups=" + encodeURIComponent("ExtendedTradingHoursPriceData,DisplayAndFormat,InstrumentPriceDetails,MarketDepth,PriceInfo,PriceInfoDetails,Quote");
+        fetch(
+            url,
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -421,9 +526,12 @@
     }
 
     demo.setupEvents([
+        {"evt": "click", "elmId": "idBtnCheckAccountSupport", "func": getCheckAccountSupport, "funcsToDisplay": [getCheckAccountSupport]},
         {"evt": "click", "elmId": "idBtnGetSupportedExchanges", "func": getSupportedExchanges, "funcsToDisplay": [getSupportedExchanges]},
+        {"evt": "click", "elmId": "idBtnCheckInstrumentSupport", "func": getCheckInstrumentSupport, "funcsToDisplay": [getCheckInstrumentSupport]},
         {"evt": "click", "elmId": "idBtnGetSessionsFromTradingSchedule", "func": getTradingSessionsFromTradingSchedule, "funcsToDisplay": [getTradingSessionsFromTradingSchedule, getTradingSessions]},
         {"evt": "click", "elmId": "idBtnGetSessionsFromInstrument", "func": getTradingSessionsFromInstrument, "funcsToDisplay": [getTradingSessionsFromInstrument, getTradingSessions]},
+        {"evt": "click", "elmId": "idBtnGetEthPrices", "func": getEthPrices, "funcsToDisplay": [getEthPrices]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnGetOrderDetails", "func": getOrderDetails, "funcsToDisplay": [getOrderDetails]},

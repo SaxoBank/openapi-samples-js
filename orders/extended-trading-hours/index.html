@@ -8,12 +8,12 @@
     <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Place orders outside regular trading session</title>
+    <title>Extended Trading Hours (ETH)</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Pre Market and After Hours</h1>
-<h2 class="project-tagline">Place orders outside regular trading session</h2>
+<h1 class="project-name">Extended Trading Hours (ETH)</h1>
+<h2 class="project-tagline">Place orders outside regular AutomatedTrading session</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
 <a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/pre-market-and-after-hours/" class="btn">View on GitHub</a>
 </section>
@@ -29,9 +29,11 @@
 </label>
 </div>
 <h1>Execute orders in the Pre Market and After Hours trading sessions</h1>
-This example shows how place an order outside the regular trading hours. This is done by adding the <strong>ExecuteAtTradingSession</strong> enum set to <i>"All"</i>. If the exchange supports this and <i>AutomatedTrading</i> session is not running, the order is moved to either pre-, or post trading.
+This example shows how place an order for the extended trading hours. This is done by adding the <strong>ExecuteAtTradingSession</strong> enum set to <i>"All"</i>. If the exchange supports this and <i>AutomatedTrading</i> session is not running, the order is moved to either pre-, or post trading session.
 <br />
 The default value is <i>"Regular"</i>.
+<br />
+ETH trading is not available for all accounts. It must be enabled for an account.
 <br />
 <br />
 POST body containing order parameters:<br />
@@ -51,10 +53,15 @@ POST body containing order parameters:<br />
     }
 }
 </textarea><br />
+<input type="button" class="action-button" value="Account enabled for ETH orders?" id="idBtnCheckAccountSupport" />
 <input type="button" class="action-button" value="Find supported Exchanges" id="idBtnGetSupportedExchanges" />
+<br />
+<input type="button" class="action-button" value="Instrument enabled for ETH orders?" id="idBtnCheckInstrumentSupport" />
 <br />
 <input type="button" class="action-button" value="Trading sessions from schedule" id="idBtnGetSessionsFromTradingSchedule" />
 <input type="button" class="action-button" value="Trading schedule from instrument" id="idBtnGetSessionsFromInstrument" />
+<br />
+<input type="button" class="action-button" value="Get ETH prices" id="idBtnGetEthPrices" />
 <br />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
