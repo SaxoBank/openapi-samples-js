@@ -31,7 +31,6 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Option Orders](orders/options/)
    - [Multi-leg Orders](orders/option-strategies/)
    - [Future Orders](orders/futures/)
-   - [Extended Trading Hours (ETH)](orders/extended-trading-hours/)
    - [Fx Option Orders](orders/fx-options/)
    - [OCO Orders](orders/oco-orders/)
    - [Algorithmic Orders](orders/algo-orders/)
