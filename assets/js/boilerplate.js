@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.31
+ * boilerplate v1.32
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -601,6 +601,9 @@ function demonstrationHelper(settings) {
                 ? document
                 : document.getElementById(eventToSetup.elmId)
             );
+            if (elm === null) {
+                throw "Element " + eventToSetup.elmId + " not found in the HTML document.";
+            }
             elm.addEventListener(eventToSetup.evt, function () {
                 run(eventToSetup.func);
                 displaySourceCode(eventToSetup.funcsToDisplay);

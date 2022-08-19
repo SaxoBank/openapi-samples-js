@@ -12,7 +12,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
+    const fictivePrice = 1;  // SIM doesn't allow calls to price endpoint for most instruments
     let lastOrderId = "0";
 
     /**
@@ -57,7 +57,7 @@
         switch (newOrderObject.OrderType) {
         case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
             fetch(
-                demo.apiUrl + "/trade/v1/infoprices?AssetType=" + newOrderObject.AssetType + "&uic=" + newOrderObject.Uic,
+                demo.apiUrl + "/trade/v1/infoprices?AssetType=" + newOrderObject.AssetType + "&uic=" + newOrderObject.Uic + "&FieldGroups=" + encodeURIComponent("DisplayAndFormat,Quote"),
                 {
                     "method": "GET",
                     "headers": {
@@ -67,9 +67,14 @@
             ).then(function (response) {
                 if (response.ok) {
                     response.json().then(function (responseJson) {
-                        newOrderObject.OrderPrice = fictivePrice;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
+                        if (responseJson.Quote.PriceTypeBid === "NoAccess") {
+                            newOrderObject.OrderPrice = fictivePrice;  // SIM doesn't supply prices for most instruments (only FxSpot)
+                            console.error("Price not available, so using fictive price (only for testing).");
+                        } else {
+                            newOrderObject.OrderPrice = responseJson.Quote.Bid;
+                        }
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                        console.log(JSON.stringify(responseJson));
+                        console.log("Result of price request due to switch to 'Limit':\n" + JSON.stringify(responseJson, null, 4));
                     });
                 } else {
                     demo.processError(response);
