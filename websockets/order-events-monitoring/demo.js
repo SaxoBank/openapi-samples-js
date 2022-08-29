@@ -160,11 +160,11 @@
                             monitorActivity(ensSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription for order changes created with" + (
+                    console.log("Subscription for ENS events created with" + (
                         connection === null
                         ? ""
                         : " readyState " + connection.readyState + " and"
-                    ) + " data: " + JSON.stringify(data, null, 4) + ".\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    ) + " data: " + JSON.stringify(data, null, 4) + ".\n\nResponse (snapshot comes via websocket stream): " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -552,7 +552,7 @@
                     // Remember the last SequenceId. This can be used to retrieve the gap after an unwanted disconnect.
                     getNewLastSequenceId(message.payload);
                     ensSubscription.isRecentDataReceived = true;
-                    console.log("Streaming order/position/fundings event from ENS #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming EventNotificationSystem (ENS) event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case balanceSubscription.reference:
                     balanceSubscription.isRecentDataReceived = true;
