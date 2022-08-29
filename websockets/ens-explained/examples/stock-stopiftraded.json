@@ -1,0 +1,37 @@
+{
+    "AccountId": "testaccount2",
+    "AccountKey": "rV7rg7O78fSvexKqBUaa|g==",
+    "ActivityTime": "2022-08-29T12:06:42.286666Z",
+    "ActivityType": "Orders",
+    "Amount": 10,
+    "AssetType": "Stock",
+    "BuySell": "Buy",
+    "ClientId": "9888152",
+    "ClientKey": "g2WzDtP6DUTyLCwhja9zhw==",
+    "CorrelationKey": "dcb39f30-fa2c-46c3-8daf-4ba279eb53d4",
+    "DisplayAndFormat": {
+        "Currency": "USD",
+        "Decimals": 2,
+        "Description": "Ferrari NV",
+        "OrderDecimals": 2,
+        "Symbol": "RACE:xnys"
+    },
+    "Duration": {
+        "DurationType": "GoodTillCancel"
+    },
+    "ExchangeInfo": {
+        "ExchangeId": "NYSE"
+    },
+    "HandledBy": "9888152",
+    "IsSecondCurrencyOrder": false,
+    "OptionData": {},
+    "OrderId": "5007903948",
+    "OrderRelation": "StandAlone",
+    "OrderType": "StopIfTraded",
+    "Price": 198.36,
+    "SequenceId": "161387812",
+    "Status": "Placed",
+    "SubStatus": "Confirmed",
+    "Symbol": "RACE:xnys",
+    "Uic": 2748478
+}
