@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Order Demo for FxOptions</title>
+<style type="text/css" media="screen">
+div.input-field {
+  width: 48%;
+  display: inline-block; 
+}
+</style>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">FxVanillaOption Orders</h1>
+<h2 class="project-tagline">Example on FxVanillaOption Orders</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/fx-options" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Buy an Fx Option by trading on quotes</h1>
+This example shows how place an FxOption order.<br />
+Create a new position by accepting a quote. For documentation see <a href="https://www.developer.saxo/openapi/learn/trade-on-quote" target="_blank">the learn section</a> and a <a href="https://saxobank.github.io/openapi-samples-js/websockets/options-chain/">sample on strike prices and expiries</a>.
+<br />
+<br />
+<label>
+  Strike price: <select class="selector" id="idCbxStrikePrice">
+    <option value="-">Get strike prices and expiry date to populate</option>
+  </select>
+</label>
+<br />
+<br />
+<div>
+<div class="input-field">POST body with price subscription data:<br /><textarea class="json-input" id="idPriceSubscriptionObject" rows="13" wrap="off">
+{
+    "ContextId": "MyFxOptionSampleContextId",
+    "ReferenceId": "MyFxOptionReferenceId",
+    "Arguments": {
+        "AccountKey": "(added on subscription request)",
+        "Amount": 10000,
+        "AmountType": "Quantity",
+        "Uic": 21,
+        "AssetType": "FxVanillaOption",
+        "ExpiryDate": "2023-02-17",
+        "PutCall": "Call",
+        "StrikePrice": 1.1425,
+        "RequireTradableQuote": true,
+        "FieldGroups": [
+            "DisplayAndFormat",
+            "InstrumentPriceDetails",
+            "MarketDepth",
+            "PriceInfoDetails",
+            "Quote"
+        ]
+    }
+}
+</textarea></div>
+<div class="input-field">POST body with Order data:<br /><textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
+{
+    "ExerciseMethod": "Cash",
+    "ContextId": "MyFxOptionSampleContextId",
+    "PriceReferenceId": "MyFxOptionReferenceId",
+    "BuySell": "Buy",
+    "UserPrice": 100,
+    "QuoteId": "123"
+}
+</textarea></div>
+</div>
+<br />
+<input type="button" class="action-button" value="Get expiry dates" id="idBtnGetExpiryDates" /><br />
+<input type="button" class="action-button" value="Get strike prices and expiry date" id="idBtnGetOptionsChain" />
+<input type="button" class="action-button" value="Get primary session" id="idBtnGetPrimarySession" />
+<input type="button" class="action-button" value="Update price subscription" id="idBtnUpdatePriceSubscription" /><br />
+<input type="button" class="action-button" value="Sell" id="idBtnPlaceNewSellOrder" />
+<input type="button" class="action-button" value="Buy" id="idBtnPlaceNewBuyOrder" />
+<br />
+<pre class="highlight" id="idTradeable">No price subscription started.</pre>
+<label>
+  Positions: <select class="selector" id="idCbxPosition">
+    <option value="-">Get positions to populate</option>
+  </select>
+</label>
+<input type="button" class="action-button" value="Get positions" id="idBtnGetPositions" />
+<br />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

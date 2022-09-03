@@ -1,10 +1,9 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -14,7 +13,7 @@
         "footerElm": document.getElementById("idFooter")
     });
     const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
-    let lastOrderId = 0;
+    let lastOrderId = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -24,7 +23,19 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-            newOrderObject.AccountKey = demo.user.accountKey;
+            if (newOrderObject.hasOwnProperty("AccountKey")) {
+                // This is the case for single orders, or conditional/related orders
+                // This function is used for other order types as well, so more order types are considered
+                newOrderObject.AccountKey = demo.user.accountKey;
+            }
+            if (newOrderObject.hasOwnProperty("Orders")) {
+                // This is the case for OCO, related and conditional orders
+                newOrderObject.Orders.forEach(function (order) {
+                    if (order.hasOwnProperty("AccountKey")) {
+                        order.AccountKey = demo.user.accountKey;
+                    }
+                });
+            }
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
@@ -90,6 +101,11 @@
             newOrderObject.TrailingStopStep = 0.1;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
+        case "TriggerBreakout":
+        case "TriggerLimit":
+        case "TriggerStop":
+            console.error("You've selected an ordertype for a conditional order, which is not covered by this sample.\nSee for conditional orders:\nhttps://saxobank.github.io/openapi-samples-js/orders/conditional-orders/");
+            break;
         default:
             console.error("Unsupported order type " + newOrderObject.OrderType);
         }
@@ -100,11 +116,28 @@
      * @return {void}
      */
     function selectOrderDuration() {
+
+        /**
+         * Prefix number with zero, if it has one digit.
+         * @param {number} n The one or two digit number representing day or month.
+         * @return {string} The formatted number.
+         */
+        function addLeadingZero(n) {
+            return (
+                n > 9
+                ? String(n)
+                : "0" + n
+            );
+        }
+
         const newOrderObject = getOrderObjectFromJson();
         let now;
         newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
         switch (newOrderObject.OrderDuration.DurationType) {
+        case "AtTheClose":
+        case "AtTheOpening":
         case "DayOrder":
+        case "GoodForPeriod":
         case "GoodTillCancel":
         case "FillOrKill":
         case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and CFDs.
@@ -115,7 +148,7 @@
             now = new Date();
             now.setDate(now.getDate() + 3);  // Add 3x24 hours to now
             now.setSeconds(0, 0);
-            newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate() + "T" + now.getHours() + ":" + now.getMinutes() + ":00";  // Example: 2020-03-20T14:00:00
+            newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + addLeadingZero(now.getMonth() + 1) + "-" + addLeadingZero(now.getDate()) + "T" + addLeadingZero(now.getHours()) + ":" + addLeadingZero(now.getMinutes()) + ":00";  // Example: 2020-03-20T14:00:00
             newOrderObject.OrderDuration.ExpirationDateContainsTime = true;
             break;
         default:
@@ -190,12 +223,64 @@
      */
     function getConditions() {
 
+        /**
+         * The instrument is tradable, but there might be limitations. If so, display them.
+         * @param {Object} detailsObject The response with the instrument details.
+         * @return {void}
+         */
+        function checkTradingStatus(detailsObject) {
+            let statusDescription = "This instrument has trading limitations:\n";
+            if (detailsObject.TradingStatus !== "Tradable") {
+                if (detailsObject.hasOwnProperty("NonTradableReason")) {
+                    switch (detailsObject.NonTradableReason) {
+                    case "ETFsWithoutKIIDs":
+                        statusDescription += "The issuer has not provided a Key Information Document (KID) for this instrument.";
+                        break;
+                    case "ExpiredInstrument":
+                        statusDescription += "This instrument has expired.";
+                        break;
+                    case "NonShortableInstrument":
+                        statusDescription += "Short selling is not available for this instrument.";
+                        break;
+                    case "NotOnlineClientTradable":
+                        statusDescription += "This instrument is not tradable online.";
+                        break;
+                    case "OfflineTradableBonds":
+                        statusDescription += "This instrument is tradable offline.";
+                        break;
+                    case "ReduceOnlyInstrument":
+                        statusDescription += "This instrument is reduce-only.";
+                        break;
+                    default:
+                        // There are reasons "OtherReason" and "None".
+                        statusDescription += "This instrument is not tradable.";
+                    }
+                    statusDescription += "\n(" + detailsObject.NonTradableReason + ")";
+                } else {
+                    // Somehow not reason was supplied.
+                    statusDescription += "Status: " + detailsObject.TradingStatus;
+                }
+                window.alert(statusDescription);
+            }
+        }
+
+        /**
+         * Verify if the selected OrderType is supported for the instrument.
+         * @param {Object} orderObject The object used to POST the new order.
+         * @param {Array<string>} orderTypes Array with supported order types (Market, Limit, etc).
+         * @return {void}
+         */
         function checkSupportedOrderTypes(orderObject, orderTypes) {
             if (orderTypes.indexOf(orderObject.OrderType) === -1) {
                 window.alert("The order type " + orderObject.OrderType + " is not supported for this instrument.");
             }
         }
 
+        /**
+         * Verify if the selected account is capable of handling this instrument.
+         * @param {Array<string>} tradableOn Supported account list.
+         * @return {void}
+         */
         function checkSupportedAccounts(tradableOn) {
             // Verify if the selected account is capable of handling this instrument.
             // First, get the id of the active account:
@@ -281,6 +366,7 @@
                         window.alert("This instrument is not tradable!");
                         // For demonstration purposes, the validation continues, but an order ticket shouldn't be shown!
                     }
+                    checkTradingStatus(responseJson);
                     checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
                     if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn") {
                         if (responseJson.hasOwnProperty("TickSizeScheme")) {
@@ -312,6 +398,28 @@
      */
     function preCheckNewOrder() {
         // Bug: Preview doesn't check for limit outside market hours
+
+        function getErrorMessage(responseJson, defaultMessage) {
+            let errorMessage;
+            if (responseJson.hasOwnProperty("ErrorInfo")) {
+                // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                errorMessage = (
+                    responseJson.ErrorInfo.hasOwnProperty("Message")
+                    ? responseJson.ErrorInfo.Message
+                    : responseJson.ErrorInfo.ErrorCode  // In some cases (AllocationKeyDoesNotMatchAccount) the message is not available
+                );
+                // There can be error messages per order. Try to add them.
+                if (responseJson.hasOwnProperty("Orders")) {
+                    responseJson.Orders.forEach(function (order) {
+                        errorMessage += "\n- " + getErrorMessage(order, "");
+                    });
+                }
+            } else {
+                errorMessage = defaultMessage;
+            }
+            return errorMessage;
+        }
+
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
@@ -335,17 +443,20 @@
                         // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
                         if (responseJson.hasOwnProperty("ErrorInfo")) {
                             // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                            console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4));
+                            console.error(getErrorMessage(responseJson, "") + "\n\n" + JSON.stringify(responseJson, null, 4));
                         } else {
                             // The order can be placed
-                            console.log(JSON.stringify(responseJson, null, 4));
+                            console.log("The order can be placed:\n\n" + JSON.stringify(responseJson, null, 4));
                         }
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
-                        console.error(JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                        // This can be something like: {"ErrorInfo":{"ErrorCode":"IllegalInstrumentId","Message":"Instrument ID is invalid"},"EstimatedCashRequired":0.0,"PreCheckResult":"Error"}
+                        console.error(getErrorMessage(responseJson, "Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:") + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
                     }
                 });
             } else {
+                // This can be something like: {"Message":"One or more properties of the request are invalid!","ModelState":{"Orders":["Stop leg of OCO order must have OrderType of either: TrailingStopIfTraded, StopIfTraded, StopLimit"]},"ErrorCode":"InvalidModelState"}
+                // The developer (you) must fix this.
                 demo.processError(response);
             }
         }).catch(function (error) {

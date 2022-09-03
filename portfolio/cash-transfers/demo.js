@@ -1,10 +1,9 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -117,8 +116,8 @@
 
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxAccount", "func": getAccountCurrency, "funcsToDisplay": [getAccountCurrency], "isDelayedRun": true},
-        {"evt": "click", "elmId": "idBtnGetBeneficiaryInstructions", "func": getBeneficiaryInstructions, "funcsToDisplay": [getBeneficiaryInstructions]},//]);
-        {"evt": "click", "elmId": "idBtnTransferMoney", "func": transferMoney, "funcsToDisplay": [transferMoney]},//]);
+        {"evt": "click", "elmId": "idBtnGetBeneficiaryInstructions", "func": getBeneficiaryInstructions, "funcsToDisplay": [getBeneficiaryInstructions]},
+        {"evt": "click", "elmId": "idBtnTransferMoney", "func": transferMoney, "funcsToDisplay": [transferMoney]}
     ]);
     demo.displayVersion("atr");
 }());

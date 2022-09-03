@@ -1,10 +1,9 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -15,7 +14,6 @@
         "selectedAssetType": "Stock",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
-    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
 
     /**
      * This is an example of the warning to be shown before trading a complex product.
@@ -105,13 +103,10 @@
             }
 
             let result = "";
-            let i;
-            let item;
             if (costs.hasOwnProperty("TradingCost")) {
                 result += "\n\nTransaction costs:";
                 if (costs.TradingCost.hasOwnProperty("Commissions")) {  // The commission structure for the selected instrument
-                    for (i = 0; i < costs.TradingCost.Commissions.length; i += 1) {
-                        item = costs.TradingCost.Commissions[i];
+                    costs.TradingCost.Commissions.forEach(function (item) {
                         result += "\nCommission: " + (
                             item.Rule.Currency === costs.Currency
                             ? ""
@@ -121,8 +116,9 @@
                             ? " (" + item.Pct + "%)"
                             : ""
                         );
-                    }
+                    });
                 }
+                result += getCostComponent("ServiceFee", "Service fee", costs.TradingCost);  // Service fee per year for holding cash positions
                 result += getCostComponent("TicketFee", "Ticket fee", costs.TradingCost);  // Ticket fees are for FX (both spot and options) and applied if below the TicketFeeThreshold
                 // <Text LanguageCode="fr">Frais de ticket</Text>
                 result += getCostComponent("ExchangeFee", "Exchange fee", costs.TradingCost);  // Futures - Exchange fee if applied separately
@@ -140,6 +136,8 @@
                 // <Text LanguageCode="fr">Coûts récurrents</Text>
                 result += getCostComponent("SwitchCommission", "Switch commission", costs.FundCost);  // Commission paid for a switch trade between two mutual funds
                 // <Text LanguageCode="fr">Commission de transfert</Text>
+                result += getCostComponent("EntryCost", "Entry commission", costs.FundCost);  // Commission paid for buying a fund
+                result += getCostComponent("ExitCost", "Exit commission", costs.FundCost);  // Commission paid for selling a fund
             }
             if (costs.hasOwnProperty("HoldingCost")) {
                 result += "\n\nOngoing charges:";
@@ -151,17 +149,16 @@
                 // <Text LanguageCode="fr">Coût de portage</Text>
                 result += getCostComponent("HoldingFee", "Holding fee", costs.HoldingCost);  // Holding fee if applied
                 // <Text LanguageCode="fr">Frais de détention</Text>
-                result += getCostComponent("TomNext", "Tom/Next", costs.HoldingCost);  // Swap interest markup
-                // <Text LanguageCode="fr">Tom/Next</Text>
+                result += getCostComponent("LoanInterestCost", "Loan interest cost", costs.HoldingCost);
+                result += getCostComponent("SwapPoints", "SwapPoints", costs.HoldingCost);  // Swap interest markup
                 result += getCostComponent("InterestFee", "Interest/day", costs.HoldingCost);  // Interest per day for for SRDs
                 // <Text LanguageCode="fr">Intérêts/jour</Text>
                 result += getCostComponent("RolloverFee", "Roll-over of positions", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
                 // <Text LanguageCode="fr">Renouvellement de positions</Text>
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
-                    for (i = 0; i < costs.HoldingCost.Tax.length; i += 1) {
-                        item = costs.HoldingCost.Tax[i];
+                    costs.HoldingCost.Tax.forEach(function (item) {
                         result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";
-                    }
+                    });
                 }
             }
             result += getCostComponent("TrailingCommission", "Trailing Commission", costs);  // Commission paid from the fund to Saxo
@@ -181,9 +178,8 @@
          */
         function getAssumptions(assumptions) {
             let result = "Assumption(s):";
-            let i;
-            for (i = 0; i < assumptions.length; i += 1) {
-                switch (assumptions[i]) {
+            assumptions.forEach(function (assumption) {
+                switch (assumption) {
                 case "IncludesOpenAndCloseCost":
                     result += "\n* Includes both open and close costs.";
                     // <Text LanguageCode="fr">Inclut les coûts à l'ouverture et à la clôture.</Text>
@@ -224,10 +220,13 @@
                     result += "\n* Margin excl. OTM discount.";
                     // <Text LanguageCode="fr">Marge hors remise OTM.</Text>
                     break;
+                case "ImplicitCostsNotChargedOnAccount":
+                    result += "\n* The implicit costs not charged on account.";
+                    break;
                 default:
-                    console.debug("Unsupported assumption code: " + assumptions[i]);
+                    console.error("Unsupported assumption code: " + assumption);
                 }
-            }
+            });
             // Add generic assumption:
             result += "\n* Any third party payments, investment service costs or financial instrument costs not listed above are 0 (0%). These can include one-off charges, ongoing charges, costs related to transactions, charges that are related to ancillary services and incidental costs.";
             // <Text LanguageCode="fr">Les coûts non décrits ci-avant (y compris forfaits, frais courants, coûts liés aux transactions, frais liés à des services accessoires et coûts indirects) s’élèvent à 0 (0 %).</Text>
@@ -237,9 +236,10 @@
         const uic = document.getElementById("idUic").value;
         const assetType = document.getElementById("idCbxAssetType").value;
         const amount = document.getElementById("idAmount").value;
+        const price = document.getElementById("idPrice").value;  // SIM doesn't allow calls to price endpoint for most instruments, so just enter it here
         // https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting
         fetch(
-            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + uic + "/" + assetType + "?Amount=" + amount + "&Price=" + fictivePrice + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=" + getHoldingPeriod(1),
+            demo.apiUrl + "/cs/v1/tradingconditions/cost/" + encodeURIComponent(demo.user.accountKey) + "/" + uic + "/" + assetType + "?Amount=" + amount + "&Price=" + price + "&FieldGroups=DisplayAndFormat&HoldingPeriodInDays=" + getHoldingPeriod(1),
             {
                 "method": "GET",
                 "headers": {
@@ -260,7 +260,7 @@
                         description += "Short costs (" + responseJson.Cost.Short.Currency + "):" + getCostsForLeg(responseJson.HoldingPeriodInDays, responseJson.Cost.Short);
                     }
                     description += "\n\n" + getAssumptions(responseJson.CostCalculationAssumptions);
-                    console.log(description + "\n\nReponse: " + JSON.stringify(responseJson, null, 4));
+                    console.log(description + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -343,8 +343,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let i;
-                    let documentDetail;
                     let fileName;
                     if (responseJson.Data.length === 0) {
                         console.log("There is no KID available for this instrument. Be aware that KIDs are only available on Live.");
@@ -357,15 +355,14 @@
                          */
                         // The recommended documents will be returned. If language is important from a legal perspective, only the applicable language is returned.
                         // Give option to download all the documents, if any:
-                        for (i = 0; i < responseJson.Data.length; i += 1) {
-                            documentDetail = responseJson.Data[i];
+                        responseJson.Data.forEach(function (documentDetail) {
                             // Note that DocumentTypes might have different translations, like "EID" in the Netherlands (https://www.afm.nl/nl-nl/consumenten/themas/advies/verplichte-info/eid).
                             // This means that you might consider a different file name, for example including the instrument name.
                             fileName = uic + "_" + assetType + "_" + documentDetail.DocumentType + "_(" + documentDetail.LanguageCode + ").pdf";
                             if (window.confirm("Do you want to download " + fileName + "?")) {
                                 downloadDocument(uic, assetType, documentDetail.DocumentType, documentDetail.LanguageCode, fileName);
                             }
-                        }
+                        });
                     }
                 });
             } else {
@@ -422,16 +419,18 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    let instrument;
                     if (responseJson.Data.length === 0) {
                         console.error("No instrument of type " + assetType + " found.");
                     } else {
-                        uic = responseJson.Data[0].Identifier;  // This might only be an OptionRootId!
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
+                        uic = instrument.Identifier;  // This might only be an OptionRootId!
                         document.getElementById("idUic").value = uic;
-                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                            convertOptionRootIdToUic(responseJson.Data[0].Identifier);
+                        if (instrument.SummaryType === "ContractOptionRoot") {
+                            convertOptionRootIdToUic(instrument.Identifier);
+                        } else {
+                            console.log("Found Uic " + uic + " for AssetType " + assetType + ".");
                         }
-                        console.log("Found Uic " + uic + " for AssetType " + assetType + ".");
                     }
                 });
             } else {

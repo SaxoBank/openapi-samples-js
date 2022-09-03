@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demo for Monitoring the Corporate Action Activities</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Monitor Corporate Action Activities</h1>
+<h2 class="project-tagline">Subscribe to Corporate Action Activities</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/websockets/corporateaction-events-monitoring" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Monitor Corporate Action Activities</h1>
+This example shows how to setup real time monitoring for corporate action activities(announcement, update and payment) using websockets. Since Corporate Action Announcement, Update and Payment are activities triggered by SAXO Bank, data of this function are only available on LIVE accounts. 
+<br />
+<br />
+<br />
+<label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
+<br />
+<label>Reference ID: <input type="text" class="text-field" id="idReferenceId" value="" disabled /></label>
+<br />
+<br />
+<input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
+<input type="button" class="action-button" value="Start listener" id="idBtnStartListener" />
+<input type="button" class="action-button" value="Subscribe Corporate Action Announcement,Update,Payment from ENS" id="idBtnSubscribeEns" />
+<input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" />
+<input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
+<input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

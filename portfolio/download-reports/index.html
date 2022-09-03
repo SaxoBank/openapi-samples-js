@@ -5,6 +5,7 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demonstration of Downloading a Report</title>
@@ -14,7 +15,7 @@
 <h1 class="project-name">Downloading Reports</h1>
 <h2 class="project-tagline">How to download an account statement as PDF and Excel?</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/portfolio/download-reports" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -28,9 +29,10 @@
 </label>
 </div>
 <h1>Downloading reports</h1>
-DISCLAIMER: the reporting endpoints on SIM give 404 errors. The endpoints only work on Live.<br />
-To test on production: add '?env=live' to the URL of this page and find a valid token in the network traffic of <a href="https://www.saxotrader.com/" target="_blank">SaxoTraderGO</a>.
-<br />
+<p class="note">
+!! <b>IMPORTANT</b> !!  The reporting endpoints on SIM return 404 errors. The endpoints only work on Live.<br />
+To test on production: add '<i>?env=live</i>' to the URL of this page. Or better, a token from <a href="https://www.developer.saxo/openapi/appmanagement#/liveoverview" target="_blank">your own live app</a>.
+</p>
 <br />
 More info on the reporting can be found in the <a href="https://www.developer.saxo/openapi/learn/portfolio-report" target="_blank">learn section</a>.
 <br />

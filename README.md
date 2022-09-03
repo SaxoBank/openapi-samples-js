@@ -1,8 +1,8 @@
 # OpenAPI JavaScript Sample Repository
 
-This repository contains sample files demonstrating OpenAPI interactions in JavaScript that can be run in the browser. Each of the included samples is designed as standalone HTML with vanilla JS and no dependecies.
+This repository contains sample files demonstrating OpenAPI interactions in JavaScript that can be run in the browser. Each of the included samples is designed as standalone HTML with vanilla JS and no dependencies.
 
-To try these samples yourself, download/clone this repo and load the HTML files locally, or navigate to [this interactive page](https://saxobank.github.io/openapi-samples-js/) to run the samples directly online.
+To try these samples yourself, download/clone this repo and load the HTML files locally on your browser. You can alternatively navigate to [this interactive page](https://saxobank.github.io/openapi-samples-js/) to select the samples hosted directly online.
 
 ## Requirements
 
@@ -11,41 +11,47 @@ Samples run against Saxo's simulation environment and require an **access token*
 ## Table of Contents
 
 1. Authentication
-   - [OAuth2 Code Flow example](authentication/oauth2-code-flow)
-   - [OAuth2 Implicit Flow example](authentication/oauth2-implicit-flow)
-   - [OAuth2 PKCE Flow example](authentication/oauth2-pkce-flow)
-   - [Claims in Jwt Token](authentication/token-explained/)
+   - [OAuth2 Code Flow](authentication/oauth2-code-flow/)
+   - [OAuth2 Implicit Flow](authentication/oauth2-implicit-flow/)
+   - [JSON Web Token Debugger](authentication/token-explained/)
 2. Basics
-   - [Get user info](basics/user-info)
-   - [Query options $top, $skip and \_\_next](basics/query-options)
-   - [Error handling](error-handling)
-   - [Diagnostics and method override](basics/diagnostics)
+   - [Basic Api Requests](basics/user-info/)
+   - [OpenApi Query Options](basics/query-options/)
+   - [Error handling](error-handling/)
+   - [Diagnose API connection](basics/diagnostics/)
 3. Instruments
-   - [Instrument Search example](instruments/instrument-search)
-   - [Price subscription levels](instruments/entitlements)
-   - [Extended AssetTypes](instruments/extended-assettypes)
-   - [Retrieve Universe](instruments/instrument-retrieval)
+   - [Instrument Search](instruments/instrument-search/)
+   - [Exchanges and Trading Sessions](instruments/exchanges/)
+   - [Extended AssetTypes](instruments/extended-assettypes/)
+   - [Currency Conversion](instruments/currency-converter/)
+   - [Download Instrument Universe](instruments/instrument-retrieval/)
 4. Order Placement
-   - [Basic Order example (stocks, bonds, etf, etc.)](orders/stocks)
-   - [Option Order](orders/options)
-   - [Option Strategy Order](orders/option-strategies)
-   - [Future Order](orders/futures)
-   - [OCO Order](orders/oco-orders)
-   - [Conditional Order](orders/conditional-orders)
-   - [Regulatory requirements for order tickets](orders/regulatory-requirements)
+   - [Stock Orders](orders/stocks/)
+   - [Option Orders](orders/options/)
+   - [Multi-leg Orders](orders/option-strategies/)
+   - [Future Orders](orders/futures/)
+   - [Fx Option Orders](orders/fx-options/)
+   - [OCO Orders](orders/oco-orders/)
+   - [Algorithmic Orders](orders/algo-orders/)
+   - [Conditional or Sleeping Orders](orders/conditional-orders/)
+   - [Block Orders](orders/block-orders/)
+   - [Regulatory Requirements](orders/regulatory-requirements/)
 5. Portfolio
-   - [Display Positions and Order List](portfolio/positions-orders)
-   - [Netting (RealTime vs EndOfDay)](portfolio/netting)
-   - [Margin calculation](portfolio/margin)
-   - [Account statements and Export (PDF, Excel)](portfolio/download-reports)
-6. Using websockets
-   - [Retrieving Order Events](websockets/order-events-monitoring)
-   - [Monitoring Primary Status](websockets/primary-monitoring)
-   - [Realtime Quotes and Protocol Buffers](websockets/realtime-quotes)
-   - [Trade Messages](websockets/trade-messages)
-   - [Historical Market Data](websockets/historical-market-data)
-7. Batch Requests
-   - [Batch Request example](batch-request)
+   - [Display positions and orders](portfolio/positions-orders/)
+   - [Netting mode](portfolio/netting/)
+   - [Available Margin](portfolio/margin/)
+   - [Downloading Reports](portfolio/download-reports/)
+6. Account History
+   - [Performance](account-history/performance/)
+   - [Unsettled Amounts](account-history/unsettled-amounts/)
+7. Using websockets
+   - [Monitor Orders and Positions](websockets/order-events-monitoring/)
+   - [Monitor TradeLevel Status for Realtime Prices](websockets/primary-monitoring/)
+   - [Realtime Quotes](websockets/realtime-quotes/)
+   - [Monitor Trade Messages](websockets/trade-messages/)
+   - [Historical Market Data](websockets/historical-market-data/)
+   - [Options Chain](websockets/options-chain/)
+   - [Protobuf protocol](websockets/protobuf/)
 
 ## Sample Apps
 
@@ -53,4 +59,4 @@ Samples run against Saxo's simulation environment and require an **access token*
 
 [Basic Order Manager](sample-apps/basic-order-manager/): A Vue.js app that runs in the browser, pulls out open orders of the logged-in client and displays them in a Vuetify table with sorting and filtering functionality. Includes a simple order blotter and an implementation of OAuth implicit flow to authenticate with the OpenAPI.
 
-Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
+Suggestions? Comments? Reach us via Github or [openapisupport@saxobank.com](mailto:openapisupport@saxobank.com).

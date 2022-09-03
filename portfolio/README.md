@@ -1,4 +1,9 @@
-# Examples for handling the DisplayAndFormat object
+# Examples for handling the DisplayAndFormat object Margin and Netting
 
-An example on using the DisplayAndFormat object to show prices and an example of the margin calculation.
-There is also an example on exporting report files as PDF or Excel.
+Examples on
+- [Display Positions and Orders](positions-orders)
+- [Margin](margin)
+- [Netting](netting)
+- [Cash Transfers](cash-transfers)
+- [Download Reports](download-reports)
+- [Upload Documents](upload-documents)

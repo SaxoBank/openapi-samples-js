@@ -2,8 +2,8 @@
 
 This is an example on retrieving realtime quotes.
 
-It contains an example using JSON messages and the more complex, but slightly faster [Protocol Buffers](https://developers.google.com/protocol-buffers/docs/overview).
+It contains an example using JSON messages. For the more complex Protobuf there is another sample available.
 
-For ProtoBuf, the library [protobuf.js](https://github.com/dcodeio/protobuf.js) is used.
+More on prices: <https://www.developer.saxo/openapi/learn/pricing>
 
-Live demo: https://saxobank.github.io/openapi-samples-js/websockets/realtime-quotes/
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/websockets/realtime-quotes/>

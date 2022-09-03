@@ -49,8 +49,8 @@ function getToken($refreshToken) {
         'ssl' => array(
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Tue Dec 8 04:12:05 2020 GMT.
-            'cafile' => 'cacert-2020-12-08.pem',
+            // This bundle was generated at Tue Apr 26 03:12:05 2022 GMT.
+            'cafile' => 'cacert-2022-04-26.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         )

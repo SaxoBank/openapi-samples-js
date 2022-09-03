@@ -1,10 +1,9 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -14,53 +13,126 @@
         "footerElm": document.getElementById("idFooter")
     });
 
+    /**
+     * Example of formatting a value according to the DisplayAndFormat.
+     * @param {Object} displayAndFormat The format rules.
+     * @param {number} value The value to be formatted.
+     * @return {string} The formatted number.
+     */
     function displayAndFormatValue(displayAndFormat, value) {
-        let result;
-        let integerPart;
-        let fractionPart;
-        let numerator;
-        console.log("DisplayFormat " + displayAndFormat.Format);
+
+        /**
+         * Round a value to a number of decimals.
+         * @param {number} valueToRound Input value.
+         * @param {number} decimalPlaces Number of decimals to round to.
+         * @return {number} The rounded value.
+         */
+        function round(valueToRound, decimalPlaces) {
+            const factorOfTen = Math.pow(10, decimalPlaces);
+            return Math.round(valueToRound * factorOfTen) / factorOfTen;
+        }
+
+        /**
+         * Return the value as a string, rounded according to given decimals.
+         * @return {string} The formatted value.
+         */
+        function displayWithNormalFormatting() {
+            return displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals});
+        }
+
+        /**
+         * Return the value as a string, using the DecimalPips display format.
+         * @param {number} numberOfPips Return with one or two smaller decimals.
+         * @return {string} The formatted value.
+         */
+        function displayWithDecimalPips(numberOfPips) {
+            // displayAndFormat = {"Currency":"USD","Decimals":4,"Description":"Example AllowDecimalPips","DisplayHint":"PreciousMetal","Format":"AllowDecimalPips","OrderDecimals":4,"Symbol":"XAGUSD"}
+            // value = 0.01084
+            // return = 0,0108 4
+            const pipsCodes = [8304, 185, 178, 179, 8308, 8309, 8310, 8311, 8312, 8313];  // Unicode superscript codes of 0..9
+            const positionOfDecimalSeparator = String(value).indexOf(".");
+            const roundedValue = round(value, displayAndFormat.Decimals + numberOfPips);  // Round, so the correct value is shown if input has more decimals.
+            // Truncate value to allowed decimals:
+            const truncatedValue = Math.trunc(roundedValue * Math.pow(10, displayAndFormat.Decimals)) / Math.pow(10, displayAndFormat.Decimals);
+            const fractionPart = (
+                positionOfDecimalSeparator === -1
+                ? String(roundedValue)
+                : String(roundedValue).slice(positionOfDecimalSeparator + 1)
+            );
+            let pipsPart = "";
+            let i;
+            if (fractionPart.length > displayAndFormat.Decimals) {
+                for (i = displayAndFormat.Decimals; i < fractionPart.length; i += 1) {
+                    pipsPart += String.fromCharCode(pipsCodes[parseInt(fractionPart.charAt(i), 10)]);
+                }
+            }
+            return displayAndFormat.Currency + " " + truncatedValue.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals}) + pipsPart;
+        }
+
+        /**
+         * Return the value as a string, using the Fractions display format.
+         * @return {string} The formatted value.
+         */
+        function displayWithFractions() {
+            // displayAndFormat = {"Currency":"USD","Decimals":5,"Description":"Example Fractions","Format":"Fractions","OrderDecimals":5,"Symbol":"UNITEDSTATES-2.5-15FEB45"}
+            // value = 101.44731
+            // return = 101 14/32 USD
+            const integerPart = Math.trunc(value);
+            const fractionPart = value - integerPart;
+            const numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
+            // In a few cases the value for the numerator can be a decimal number itself. The number of decimals on the numerator is then indicated by the NumeratorDecimals value.
+            const numeratorText = (
+                displayAndFormat.hasOwnProperty("NumeratorDecimals")
+                ? numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals})
+                : String(Math.round(numerator))
+            );
+            return displayAndFormat.Currency + " " + integerPart + " " + numeratorText + "/" + Math.pow(2, displayAndFormat.Decimals);
+        }
+
+        /**
+         * Return the value as a string, using the ModernFractions display format.
+         * @return {string} The formatted value.
+         */
+        function displayWithModernFractions() {
+            // displayAndFormat = {"Currency":"USD","Decimals":5,"Description":"Example ModernFractions","DisplayHint":"Continuous","Format":"ModernFractions","LotSizeText":"100000","NumeratorDecimals":1,"OrderDecimals":5,"Symbol":"TNc1"}
+            // value = 139.328125
+            // return = 139'10.5
+            const integerPart = Math.trunc(value);
+            const fractionPart = value - integerPart;
+            const numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
+            const numeratorText = (
+                displayAndFormat.hasOwnProperty("NumeratorDecimals")
+                ? numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals})
+                : String(Math.round(numerator))
+            );
+            return displayAndFormat.Currency + " " + integerPart + "'" + numeratorText;
+        }
+
         if (value === undefined || value === null) {
             return "(not available)";
         }
         if (displayAndFormat.hasOwnProperty("Format")) {
             switch (displayAndFormat.Format) {
             case "Normal":  // Standard decimal formatting is used with the Decimals field indicating the number of decimals.
-                result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals});
-                break;
+                return displayWithNormalFormatting();
             case "Percentage":  // Display as percentage, e.g. 12.34%.
-                result = value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + "%";
-                break;
-            case "AllowDecimalPips":  // Display the last digit as a smaller than the rest of the numbers. Note that this digit is not included in the number of decimals, effectively increasing the number of decimals by one. E.g. 12.345 when Decimals is 2 and DisplayFormat is AllowDecimalPips.
-                result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + " " + value.toFixed(displayAndFormat.Decimals + 1).slice(-1);
-                break;
+                return value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals}) + "%";
+            case "AllowDecimalPips":  // Display the last digit smaller than the rest of the numbers. Note that this digit is not included in the number of decimals, effectively increasing the number of decimals by one. E.g. 12.345 when Decimals is 2 and DisplayFormat is AllowDecimalPips.
+                return displayWithDecimalPips(1);
+            case "AllowTwoDecimalPips":  // Display the last 2 digits smaller than the rest of the numbers. Note that these digits are not included in the number of decimals, effectively increasing the number of decimals by two. E.g. 12.3453 when Decimals is 2 and DisplayFormat is AllowTwoDecimalPips.
+                return displayWithDecimalPips(2);
             case "Fractions":  // Display as regular fraction i.e. 3 1/4 where 1=numerator and 4=denominator.
-                integerPart = parseInt(value);
-                fractionPart = value - integerPart;
-                numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
-                numerator = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
-                result = displayAndFormat.Currency + " " + integerPart + " " + numerator + "/" + Math.pow(2, displayAndFormat.Decimals);
-                break;
+                return displayWithFractions();
             case "ModernFractions":  // Special US Bonds futures fractional format (1/32s or 1/128s without nominator). If PriceDecimals = -5 then the nominator is 32, else 128.
-                integerPart = parseInt(value);
-                fractionPart = value - integerPart;
-                numerator = fractionPart * Math.pow(2, displayAndFormat.Decimals);
-                numerator = numerator.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.NumeratorDecimals, maximumFractionDigits: displayAndFormat.NumeratorDecimals});
-                result = displayAndFormat.Currency + " " + integerPart + " " + numerator + "/" + (
-                    displayAndFormat.Decimals === -5
-                    ? "32"
-                    : "128"
-                );
-                break;
+                return displayWithModernFractions();
             default:
-                console.error("Unsupported format: " + displayAndFormat.Format);
+                console.error("Unsupported price format: " + displayAndFormat.Format);
                 throw "Unsupported format";
             }
         } else {
             // No format returned, use "Normal":
-            result = displayAndFormat.Currency + " " + value.toLocaleString(undefined, {minimumFractionDigits: displayAndFormat.Decimals, maximumFractionDigits: displayAndFormat.Decimals});
+            return displayWithNormalFormatting();
         }
-        return result;
     }
 
     /**
@@ -137,45 +209,59 @@
     }
 
     /**
-     * Create a description of the condition in case of conditional orders.
-     * @return {void}
+     * Create a description of the condition in case of conditional orders (aka sleeping orders).
+     * @param {Object} condition The condition of the sleeping order.
+     * @return {string} Textual representation of the condition.
      */
-    function getConditionInText(conditionalOrder) {
+    function getConditionInText(condition) {
 
         function priceTypeInText() {
-            switch (conditionalOrder.TriggerPriceType) {
+            switch (condition.TriggerPriceType) {
             case "LastTraded":
                 return "last traded";
             default:
-                return conditionalOrder.TriggerPriceType.toLowerCase();
+                return condition.TriggerPriceType.toLowerCase();
             }
         }
 
+        const orderType = (
+            condition.hasOwnProperty("OpenOrderType")
+            ? condition.OpenOrderType  // This is the case for /orders
+            : condition.OrderType  // This is the case for /activities
+        );
+        const symbol = (
+            condition.hasOwnProperty("DisplayAndFormat")
+            ? condition.DisplayAndFormat.Symbol  // This is the case for /orders
+            : condition.Symbol  // This is the case for /activities
+        );
         let description = "  - activated when the following condition is met: ";
         let expirationDate;
-        switch (conditionalOrder.OpenOrderType) {
-        case "StopTrigger":  // Distance
-            description += conditionalOrder.DisplayAndFormat.Description + " " + priceTypeInText() + " price is " + conditionalOrder.TrailingStopDistanceToMarket + " " + (
-                conditionalOrder.BuySell === "Sell"
-                ? "above lowest "
-                : "below highest "
+        switch (orderType) {
+        case "TriggerStop":  // New version of Distance trigger order
+        case "StopTrigger":  // Old version (on GET /cs/v1/audit/orderactivities, before April, 2022)
+            description += symbol + " " + priceTypeInText() + " price is " + condition.TrailingStopDistanceToMarket + " " + (
+                condition.BuySell === "Sell"
+                ? "below highest "
+                : "above lowest "
             ) + priceTypeInText() + " price";
             break;
-        case "BreakoutTrigger":  // Breakout
-            description += conditionalOrder.DisplayAndFormat.Description + " " + priceTypeInText() + " price is outside " + conditionalOrder.BreakoutTriggerDownPrice + "-" + conditionalOrder.BreakoutTriggerUpPrice;
+        case "TriggerBreakout":  // New version of Breakout trigger order
+        case "BreakoutTrigger":  // Old version (on GET /cs/v1/audit/orderactivities, before April, 2022)
+            description += symbol + " " + priceTypeInText() + " price is outside " + condition.BreakoutTriggerDownPrice + "-" + condition.BreakoutTriggerUpPrice;
             break;
-        case "LimitTrigger":  // Price
-            description += conditionalOrder.DisplayAndFormat.Description + " last traded price is at or " + (
-                conditionalOrder.BuySell === "Sell"
+        case "TriggerLimit":  // New version of Price trigger order
+        case "LimitTrigger":  // Old version (on GET /cs/v1/audit/orderactivities, before April, 2022)
+            description += symbol + " last traded price is at or " + (
+                condition.BuySell === "Sell"
                 ? "above"
                 : "below"
-            ) + " " + conditionalOrder.Price;
+            ) + " " + condition.Price;
             break;
         }
         description += ". ";
-        switch (conditionalOrder.Duration.DurationType) {
+        switch (condition.Duration.DurationType) {
         case "GoodTillDate":
-            expirationDate = new Date(conditionalOrder.Duration.ExpirationDate);
+            expirationDate = new Date(condition.Duration.ExpirationDate);
             description += "Valid until trade day " + expirationDate.toLocaleDateString() + ".";
             break;
         case "DayOrder":
@@ -208,32 +294,34 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     let list = "";
+                    let multiLegOrderId = 0;
                     responseJson.Data.forEach(function (order) {
-                        const conditionalOrderTypes = ["LimitTrigger", "BreakoutTrigger", "StopTrigger"];
-                        if (conditionalOrderTypes.indexOf(order.OpenOrderType) < 0) {
-                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + (
-                                order.OpenOrderType === "Market"  // This can be the case for conditional orders (Status = WaitCondition)
-                                ? " (Market)"
-                                : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
-                            );
-                            list += " (status " + order.Status + ")" + (
-                                order.hasOwnProperty("ExternalReference")
-                                ? " reference: " + order.ExternalReference
-                                : ""
-                            );
-                            list += (
-                                order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
-                                ? " partially filled: " + order.FilledAmount
-                                : ""
-                            ) + "\n";
-                            if (order.hasOwnProperty("TriggerParentOrderId")) {
-                                // This is the reference to the condition.
-                                responseJson.Data.forEach(function (conditionalOrder) {
-                                    if (conditionalOrder.OrderId === order.TriggerParentOrderId) {
-                                        list += getConditionInText(conditionalOrder) + "\n"
-                                    }
-                                });
+                        if (order.hasOwnProperty("MultiLegOrderDetails")) {
+                            if (order.MultiLegOrderDetails.MultiLegOrderId !== multiLegOrderId) {
+                                multiLegOrderId = order.MultiLegOrderDetails.MultiLegOrderId;
+                                list += order.MultiLegOrderDetails.Description + "\n";
                             }
+                            list += "- ";
+                        }
+                        list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + order.DisplayAndFormat.Description + (
+                            order.OpenOrderType === "Market"  // This can be the case for conditional orders (Status = WaitCondition)
+                            ? " (Market)"
+                            : " @ price " + displayAndFormatValue(order.DisplayAndFormat, order.Price)
+                        );
+                        list += " (status " + order.Status + ")" + (
+                            (order.hasOwnProperty("ExternalReference") && order.ExternalReference !== "")
+                            ? " reference: " + order.ExternalReference
+                            : ""
+                        );
+                        list += (
+                            order.hasOwnProperty("FilledAmount")  // You won't see partial fills on SIM, but they exist on Live!
+                            ? " partially filled: " + order.FilledAmount
+                            : ""
+                        ) + "\n";
+                        if (order.Status === "WaitCondition") {
+                            // This status indicates that the order is waiting for a condition to be met, it is a "sleeping" order.
+                            // This condition can be a price movement on a different instrument and is represented in the SleepingOrderCondition object.
+                            list += getConditionInText(order.SleepingOrderCondition) + "\n";
                         }
                     });
                     console.log(msg + "\n\n" + (
@@ -301,17 +389,18 @@
          * @param {number} n The one or two digit number representing day or month.
          * @return {string} The formatted numer.
          */
-        function addLeadingZeroes(n) {
-            if (n <= 9) {
-                return "0" + n;
-            }
-            return n;
+        function addLeadingZero(n) {
+            return (
+                n > 9
+                ? String(n)
+                : "0" + n
+            );
         }
 
         const fromDate = new Date();
         let fromDateString;
         fromDate.setDate(fromDate.getDate() - daysInThePast);
-        fromDateString = fromDate.getFullYear() + "-" + addLeadingZeroes(fromDate.getMonth() + 1) + "-" + addLeadingZeroes(fromDate.getDate()) + "T00:00:00.000Z";
+        fromDateString = fromDate.getFullYear() + "-" + addLeadingZero(fromDate.getMonth() + 1) + "-" + addLeadingZero(fromDate.getDate()) + "T00:00:00.000Z";
         url += "&FromDateTime=" + encodeURIComponent(fromDateString);
         fetch(
             url,
@@ -326,21 +415,14 @@
                 response.json().then(function (responseJson) {
                     let list = "";
                     responseJson.Data.forEach(function (order) {
-                        switch (order.OrderType) {
-                        case "LimitTrigger":
-                            list += "Conditional order of type " + order.OrderType;
-                            break;
-                        case "BreakoutTrigger":
-                            list += "Conditional order of type " + order.OrderType;
-                            break;
-                        case "StopTrigger":
-                            list += "Conditional order of type " + order.OrderType;
-                            break;
-                        default:
-                            list += order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType;
-                        }
-                        list += " (status " + order.Status + " " + order.SubStatus + ")" + (
-                            order.hasOwnProperty("ExternalReference")
+                        const activityTime = new Date(order.ActivityTime);
+                        const symbol = (
+                            order.hasOwnProperty("DisplayAndFormat")
+                            ? order.DisplayAndFormat.Symbol  // OrderActivities
+                            : order.Symbol  // Activities
+                        );
+                        list += activityTime.toLocaleString() + " " + order.Duration.DurationType + " #" + order.OrderId + ": " + order.BuySell + " " + order.Amount + "x " + order.AssetType + " " + symbol + " (status " + order.Status + " " + order.SubStatus + ")" + (
+                            (order.hasOwnProperty("ExternalReference") && order.ExternalReference !== "")
                             ? " reference: " + order.ExternalReference
                             : ""
                         ) + (
@@ -348,6 +430,15 @@
                             ? " partially filled: " + order.FilledAmount
                             : ""
                         ) + "\n";
+                        if (order.SubStatus === "WaitCondition") {
+                            // This status indicates that the order is waiting for a condition to be met, it is a "sleeping" order.
+                            // This condition can be a price movement on a different instrument and is represented in the SleepingOrderCondition object.
+                            if (order.hasOwnProperty("SleepingOrderCondition")) {
+                                list += getConditionInText(order.SleepingOrderCondition) + "\n";
+                            } else {
+                                list += "  - condition couldn't be displayed." + "\n";
+                            }
+                        }
                     });
                     console.log(msg + "\n\n" + (
                         list === ""
@@ -364,7 +455,7 @@
     }
 
     /**
-     * Example of getting historical orders for the selected account.
+     * Example of getting historical orders for the selected client.
      * @return {void}
      */
     function getHistoricalOrdersClient() {
@@ -377,7 +468,7 @@
     }
 
     /**
-     * Example of getting historical orders for the selected account.
+     * Example of getting historical orders for the selected account group.
      * @return {void}
      */
     function getHistoricalOrdersAccountGroup() {

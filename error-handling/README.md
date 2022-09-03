@@ -2,4 +2,6 @@
 
 This is a demonstration on how to handle errors.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/error-handling/
+More on error handling: <https://www.developer.saxo/openapi/learn/openapi-request-response>
+
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/error-handling/>

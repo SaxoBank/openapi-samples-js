@@ -5,16 +5,23 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demo for Monitoring the Order Events</title>
+<style type="text/css" media="screen">
+div.input-field {
+  width: 30%;
+  display: inline-block; 
+}
+</style>
 </head>
 <body>
 <section class="page-header">
 <h1 class="project-name">Monitor Orders and Positions</h1>
 <h2 class="project-tagline">Subscribe to Order and Position Events</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/websockets/order-events-monitoring" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -29,25 +36,86 @@
 </div>
 <h1>Monitor order, positions and balance updates</h1>
 This example shows how to setup real time monitoring for order events and position changes using websockets.
-<br />
-<br />
-Be aware that ENS-events from partial fills might be received in a different order, due to the nature of the distributed system.
-<br />
-<br />
-<label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
-<br />
-<br />
+<p class="note">Be aware that ENS-events from partial fills might be received in a different order, due to the nature of the distributed system.</p>
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" />
+<br /><br />
+<div>
+<div class="input-field">ENS request arguments:<br />
+<textarea class="json-input" id="idEnsRequestObject" rows="10" wrap="off">
+{
+    "ContextId": "(added on first request)",
+    "ReferenceId": "MyEnsEvent",
+    "Arguments": {
+        "AccountKey": "(added on first request)",
+        "Activities": [
+            "AccountDepreciation",
+            "AccountFundings",
+            "CorporateActions",
+            "MarginCalls",
+            "Orders",
+            "PositionDepreciation",
+            "Positions"
+        ],
+        "FromDateTime": "",
+        "FieldGroups": [
+            "DisplayAndFormat",
+            "ExchangeInfo"
+        ]
+    }
+}
+</textarea>
 <input type="button" class="action-button" value="Subscribe to events from ENS" id="idBtnSubscribeEns" />
+</div>
+
+<div class="input-field">Balance request arguments:<br />
+<textarea class="json-input" id="idBalancesRequestObject" rows="10" wrap="off" wrap="off">
+{
+    "ContextId": "(added on first request)",
+    "ReferenceId": "MyBalanceEvent",
+    "RefreshRate": 10000,
+    "Arguments": {
+        "AccountKey": "(added on first request)",
+        "ClientKey": "(added on first request)",
+        "FieldGroups": [
+            "CalculateCashForTrading",
+            "MarginOverview"
+        ]
+    }
+}
+</textarea>
 <input type="button" class="action-button" value="Subscribe to balance changes" id="idBtnSubscribeBalances" />
+</div>
+
+<div class="input-field">Position request arguments:<br />
+<textarea class="json-input" id="idPositionsRequestObject" rows="10" wrap="off" wrap="off">
+{
+    "ContextId": "(added on first request)",
+    "ReferenceId": "MyPositionEvent",
+    "RefreshRate": 60000,
+    "Arguments": {
+        "AccountKey": "(added on first request)",
+        "ClientKey": "(added on first request)",
+        "FieldGroups": [
+            "DisplayAndFormat",
+            "ExchangeInfo",
+            "Greeks",
+            "NetPositionBase",
+            "NetPositionView"
+        ]
+    }
+}
+</textarea>
 <input type="button" class="action-button" value="Subscribe to position changes" id="idBtnSubscribePositions" />
-Place&nbsp;order&nbsp;with&nbsp;<a href="https://www.saxotrader.com/sim" target="_blank">SaxoTraderGO</a><br />
+</div>
+</div>
+<br />
+Place an order with <a href="https://www.saxotrader.com/sim" target="_blank">SaxoTraderGO</a> to see what happens.<br />
 <input type="button" class="action-button" value="Switch account" id="idBtnSwitchAccount" />
 <input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
 <input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
 <input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
-<br />
+<br /><br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
 <br />
 JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>

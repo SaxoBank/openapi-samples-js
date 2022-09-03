@@ -1,0 +1,65 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Corporate Action Election</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Corporate Action Election</h1>
+<h2 class="project-tagline">This example shows how to elect an option for an event</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/corporate-actions/elections" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">filters
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Events and Election</h1>
+This example shows how to elect an option for an event.<br />
+Documentation about Corporate Actions can be found at the <a href="https://www.developer.saxo/openapi/learn/corporate-actions" target="_blank">Developer Portal</a>.
+<p class="note">
+DISCLAIMER: the Corporate Action endpoints on SIM give 403 errors. The endpoints only work on Live.<br />
+To test on production: add '?env=live' to the URL of this page.
+</p>
+<br />
+<input type="button" class="action-button" value="1. Find Active Events to Elect" id="idBtnGetActiveEvents" />
+<br />
+<br />
+<label>2. Election: POST body containing election parameters: <input type="button" class="action-button" value=" Fill the election below and click" id="idBtnElect" /> </label> 
+<textarea class="json-input" id="idElectBody" rows="10">{
+    "AccountKey": "(added on first request)",
+    "EventId": "(Pick one EventId of the Events)",
+    "Options": [
+        {
+            "OptionId": "(The option to elect according to Options.OptionId)",
+            "Amount": "(Amount according to Holdings.Amount)"
+        }
+    ]
+}
+</textarea>
+<br />
+<label>3. Check the ElectionStatus Holdings.Options of this Event: <input type="text" class="text-field" id="idEventId" value="" placeholder="Enter an event id.."></label>
+<input type="button" class="action-button" value="Get this Event again" id="idBtnGetEventById" />
+<br />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

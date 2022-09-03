@@ -2,7 +2,15 @@
 
 This document describes how a client application can subscribe to Saxo Bank's Event Notification Service (ENS).
 
-Live demo: https://saxobank.github.io/openapi-samples-js/websockets/order-events-monitoring/
+Examples on
+- [Order Events Monitoring (ENS)](order-events-monitoring)
+- [Realtime Quotes](realtime-quotes)
+- [Primary Session Monitoring](primary-monitoring)
+- [Options Chain](options-chain)
+- [Trade Messages](trade-messages)
+- [Historical Market Data (Charts)](historical-market-data)
+- [Protobuf](protobuf)
+- [Corporate Action Events](corporateaction-events-monitoring)
 
 ## Table of contents
 
@@ -41,7 +49,7 @@ The following code creates and starts a connection:
 ```javascript
     var accessToken = // paste access token here
     var contextId = encodeURIComponent("MyApp" + Date.now());
-    var streamerUrl = "wss://gateway.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+    var streamerUrl = "wss://streaming.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
     var connection = new WebSocket(streamerUrl);
     console.log("Connection created. Status: " + connection.readyState);
 ```

@@ -1,10 +1,9 @@
-/*jslint browser: true, for: true, long: true */
+/*jslint browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -14,7 +13,7 @@
         "footerElm": document.getElementById("idFooter")
     });
     const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
-    let lastOrderId = 0;
+    let lastOrderId = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -24,7 +23,19 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-            newOrderObject.AccountKey = demo.user.accountKey;
+            if (newOrderObject.hasOwnProperty("AccountKey")) {
+                // This is the case for single orders, or conditional/related orders
+                // This function is used for other order types as well, so more order types are considered
+                newOrderObject.AccountKey = demo.user.accountKey;
+            }
+            if (newOrderObject.hasOwnProperty("Orders")) {
+                // This is the case for OCO, related and conditional orders
+                newOrderObject.Orders.forEach(function (order) {
+                    if (order.hasOwnProperty("AccountKey")) {
+                        order.AccountKey = demo.user.accountKey;
+                    }
+                });
+            }
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
@@ -71,6 +82,11 @@
             newOrderObject.TrailingStopStep = 0.1;
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
             break;
+        case "TriggerBreakout":
+        case "TriggerLimit":
+        case "TriggerStop":
+            console.error("You've selected an ordertype for a conditional order, which is not covered by this sample.\nSee for conditional orders:\nhttps://saxobank.github.io/openapi-samples-js/orders/conditional-orders/");
+            break;
         default:
             console.error("Unsupported order type " + newOrderObject.OrderType);
         }
@@ -81,6 +97,20 @@
      * @return {void}
      */
     function selectOrderDuration() {
+
+        /**
+         * Prefix number with zero, if it has one digit.
+         * @param {number} n The one or two digit number representing day or month.
+         * @return {string} The formatted number.
+         */
+        function addLeadingZero(n) {
+            return (
+                n > 9
+                ? String(n)
+                : "0" + n
+            );
+        }
+
         const newOrderObject = getOrderObjectFromJson();
         let now;
         newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
@@ -96,7 +126,7 @@
             now = new Date();
             now.setDate(now.getDate() + 3);  // Add 3x24 hours to now
             now.setSeconds(0, 0);
-            newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + (now.getMonth() + 1) + "-" + now.getDate() + "T" + now.getHours() + ":" + now.getMinutes() + ":00";  // Example: 2020-03-20T14:00:00
+            newOrderObject.OrderDuration.ExpirationDateTime = now.getFullYear() + "-" + addLeadingZero(now.getMonth() + 1) + "-" + addLeadingZero(now.getDate()) + "T" + addLeadingZero(now.getHours()) + ":" + addLeadingZero(now.getMinutes()) + ":00";  // Example: 2020-03-20T14:00:00
             newOrderObject.OrderDuration.ExpirationDateContainsTime = true;
             break;
         default:
@@ -167,8 +197,6 @@
      */
     function getSeries() {
         const optionRootId = document.getElementById("idInstrumentId").value;
-        const newOrderObject = getOrderObjectFromJson();
-        document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         fetch(
             demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId + "?OptionSpaceSegment=AllDates&TradingStatus=Tradable",
             {
@@ -194,12 +222,64 @@
     }
 
     /**
+     * This is an example of getting the price or the strategy.
+     * @return {void}
+     */
+    function getPrice() {
+        const newOrderObject = getOrderObjectFromJson();
+        newOrderObject.FieldGroups = ["Commissions", "DisplayAndFormat", "InstrumentPriceDetails", "MarginImpactBuySell", "Quote", "Greeks"];
+        fetch(
+            demo.apiUrl + "/trade/v1/prices/multileg",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(newOrderObject)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("This is the price data, including MarginImpactBuySell and commissions:\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
      * This is an example of an order validation.
      * @return {void}
      */
     function preCheckNewOrder() {
         // Bug: Preview doesn't check for limit outside market hours
         // Bug: Sometimes the response is CouldNotCompleteRequest - meaning you need to do the request again
+
+        function getErrorMessage(responseJson, defaultMessage) {
+            let errorMessage;
+            if (responseJson.hasOwnProperty("ErrorInfo")) {
+                // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                errorMessage = (
+                    responseJson.ErrorInfo.hasOwnProperty("Message")
+                    ? responseJson.ErrorInfo.Message
+                    : responseJson.ErrorInfo.ErrorCode  // In some cases (AllocationKeyDoesNotMatchAccount) the message is not available
+                );
+                // There can be error messages per order. Try to add them.
+                if (responseJson.hasOwnProperty("Orders")) {
+                    responseJson.Orders.forEach(function (order) {
+                        errorMessage += "\n- " + getErrorMessage(order, "");
+                    });
+                }
+            } else {
+                errorMessage = defaultMessage;
+            }
+            return errorMessage;
+        }
+
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
@@ -224,14 +304,15 @@
                         // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
                         if (responseJson.hasOwnProperty("ErrorInfo")) {
                             // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
-                            console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4));
+                            console.error(getErrorMessage(responseJson, "") + "\n\n" + JSON.stringify(responseJson, null, 4));
                         } else {
                             // The order can be placed
-                            console.log(JSON.stringify(responseJson, null, 4));
+                            console.log("The order can be placed:\n\n" + JSON.stringify(responseJson, null, 4));
                         }
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
-                        console.error(JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                        // This can be something like: {"ErrorInfo":{"ErrorCode":"IllegalInstrumentId","Message":"Instrument ID is invalid"},"EstimatedCashRequired":0.0,"PreCheckResult":"Error"}
+                        console.error(getErrorMessage(responseJson, "Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:") + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
                     }
                 });
             } else {
@@ -351,8 +432,9 @@
         {"evt": "change", "elmId": "idCbxOptionStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
         {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
         {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
-        {"evt": "click", "elmId": "idBtnGetStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
         {"evt": "click", "elmId": "idBtnGetSeries", "func": getSeries, "funcsToDisplay": [getSeries]},
+        {"evt": "click", "elmId": "idBtnGetStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
+        {"evt": "click", "elmId": "idBtnGetPrice", "func": getPrice, "funcsToDisplay": [getPrice]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},

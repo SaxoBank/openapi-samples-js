@@ -18,6 +18,7 @@
     function checkErrors() {
         const urlParams = new URLSearchParams(window.location.search);
         const error = urlParams.get("error");
+        // Example: ?error=access_denied&error_description=Disclaimers+not+accepted+during+login.&state=eyJjc3Jm
         if (error === null) {
             console.log("No error found.");
         } else {
@@ -49,7 +50,7 @@
         const state = urlParams.get("state");
         let stateUnencoded;
         if (state === null) {
-            console.log("No state found");
+            console.log("No state found.");
         } else {
             stateUnencoded = window.atob(state);
             try {
@@ -74,7 +75,7 @@
                     "Accept": "application/json; charset=utf-8"
                 },
                 "method": "POST",
-                "body": new URLSearchParams("grant_type=authorization_code&client_id=51cf2a12e7c048328158b0b1f171f9a7&code_verifier=" + document.getElementById("idCodeVerifier").value + "&code=" + code + "&redirect_uri=" + location.protocol + "//" + location.host + location.pathname)
+                "body": new URLSearchParams("grant_type=authorization_code&client_id=ab6c0ebb8a7e494f89a79326bbde54f5&code_verifier=" + document.getElementById("idCodeVerifier").value + "&code=" + code + "&redirect_uri=" + location.protocol + "//" + location.host + location.pathname)
             }
         ).then(function (response) {
             const accessTokenExpirationTime = new Date();

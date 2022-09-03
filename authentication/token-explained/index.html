@@ -5,16 +5,17 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Explain the Bearer Token (JWT)</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">JWT Debugger</h1>
+<h1 class="project-name">JSON Web Token Debugger</h1>
 <h2 class="project-tagline">Explain the Bearer Token (JWT)</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/authentication/token-explained" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -28,7 +29,8 @@
 </label>
 </div>
 <h1>Unpack the JSON Web Token (JWT)</h1>
-This example shows the info from the token.
+This example shows the info from the token.<br />
+Keep in mind that at any moment Saxo can change the data in the token (except the OAuth2 default claims), so don't rely on the IDs in the token.
 <br />
 More info on this topic: <a href="https://jwt.io/#debugger-io" target="_blank">https://jwt.io/#debugger-io</a>
 <br />

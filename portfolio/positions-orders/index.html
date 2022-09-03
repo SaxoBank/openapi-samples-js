@@ -5,16 +5,17 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demonstration of displaying portfolio and orders</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Display prices</h1>
-<h2 class="project-tagline">Format prices using the DisplayAndFormat object</h2>
+<h1 class="project-name">Display portfolio and orders</h1>
+<h2 class="project-tagline">Access a portfolio and view its active and historical orders.</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/portfolio/positions-orders" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -32,17 +33,20 @@
 More info: <a href="https://www.developer.saxo/openapi/learn/price-formatting" target="_blank">https://www.developer.saxo/openapi/learn/price-formatting</a>
 <br />
 <br />
-<input type="button" class="action-button" value="Get portfolio of Client" id="idBtnGetPortfolioClient" />
-<input type="button" class="action-button" value="Orders of Client" id="idBtnGetOrdersClient" />
-<input type="button" class="action-button" value="Historical orders of Client" id="idBtnGetHistoricalOrdersClient" />
+Client:
+<input type="button" class="action-button" value="Get portfolio" id="idBtnGetPortfolioClient" />
+<input type="button" class="action-button" value="Orders" id="idBtnGetOrdersClient" />
+<input type="button" class="action-button" value="Historical orders" id="idBtnGetHistoricalOrdersClient" />
 <br />
-<input type="button" class="action-button" value="Get portfolio of AccountGroup" id="idBtnGetPortfolioAccountGroup" />
-<input type="button" class="action-button" value="Orders of AccountGroup" id="idBtnGetOrdersAccountGroup" />
-<input type="button" class="action-button" value="Historical orders of AccountGroup" id="idBtnGetHistoricalOrdersAccountGroup" />
+AccountGroup:
+<input type="button" class="action-button" value="Get portfolio" id="idBtnGetPortfolioAccountGroup" />
+<input type="button" class="action-button" value="Orders" id="idBtnGetOrdersAccountGroup" />
+<input type="button" class="action-button" value="Historical orders" id="idBtnGetHistoricalOrdersAccountGroup" />
 <br />
-<input type="button" class="action-button" value="Get portfolio of Account" id="idBtnGetPortfolioAccount" />
-<input type="button" class="action-button" value="Orders of Account" id="idBtnGetOrdersAccount" />
-<input type="button" class="action-button" value="Historical orders of Account" id="idBtnGetHistoricalOrdersAccount" />
+Account:
+<input type="button" class="action-button" value="Get portfolio" id="idBtnGetPortfolioAccount" />
+<input type="button" class="action-button" value="Orders" id="idBtnGetOrdersAccount" />
+<input type="button" class="action-button" value="Historical orders" id="idBtnGetHistoricalOrdersAccount" />
 <br />
 <input type="button" class="action-button" value="Historical orders via ENS" id="idBtnGetHistoricalOrdersViaEns" />
 <br />

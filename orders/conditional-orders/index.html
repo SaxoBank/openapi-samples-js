@@ -2,17 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Order Demo for Conditional Orders</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Conditional Orders</h1>
+<h1 class="project-name">Conditional, or Sleeping Orders</h1>
 <h2 class="project-tagline">Creating Orders with a Trigger</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/conditional-orders" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -81,6 +84,7 @@ POST body containing order parameters:
     "ManualOrder": true,
     "Orders": [
         {
+            "AccountKey": "(added on first request)",
             "OrderType": "TriggerLimit",
             "AssetType": "StockIndex",
             "Uic": 1957254,
@@ -98,6 +102,7 @@ POST body containing order parameters:
 }
 </textarea>
 <br />
+<input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />

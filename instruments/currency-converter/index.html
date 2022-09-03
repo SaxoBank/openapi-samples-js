@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demo for FxSpot prices</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Currency Converter</h1>
+<h2 class="project-tagline">This example shows how to find prices on FxSpot instruments</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/instruments/currency-converter" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Currency Converter</h1>
+This example shows how to get prices for FxSpot instruments and use them for currency conversion.<br />
+Crypto's (BTC) are not available by default, but can be added by configuration.
+<br />
+<br />
+<label>Amount: <input type="number" id="idAmount" value="1.00" placeholder="Enter amount.."></label>
+<label>
+  From: <select id="idCbxCurrencyFrom">
+    <option value="-">Press 'Get Currency Pairs' to populate</option>
+  </select>
+</label>
+<br />
+<br />
+<input type="button" class="action-button" value="Get Currency Pairs" id="idBtnInitialize" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

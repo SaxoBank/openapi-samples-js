@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="ROBOTS" content="NOINDEX" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="redirect.js" defer></script>
     <title>This is the redirect page of the example</title>
@@ -14,7 +15,7 @@
 <h1 class="project-name">OAuth2 Implicit Flow (step 2)</h1>
 <h2 class="project-tagline">Retrieve Token using the Implicit Flow</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/authentication/oauth2-implicit-flow" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <h1>OAuth2 Implicit Flow Sample</h1>
@@ -23,9 +24,12 @@ This is the redirect page, where the user lands after authentication.<br />
 <br />
 <br />
 <input type="button" class="action-button" value="Check for errors" id="idBtnCheckErrors" />
-<input type="button" class="action-button" value="Get token" id="idBtnGetToken" />
 <input type="button" class="action-button" value="Get state" id="idBtnGetState" />
-<input type="button" class="action-button" value="Basic API request" id="idBtnGetUserData" />
+<input type="button" class="action-button" value="Verify CSRF token" id="idBtnVerifyCsrfToken" />
+<input type="button" class="action-button" value="Get Bearer token" id="idBtnGetToken" />
+<input type="button" class="action-button" value="Hide token" id="idBtnHideToken" /><br />
+<input type="button" class="action-button" value="Basic API request" id="idBtnGetUserData" /><br />
+<input type="button" class="action-button" value="Refresh token" id="idBtnRefreshToken" />
 <br />
 <br />
 <br />

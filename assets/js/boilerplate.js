@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.24
+ * boilerplate v1.32
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -14,7 +14,7 @@
  *
  * The token is stored in the localStorage, so it remains available after a page refresh.
  *
- * Suggestions? Comments? Reach us via Github or openapisupport@saxobank.com
+ * Suggestions? Comments? Reach us via Github or OpenApiSupport@saxobank.com
  *
  */
 
@@ -27,31 +27,52 @@ function demonstrationHelper(settings) {
     // https://www.developer.saxo/openapi/learn/environments
     const configSim = {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
-        "env": "sim",
+        "env": "sim",  // The SaxoTraderGO app for Simulation can be found here: https://www.saxotrader.com/sim/ (Developer Portal https://www.developer.saxo/openapi/ and https://developer.saxobank.com/openapi/ from China)
         "authUrl": "https://sim.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
-        "apiHost": "gateway.saxobank.com",  // Shouldn't be changed. On Saxo internal dev environments this can be something like "stgo-tst216.cf.saxo"
+        "apiHost": "gateway.saxobank.com",
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
-        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",  // On Saxo internal dev environments this can be something like "wss://blue.openapi.sys.dom/openapi/streamingws/connect"
-        "appKey": {
-            "defaultAssetTypes": "e081be34791f4c7eac479b769b96d623",  // No need to create your own app, unless you want to test on a different environment than SIM
-            //"defaultAssetTypes": "e125a21819334a78b4f02adcb362b060",  // This app has no trading rights - use this to test how it behaves when ordering
-            "extendedAssetTypes": "877130df4a954b60860088dc00d56bda"  // This app has Extended AssetTypes enabled - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
-        }
+        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
+        // App management: https://www.developer.saxo/openapi/appmanagement#/
+        "appKey": "1a6eb56ced7c4e04b1467e7e9be9bff7"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "7194692c30db42efb2c675c6c0fb2a67"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        // "appKey": "67625f8ca809446aa10b08d6eae2c7ab"  // This app has no trading rights - use this to test how it behaves when ordering
     };
     const configLive = {
         // Using "Live" for testing the samples is a risk. Use it with care!
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
-        "env": "live",
+        "env": "live",  // The SaxoTraderGO app for Live can be found here: https://www.saxotrader.com/
         "authUrl": "https://live.logonvalidation.net/authorize",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
         "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
-        "appKey": {
-            "defaultAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-DefaultAssetTypes",
-            "extendedAssetTypes": "CreateImplicitFlowLiveAppAndEnterIdHere-ExtendedAssetTypes"
-        }
+        "appKey": "4995383fd4b344e588eb784a7c666835"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "ae84ff08844e40d9a7e546bb1c4bdeb7"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+    };
+    const configDte231 = {
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "dte231",  // The SaxoTraderGO app for this DTE environment can be found here: https://stgo-tst231.cf.saxo/ (Developer Portal https://developerportal-tst231.cf.saxo/openapi/)
+        "authUrl": "https://sso-tst231.cf.saxo/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
+        "apiHost": "stgo-tst231.cf.saxo",
+        "apiPath": "/openapi",
+        "streamerUrl": "wss://stgo-tst231.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
+        "appKey": "9f07eb9eaf5447469509a03260830990"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "91250b8fdceb4713b0bb54b0f0eeae56"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        // "appKey": "8ef6e513003e46618d501eec0e213221"  // This app has no trading rights - use this to test how it behaves when ordering
+    };
+    const configDte211 = {
+        "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
+        "env": "dte211",  // The SaxoTraderGO app for this DTE environment can be found here: https://stgo-tst211.cf.saxo/ (Developer Portal https://developerportal-tst211.cf.saxo/openapi/)
+        "authUrl": "https://sso-tst211.cf.saxo/authorize",
+        "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
+        "apiHost": "stgo-tst211.cf.saxo",
+        "apiPath": "/openapi",
+        "streamerUrl": "wss://stgo-tst211.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
+        "appKey": "31eba2b4020c4185a93372a434373cb7"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
+        // "appKey": "1c66f4c529ec49cab9303371636fe3d8"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
+        // "appKey": "2c6e16c31a5b404190bc2c90b3bc75bc"  // This app has no trading rights - use this to test how it behaves when ordering
     };
     const user = {};
     const tokenKey = "saxoBearerToken";
@@ -110,9 +131,13 @@ function demonstrationHelper(settings) {
             if (errorObjectJson.hasOwnProperty("Message")) {
                 textToDisplay += processErrorInfo(errorObjectJson);
             } else if (errorObjectJson.hasOwnProperty("Orders")) {
-                // This response is returned when there is a 400 on related order requests:
+                // This response is returned when there is a 400, or 404 on related order requests.
+                // Example: {"Orders":[{"ExternalReference":"MyOcoOrderCorrelationId1","OrderId":"113319549"},{"ErrorInfo":{"ErrorCode":"OnWrongSideOfMarket","Message":"Price is on wrong side of market"},"ExternalReference":"MyOcoOrderCorrelationId2"}]}
                 errorObjectJson.Orders.forEach(function (orderError) {
-                    textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                    // It might be that not all related orders have an issue
+                    if (orderError.hasOwnProperty("ErrorInfo")) {
+                        textToDisplay += processErrorInfo(orderError.ErrorInfo);
+                    }
                 });
             }
             console.error(textToDisplay + correlationInfo);
@@ -239,32 +264,35 @@ function demonstrationHelper(settings) {
      */
     function getConfig() {
         let urlParams;
-        let isRunningOnSim = true;
+        let env;
+        let envParam = "sim";  // By default, SIM is used as environment. If you want to experiment on Live (BE CAREFUL!), you can add a query param '?env=live' (or dte231, for Saxo devs)
         if (window.URLSearchParams) {
             urlParams = new window.URLSearchParams(
                 window.location.hash === ""
                 ? window.location.search
                 : window.location.hash.replace("#", "?")
             );
-
-            const envParam = urlParams.get("env");
-            if (envParam && envParam.toLowerCase() === "live") {
-                isRunningOnSim = false;
+            envParam = urlParams.get("env");
+            if (envParam) {
+                env = envParam.toLowerCase();
             } else if (urlParams.get("state") !== null) {
                 try {
-                    if (JSON.parse(window.atob(urlParams.get("state"))).env === "live") {
-                        isRunningOnSim = false;
-                    }
+                    env = JSON.parse(window.atob(urlParams.get("state"))).env;
                 } catch (ignore) {
                     console.error("Something went wrong unpacking the state parameter..");
                 }
             }
         }
-        return (
-            isRunningOnSim
-            ? configSim
-            : configLive
-        );
+        switch (env) {
+        case "live":
+            return configLive;
+        case "dte231":
+            return configDte231;
+        case "dte211":
+            return configDte211;
+        default:
+            return configSim;
+        }
     }
 
     /**
@@ -377,11 +405,69 @@ function demonstrationHelper(settings) {
         }
 
         /**
+         * Extract the UserKey and clientKey from the token. These keys are required for subsequent requests.
+         * @return {void}
+         */
+        function getKeysFromToken() {
+            const tokenArray = String(settings.accessTokenElm.value).split(".");
+            let payload;
+            if (tokenArray.length !== 3) {
+                console.error("Token must have an header, payload and checksum.");  // Header, payload and checksum must be available, separated by dots. If not, token is invalid.
+                return;
+            }
+            try {
+                // The JWT contains an header, payload and checksum
+                // Payload is a base64 encoded JSON string
+                payload = JSON.parse(window.atob(tokenArray[1]));
+                // An example on getting the different claims can be found here: https://saxobank.github.io/openapi-samples-js/authentication/token-explained/
+                user.userKey = payload.uid;
+                user.clientKey = payload.cid;
+            } catch (error) {
+                console.error("Error getting userKey and clientKey of token.");
+                console.error(error);
+            }
+        }
+
+        /**
          * Request the basic data from the Api using a batch request.
          * @return {void}
          */
         function getDataFromApi() {
 
+            /**
+             * For security reasons a welcome message can be displayed. The customer can verify if this is as expected.
+             * @return {void}
+             */
+            function showWelcomeMessage(responseJson) {
+                const lastLoginTime = new Date(responseJson.LastLoginTime);
+                let message = "Welcome " + responseJson.Name + ".";
+                switch (responseJson.LastLoginStatus) {
+                case "Successful":
+                    message += " Your last visit was " + lastLoginTime.toLocaleString();
+                    break;
+                case "Unsuccessful":
+                    message += " Your last login failed @ " + lastLoginTime.toLocaleString();
+                    break;
+                default:
+                    throw "Unknown LastLoginStatus: " + responseJson.LastLoginStatus;
+                }
+                // Display message for security reasons - so the customer can verify if this is correct:
+                console.log(message);
+            }
+
+            /**
+             * Fire an event to let possible subscribers (in demo.js) know that accountKey, clientKey and userKey are available.
+             * @return {void}
+             */
+            function triggerDemoDataLoadedEvent() {
+                const demoDataLoadedEvent = new Event("demoDataLoaded");
+                document.dispatchEvent(demoDataLoadedEvent);
+            }
+
+            /**
+             * Response is received. It is a BATCH response (https://github.com/SaxoBank/openapi-samples-js/tree/main/batch-request). Unpack it, and populate required fields.
+             * @return {void}
+             */
             function processBatchResponse(responseArray) {
                 const requestIdMarker = "X-Request-Id:";
                 let requestId = "";
@@ -396,22 +482,22 @@ function demonstrationHelper(settings) {
                         try {
                             responseJson = JSON.parse(line);
                             switch (requestId) {
-                            case "1":  // Response of GET /users/me
+                            case "1":  // Response of GET /users/{UserKey}
                                 user.culture = responseJson.Culture;
                                 user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
+                                user.name = responseJson.Name;
                                 userId = responseJson.UserId;
+                                showWelcomeMessage(responseJson);
                                 if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
                                     // This is only an issue for Live - SIM supports only FX prices.
                                     console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
                                 }
                                 break;
-                            case "2":  // Response of GET /clients/me
+                            case "2":  // Response of GET /clients/{ClientKey}
                                 user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                user.clientKey = responseJson.ClientKey;
-                                user.name = responseJson.Name;
                                 clientId = responseJson.ClientId;
                                 break;
-                            case "3":  // Response of GET /accounts/me
+                            case "3":  // Response of GET /accounts?ClientKey={ClientKey}
                                 populateAccountSelection(responseJson.Data);
                                 break;
                             }
@@ -421,12 +507,16 @@ function demonstrationHelper(settings) {
                     }
                 });
                 console.log("The token is valid - hello " + user.name + "\nUserId: " + userId + "\nClientId: " + clientId);
+                triggerDemoDataLoadedEvent();
                 functionToRun();  // Run the function
             }
 
             const config = getConfig();
-            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
-            const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
+            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint} HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
+            let request = requestTemplate.replace("{endpoint}", "users/" + encodeURIComponent(user.userKey)).replace("{id}", "1");
+            request += requestTemplate.replace("{endpoint}", "clients/" + encodeURIComponent(user.clientKey)).replace("{id}", "2");
+            request += requestTemplate.replace("{endpoint}", "accounts?IncludeSubAccounts=true&ClientKey=" + encodeURIComponent(user.clientKey)).replace("{id}", "3");
+            request += "--+--\r\n";
             // This function uses a batch request to do three requests in one. See the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
             fetch(
                 "https://" + config.apiHost + config.apiPath + "/port/batch",  // Grouping is done per service group, so "/ref" for example, goes in a different batch.
@@ -470,6 +560,7 @@ function demonstrationHelper(settings) {
                 if (user.hasOwnProperty("accountKey")) {
                     functionToRun();
                 } else {
+                    getKeysFromToken();
                     // Not initialized yet. Request customer data in a batch.
                     getDataFromApi();
                 }
@@ -505,7 +596,15 @@ function demonstrationHelper(settings) {
          * @return {void}
          */
         function setupEvent(eventToSetup) {
-            document.getElementById(eventToSetup.elmId).addEventListener(eventToSetup.evt, function () {
+            const elm = (
+                eventToSetup.elmId === ""
+                ? document
+                : document.getElementById(eventToSetup.elmId)
+            );
+            if (elm === null) {
+                throw "Element " + eventToSetup.elmId + " not found in the HTML document.";
+            }
+            elm.addEventListener(eventToSetup.evt, function () {
                 run(eventToSetup.func);
                 displaySourceCode(eventToSetup.funcsToDisplay);
             });
@@ -555,7 +654,7 @@ function demonstrationHelper(settings) {
             // The JWT contains an header, payload and checksum
             // Payload is a base64 encoded JSON string
             payload = JSON.parse(window.atob(tokenArray[1]));
-            // An example about the different claims can be found here: authentication/token-explained/
+            // An example on getting the different claims can be found here: https://saxobank.github.io/openapi-samples-js/authentication/token-explained/
             return Math.floor((payload.exp * 1000 - now.getTime()) / 1000);
         } catch (error) {
             console.error("Error getting expiration time of token: " + token);
@@ -763,10 +862,10 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * If this sample is run from a known location (https://saxobank.github.io, or http://localhost), the link to authenticate using an app on Extended AssetTypes can be provided.
+     * Create link with preconfigured redirect (run from https://saxobank.github.io or http://localhost) and store Csrf token.
      * @return {void}
      */
-    function addOptionalExtendedAssetTypesLoginLink() {
+    function prepareLoginLink() {
 
         /**
          * Store the CSRF token in localStorage or cookie.
@@ -783,24 +882,36 @@ function demonstrationHelper(settings) {
             }
         }
 
+        /**
+         * This function generates a cryptographically strong random value.
+         * https://developer.mozilla.org/en-US/docs/Web/API/Crypto/getRandomValues
+         * @return {string} A 'real' random value
+         */
+        function getRandomValue() {
+            const randomValues = new Uint32Array(1);
+            window.crypto.getRandomValues(randomValues);
+            return randomValues[0].toString();
+        }
+
         const config = getConfig();
         const stateObject = {
             "redirect": window.location.pathname,  // https://auth0.com/docs/protocols/state-parameters#redirect-users
-            "csrfToken": Math.random().toString(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
+            "csrfToken": getRandomValue(),  // https://auth0.com/docs/protocols/state-parameters#csrf-attacks
             "env": config.env
         };
+        const urlLocalHost = "http://localhost/openapi-samples-js/";
+        const urlGithubPages = "https://saxobank.github.io/openapi-samples-js/";
         let urlWithoutParams = window.location.protocol + "//" + window.location.host + window.location.pathname;
-        if (urlWithoutParams.substring(0, 36) === "http://localhost/openapi-samples-js/" || urlWithoutParams.substring(0, 46) === "https://saxobank.github.io/openapi-samples-js/") {
+        if (urlWithoutParams.substring(0, urlLocalHost.length) === urlLocalHost || urlWithoutParams.substring(0, urlGithubPages.length) === urlGithubPages) {
             // We can probably use the Implicit/Code Flow Grant to get a token
-            // Change the URL, to give the option to use Extended AssetTypes
+            // Change the URL, to give the option to authenticate using the Github app on Extended AssetTypes
             urlWithoutParams = config.authUrl + "?response_type=" + config.grantType + "&state=" + window.btoa(JSON.stringify(stateObject)) + "&redirect_uri=" + encodeURIComponent(config.redirectUrl);
-            if (settings.hasOwnProperty("isExtendedAssetTypesRequired") && settings.isExtendedAssetTypesRequired === true) {
-                settings.retrieveTokenHref.parentElement.innerHTML = "Add token from <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes + "\" title=\"This app has default (soon legacy) asset types.\">default app</a> or <a href=\"" + urlWithoutParams + "&client_id=" + config.appKey.extendedAssetTypes + "\" title=\"This app is configured to have extended asset types, like ETF and ETN.\">app with Extended AssetTypes</a> to the box below:";
-            } else {
-                settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey.defaultAssetTypes;
-                settings.retrieveTokenHref.target = "_self";  // Back to default
-            }
+            settings.retrieveTokenHref.href = urlWithoutParams + "&client_id=" + config.appKey;
+            settings.retrieveTokenHref.target = "_self";  // Back to default
             saveCsrfToken(stateObject.csrfToken);  // Save CsrfToken for new authentication.
+        }
+        if (config.env !== "sim") {
+            settings.retrieveTokenHref.parentElement.innerHTML = "<p class=\"warning\">The " + config.env + " environment is being used for testing!</p>" + settings.retrieveTokenHref.parentElement.innerHTML;
         }
     }
 
@@ -817,7 +928,7 @@ function demonstrationHelper(settings) {
         mirrorConsoleError();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
             tryToGetToken();
-            addOptionalExtendedAssetTypesLoginLink();
+            prepareLoginLink();
             activateTokenExpirationWarning(settings.accessTokenElm.value);
             settings.accessTokenElm.addEventListener("change", function () {
                 saveAccessToken(settings.accessTokenElm.value);

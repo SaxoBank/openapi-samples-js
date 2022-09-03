@@ -1,10 +1,9 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -12,7 +11,7 @@
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
         "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
-        "selectedAssetType": "Stock",  // Is required when assetTypesList is available
+        "selectedAssetType": "-",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
     let instrumentId;
@@ -64,19 +63,45 @@
     }
 
     /**
+     * List the search result using GroupId.
+     * @param {Array<Object>} instrumentList The search result data.
+     * @return {string} The items in a list.
+     */
+    function getGroupedDisplayList(instrumentList) {
+        // More info: https://openapi.help.saxo/hc/en-us/articles/4468535563037-What-is-the-purpose-of-GroupId-in-the-instruments-resource-
+        let items = [];
+        let currentGroupId = 0;  // "0" is used for ungrouped data.
+        instrumentList.forEach(function (instrument) {
+            if (instrument.GroupId === 0 || instrument.GroupId !== currentGroupId) {
+                currentGroupId = instrument.GroupId;
+                items.push("+" + instrument.AssetType + " " + instrument.Description);
+            } else {
+                items.push("    - " + instrument.AssetType + " " + instrument.Description);
+            }
+        });
+        return items.join("\n");
+    }
+
+    /**
      * This is an example of instrument search.
      * @return {void}
      */
     function findInstrument() {
+        const maxResults = 200;
         const assetType = document.getElementById("idCbxAssetType").value;
+        const exchangeId = document.getElementById("idCbxExchange").value;
         const keywords = document.getElementById("idInstrumentName").value + (
             assetType === "ContractFutures"
             ? " continuous"  // By adding this, non tradable FuturesSpaces can be found
             : ""
         );
-        let url = demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&$top=10" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
-        if (document.getElementById("idCbxExchange").value !== "-") {
-            url += "&ExchangeId=" + encodeURIComponent(document.getElementById("idCbxExchange").value);
+        let url = demo.apiUrl + "/ref/v1/instruments?$top=" + maxResults + "&AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&Keywords=" + encodeURIComponent(keywords);
+        if (exchangeId !== "-") {
+            url += "&ExchangeId=" + encodeURIComponent(exchangeId);
+        }
+        if (assetType !== "-") {
+            // You can also specify a consistent group here, like "MiniFuture,WarrantDoubleKnockOut,WarrantKnockOut,WarrantOpenEndKnockOut" for all Turbo's
+            url += "&AssetTypes=" + encodeURIComponent(assetType);
         }
         // After a corporate action the instrument might be replaced by a copy with new Uic. The old one becomes non tradable.
         url += "&IncludeNonTradable=" + (
@@ -98,26 +123,41 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
+                    let instrument;
+                    let result;
                     if (responseJson.Data.length > 0) {
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
                         // Remember the first Uic for the details request
-                        if (responseJson.Data[0].hasOwnProperty("PrimaryListing") && assetType === "Stock") {
+                        if (instrument.hasOwnProperty("PrimaryListing") && assetType === "Stock") {
                             // Stocks might have a primary listing on another market - take that one
-                            instrumentId = responseJson.Data[0].PrimaryListing;
+                            instrumentId = instrument.PrimaryListing;
                         } else {
                             // This is not called "Uic", because it can identify an OptionRoot or FuturesSpace as well
-                            instrumentId = responseJson.Data[0].Identifier;
+                            instrumentId = instrument.Identifier;
                         }
-                        if (assetType === "ContractFutures" && responseJson.Data[0].hasOwnProperty("DisplayHint") && responseJson.Data[0].DisplayHint === "Continuous") {
-                            instrumentIdType = "futuresSpace";
-                        } else if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
+                        switch (instrument.SummaryType) {
+                        case "ContractOptionRoot":
                             instrumentIdType = "optionRoot";
-                        } else {
-                            instrumentIdType = "uic";
+                            result = "Click [Get details] for the contract option space of option root " + instrument.Description + ", which is the first search result.";
+                            break;
+                        case "Instrument":
+                            if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                                instrumentIdType = "futuresSpace";
+                                result = "Click [Get details] for the future space of future " + instrument.Description + ", which is the first search result.";
+                            } else {
+                                instrumentIdType = "uic";
+                                result = "Click [Get details] for the instrument details of " + instrument.Description + ", which is the first search result.";
+                            }
+                            break;
+                        default:
+                            console.error("Unknown SummaryType: " + instrument.SummaryType);
                         }
+                        result = getGroupedDisplayList(responseJson.Data) + "\n\n" + result;
+                    } else {
+                        result = "No instruments found.";
                     }
                     // You can search for an ISIN. That will work. But due to market limitations the ISIN won't be in the response.
-                    console.log(JSON.stringify(responseJson, null, 4));
+                    console.log(result + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);

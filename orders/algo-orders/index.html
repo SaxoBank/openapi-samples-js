@@ -1,0 +1,79 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Order Demo for Algorithmic Orders</title>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Algorithmic Orders</h1>
+<h2 class="project-tagline">Demo on Algorithmic Orders</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/algo-orders" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Basics of an Algo Order</h1>
+An Algo order is a regular Order that has an AlgoOrderData section added in the Place Order or Change Order requests.<br />
+Get the strategy guide <a href="https://github.com/SaxoBank/openapi-samples-js/blob/main/orders/algo-orders/algo-orders-guide.pdf" target="_blank">here</a> and the developer description at the <a href="https://developer.saxobank.com/openapi/learn/algo-orders" target="_blank">Developer Portal</a>.<br />
+Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.<br />
+Algo-orders can be used for <a href="https://www.help.saxo/hc/en-gb/articles/360001286166-Does-Saxo-Markets-offer-pre-market-trading-" target="_blank">pre-market trading in US Stocks</a>.<br />
+<p class="note">
+!! <b>IMPORTANT</b> !! Algo Orders only partly work on SIM (no executions), so Live testing is necessary!<br />
+The '<i>?env=live</i>' option to test on production uses a readonly app. So best is to use a token from <a href="https://www.developer.saxo/openapi/appmanagement#/liveoverview" target="_blank">your own live app</a>.
+</p>
+<br />
+POST body containing order parameters:
+<br />
+<label>
+  Strategies: <select class="selector" id="idCbxStrategy">
+    <option value="-" selected>Press "Get strategies" to populate</option>
+  </select>
+</label>
+<textarea class="json-input" id="idNewOrderObject" rows="13">
+{
+    "AccountKey": "(added on first request)",
+    "Uic": 112809,
+    "AssetType": "Stock",
+    "Amount": 100,
+    "BuySell": "Buy",
+    "OrderType": "Limit",
+    "OrderPrice": 150,
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    },
+    "ManualOrder": true,
+    "AlgoOrderData": {
+        "StrategyName": "Dark",
+        "Arguments": {}
+    }
+}
+</textarea>
+<br />
+<input type="button" class="action-button" value="Get strategies for instrument" id="idBtnGetStrategies" />
+<input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
+<input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
+<input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

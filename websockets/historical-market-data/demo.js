@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -9,7 +9,6 @@
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -60,16 +59,15 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let i;
                     let foundSampleTime;
                     if (responseJson.Data.length > 0) {
                         oldestSampleTime = new Date();
-                        for (i = 0; i < responseJson.Data.length; i += 1) {
-                            foundSampleTime = new Date(responseJson.Data[i].Time);
+                        responseJson.Data.forEach(function (sample) {
+                            foundSampleTime = new Date(sample.Time);
                             if (foundSampleTime < oldestSampleTime) {
                                 oldestSampleTime = foundSampleTime;
                             }
-                        }
+                        });
                         console.log("Found " + responseJson.Data.length + " samples in response, dating back to " + oldestSampleTime.toLocaleString() + ". Response: " + JSON.stringify(responseJson, null, 4));
                     } else {
                         console.log("No older samples found. Response: " + JSON.stringify(responseJson, null, 4));
@@ -258,10 +256,10 @@
             messages.forEach(function (message) {
                 switch (message.referenceId) {
                 case "MyChartDataEvent":
-                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming chart data event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
-                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    console.debug("Heartbeat event #" + message.messageId + " received: " + JSON.stringify(message.payload));
                     break;
                 case "_resetsubscriptions":
                     // The server is not able to send messages and client needs to reset subscriptions by recreating them.
@@ -319,21 +317,26 @@
     }
 
     /**
-     * This is an example of extending the websocket session, when a token refresh took place.
+     * This is an example of extending the websocket session, after a token refresh took place.
      * @return {void}
      */
     function extendSubscription() {
+        // Be sure to refresh the token first, using the OAuth2 server (not included in this sample).
+        // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
+        const token = document.getElementById("idBearerToken").value;
         fetch(
             demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    "Authorization": "Bearer " + token
                 }
             }
         ).then(function (response) {
+            const newExpirationTime = new Date();
+            newExpirationTime.setSeconds(newExpirationTime.getSeconds() + demo.getSecondsUntilTokenExpiry(token));
             if (response.ok) {
-                console.log("Subscription extended.");
+                console.log("Subscription extended until " + newExpirationTime.toLocaleString() + ".");
             } else {
                 demo.processError(response);
             }
@@ -382,7 +385,7 @@
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribe", "func": subscribe, "funcsToDisplay": [subscribe]},
-        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription, demo.getSecondsUntilTokenExpiry]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);

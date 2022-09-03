@@ -2,4 +2,6 @@
 
 This is a demonstration on how to request paged responses with $top and $skip.
 
-Live demo: https://saxobank.github.io/openapi-samples-js/basics/query-options/
+More on query options: <https://www.developer.saxo/openapi/learn/openapi-request-response>
+
+Interactive demo: <https://saxobank.github.io/openapi-samples-js/basics/query-options/>

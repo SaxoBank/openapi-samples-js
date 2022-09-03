@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper */
 
 /**
@@ -49,10 +49,11 @@
             if (response.ok) {
                 response.json().then(function (responseJson) {
                     const responseText = "\n\nResponse: " + JSON.stringify(responseJson, null, 4);
-                    if (responseJson.AccessRights.CanTrade) {
-                        console.log("You can take the Price Session!" + responseText);
+                    // More info about the user operations can be found @ https://saxobank.github.io/openapi-samples-js/basics/user-info/
+                    if (responseJson.Operations.indexOf("OAPI.OP.TakeTradeSession") === -1) {
+                        console.error("You are not allowed to upgrade your TradeLevel to FullTradingAndChat.");
                     } else {
-                        console.error("You are not allowed to take the price session." + responseText);
+                        console.log("Session has operation 'OAPI.OP.TakeTradeSession':\nYou can upgrade your session to FullTradingAndChat!" + responseText);
                     }
                 });
             } else {
@@ -222,11 +223,11 @@
             messages.forEach(function (message) {
                 switch (message.referenceId) {
                 case "MyTradeLevelChangeEvent":
-                    console.log("Streaming trade level change event " + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    console.log("Streaming trade level change event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-                    console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
+                    console.debug("Heartbeat event #" + message.messageId + " received: " + JSON.stringify(message.payload));
                     break;
                 case "_resetsubscriptions":
                     // The server is not able to send messages and client needs to reset subscriptions by recreating them.
@@ -266,6 +267,32 @@
         ).then(function (response) {
             if (response.ok) {
                 console.log("Subscription created with readyState " + connection.readyState + " and data '" + JSON.stringify(data, null, 4) + "'");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * This is an example of requesting the active session capabilities.
+     * @return {void}
+     */
+    function getSessionCapabilities() {
+        fetch(
+            demo.apiUrl + "/root/v1/sessions/capabilities",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    console.log("Response: " + JSON.stringify(responseJson, null, 4));
+                });
             } else {
                 demo.processError(response);
             }
@@ -331,21 +358,26 @@
     }
 
     /**
-     * This is an example of extending the websocket session, when a token refresh took place.
+     * This is an example of extending the websocket session, after a token refresh took place.
      * @return {void}
      */
     function extendSubscription() {
+        // Be sure to refresh the token first, using the OAuth2 server (not included in this sample).
+        // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
+        const token = document.getElementById("idBearerToken").value;
         fetch(
             demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    "Authorization": "Bearer " + token
                 }
             }
         ).then(function (response) {
+            const newExpirationTime = new Date();
+            newExpirationTime.setSeconds(newExpirationTime.getSeconds() + demo.getSecondsUntilTokenExpiry(token));
             if (response.ok) {
-                console.log("Subscription extended.");
+                console.log("Subscription extended until " + newExpirationTime.toLocaleString() + ".");
             } else {
                 demo.processError(response);
             }
@@ -393,9 +425,10 @@
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
         {"evt": "click", "elmId": "idBtnSubscribe", "func": subscribe, "funcsToDisplay": [subscribe]},
+        {"evt": "click", "elmId": "idBtnGetSessionCapabilities", "func": getSessionCapabilities, "funcsToDisplay": [getSessionCapabilities]},
         {"evt": "click", "elmId": "idBtnBecomePrimary", "func": requestPrimaryPriceSession, "funcsToDisplay": [requestPrimaryPriceSession]},
         {"evt": "click", "elmId": "idBtnBecomePrimaryAgain", "func": requestPrimaryPriceSessionAgain, "funcsToDisplay": [requestPrimaryPriceSessionAgain]},
-        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription, demo.getSecondsUntilTokenExpiry]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribe, "funcsToDisplay": [unsubscribe]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);

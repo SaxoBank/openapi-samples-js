@@ -1,7 +1,9 @@
 # Examples for handling instruments
 
 Examples on
-- Finding instruments,
-- Extended AssetTypes,
-- Entitlements
-- Download the instruments universe, respecting the rate limit.
+- [Finding instruments](instrument-search)
+- [Exchanges](exchanges)
+- [Extended AssetTypes](extended-assettypes)
+- [Entitlements](entitlements)
+- [Currency conversion](currency-converter)
+- [Download the instruments universe, respecting the rate limit](instrument-retrieval)

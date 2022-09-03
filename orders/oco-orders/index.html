@@ -5,6 +5,7 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Order Demo for One-Cancels-the-Other (OCO) Orders</title>
@@ -14,7 +15,7 @@
 <h1 class="project-name">OCO-Orders</h1>
 <h2 class="project-tagline">Demo on related orders: OCO</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/oco-orders" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -28,9 +29,9 @@
 </label>
 </div>
 <h1>Basics of a One-Cancels-the-Other (OCO) Order</h1>
-Traders can use OCO orders to trade retracements and breakouts. If a trader wanted to trade a break above resistance or below support, they could place an OCO order that uses a buy stop and sell stop to enter the market..<br />
+Traders can use OCO orders to trade retracements and breakouts. If a trader wanted to trade a break above resistance or below support, they could place an OCO order that uses a buy stop and sell stop to enter the market.<br />
 The example here is taken from the description at <a href="https://www.investopedia.com/terms/o/oco.asp" target="_blank">Investopedia</a>.<br />
-An OCO-order is an example of a "related order", or "tactic order". Keep in mind that one of the related orders can be rejected, but the rest might go to the market. It is up tou the app to handle this scenario!<br />
+An OCO-order is an example of a "related order", or "tactic order". Keep in mind that one of the related orders can be rejected, but the rest might go to the market. It is up to the app to handle this scenario!<br />
 Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
 <br />
 <br />
@@ -71,6 +72,7 @@ POST body containing order parameters:
 }
 </textarea>
 <br />
+<input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />
 <input type="button" class="action-button" value="Modify order" id="idBtnModifyLastOrder" />
 <input type="button" class="action-button" value="Cancel order" id="idBtnCancelLastOrder" />

@@ -5,6 +5,7 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Order Demo for Regulatory Requirements</title>
@@ -14,7 +15,7 @@
 <h1 class="project-name">Regulatory Requirements</h1>
 <h2 class="project-tagline">Example on Requirements for Order Tickets</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/regulatory-requirements" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -32,15 +33,16 @@ This example shows three important things which need to be in place for order ti
 <ol>
 <li>When the customer wants to trade a complex AssetType, the customer must be warned that specific knowledge about this AssetType is required.</li>
 <li>The customer must have the option to examine a <a href="https://www.developer.saxo/openapi/learn/mifid-2-cost-reporting" target="_blank">cost breakdown</a> of the transaction and holding the asset for 1 year.</li>
-<li>If there is documentation about the asset (PRIIPS / KIID), the customer must have the option to download this.</li>
+<li>If there is documentation about the asset <a href="https://www.developer.saxo/openapi/learn/market-overview" target="_blank">(PRIIPS/KIID)</a>, the customer must have the option to download this.</li>
 </ol>
 <label>
   Asset type: <select class="selector" id="idCbxAssetType">
     <option value="-">Click "Validate" to populate</option>
   </select>
 </label>
-<label>Instrument Uic: <input type="text" class="text-field" id="idUic" value="112809" placeholder="Enter instrument name.." /></label><br />
-<label>Amount: <input type="text" class="text-field" id="idAmount" value="100" placeholder="Enter amount.." /></label><br />
+<label>Instrument Uic: <input type="text" class="text-field" id="idUic" value="112809" placeholder="Enter instrument Uic.." /></label><br />
+<label>Amount (for cost): <input type="text" class="text-field" id="idAmount" value="100" placeholder="Enter amount.." /></label><br />
+<label>Price (for cost): <input type="text" class="text-field" id="idPrice" value="3.24" placeholder="Enter last price.." /></label><br />
 <br />
 <input type="button" class="action-button" value="Complex warning" id="idBtnComplexWarning" />
 <input type="button" class="action-button" value="Order costs" id="idBtnGetOrderCosts" />

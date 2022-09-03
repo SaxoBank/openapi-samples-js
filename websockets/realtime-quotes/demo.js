@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, long: true, bitwise: true */
+/*jslint this: true, browser: true, for: true, long: true, bitwise: true, unordered: true */
 /*global window console demonstrationHelper ParserProtobuf protobuf */
 
 /**
@@ -9,7 +9,6 @@
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -20,26 +19,24 @@
         "selectedAssetType": "FxSpot",  // Only FX has realtime prices, if Live account is not linked
         "footerElm": document.getElementById("idFooter")
     });
-    const parserProtobuf = new ParserProtobuf("default", protobuf);
     // These objects contains the state of the subscriptions, so a reconnect can be processed and health can be monitored.
-    const jsonListSubscription = {
-        "reference": "MyPriceListEvent_Json",
+    const tradeLevelSubscription = {
+        "referenceId": "MyTradeLevelEvent",
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false
     };
-    const protoBufListSubscription = {
-        "reference": "MyPriceListEvent_ProtoBuf",
+    const listSubscription = {
+        "referenceId": "MyPriceListEvent",
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false
     };
     const orderTicketSubscriptions = [];
-    const jsonOrderTicketSubscriptionReferencePrefix = "MyPriceEventJsonOfUic";  // These references are used to determine the Uic when data is received
-    const protoBufOrderTicketSubscriptionReferencePrefix = "MyPriceEventProtoBufOfUic";
-    let schemaName;  // The ProtoBuf schema
-    let connection;  // The websocket connection object
+    const orderTicketSubscriptionReferenceIdPrefix = "MyPriceEvent";
+    let connection = null;  // The websocket connection object
     let orderTicketSubscriptionsActivityMonitor = null;
+    let primarySessionRequestCount = 0;
 
     /**
      * Test if the browser supports the features required for websockets.
@@ -52,6 +49,36 @@
             Boolean(window.Uint8Array) &&
             Boolean(window.TextDecoder)
         );
+    }
+
+    /**
+     * Only applicable on Live: verify if customer accepted the OpenAPI Market Data Terms.
+     * @return {void}
+     */
+    function getMarketDataTermsAccepted() {
+        fetch(
+            demo.apiUrl + "/port/v1/users/me",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    if (responseJson.MarketDataViaOpenApiTermsAccepted) {
+                        console.log("The customer accepted the OpenAPI Market Data Terms.\nThis means realtime prices, when available, can be retrieved by a thirdparty app.");
+                    } else {
+                        console.error("User didn't accept the terms for market data via the OpenApi.\nThis is required for instrument prices on Live via the OpenAPI.\n\n!!! This is not an issue on SIM, which has only realtime prices for Fx instruments.");
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
@@ -89,22 +116,22 @@
     function monitorActivity(subscription) {
         if (subscription.isActive) {
             if (subscription.isRecentDataReceived) {
-                console.debug("Subscription " + subscription.reference + " is healthy..");
+                console.debug("Subscription " + subscription.referenceId + " is healthy..");
                 subscription.isRecentDataReceived = false;
             } else {
-                console.error("No recent network activity for subscription " + subscription.reference + ". You might want to reconnect.");
+                console.error("No recent network activity for subscription " + subscription.referenceId + ". You might want to reconnect.");
             }
         }
     }
 
     /**
-     * This is an example of subscribing to price updates for multiple instruments, using Json.
+     * This is an example of subscribing to price updates for multiple instruments.
      * @return {void}
      */
-    function subscribeListJson() {
+    function subscribeList() {
         const data = {
             "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": jsonListSubscription.reference,
+            "ReferenceId": listSubscription.referenceId,
             "Arguments": {
                 "AccountKey": demo.user.accountKey,
                 "Uics": document.getElementById("idUics").value,
@@ -114,6 +141,14 @@
                 "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
             }
         };
+        if (listSubscription.isActive) {
+            // The reference id of a subscription for which the new subscription is a replacement.
+            // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+            // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+            // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+            // If no such subscription exists, the ReplaceReferenceId is ignored.
+            data.ReplaceReferenceId = listSubscription.referenceId;
+        }
         fetch(
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
             // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
@@ -129,16 +164,20 @@
             }
         ).then(function (response) {
             if (response.ok) {
-                jsonListSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                jsonListSubscription.isActive = true;
+                listSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+                listSubscription.isActive = true;
                 response.json().then(function (responseJson) {
                     // Monitor connection every "InactivityTimeout" seconds.
-                    if (jsonListSubscription.activityMonitor === null) {
-                        jsonListSubscription.activityMonitor = window.setInterval(function () {
-                            monitorActivity(jsonListSubscription);
+                    if (listSubscription.activityMonitor === null) {
+                        listSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(listSubscription);
                         }, responseJson.InactivityTimeout * 1000);
                     }
-                    console.log("Subscription created (readyState " + connection.readyState + ") with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
+                    console.log("Subscription created " + (
+                        connection === null
+                        ? ""
+                        : "(readyState " + connection.readyState + ") "
+                    ) + "with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -162,40 +201,53 @@
     }
 
     /**
-     * Convert an underscore-separated ReferenceId to an object containing the Uic and AssetType.
-     * @param {string} referenceId ReferenceId to parse
-     * @return {Object} Object containing the Uic and AssetType
+     * Convert an unsubscribe request for an individual price subscription to a text block to be used in a batch request.
+     * Delete requests should be done before adding new subscriptions, to prevent reaching an unnecessary subscription limit.
+     * @param {number} newLength The new number of price subscriptions
+     * @return {string} Part of the batch request data
      */
-    function referenceIdToObject(referenceId) {
-        const referenceIdArray = referenceId.split("_");  // Example: protoBufOrderTicketSubscriptionReferencePrefix_21_FxSpot
-        return {
-            "prefix": referenceIdArray[0],
-            "uic": referenceIdArray[1],
-            "assetType": referenceIdArray[2]
-        };
+    function addDeleteSubscriptionRequestsToBatchRequest(newLength) {
+        const host = "https://gateway.saxobank.com";
+        let fullPathPrefix = demo.apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value + "/";
+        let request = "";
+        let i;
+        fullPathPrefix = fullPathPrefix.substring(host.length);
+        for (i = newLength; i < orderTicketSubscriptions.length; i += 1) {
+            console.log("Deleting subscription with reference " + orderTicketSubscriptions[i].referenceId);
+            request += "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nDELETE " + fullPathPrefix + orderTicketSubscriptions[i].referenceId + " HTTP/1.1\r\nX-Request-Id:DEL" + i + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
+        }
+        return request;
+    }
+
+    /**
+     * Lookup the subscription in the list, to get Uic and AssetType.
+     * @param {Array<Object>} subscriptions The list
+     * @param {string} referenceId The reference id to lookup
+     * @return {Object} The subscription
+     */
+    function getSubscriptionByReference(subscriptions, referenceId) {
+        // The referenceId is something like "MyPriceEvent_4" - the second part is the index.
+        return subscriptions[parseInt(referenceId.substring(referenceId.indexOf("_") + 1), 10)];
     }
 
     /**
      * Subscribe to prices in high quality. These are meant to display on order tickets, but you can setup multiple subscriptions.
      * Multiple subscriptions are grouped into a single batch request.
-     * @param {string} format Format of the events, either "json", or "protoBuf"
-     * @param {Array<number>} uicList Instrument list to subscribe to
      * @return {void}
      */
-    function subscribeOrderTicket(format, uicList) {
+    function subscribeOrderTicket() {
+        const uicList = document.getElementById("idUics").value.split(",");
+        const orderTicketSubscriptionsRequested = [];
         let postDataBatchRequest = "";
         let requestId = 0;
         // Create a batch request to create multiple subscriptions in one request.
         // More info on batch requests: https://saxobank.github.io/openapi-samples-js/batch-request/
-        uicList.forEach(function (uic) {
+        uicList.forEach(function (uic, i) {
             const assetType = document.getElementById("idCbxAssetType").value;
+            const referenceId = orderTicketSubscriptionReferenceIdPrefix + "_" + i;
             const data = {
                 "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": (
-                    format === "json"
-                    ? jsonOrderTicketSubscriptionReferencePrefix
-                    : protoBufOrderTicketSubscriptionReferencePrefix
-                ) + "_" + uic + "_" + assetType,
+                "ReferenceId": referenceId,
                 "Arguments": {
                     "AccountKey": demo.user.accountKey,
                     "Uic": uic,
@@ -206,12 +258,28 @@
                     "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
                 }
             };
-            if (format === "protoBuf") {
-                data.Format = "application/x-protobuf";  // This triggers ProtoBuf
+            orderTicketSubscriptionsRequested.push({
+                "referenceId": referenceId,
+                "uic": uic,
+                "assetType": assetType
+            });
+            if (orderTicketSubscriptions.length > i) {
+                // The reference id of a subscription for which the new subscription is a replacement.
+                // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+                // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+                // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+                // If no such subscription exists, the ReplaceReferenceId is ignored.
+                data.ReplaceReferenceId = referenceId;
             }
             requestId += 1;
             postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
         });
+        // There is a possibility that the new list is smaller than the current list. Then subscriptions must be deleted, instead of replaced.
+        // Maybe this is too complex and far beyond an example, but replacing subscriptions is an important topic.
+        if (orderTicketSubscriptions.length > orderTicketSubscriptionsRequested.length) {
+            // The DELETE requests are added to the batch, BEFORE setting up the new subscriptions, to prevent reaching a subscription limit:
+            postDataBatchRequest = addDeleteSubscriptionRequestsToBatchRequest(orderTicketSubscriptionsRequested.length) + postDataBatchRequest;
+        }
         postDataBatchRequest += "--+--\r\n";  // Add the end tag
         fetch(
             demo.apiUrl + "/trade/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
@@ -230,34 +298,30 @@
             if (response.ok) {
                 response.text().then(function (responseText) {
                     const responseArray = responseText.split("\n");
-                    let responseCount = 0;
                     let responseJson;
+                    let requestedSubscription;
                     let smallestInactivityTimeout = Number.MAX_VALUE;
+                    orderTicketSubscriptions.length = 0;
                     responseArray.forEach(function (line) {
                         line = line.trim();
                         if (line.charAt(0) === "{") {
                             try {
                                 responseJson = JSON.parse(line);
-                                console.debug(responseJson);
-                                smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
-                                orderTicketSubscriptions.push({
-                                    "reference": responseJson.ReferenceId,
-                                    "uic": referenceIdToObject(responseJson.ReferenceId).uic,
-                                    "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
-                                    "isActive": true,
-                                    "format": format
-                                });
-                                if (format === "protoBuf") {
-                                    // The schema to use when parsing the messages, is send together with the snapshot.
-                                    schemaName = responseJson.SchemaName;
-                                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                                        console.error("Adding schema to protobuf was not successful.");
-                                    }
-                                    console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Schema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema + "\n\nSnapshot:\n" + JSON.stringify(responseJson, null, 4));
+                                if (responseJson.hasOwnProperty("ErrorCode")) {
+                                    // This can be something like "IllegalInstrumentId" - but this never happens in your app :-)
+                                    console.error(responseJson.Message);
                                 } else {
+                                    smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
+                                    requestedSubscription = getSubscriptionByReference(orderTicketSubscriptionsRequested, responseJson.ReferenceId);
+                                    orderTicketSubscriptions.push({
+                                        "referenceId": responseJson.ReferenceId,
+                                        "uic": requestedSubscription.uic,
+                                        "assetType": requestedSubscription.assetType,
+                                        "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
+                                        "isActive": true
+                                    });
                                     console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                                 }
-                                responseCount += 1;
                             } catch (error) {
                                 console.error(error);
                             }
@@ -278,90 +342,6 @@
         }).catch(function (error) {
             console.error(error);
         });
-    }
-
-    /**
-     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Json.
-     * @return {void}
-     */
-    function subscribeOrderTicketJson() {
-        const uicList = document.getElementById("idUics").value.split(",");
-        subscribeOrderTicket("json", uicList);
-    }
-
-    /**
-     * This is an example of subscribing to price updates, using Protobuf, which saves some bandwidth, but is much more complex to implement!
-     * @return {void}
-     */
-    function subscribeListProtoBuf() {
-        // The Saxo API supports ProtoBuf, which saves some bandwidth.
-        //
-        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
-        //
-        // In order to make the parsing work, parts of the client-lib are used.
-        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": protoBufListSubscription.reference,
-            "Format": "application/x-protobuf",  // This triggers ProtoBuf
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Uics": document.getElementById("idUics").value,
-                "AssetType": document.getElementById("idCbxAssetType").value,
-                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
-            }
-        };
-        fetch(
-            demo.apiUrl + "/trade/v1/infoprices/subscriptions",
-            {
-                "method": "POST",
-                "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Content-Type": "application/json; charset=utf-8"
-                },
-                "body": JSON.stringify(data)
-            }
-        ).then(function (response) {
-            if (response.ok) {
-                protoBufListSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
-                protoBufListSubscription.isActive = true;
-                response.json().then(function (responseJson) {
-                    // The schema to use when parsing the messages, is send together with the snapshot.
-                    schemaName = responseJson.SchemaName;
-                    if (!parserProtobuf.addSchema(responseJson.Schema, schemaName)) {
-                        console.error("Adding schema to protobuf was not successful.");
-                    }
-                    // Monitor connection every "InactivityTimeout" seconds.
-                    if (protoBufListSubscription.activityMonitor === null) {
-                        protoBufListSubscription.activityMonitor = window.setInterval(function () {
-                            monitorActivity(protoBufListSubscription);
-                        }, responseJson.InactivityTimeout * 1000);
-                    }
-                    console.log("Subscription created (readyState " + connection.readyState + ") with RefreshRate: " + responseJson.RefreshRate + ".\nSchema name: " + schemaName + ".\nSchema:\n" + responseJson.Schema);
-                });
-            } else {
-                demo.processError(response);
-            }
-        }).catch(function (error) {
-            console.error(error);
-        });
-    }
-
-    /**
-     * This is an example of subscribing to price updates with higher refreshRate meant for displaying in an order ticket, using Protocol Buffers.
-     * @return {void}
-     */
-    function subscribeOrderTicketProtoBuf() {
-        // The Saxo API supports ProtoBuf, which saves some bandwidth.
-        //
-        // More about Protocol Buffers: https://developers.google.com/protocol-buffers/docs/overview
-        //
-        // In order to make the parsing work, parts of the client-lib are used.
-        // See Github: https://github.com/SaxoBank/openapi-clientlib-js
-        const uicList = document.getElementById("idUics").value.split(",");
-        subscribeOrderTicket("protoBuf", uicList);
     }
 
     /**
@@ -390,7 +370,11 @@
                     }
                 ).then(function (response) {
                     if (response.ok) {
-                        console.log("Unsubscribed to " + demo.apiUrl + urlPath + ".\nReadyState " + connection.readyState + ".");
+                        console.log("Unsubscribed to " + demo.apiUrl + urlPath + "." + (
+                            connection === null
+                            ? ""
+                            : "\nReadyState " + connection.readyState + "."
+                        ));
                         internalCallbackOnSuccess();
                     } else {
                         demo.processError(response);
@@ -399,6 +383,7 @@
                     console.error(error);
                 });
             } else {
+                console.log("Subscription not active: " + urlPath);
                 internalCallbackOnSuccess();
             }
         }
@@ -406,8 +391,8 @@
         const contextId = document.getElementById("idContextId").value;
         const urlPathInfoPrices = "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(contextId);
         const urlPathPrices = "/trade/v1/prices/subscriptions/" + encodeURIComponent(contextId);
-        // Make sure this is done sequentially.
-        removeSubscription(jsonListSubscription.isActive || protoBufListSubscription.isActive, urlPathInfoPrices, function () {
+        // Make sure this is done sequentially, to prevent throttling issues when new subscriptions are created.
+        removeSubscription(listSubscription.isActive, urlPathInfoPrices, function () {
             removeSubscription(orderTicketSubscriptions.length > 0, urlPathPrices, callbackOnSuccess);
         });
     }
@@ -417,30 +402,20 @@
      * @return {void}
      */
     function recreateSubscriptions() {
-        unsubscribe(function () {
-            const uicsForJson = [];
-            const uicsForProtoBuf = [];
-            if (jsonListSubscription.isActive) {
-                subscribeListJson();
-            }
-            if (protoBufListSubscription.isActive) {
-                subscribeListProtoBuf();
-            }
-            orderTicketSubscriptions.forEach(function (subscription) {
-                if (subscription.format === "json") {
-                    uicsForJson.push(subscription.uic);
-                } else {
-                    uicsForProtoBuf.push(subscription.uic);
-                }
-            });
-            orderTicketSubscriptions.length = 0;
-            if (uicsForJson.length > 0) {
-                subscribeOrderTicket("json", uicsForJson);
-            }
-            if (uicsForProtoBuf.length > 0) {
-                subscribeOrderTicket("protoBuf", uicsForProtoBuf);
-            }
+        const uicList = [];
+        if (tradeLevelSubscription.isActive) {
+            subscribeToTradeLevelChanges();
+        }
+        if (listSubscription.isActive) {
+            subscribeList();
+        }
+        orderTicketSubscriptions.forEach(function (subscription) {
+            uicList.push(subscription.uic);
         });
+        if (uicList.length > 0) {
+            document.getElementById("idUics").value = uicList.join(",");
+            subscribeOrderTicket();
+        }
     }
 
     /**
@@ -493,11 +468,12 @@
         /**
          * This function processes the heartbeat messages, containing info about system health.
          * https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
+         * @param {number} messageId The message sequence number
          * @param {Array<Object>} payload The list of messages
          * @return {void}
          */
-        function handleHeartbeat(payload) {
-            // Heartbeat messages are sent every 20 seconds. If there is a minute without messages, this is an error.
+        function handleHeartbeat(messageId, payload) {
+            // Heartbeat messages are sent every "responseJson.InactivityTimeout" seconds. If there is a minute without messages, this indicates an error.
             if (Array.isArray(payload)) {
                 payload.forEach(function (heartbeatMessages) {
                     heartbeatMessages.Heartbeats.forEach(function (heartbeat) {
@@ -508,20 +484,20 @@
                             break;
                         case "NoNewData":
                             switch (heartbeat.OriginatingReferenceId) {
-                            case jsonListSubscription.reference:
-                                jsonListSubscription.isRecentDataReceived = true;
+                            case listSubscription.referenceId:
+                                listSubscription.isRecentDataReceived = true;
                                 break;
-                            case protoBufListSubscription.reference:
-                                protoBufListSubscription.isRecentDataReceived = true;
+                            case tradeLevelSubscription.referenceId:
+                                tradeLevelSubscription.isRecentDataReceived = true;
                                 break;
                             default:
                                 orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                                    if (orderTicketSubscription.reference === heartbeat.OriginatingReferenceId) {
+                                    if (orderTicketSubscription.referenceId === heartbeat.OriginatingReferenceId) {
                                         orderTicketSubscription.isRecentDataReceived = true;
                                     }
                                 });
                             }
-                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString());
+                            console.debug("No data, but heartbeat received for " + heartbeat.OriginatingReferenceId + " @ " + new Date().toLocaleTimeString() + " (#" + messageId + ")");
                             break;
                         default:
                             console.error("Unknown heartbeat message received: " + JSON.stringify(payload));
@@ -534,9 +510,70 @@
             }
         }
 
+        /**
+         * This is an example of making the current app primary, so real time prices can be shown again. Other apps are notified and get delayed prices.
+         * @return {void}
+         */
+        function requestPrimaryPriceSessionAgain() {
+            const data = {
+                "TradeLevel": "FullTradingAndChat"
+            };
+            const MAX_REQUESTS = 4;
+            if (primarySessionRequestCount < MAX_REQUESTS) {
+                // This check is to prevent a "Primary Session fight", after some retries the app must wait with requesting FullTradingAndChat again.
+                primarySessionRequestCount += 1;
+                fetch(
+                    demo.apiUrl + "/root/v1/sessions/capabilities",
+                    {
+                        "method": "PATCH",
+                        "headers": {
+                            "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                            "Content-Type": "application/json; charset=utf-8"
+                        },
+                        "body": JSON.stringify(data)
+                    }
+                ).then(function (response) {
+                    if (response.ok) {
+                        console.log("Requested FullTradingAndChat session capabilities again..");
+                    } else {
+                        demo.processError(response);
+                    }
+                }).catch(function (error) {
+                    console.error(error);
+                });
+            } else {
+                // Wait 30 seconds..
+                console.error("Wait 30 seconds with requesting FullTradingAndChat rights again, to prevent a fight with another app...");
+                window.setTimeout(function () {
+                    primarySessionRequestCount = 0;  // Reset
+                    requestPrimaryPriceSessionAgain();
+                }, 30 * 1000);
+            }
+        }
+
+        /**
+         * This function processes the trade level change messages.
+         * @param {Array<Object>} payload The list of messages
+         * @return {void}
+         */
+        function handleTradeLevelMessage(payload) {
+            if (payload.TradeLevel !== "FullTradingAndChat") {
+                requestPrimaryPriceSessionAgain();
+                demo.displaySourceCode([requestPrimaryPriceSessionAgain]);  // Show code, for demo purposes..
+            }
+            tradeLevelSubscription.isRecentDataReceived = true;
+        }
+
+        /**
+         * This function processes the price update messages - the most important part.
+         * @param {Object} message The update
+         * @param {number} bundleId The bundle identifier
+         * @param {number} bundleCount The bundle number
+         * @return {void}
+         */
         function handlePriceUpdate(message, bundleId, bundleCount) {
-            const logLine = "Subscription " + message.referenceId + " - messageId " + message.messageId + " (bundle " + bundleId + "/" + bundleCount + "): " + JSON.stringify(message.payload);
-            console.info(logLine);
+            const subscription = getSubscriptionByReference(orderTicketSubscriptions, message.referenceId);
+            console.log("Individual price update event #" + message.messageId + " received (" + bundleId + " of " + bundleCount + ") with reference id " + message.referenceId + ":\nUic " + subscription.uic + " " + subscription.assetType + "\n" + JSON.stringify(message.payload, null, 4));
         }
 
         /**
@@ -628,7 +665,7 @@
                     break;
                 case 1:
                     // ProtoBuf
-                    payload = parserProtobuf.parse(payloadBuffer, schemaName);
+                    console.error("Protobuf is not covered by this sample");
                     break;
                 default:
                     console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -654,20 +691,16 @@
             const messages = parseMessageFrame(messageFrame.data);
             messages.forEach(function (message, i) {
                 switch (message.referenceId) {
-                case jsonListSubscription.reference:
-                    jsonListSubscription.isRecentDataReceived = true;
+                case listSubscription.referenceId:
+                    listSubscription.isRecentDataReceived = true;
                     // Notice that the format of the messages of the two list endpoints is different.
                     // The /prices contain no Uic, that must be derived from the referenceId.
                     // Since /infoprices is about lists, it always contains the Uic.
-                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
-                    break;
-                case protoBufListSubscription.reference:
-                    protoBufListSubscription.isRecentDataReceived = true;
-                    console.log("Price list update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
+                    console.log("Price list update event #" + message.messageId + " received in bundle of " + messages.length + " (reference id " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     break;
                 case "_heartbeat":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
-                    handleHeartbeat(message.payload);
+                    handleHeartbeat(message.messageId, message.payload);
                     break;
                 case "_resetsubscriptions":
                     // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
@@ -680,20 +713,23 @@
                     // The server has disconnected the client. This messages requires you to re-authenticate if you wish to continue receiving messages.
                     console.error("The server has disconnected the client! New login is required.\n\n" + JSON.stringify(message.payload, null, 4));
                     break;
+                case tradeLevelSubscription.referenceId:
+                    handleTradeLevelMessage(message.payload);
+                    console.log("Streaming trade level change event #" + message.messageId + " received: " + JSON.stringify(message.payload, null, 4));
+                    break;
                 default:
                     orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                        if (orderTicketSubscription.reference === message.referenceId) {
+                        if (orderTicketSubscription.referenceId === message.referenceId) {
                             orderTicketSubscription.isRecentDataReceived = true;
                         }
                     });
-                    if (referenceIdToObject(message.referenceId).prefix === jsonOrderTicketSubscriptionReferencePrefix || referenceIdToObject(message.referenceId).prefix === protoBufOrderTicketSubscriptionReferencePrefix) {
+                    if (message.referenceId.substr(0, orderTicketSubscriptionReferenceIdPrefix.length) === orderTicketSubscriptionReferenceIdPrefix) {
                         // Notice that the format of the messages of the two endpoints is different.
                         // The /prices contain no Uic, that must be derived from the referenceId.
                         // Since /infoprices is about lists, it always contains the Uic.
                         handlePriceUpdate(message, i + 1, messages.length);
-                        console.log("Individual price update event " + message.messageId + " received in bundle of " + messages.length + " (reference " + message.referenceId + "):\n" + JSON.stringify(message.payload, null, 4));
                     } else {
-                        console.error("No processing implemented for message with reference " + message.referenceId);
+                        console.error("No processing implemented for message with reference id: " + message.referenceId);
                     }
                 }
             });
@@ -707,21 +743,26 @@
     }
 
     /**
-     * This is an example of extending the websocket session, when a token refresh took place.
+     * This is an example of extending the websocket session, after a token refresh took place.
      * @return {void}
      */
     function extendSubscription() {
+        // Be sure to refresh the token first, using the OAuth2 server (not included in this sample).
+        // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
+        const token = document.getElementById("idBearerToken").value;
         fetch(
             demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
-                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    "Authorization": "Bearer " + token
                 }
             }
         ).then(function (response) {
+            const newExpirationTime = new Date();
+            newExpirationTime.setSeconds(newExpirationTime.getSeconds() + demo.getSecondsUntilTokenExpiry(token));
             if (response.ok) {
-                console.log("Subscription extended.");
+                console.log("Subscription extended until " + newExpirationTime.toLocaleString() + ".");
             } else {
                 demo.processError(response);
             }
@@ -744,8 +785,7 @@
      */
     function unsubscribeAndResetState() {
         unsubscribe(function () {
-            jsonListSubscription.isActive = false;
-            protoBufListSubscription.isActive = false;
+            listSubscription.isActive = false;
             orderTicketSubscriptions.length = 0;
         });
     }
@@ -756,11 +796,132 @@
      */
     function disconnect() {
         const NORMAL_CLOSURE = 1000;
-        connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
+        if (connection !== null) {
+            connection.close(NORMAL_CLOSURE);  // This will trigger the onclose event
+        } else {
+            console.error("Connection not active.   ");
+        }
         // Activity monitoring can be stopped.
+        window.clearInterval(tradeLevelSubscription.activityMonitor);
         window.clearInterval(orderTicketSubscriptionsActivityMonitor);
-        window.clearInterval(protoBufListSubscription.activityMonitor);
-        window.clearInterval(jsonListSubscription.activityMonitor);
+        window.clearInterval(listSubscription.activityMonitor);
+    }
+
+    /**
+     * Only one app can retrieve realtime prices. This is the primary app. This function makes this app the primary one. Other apps are notified and get delayed prices.
+     * @return {void}
+     */
+    function requestPrimaryPriceSession() {
+        const data = {
+            "TradeLevel": "FullTradingAndChat"
+        };
+        fetch(
+            demo.apiUrl + "/root/v1/sessions/capabilities",
+            {
+                "method": "PUT",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                console.log("Requested FullTradingAndChat session capabilities..");
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Subscribe to price session changes.
+     * @return {void}
+     */
+    function subscribeToTradeLevelChanges() {
+        const contextId = encodeURIComponent(document.getElementById("idContextId").value);
+        const data = {
+            "ContextId": contextId,
+            "ReferenceId": tradeLevelSubscription.referenceId
+        };
+        if (tradeLevelSubscription.isActive) {
+            // The reference id of a subscription for which the new subscription is a replacement.
+            // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
+            // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
+            // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
+            // If no such subscription exists, the ReplaceReferenceId is ignored.
+            data.ReplaceReferenceId = tradeLevelSubscription.referenceId;
+        }
+        fetch(
+            demo.apiUrl + "/root/v1/sessions/events/subscriptions",
+            {
+                "method": "POST",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
+                    "Content-Type": "application/json; charset=utf-8"
+                },
+                "body": JSON.stringify(data)
+            }
+        ).then(function (response) {
+            tradeLevelSubscription.isRecentDataReceived = true;  // Start positive, will be set to 'false' after the next monitor health check.
+            tradeLevelSubscription.isActive = true;
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    // Monitor connection every "InactivityTimeout" seconds.
+                    if (tradeLevelSubscription.activityMonitor === null) {
+                        tradeLevelSubscription.activityMonitor = window.setInterval(function () {
+                            monitorActivity(tradeLevelSubscription);
+                        }, responseJson.InactivityTimeout * 1000);
+                    }
+                    console.log("Subscription created " + (
+                        connection === null
+                        ? ""
+                        : "(readyState " + connection.readyState + ") "
+                    ) + "with data " + JSON.stringify(data, null, 4) + "\n\nResponse: " + JSON.stringify(responseJson, null, 4));
+                    if (responseJson.Snapshot.TradeLevel !== "FullTradingAndChat") {
+                        requestPrimaryPriceSession();
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
+    }
+
+    /**
+     * Request primary price session if allowed, and keep this.
+     * @return {void}
+     */
+    function getAndKeepPrimarySession() {
+        fetch(
+            demo.apiUrl + "/root/v1/user",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    // More info about the user operations can be found @ https://saxobank.github.io/openapi-samples-js/basics/user-info/
+                    if (responseJson.Operations.indexOf("OAPI.OP.TakeTradeSession") === -1) {
+                        console.error("You are not allowed to upgrade your TradeLevel to FullTradingAndChat.");
+                    } else {
+                        console.log("Session has operation 'OAPI.OP.TakeTradeSession':\nYou can upgrade your session to FullTradingAndChat!\n\nProceeding to request..");
+                        subscribeToTradeLevelChanges();
+                    }
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
@@ -770,13 +931,47 @@
     function findInstrumentsForAssetType() {
 
         /**
+         * Find futures by FutureSpaceId.
+         * @param {number} futureSpaceId ID from the search.
+         * @return {void}
+         */
+        function findFutureContracts(futureSpaceId) {
+            fetch(
+                demo.apiUrl + "/ref/v1/instruments/futuresspaces/" + futureSpaceId,
+                {
+                    "method": "GET",
+                    "headers": {
+                        "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                    }
+                }
+            ).then(function (response) {
+                if (response.ok) {
+                    response.json().then(function (responseJson) {
+                        const uics = [];
+                        responseJson.Elements.forEach(function (futureContract) {
+                            if (uics.length < 200) {
+                                // Max 200 subscriptions are allowed for default thirdparty apps.
+                                uics.push(futureContract.Uic);
+                            }
+                        });
+                        document.getElementById("idUics").value = uics.join();
+                    });
+                } else {
+                    demo.processError(response);
+                }
+            }).catch(function (error) {
+                console.error(error);
+            });
+        }
+
+        /**
          * For options, the identifier is an OptionRoot. Convert this to a Uic.
          * @param {number} optionRootId The identifier from the instrument response
          * @return {void}
          */
-        function convertOptionRootIdToUic(optionRootId) {
+        function findOptionContracts(optionRootId) {
             fetch(
-                demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,  // Randomly pick first option root
+                demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,
                 {
                     "method": "GET",
                     "headers": {
@@ -789,7 +984,7 @@
                         const uics = [];
                         responseJson.OptionSpace[0].SpecificOptions.forEach(function (specificOption) {
                             if (uics.length < 200) {
-                                // Max 200 subscriptions are allowed.
+                                // Max 200 subscriptions are allowed for default thirdparty apps.
                                 uics.push(specificOption.Uic);
                             }
                         });
@@ -804,8 +999,13 @@
         }
 
         const assetType = document.getElementById("idCbxAssetType").value;
+        const includeNonTradable = (
+            assetType === "StockIndex"
+            ? "true"
+            : "false"
+        );
         fetch(
-            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=false&$top=5" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
+            demo.apiUrl + "/ref/v1/instruments?AssetTypes=" + assetType + "&IncludeNonTradable=" + includeNonTradable + "&$top=5" + "&AccountKey=" + encodeURIComponent(demo.user.accountKey),
             {
                 "method": "GET",
                 "headers": {
@@ -815,17 +1015,22 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    const identifierIsOptionRoot = ["CfdIndexOption", "FuturesOption", "StockIndexOption", "StockOption"];
                     const identifiers = [];
+                    let instrument;
                     if (responseJson.Data.length === 0) {
                         console.error("No instrument of type " + assetType + " found.");
                     } else {
-                        responseJson.Data.forEach(function (instrument) {
-                            identifiers.push(instrument.Identifier);  // This might only be an OptionRootId!
-                        });
-                        if (identifierIsOptionRoot.indexOf(assetType) !== -1) {
-                            convertOptionRootIdToUic(identifiers[0]);
+                        instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
+                        if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                            // We found an future root - get the series
+                            findFutureContracts(instrument.Identifier);
+                        } else if (instrument.SummaryType === "ContractOptionRoot") {
+                            // We found an option root - get the series
+                            findOptionContracts(instrument.Identifier);
                         } else {
+                            responseJson.Data.forEach(function (instrument) {
+                                identifiers.push(instrument.Identifier);
+                            });
                             document.getElementById("idUics").value = identifiers.join();
                         }
                         console.log("Changed object to asset of type " + assetType + ".");
@@ -844,12 +1049,12 @@
         {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},
-        {"evt": "click", "elmId": "idBtnSubscribeListJson", "func": subscribeListJson, "funcsToDisplay": [subscribeListJson]},
-        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketJson", "func": subscribeOrderTicketJson, "funcsToDisplay": [subscribeOrderTicketJson, subscribeOrderTicket]},
-        {"evt": "click", "elmId": "idBtnSubscribeListProtoBuf", "func": subscribeListProtoBuf, "funcsToDisplay": [subscribeListProtoBuf]},
-        {"evt": "click", "elmId": "idBtnSubscribeOrderTicketProtoBuf", "func": subscribeOrderTicketProtoBuf, "funcsToDisplay": [subscribeOrderTicketProtoBuf, subscribeOrderTicket]},
+        {"evt": "click", "elmId": "idBtnGetMarketDataTerms", "func": getMarketDataTermsAccepted, "funcsToDisplay": [getMarketDataTermsAccepted]},
+        {"evt": "click", "elmId": "idBtnRequestPrimarySession", "func": getAndKeepPrimarySession, "funcsToDisplay": [getAndKeepPrimarySession, subscribeToTradeLevelChanges, requestPrimaryPriceSession]},
+        {"evt": "click", "elmId": "idBtnSubscribeList", "func": subscribeList, "funcsToDisplay": [subscribeList]},
+        {"evt": "click", "elmId": "idBtnSubscribeOrderTicket", "func": subscribeOrderTicket, "funcsToDisplay": [subscribeOrderTicket]},
         {"evt": "click", "elmId": "idBtnSwitchAccount", "func": switchAccount, "funcsToDisplay": [switchAccount, recreateSubscriptions]},
-        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription]},
+        {"evt": "click", "elmId": "idBtnExtendSubscription", "func": extendSubscription, "funcsToDisplay": [extendSubscription, demo.getSecondsUntilTokenExpiry]},
         {"evt": "click", "elmId": "idBtnUnsubscribe", "func": unsubscribeAndResetState, "funcsToDisplay": [unsubscribeAndResetState, unsubscribe]},
         {"evt": "click", "elmId": "idBtnDisconnect", "func": disconnect, "funcsToDisplay": [disconnect]}
     ]);

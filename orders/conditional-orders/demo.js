@@ -1,10 +1,9 @@
-/*jslint browser: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -15,8 +14,8 @@
         "selectedAssetType": "Stock",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
-    let lastOrderId = 0;
-    let lastOrderIdCondition = 0;
+    let lastOrderId = "0";
+    let lastOrderIdCondition = "0";
 
     /**
      * Helper function to convert the json string to an object, with error handling.
@@ -26,12 +25,70 @@
         let newOrderObject = null;
         try {
             newOrderObject = JSON.parse(document.getElementById("idNewOrderObject").value);
-            newOrderObject.AccountKey = demo.user.accountKey;
+            if (newOrderObject.hasOwnProperty("AccountKey")) {
+                // This is the case for single orders, or conditional/related orders
+                // This function is used for other order types as well, so more order types are considered
+                newOrderObject.AccountKey = demo.user.accountKey;
+            }
+            if (newOrderObject.hasOwnProperty("Orders")) {
+                // This is the case for OCO, related and conditional orders
+                newOrderObject.Orders.forEach(function (order) {
+                    if (order.hasOwnProperty("AccountKey")) {
+                        order.AccountKey = demo.user.accountKey;
+                    }
+                });
+            }
             document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
         } catch (e) {
             console.error(e);
         }
         return newOrderObject;
+    }
+
+    /**
+     * This is an example of getting the trading settings of an instrument.
+     * There is a much more detailed example of this in the Stock sample.
+     * That sample checks amongst others the MinimumOrderSize, TradingStatus, SupportedAccounts.
+     * This one is just to verify the supported conditions.
+     * @return {void}
+     */
+    function getConditions() {
+        const newOrderObject = getOrderObjectFromJson();
+        fetch(
+            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&FieldGroups=OrderSetting",
+            {
+                "method": "GET",
+                "headers": {
+                    "Authorization": "Bearer " + document.getElementById("idBearerToken").value
+                }
+            }
+        ).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (responseJson) {
+                    const orderConditions = Array.from(document.getElementById("idCbxCondition").options).map(function (opt) {
+                        return opt.value;
+                    });
+                    const supportedConditions = [];
+                    let description;
+                    responseJson.SupportedOrderTypes.forEach(function (orderType) {
+                        if (orderConditions.indexOf(orderType) > -1) {
+                            supportedConditions.push(orderType);
+                        }
+                    });
+                    if (supportedConditions.length === 0) {
+                        description = "Conditional orders are not supported for this instrument and the selected account.";
+                    } else {
+                        description = "Supported conditions are: " + supportedConditions.join(", ");
+                        description += "\nSupported TriggerPriceTypes: " + responseJson.SupportedOrderTriggerPriceTypes.join(", ");
+                    }
+                    console.log(description + "\n\n" + JSON.stringify(responseJson, null, 4));
+                });
+            } else {
+                demo.processError(response);
+            }
+        }).catch(function (error) {
+            console.error(error);
+        });
     }
 
     /**
@@ -41,8 +98,29 @@
     function preCheckNewOrder() {
         // The PreCheck only checks the order, not the trigger!
         // Bug: Preview doesn't check for limit outside market hours
+
+        function getErrorMessage(responseJson, defaultMessage) {
+            let errorMessage;
+            if (responseJson.hasOwnProperty("ErrorInfo")) {
+                // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                errorMessage = (
+                    responseJson.ErrorInfo.hasOwnProperty("Message")
+                    ? responseJson.ErrorInfo.Message
+                    : responseJson.ErrorInfo.ErrorCode  // In some cases (AllocationKeyDoesNotMatchAccount) the message is not available
+                );
+                // There can be error messages per order. Try to add them.
+                if (responseJson.hasOwnProperty("Orders")) {
+                    responseJson.Orders.forEach(function (order) {
+                        errorMessage += "\n- " + getErrorMessage(order, "");
+                    });
+                }
+            } else {
+                errorMessage = defaultMessage;
+            }
+            return errorMessage;
+        }
+
         const newOrderObject = getOrderObjectFromJson();
-        newOrderObject.AccountKey = demo.user.accountKey;
         newOrderObject.FieldGroups = ["Costs", "MarginImpactBuySell"];
         fetch(
             demo.apiUrl + "/trade/v2/orders/precheck",
@@ -64,17 +142,21 @@
                         // Order could be placed if the account had sufficient margin and funding.
                         // In this case all calculated cost and margin values are in the response, together with an ErrorInfo object:
                         if (responseJson.hasOwnProperty("ErrorInfo")) {
-                            console.error(responseJson.ErrorInfo.Message + "\n\n" + JSON.stringify(responseJson, null, 4));
+                            // Be aware that the ErrorInfo.Message might contain line breaks, escaped like "\r\n"!
+                            console.error(getErrorMessage(responseJson, "") + "\n\n" + JSON.stringify(responseJson, null, 4));
                         } else {
                             // The order can be placed
-                            console.log(JSON.stringify(responseJson, null, 4));
+                            console.log("The order can be placed:\n\n" + JSON.stringify(responseJson, null, 4));
                         }
                     } else {
                         // Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules
-                        console.error(JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
+                        // This can be something like: {"ErrorInfo":{"ErrorCode":"IllegalInstrumentId","Message":"Instrument ID is invalid"},"EstimatedCashRequired":0.0,"PreCheckResult":"Error"}
+                        console.error(getErrorMessage(responseJson, "Order request is syntactically correct, but the order cannot be placed, as it would violate semantic rules:") + "\n\n" + JSON.stringify(responseJson, null, 4) + "\n\nX-Correlation header (for troubleshooting with Saxo): " + response.headers.get("X-Correlation"));
                     }
                 });
             } else {
+                // This can be something like: {"Message":"One or more properties of the request are invalid!","ModelState":{"Orders":["Stop leg of OCO order must have OrderType of either: TrailingStopIfTraded, StopIfTraded, StopLimit"]},"ErrorCode":"InvalidModelState"}
+                // The developer (you) must fix this.
                 demo.processError(response);
             }
         }).catch(function (error) {
@@ -342,6 +424,7 @@
         {"evt": "change", "elmId": "idCbxOperator", "func": changeOperator, "funcsToDisplay": [changeOperator, getConditionInText]},
         {"evt": "change", "elmId": "idCbxTrigger", "func": changeTrigger, "funcsToDisplay": [changeTrigger, getConditionInText]},
         {"evt": "change", "elmId": "idCbxExpiry", "func": changeExpiry, "funcsToDisplay": [changeExpiry, getConditionInText]},
+        {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},
         {"evt": "click", "elmId": "idBtnPlaceNewOrder", "func": placeNewOrder, "funcsToDisplay": [placeNewOrder]},
         {"evt": "click", "elmId": "idBtnModifyLastOrder", "func": modifyLastOrder, "funcsToDisplay": [modifyLastOrder]},

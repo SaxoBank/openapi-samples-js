@@ -1,10 +1,9 @@
-/*jslint browser: true, for: true, long: true */
+/*jslint browser: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
     // Create a helper function to remove some boilerplate code from the example itself.
     const demo = demonstrationHelper({
-        "isExtendedAssetTypesRequired": true,  // Adds link to app with Extended AssetTypes
         "responseElm": document.getElementById("idResponse"),
         "javaScriptElm": document.getElementById("idJavaScript"),
         "accessTokenElm": document.getElementById("idBearerToken"),
@@ -27,7 +26,7 @@
         const cbxExchange = document.getElementById("idCbxExchange");
         cbxExchange.options.length = 1;  // Remove all, except the first
         fetch(
-            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 200 exchanges available)
+            demo.apiUrl + "/ref/v1/exchanges?$top=1000",  // Get the first 1.000 (actually there are around 225 exchanges available)
             {
                 "method": "GET",
                 "headers": {
@@ -73,6 +72,13 @@
     }
 
     function processDetailsListResponse(assetType, responseJson) {
+        // We have the Uic - collect the details
+        responseJson.Data.forEach(function (instrument) {
+            const filterOnExchangeId = document.getElementById("idCbxExchange").value;
+            if (filterOnExchangeId === "-" || filterOnExchangeId === instrument.Exchange.ExchangeId) {
+                instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId + ",\"" + instrument.Description.trim() + "\"");
+            }
+        });
         if (responseJson.hasOwnProperty("__next")) {
             // Recursively get next bulk
             console.debug("Found '__next': " + responseJson.__next);
@@ -82,13 +88,6 @@
                 "callback": processDetailsListResponse
             });
         }
-        // We have the Uic - collect the details
-        responseJson.Data.forEach(function (instrument) {
-            const filterOnExchangeId = document.getElementById("idCbxExchange").value;
-            if (filterOnExchangeId === "-" || filterOnExchangeId === instrument.Exchange.ExchangeId) {
-                instrumentIds.push(instrument.AssetType + "," + instrument.Uic + "," + instrument.Exchange.ExchangeId + ",\"" + instrument.Description.trim() + "\"");
-            }
-        });
     }
 
     function processOptionSearchResponse(assetType, responseJson) {

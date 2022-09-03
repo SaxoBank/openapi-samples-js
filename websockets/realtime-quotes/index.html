@@ -5,9 +5,8 @@
     <meta name="ROBOTS" content="INDEX, FOLLOW" />
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <!-- ProtoBuf versions https://github.com/protobufjs/protobuf.js/tags -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/dcodeIO/protobuf.js@6.10.2/dist/protobuf.min.js" defer></script>
-    <script type="text/javascript" src="protobuf-lib/protobuf-saxo.js" defer></script>
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demo for retrieving realtime quotes</title>
@@ -17,7 +16,7 @@
 <h1 class="project-name">Realtime quotes</h1>
 <h2 class="project-tagline">Example on how to get realtime quotes</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/websockets/realtime-quotes" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -31,11 +30,13 @@
 </label>
 </div>
 <h1>Realtime quotes for a group of instruments</h1>
-This is an example on retrieving realtime prices. Make sure your application is the <a href="https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/" target="_blank">primary</a> one, to be entitled for the realtime price feed.
+This is an example on retrieving prices. Make this session the <a href="https://saxobank.github.io/openapi-samples-js/websockets/primary-monitoring/" target="_blank">primary</a> one, so prices are realtime, if you have a <a target="_blank" href="https://www.home.saxo/products/market-data-subscriptions">subscription for realtime prices</a>.
 <br />
 On SIM, only prices for FxSpot are available, unless you <a href="https://www.developer.saxo/openapi/appmanagement#/connectlive" target="_blank">connect your SIM account with your Live account</a>.
 <br />
-When testing on live, you might need to <a href="https://www.saxotrader.com/d/myAccount" target="_blank">enable OpenApi DataAccess</a> in your account in order to get prices.
+When testing on live, you might need to <a href="https://openapi.help.saxo/hc/en-us/articles/4418427366289-How-do-I-enable-market-data-" target="_blank">enable OpenApi DataAccess</a> in your account. Only then you will receive prices.
+<br />
+Trying to get prices of instruments traded on CME? You need an <a href="https://www.developer.saxo/openapi/learn/request-app-access-to-CME-Products" target="_blank">extra agreement in order to get CME prices and trading (make sure to mention all thirdparty apps).</a>.
 <br />
 More info about prices can be found in <a href="https://www.developer.saxo/openapi/learn/pricing" target="_blank">the learn section</a>.
 <br />
@@ -53,10 +54,10 @@ More info about prices can be found in <a href="https://www.developer.saxo/opena
 <br />
 <input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
 <input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
-<input type="button" class="action-button" value="Subscribe for list (JSON)" id="idBtnSubscribeListJson" />
-<input type="button" class="action-button" value="Subscribe for order ticket (JSON)" id="idBtnSubscribeOrderTicketJson" /><br />
-<input type="button" class="action-button" value="Subscribe for list (ProtoBuf)" id="idBtnSubscribeListProtoBuf" />
-<input type="button" class="action-button" value="Subscribe for order ticket (ProtoBuf)" id="idBtnSubscribeOrderTicketProtoBuf" /><br />
+<input type="button" class="action-button" value="Market data enabled?" id="idBtnGetMarketDataTerms" />
+<input type="button" class="action-button" value="Request primary session" id="idBtnRequestPrimarySession" /><br />
+<input type="button" class="action-button" value="Subscribe for list" id="idBtnSubscribeList" />
+<input type="button" class="action-button" value="Subscribe for order ticket" id="idBtnSubscribeOrderTicket" /><br />
 <input type="button" class="action-button" value="Switch account" id="idBtnSwitchAccount" />
 <input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
 <input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
