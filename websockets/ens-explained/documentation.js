@@ -88,6 +88,45 @@ function addRemarksToEnsEvent(ensEvent) {
         ensEvent.CorrelationKey += " [If there are relations with other orders, they share the CorrelationKey.]";
     }
 
+    function addPositionEventRemarks() {
+        if (ensEvent.hasOwnProperty("SourceOrderId")) {
+            // This is an event coming from an order:
+
+        } else if (ensEvent.hasOwnProperty("ToolId")) {
+            // This is an event not coming from an order, but from a corporate action, asset transfer or other source:
+            switch (ensEvent.ToolId) {
+            case 10:  // Corporate Action
+                addPositionEventCorporateAction();
+                break;
+            case 26:  // Barrier Event Tool ID
+                break;
+            case 24:  // Barrier Monitor Tool ID
+                break;
+            case 7:  // Cash Back Office Tool
+                break;
+            case 38:  // Cash Settlement Tool ID
+                break;
+            case 10:  // Corporate Action Tool ID
+                break;
+            case 49:  // Front Arena Assignment Tool ID
+                break;
+            case 50:  // Front Arena Expiry Tool ID
+                break;
+            case 54:  // Front Arena Trade Correction Tool ID
+                break;
+            case 19:  // Future Expiry Tool ID
+                break;
+            case 11:  // Trade Correction
+                break;
+            default:
+                console.error("Unsupported ToolId: " + ensEvent.ToolId);
+                break;
+            }
+        } else {
+            console.error("Undocumented Position event found.");
+        }
+    }
+
     function processMessage() {
         /*
          *  This are the generic ENS fields
@@ -117,11 +156,17 @@ function addRemarksToEnsEvent(ensEvent) {
              *  ORDER
              *  https://www.developer.saxo/openapi/learn/order-events
              */
-            ensEvent.ActivityType += " [The activity is the event type. Subscribe for different ActivityTypes by specifying the Activities in the subscription request. This is an order event. Examine the OrderType end Status to get more info.]";
+            ensEvent.ActivityType += " [The activity is the event type. Subscribe for different ActivityTypes by specifying the Activities in the subscription request. This is an order event. Examine the OrderType and Status to get more info.]";
             addOrderEventRemarks();
             break;
-        default:
+        case "Positions":
+            // ToolId: https://wiki/display/BO2/Specs+for+Order+Placement+Tools
             // https://www.developer.saxo/openapi/learn/position-events
+            ensEvent.ActivityType += " [The activity is the event type. Subscribe for different ActivityTypes by specifying the Activities in the subscription request. This is a position event. Examine the PositionEvent, ToolId or SourceOrderId to get more info.]";
+            addPositionEventRemarks();
+            break;
+        default:
+            
             // https://www.developer.saxo/openapi/learn/margin-call-events
             // https://www.developer.saxo/openapi/learn/account-funding-events
             // https://www.developer.saxo/openapi/learn/account-depreciation-events
