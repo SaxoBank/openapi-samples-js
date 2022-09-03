@@ -6,8 +6,9 @@
     <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
     <link rel="stylesheet" href="../realtime-quotes/pricelist.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <!-- ProtoBuf versions https://github.com/protobufjs/protobuf.js/tags -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/dcodeIO/protobuf.js@6.11.2/dist/protobuf.min.js" defer></script>
+    <script type="text/javascript" src="../realtime-quotes/protobuf-lib/protobuf.js-7.1.0/protobuf.min.js" defer></script>
     <script type="text/javascript" src="../realtime-quotes/protobuf-lib/protobuf-saxo.js" defer></script>
     <script type="text/javascript" src="../realtime-quotes/instrumentcell.js" defer></script>
     <script type="text/javascript" src="../realtime-quotes/instrumentrow.js" defer></script>
@@ -21,7 +22,7 @@
 <h1 class="project-name">Streaming quotes sample</h1>
 <h2 class="project-tagline">Retrieve quote updates from 10.000 instruments</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/sample-apps/realtime-quotes-10000" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -56,13 +57,13 @@ More info about prices can be found in <a href="https://www.developer.saxo/opena
 </select></label>
 <br />
 <label>Max. number of instruments: <select class="selector" id="idCbxMaxInstruments">
-  <option value="100">100 (OK)</option>
-  <option value="1000">1000 (delays of seconds / OK)</option>
-  <option value="2000">2000 (half OK / not OK)</option>
-  <option value="5000">5000 (not OK)</option>
-  <option value="10000" selected>10000 (not OK)</option>
-  <option value="16000">16000 (not OK)</option>
-  <option value="20000">20000 (not OK)</option>
+  <option value="100">100</option>
+  <option value="1000">1.000</option>
+  <option value="2000">2.000</option>
+  <option value="5000">5.000</option>
+  <option value="10000" selected>10.000</option>
+  <option value="16000">16.000</option>
+  <option value="20000">20.000</option>
 </select></label>
 <br />
 <label>Subscribe in batches of: <select class="selector" id="idCbxBatchSize">
@@ -70,7 +71,7 @@ More info about prices can be found in <a href="https://www.developer.saxo/opena
   <option value="100" selected>100</option>
   <option value="200">200</option>
   <option value="500">500</option>
-  <option value="1000">1000</option>
+  <option value="1000">1.000</option>
 </select></label>
 <br />
 <label>RefreshRate: <select class="selector" id="idCbxRefreshRate">
@@ -78,7 +79,7 @@ More info about prices can be found in <a href="https://www.developer.saxo/opena
   <option value="300" selected>300</option>
   <option value="500">500</option>
   <option value="750">750</option>
-  <option value="1000">1000</option>
+  <option value="1000">1.000</option>
 </select></label>
 <br />
 <br />
