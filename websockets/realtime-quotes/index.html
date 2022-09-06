@@ -10,6 +10,12 @@
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
     <title>Demo for retrieving realtime quotes</title>
+<style type="text/css" media="screen">
+div.input-field {
+  width: 49%;
+  display: inline-block; 
+}
+</style>
 </head>
 <body>
 <section class="page-header">
@@ -41,10 +47,11 @@ Trying to get prices of instruments traded on CME? You need an <a href="https://
 More info about prices can be found in <a href="https://www.developer.saxo/openapi/learn/pricing" target="_blank">the learn section</a>.
 <br />
 <br />
-<label>Context ID: <input type="text" class="text-field" id="idContextId" value="" /></label>
+<input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
+<input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
+<input type="button" class="action-button" value="Market data enabled?" id="idBtnGetMarketDataTerms" />
+<input type="button" class="action-button" value="Request primary session" id="idBtnRequestPrimarySession" /><br />
 <br />
-<br />
-<label>List of Uics: <input type="text" class="text-field" id="idUics" value="4,12,14,17,18,21,31,38,43" /></label>
 <label>
   Asset type: <select class="selector" id="idCbxAssetType">
     <option value="FxSpot">FxSpot</option>
@@ -52,17 +59,67 @@ More info about prices can be found in <a href="https://www.developer.saxo/opena
 </label>
 <br />
 <br />
-<input type="button" class="action-button" value="Create websocket connection" id="idBtnCreateConnection" />
-<input type="button" class="action-button" value="Start listener" id="idBtnStartListener" /><br />
-<input type="button" class="action-button" value="Market data enabled?" id="idBtnGetMarketDataTerms" />
-<input type="button" class="action-button" value="Request primary session" id="idBtnRequestPrimarySession" /><br />
-<input type="button" class="action-button" value="Subscribe for list" id="idBtnSubscribeList" />
-<input type="button" class="action-button" value="Subscribe for order ticket" id="idBtnSubscribeOrderTicket" /><br />
+<div>
+<div class="input-field">InfoPrices request arguments:<br />
+<textarea class="json-input" id="idInfoPricesRequestObject" rows="10" wrap="off">
+{
+    "ContextId": "(added on first request)",
+    "ReferenceId": "MyInfoPricesEvent",
+    "Arguments": {
+        "AccountKey": "(added on first request)",
+        "Uics": "4,12,14,17,18,21,31,38,43",
+        "AssetType": "FxSpot",
+        "FieldGroups": [
+            "Commissions",
+            "DisplayAndFormat",
+            "HistoricalChanges",
+            "InstrumentPriceDetails",
+            "MarketDepth",
+            "PriceInfo",
+            "PriceInfoDetails",
+            "Quote"
+        ]
+    }
+}
+</textarea>
+<input type="button" class="action-button" value="Subscribe for InfoPrices" id="idBtnSubscribeList" />
+</div>
+
+<div class="input-field">Prices request arguments:<br />
+<textarea class="json-input" id="idPricesRequestObject" rows="10" wrap="off" wrap="off">
+{
+    "ContextId": "(added on first request)",
+    "ReferenceId": "MyPricesEvent",
+    "Arguments": {
+        "AccountKey": "(added on first request)",
+        "Uic": 21,
+        "AssetType": "FxSpot",
+        "RequireTradableQuote": true,
+        "FieldGroups": [
+            "Commissions",
+            "DisplayAndFormat",
+            "Greeks",
+            "HistoricalChanges",
+            "InstrumentPriceDetails",
+            "MarginImpactBuySell",
+            "MarketDepth",
+            "PriceInfo",
+            "PriceInfoDetails",
+            "Quote",
+            "Timestamps"
+        ]
+    }
+}
+</textarea>
+<input type="button" class="action-button" value="Subscribe for Prices" id="idBtnSubscribeOrderTicket" /><br />
+</div>
+</div>
+<br />
 <input type="button" class="action-button" value="Switch account" id="idBtnSwitchAccount" />
 <input type="button" class="action-button" value="Extend subscription" id="idBtnExtendSubscription" /><br />
 <input type="button" class="action-button" value="Unsubscribe" id="idBtnUnsubscribe" />
 <input type="button" class="action-button" value="Disconnect" id="idBtnDisconnect" />
-<br />
+<br /><br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
 <br />
 JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
