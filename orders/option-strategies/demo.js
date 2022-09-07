@@ -47,7 +47,7 @@
      * Modify the order object so the elements comply to the order type.
      * @return {void}
      */
-    function selectOrderType() {
+    function changeOrderType() {
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
         delete newOrderObject.OrderPrice;
@@ -96,7 +96,7 @@
      * Adjust the order object in the textarea so the related properties comply with the chosen order duration.
      * @return {void}
      */
-    function selectOrderDuration() {
+    function changeOrderDuration() {
 
         /**
          * Prefix number with zero, if it has one digit.
@@ -178,9 +178,8 @@
                         leg.ToOpenClose = "ToOpen";
                     });
                     document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                    selectOrderType();
-                    selectOrderDuration();
-                    selectOrderType();
+                    changeOrderType();
+                    changeOrderDuration();
                     console.log("The strategy has been updated to " + optionStrategyType + ".");
                 });
             } else {
@@ -210,7 +209,7 @@
                 response.json().then(function (responseJson) {
                     // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme
                     populateOrderTypes(responseJson.SupportedOrderTypes);
-                    selectOrderType();
+                    changeOrderType();
                     console.log(JSON.stringify(responseJson, null, 4));
                 });
             } else {
@@ -430,8 +429,8 @@
 
     demo.setupEvents([
         {"evt": "change", "elmId": "idCbxOptionStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
-        {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
-        {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
+        {"evt": "change", "elmId": "idCbxOrderType", "func": changeOrderType, "funcsToDisplay": [changeOrderType]},
+        {"evt": "change", "elmId": "idCbxOrderDuration", "func": changeOrderDuration, "funcsToDisplay": [changeOrderDuration]},
         {"evt": "click", "elmId": "idBtnGetSeries", "func": getSeries, "funcsToDisplay": [getSeries]},
         {"evt": "click", "elmId": "idBtnGetStrategy", "func": getStrategy, "funcsToDisplay": [getStrategy]},
         {"evt": "click", "elmId": "idBtnGetPrice", "func": getPrice, "funcsToDisplay": [getPrice]},
