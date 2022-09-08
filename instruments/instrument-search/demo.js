@@ -128,7 +128,7 @@
                     if (responseJson.Data.length > 0) {
                         instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
                         // Remember the first Uic for the details request
-                        if (instrument.hasOwnProperty("PrimaryListing") && assetType === "Stock") {
+                        if (instrument.hasOwnProperty("PrimaryListing") && instrument.AssetType === "Stock") {
                             // Stocks might have a primary listing on another market - take that one
                             instrumentId = instrument.PrimaryListing;
                         } else {
@@ -141,7 +141,7 @@
                             result = "Click [Get details] for the contract option space of option root " + instrument.Description + ", which is the first search result.";
                             break;
                         case "Instrument":
-                            if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                            if (instrument.AssetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
                                 instrumentIdType = "futuresSpace";
                                 result = "Click [Get details] for the future space of future " + instrument.Description + ", which is the first search result.";
                             } else {
@@ -153,6 +153,7 @@
                             console.error("Unknown SummaryType: " + instrument.SummaryType);
                         }
                         result = getGroupedDisplayList(responseJson.Data) + "\n\n" + result;
+                        document.getElementById("idCbxAssetType").value = instrument.AssetType;
                     } else {
                         result = "No instruments found.";
                     }
