@@ -1,0 +1,31 @@
+{
+  "AccountId": "98900/1038113EUR",
+  "AccountKey": "UXE-bvm4P0cVVzZn56|7L|FdQN1n-e7SLWPHmyKTQLI=",
+  "ActivityTime": "2022-08-18T06:03:05.546666Z",
+  "ActivityType": "Orders",
+  "AssetType": "Etf",
+  "BuySell": "Sell",
+  "ClientId": "15800200",
+  "ClientKey": "SiWn-xjwT4BwDT40XxmiRA==",
+  "CorrelationKey": "61ff7f0d-9c1a-4315-88f3-e7f21c414821",
+  "DisplayAndFormat": {
+    "Currency": "EUR",
+    "Decimals": 3,
+    "Description": "iShares Global Infrastructure UCITS ETF",
+    "OrderDecimals": 3,
+    "Symbol": "INFR:xmil"
+  },
+  "Duration": { "DurationType": "GoodTillCancel" },
+  "HandledBy": "15800200",
+  "IsSecondCurrencyOrder": false,
+  "OptionData": {},
+  "OrderId": "5035554339",
+  "OrderRelation": "StandAlone",
+  "OrderType": "TriggerLimit",
+  "Price": 33.9,
+  "SequenceId": "961960005",
+  "Status": "Placed",
+  "SubStatus": "Confirmed",
+  "Symbol": "INFR:xmil",
+  "Uic": 51071
+}

@@ -1,0 +1,36 @@
+{
+  "AccountId": "98900/0501048EUR",
+  "AccountKey": "kTHbN6OmgHHn8NpMNVH3NPRQLxkmhy5gisWGQWaGmTw=",
+  "ActivityTime": "2022-08-19T13:31:31.476666Z",
+  "ActivityType": "Orders",
+  "Amount": 3.0,
+  "AssetType": "StockOption",
+  "BuySell": "Buy",
+  "ClientId": "15456012",
+  "ClientKey": "ZUzl3kUmPROXp7JGJXt0RA==",
+  "CorrelationKey": "aeb7f767-4c83-44da-9d66-2d9b595b4156",
+  "DisplayAndFormat": {
+    "Currency": "EUR",
+    "Decimals": 2,
+    "Description": "L'Oreal SA Aug2022 360 C",
+    "OrderDecimals": 2,
+    "StrikeDecimals": 2,
+    "Symbol": "OR1/Q22C360:xpar"
+  },
+  "Duration": { "DurationType": "GoodTillCancel" },
+  "ExpiryDate": "2022-08-19",
+  "IsSecondCurrencyOrder": false,
+  "OptionData": {
+    "ExpiryDate": "2022-08-19",
+    "PutCall": "Call",
+    "ToOpenClose": "ToClose"
+  },
+  "OrderId": "5035920417",
+  "OrderRelation": "StandAlone",
+  "OrderType": "MarketDefault",
+  "SequenceId": "963866481",
+  "Status": "Placed",
+  "SubStatus": "Confirmed",
+  "Symbol": "OR1/Q22C360:xpar",
+  "Uic": 29267698
+}
