@@ -7,12 +7,12 @@ CDN usage
 
 Development:
 ```
-<script src="//cdn.jsdelivr.net/gh/SaxoBank/openapi-samples-js@main/websockets/protobuf/protobuf-lib/protobuf.js-7.X.X/protobuf.js"></script>
+<script src="//unpkg.com/protobufjs@7.X.X/dist/protobuf.js"></script>
 ```
 
 Production:
 ```
-<script src="//cdn.jsdelivr.net/gh/SaxoBank/openapi-samples-js@main/websockets/protobuf/protobuf-lib/protobuf.js-7.X.X/protobuf.min.js"></script>
+<script src="//unpkg.com/protobufjs@7.X.X/dist/protobuf.min.js"></script>
 ```
 
 **NOTE:** Remember to replace the version tag with the exact [release](https://github.com/dcodeIO/protobuf.js/tags) your project depends upon.

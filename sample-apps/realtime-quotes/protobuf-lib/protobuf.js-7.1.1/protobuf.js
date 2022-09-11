@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.1.0 (c) 2016, daniel wirtz
- * compiled sun, 28 aug 2022 19:13:35 utc
+ * protobuf.js v7.1.1 (c) 2016, daniel wirtz
+ * compiled sat, 10 sep 2022 18:30:36 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -1530,18 +1530,20 @@ var Enum = require(15),
  * @ignore
  */
 function genValuePartial_fromObject(gen, field, fieldIndex, prop) {
+    var defaultAlreadyEmitted = false;
     /* eslint-disable no-unexpected-multiline, block-scoped-var, no-redeclare */
     if (field.resolvedType) {
         if (field.resolvedType instanceof Enum) { gen
             ("switch(d%s){", prop);
             for (var values = field.resolvedType.values, keys = Object.keys(values), i = 0; i < keys.length; ++i) {
                 // enum unknown values passthrough
-                if (values[keys[i]] === field.typeDefault) { gen
+                if (values[keys[i]] === field.typeDefault && !defaultAlreadyEmitted) { gen
                     ("default:")
                         ("if(typeof(d%s)===\"number\"){m%s=d%s;break}", prop, prop, prop);
                     if (!field.repeated) gen // fallback to default value only for
                                              // arrays, to avoid leaving holes.
                         ("break");           // for non-repeated fields, just ignore
+                    defaultAlreadyEmitted = true;
                 }
                 gen
                 ("case%j:", keys[i])
