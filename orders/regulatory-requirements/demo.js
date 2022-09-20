@@ -223,6 +223,12 @@
                 case "ImplicitCostsNotChargedOnAccount":
                     result += "\n* The implicit costs not charged on account.";
                     break;
+                case "InterestEstimationCalculatedOnValueDate":
+                    result += "\n* Interest estimation is calculated from the value date of trade date + 2 days.";
+                    break;
+                case "MarginLoanEstimationOnCashAvailable":
+                    result += "\n* The margin loan is estimated based on a snapshot based on your current Cash available to partially or fully cover the value of position.";
+                    break;
                 default:
                     console.error("Unsupported assumption code: " + assumption);
                 }
