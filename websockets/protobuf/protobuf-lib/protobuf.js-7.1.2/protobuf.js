@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.1.1 (c) 2016, daniel wirtz
- * compiled sat, 10 sep 2022 18:30:36 utc
+ * protobuf.js v7.1.2 (c) 2016, daniel wirtz
+ * compiled fri, 23 sep 2022 18:22:41 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -3358,9 +3358,8 @@ Object.defineProperty(Namespace.prototype, "nestedArray", {
 /**
  * Any nested object descriptor.
  * @typedef AnyNestedObject
- * @type {IEnum|IType|IService|AnyExtensionField|INamespace}
+ * @type {IEnum|IType|IService|AnyExtensionField|INamespace|IOneOf}
  */
-// ^ BEWARE: VSCode hangs forever when using more than 5 types (that's why AnyExtensionField exists in the first place)
 
 /**
  * Converts this namespace to a namespace descriptor.
