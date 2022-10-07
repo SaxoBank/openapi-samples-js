@@ -17,7 +17,7 @@
         "tokenValidateButton": document.getElementById("idBtnValidate"),
         "accountsList": document.getElementById("idCbxAccount"),
         "assetTypesList": document.getElementById("idCbxAssetType"),  // Optional
-        "selectedAssetType": "-",  // Only FX has realtime prices, if Live account is not linked
+        "selectedAssetType": "FxSpot",  // Only FX has realtime prices, if Live account is not linked
         "footerElm": document.getElementById("idFooter"),
         "newTokenCallback": function (accessToken) {
             // This doesn't work with the Implicit Flow, used in this sample!
