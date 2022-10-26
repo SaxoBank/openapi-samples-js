@@ -1,6 +1,6 @@
 # Sample for authentication using Certificate Based Authentication using NodeJs
 
-Within [SaxoTraderGo on SIM](https://www.saxotrader.com/sim/d/myAccount) (or [Live](https://www.saxotrader.com/account/)) (use Chrome and English language) the certificate can be downloaded, which can be used to generate a JWT to get server2server access.
+Within [SaxoTraderGo on SIM](https://www.saxotrader.com/sim/account/) (or [Live](https://www.saxotrader.com/account/)) (use Chrome and English language) the certificate can be downloaded, which can be used to generate a JWT to get server2server access.
 
 This is the message you see after generation:
 > The certificate with serial number 6B000007CA3413AA65FEA7F1230002000007CA has been created and saved on your computer.\
