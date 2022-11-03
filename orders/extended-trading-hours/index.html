@@ -40,13 +40,14 @@ POST body containing order parameters:<br />
 <textarea class="json-input" id="idNewOrderObject" rows="13">
 {
     "AccountKey": "(added on first request)",
-    "OrderType": "Market",
-    "Uic": 211,
+    "OrderType": "Limit",
+    "OrderPrice": 36,
+    "Uic": 721,
     "AssetType": "Stock",
     "ExecuteAtTradingSession": "All",
     "BuySell": "Buy",
     "Amount": 100,
-    "ExternalReference": "MyOutsideAutomatedTradingOrderCorrelationId",
+    "ExternalReference": "MyEthOrderCorrelationId",
     "ManualOrder": true,
     "OrderDuration": {
         "DurationType": "DayOrder"
