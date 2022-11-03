@@ -43,12 +43,12 @@
     }
 
     /**
-     * Not all accounts support ETH trading.
+     * Not all clients support ETH trading.
      * @return {void}
      */
-    function getCheckAccountSupport() {
+    function getClientSupport() {
         fetch(
-            demo.apiUrl + "/port/v1/accounts/" + encodeURIComponent(demo.user.accountKey),
+            demo.apiUrl + "/port/v1/clients/" + encodeURIComponent(demo.user.clientKey),
             {
                 "method": "GET",
                 "headers": {
@@ -526,7 +526,7 @@
     }
 
     demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnCheckAccountSupport", "func": getCheckAccountSupport, "funcsToDisplay": [getCheckAccountSupport]},
+        {"evt": "click", "elmId": "idBtnCheckClientSupport", "func": getClientSupport, "funcsToDisplay": [getClientSupport]},
         {"evt": "click", "elmId": "idBtnGetSupportedExchanges", "func": getSupportedExchanges, "funcsToDisplay": [getSupportedExchanges]},
         {"evt": "click", "elmId": "idBtnCheckInstrumentSupport", "func": getCheckInstrumentSupport, "funcsToDisplay": [getCheckInstrumentSupport]},
         {"evt": "click", "elmId": "idBtnGetSessionsFromTradingSchedule", "func": getTradingSessionsFromTradingSchedule, "funcsToDisplay": [getTradingSessionsFromTradingSchedule, getTradingSessions]},
