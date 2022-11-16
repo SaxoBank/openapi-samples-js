@@ -138,13 +138,13 @@ As described above, events are received in the onmessage handler:
 
 ```javascript
     /**
-     * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
-     * @param {Object} data The received stream message
-     * @returns {Array[Object]}
+         * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
+         * @param {Object} data The received stream message
+         * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
      */
     function parseMessageFrame(data) {
         const message = new DataView(data);
-        let parsedMessages = [];
+        const parsedMessages = [];
         let index = 0;
         let messageId;
         let referenceIdSize;
@@ -160,7 +160,7 @@ As described above, events are received in the onmessage handler:
              * The message identifier is used by clients when reconnecting. It may not be a sequence number and no interpretation
              * of its meaning should be attempted at the client.
              */
-            messageId = fromBytesLE(new Uint8Array(data, index, 8));
+            messageId = fromBytesLe(new window.Uint8Array(data, index, 8));
             index += 8;
             /* Version number (2 bytes)
              * Ignored in this example. Get it using 'messageEnvelopeVersion = message.getInt16(index)'.
@@ -175,7 +175,7 @@ As described above, events are received in the onmessage handler:
              * ASCII encoded reference id for identifying the subscription associated with the message.
              * The reference id identifies the source subscription, or type of control message (like '_heartbeat').
              */
-            referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
+            referenceIdBuffer = new window.Int8Array(data, index, referenceIdSize);
             referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
             index += referenceIdSize;
             /* Payload format (1 byte)
@@ -188,7 +188,7 @@ As described above, events are received in the onmessage handler:
             payloadFormat = message.getUint8(index);
             index += 1;
             /* Payload size 'Spayload' (4 bytes)
-             * 64-bit little-endian unsigned integer indicating the size of the message payload.
+             * 32-bit unsigned integer indicating the size of the message payload.
              */
             payloadSize = message.getUint32(index, true);
             index += 4;
@@ -196,15 +196,20 @@ As described above, events are received in the onmessage handler:
              * Binary message payload with the size indicated by the payload size field.
              * The interpretation of the payload depends on the message format field.
              */
-            payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
+            payloadBuffer = new window.Uint8Array(data, index, payloadSize);
+            payload = null;
             switch (payloadFormat) {
             case 0:
-                // Json
-                payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                // JSON
+                try {
+                    payload = JSON.parse(utf8Decoder.decode(payloadBuffer));
+                } catch (error) {
+                    console.error(error);
+                }
                 break;
             case 1:
                 // ProtoBuf
-                payload = parserProtobuf.parse(new Uint8Array(payloadBuffer), schemaName);
+                payload = parserProtobuf.parse(payloadBuffer, schemaName);
                 break;
             default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -226,14 +231,17 @@ As described above, events are received in the onmessage handler:
         messages.forEach(function (message) {
             switch (message.referenceId) {
             case "_heartbeat":
+                // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
                 console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
                 break;
             case "_resetsubscriptions":
+                // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
                 // The server is not able to send messages and client needs to reset subscriptions by recreating them.
                 console.error("Reset Subscription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             case "_disconnect":
-                // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
+                // The server has disconnected the client. This messages requires you to re-authenticate if you wish to continue receiving messages.
                 console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             default:

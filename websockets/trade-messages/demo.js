@@ -480,7 +480,7 @@
                 payloadFormat = message.getUint8(index);
                 index += 1;
                 /* Payload size 'Spayload' (4 bytes)
-                 * 64-bit little-endian unsigned integer indicating the size of the message payload.
+                 * 32-bit unsigned integer indicating the size of the message payload.
                  */
                 payloadSize = message.getUint32(index, true);
                 index += 4;
