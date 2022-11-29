@@ -1,0 +1,13 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+
+version: 2
+updates:
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/authentication/oauth2-certificate-flow/example_nodejs" # Location of package manifests
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm" # See documentation for possible values
+    directory: "/authentication/oauth2-code-flow/redirect/backend-js" # Location of package manifests
+    schedule:
+      interval: "weekly"

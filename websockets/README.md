@@ -1,4 +1,4 @@
-# <a name="documentation"></a>Client-side Samples for realtime feeds
+# <a name="documentation"></a>Client-side Samples for Websocket feeds
 
 This document describes how a client application can subscribe to Saxo Bank's Event Notification Service (ENS).
 
@@ -47,10 +47,10 @@ The WebSocket API can be used in JavaScript by any modern browser.
 The following code creates and starts a connection:
 
 ```javascript
-    var accessToken = // paste access token here
-    var contextId = encodeURIComponent("MyApp" + Date.now());
-    var streamerUrl = "wss://streaming.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
-    var connection = new WebSocket(streamerUrl);
+    const accessToken = " // paste access token here
+    const contextId = encodeURIComponent("MyApp" + Date.now());
+    const streamerUrl = "wss://streaming.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+    const connection = new WebSocket(streamerUrl);
     console.log("Connection created. Status: " + connection.readyState);
 ```
 
@@ -91,15 +91,19 @@ The following code configures the events:
 An 'empty' streaming websocket connection is now configured. In order to subscribe to events to be sent on this connection, you need to create a subscription with a POST request to Saxo's OpenAPI. This is an example to subscribe to order events:
 
 ```javascript
-    var data = {
+    const data = {
         "ContextId": contextId,
         "ReferenceId": "orders",
         "Arguments": {
-            "ClientKey": clientKey,
             "AccountKey": accountKey,
             "Activities": [
+                "AccountDepreciation",
                 "AccountFundings",
-                "Orders"
+                "CorporateActions",
+                "MarginCalls",
+                "Orders",
+                "PositionDepreciation",
+                "Positions"
             ],
             "FieldGroups": [
                 "DisplayAndFormat",
@@ -140,11 +144,11 @@ As described above, events are received in the onmessage handler:
     /**
      * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
      * @param {Object} data The received stream message
-     * @returns {Array[Object]}
+     * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
      */
     function parseMessageFrame(data) {
         const message = new DataView(data);
-        let parsedMessages = [];
+        const parsedMessages = [];
         let index = 0;
         let messageId;
         let referenceIdSize;
@@ -160,7 +164,7 @@ As described above, events are received in the onmessage handler:
              * The message identifier is used by clients when reconnecting. It may not be a sequence number and no interpretation
              * of its meaning should be attempted at the client.
              */
-            messageId = fromBytesLE(new Uint8Array(data, index, 8));
+            messageId = fromBytesLe(new window.Uint8Array(data, index, 8));
             index += 8;
             /* Version number (2 bytes)
              * Ignored in this example. Get it using 'messageEnvelopeVersion = message.getInt16(index)'.
@@ -175,7 +179,7 @@ As described above, events are received in the onmessage handler:
              * ASCII encoded reference id for identifying the subscription associated with the message.
              * The reference id identifies the source subscription, or type of control message (like '_heartbeat').
              */
-            referenceIdBuffer = new Int8Array(data.slice(index, index + referenceIdSize));
+            referenceIdBuffer = new window.Int8Array(data, index, referenceIdSize);
             referenceId = String.fromCharCode.apply(String, referenceIdBuffer);
             index += referenceIdSize;
             /* Payload format (1 byte)
@@ -188,7 +192,7 @@ As described above, events are received in the onmessage handler:
             payloadFormat = message.getUint8(index);
             index += 1;
             /* Payload size 'Spayload' (4 bytes)
-             * 64-bit little-endian unsigned integer indicating the size of the message payload.
+             * 32-bit unsigned integer indicating the size of the message payload.
              */
             payloadSize = message.getUint32(index, true);
             index += 4;
@@ -196,15 +200,20 @@ As described above, events are received in the onmessage handler:
              * Binary message payload with the size indicated by the payload size field.
              * The interpretation of the payload depends on the message format field.
              */
-            payloadBuffer = new Int8Array(data.slice(index, index + payloadSize));
+            payloadBuffer = new window.Uint8Array(data, index, payloadSize);
+            payload = null;
             switch (payloadFormat) {
             case 0:
-                // Json
-                payload = JSON.parse(String.fromCharCode.apply(String, payloadBuffer));
+                // JSON
+                try {
+                    payload = JSON.parse(utf8Decoder.decode(payloadBuffer));
+                } catch (error) {
+                    console.error(error);
+                }
                 break;
             case 1:
                 // ProtoBuf
-                payload = parserProtobuf.parse(new Uint8Array(payloadBuffer), schemaName);
+                payload = parserProtobuf.parse(payloadBuffer, schemaName);
                 break;
             default:
                 console.error("Unsupported payloadFormat: " + payloadFormat);
@@ -226,14 +235,17 @@ As described above, events are received in the onmessage handler:
         messages.forEach(function (message) {
             switch (message.referenceId) {
             case "_heartbeat":
+                // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
                 console.debug("Heartbeat event " + message.messageId + " received: " + JSON.stringify(message.payload));
                 break;
             case "_resetsubscriptions":
+                // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
                 // The server is not able to send messages and client needs to reset subscriptions by recreating them.
                 console.error("Reset Subscription Control messsage received! Reset your subscriptions by recreating them.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             case "_disconnect":
-                // The server has disconnected the client. This messages requires you to reauthenticate if you wish to continue receiving messages.
+                // https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages
+                // The server has disconnected the client. This messages requires you to re-authenticate if you wish to continue receiving messages.
                 console.error("The server has disconnected the client! Refresh the token.\n\n" + JSON.stringify(message.payload, null, 4));
                 break;
             default:
@@ -323,7 +335,7 @@ Next, we need to create a netpositions subscripition, which will provide us with
 The below code is very similar to the code in step 3. This new subscription will be streaming updates on the **same** websocket connection. Note that the `AccountKey` field is optional: if it is *not* provided, netpositions for ALL of the client accounts will be streamed (this is likely what you want if you are looking to provide a 'complete overview' in your UI).
 
 ```javascript
-    var data = {
+    const data = {
         "ContextId": contextId,
         "ReferenceId": "netpositions",
         "Arguments": {

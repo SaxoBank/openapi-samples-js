@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v6.10.2 (c) 2016, daniel wirtz
- * compiled fri, 08 jul 2022 16:17:13 utc
+ * protobuf.js v7.1.2 (c) 2016, daniel wirtz
+ * compiled fri, 23 sep 2022 18:22:41 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -1530,13 +1530,21 @@ var Enum = require(15),
  * @ignore
  */
 function genValuePartial_fromObject(gen, field, fieldIndex, prop) {
+    var defaultAlreadyEmitted = false;
     /* eslint-disable no-unexpected-multiline, block-scoped-var, no-redeclare */
     if (field.resolvedType) {
         if (field.resolvedType instanceof Enum) { gen
             ("switch(d%s){", prop);
             for (var values = field.resolvedType.values, keys = Object.keys(values), i = 0; i < keys.length; ++i) {
-                if (field.repeated && values[keys[i]] === field.typeDefault) gen
-                ("default:");
+                // enum unknown values passthrough
+                if (values[keys[i]] === field.typeDefault && !defaultAlreadyEmitted) { gen
+                    ("default:")
+                        ("if(typeof(d%s)===\"number\"){m%s=d%s;break}", prop, prop, prop);
+                    if (!field.repeated) gen // fallback to default value only for
+                                             // arrays, to avoid leaving holes.
+                        ("break");           // for non-repeated fields, just ignore
+                    defaultAlreadyEmitted = true;
+                }
                 gen
                 ("case%j:", keys[i])
                 ("case %i:", values[keys[i]])
@@ -1668,7 +1676,7 @@ function genValuePartial_toObject(gen, field, fieldIndex, prop) {
     /* eslint-disable no-unexpected-multiline, block-scoped-var, no-redeclare */
     if (field.resolvedType) {
         if (field.resolvedType instanceof Enum) gen
-            ("d%s=o.enums===String?types[%i].values[m%s]:m%s", prop, fieldIndex, prop, prop);
+            ("d%s=o.enums===String?(types[%i].values[m%s]===undefined?m%s:types[%i].values[m%s]):m%s", prop, fieldIndex, prop, prop, fieldIndex, prop, prop);
         else gen
             ("d%s=types[%i].toObject(m%s,o)", prop, fieldIndex, prop);
     } else {
@@ -2058,8 +2066,9 @@ var Namespace = require(23),
  * @param {Object.<string,*>} [options] Declared options
  * @param {string} [comment] The comment for this enum
  * @param {Object.<string,string>} [comments] The value comments for this enum
+ * @param {Object.<string,Object<string,*>>|undefined} [valuesOptions] The value options for this enum
  */
-function Enum(name, values, options, comment, comments) {
+function Enum(name, values, options, comment, comments, valuesOptions) {
     ReflectionObject.call(this, name, options);
 
     if (values && typeof values !== "object")
@@ -2088,6 +2097,12 @@ function Enum(name, values, options, comment, comments) {
      * @type {Object.<string,string>}
      */
     this.comments = comments || {};
+
+    /**
+     * Values options, if any
+     * @type {Object<string, Object<string, *>>|undefined}
+     */
+    this.valuesOptions = valuesOptions;
 
     /**
      * Reserved ranges, if any.
@@ -2133,11 +2148,12 @@ Enum.fromJSON = function fromJSON(name, json) {
 Enum.prototype.toJSON = function toJSON(toJSONOptions) {
     var keepComments = toJSONOptions ? Boolean(toJSONOptions.keepComments) : false;
     return util.toObject([
-        "options"  , this.options,
-        "values"   , this.values,
-        "reserved" , this.reserved && this.reserved.length ? this.reserved : undefined,
-        "comment"  , keepComments ? this.comment : undefined,
-        "comments" , keepComments ? this.comments : undefined
+        "options"       , this.options,
+        "valuesOptions" , this.valuesOptions,
+        "values"        , this.values,
+        "reserved"      , this.reserved && this.reserved.length ? this.reserved : undefined,
+        "comment"       , keepComments ? this.comment : undefined,
+        "comments"      , keepComments ? this.comments : undefined
     ]);
 };
 
@@ -2146,11 +2162,12 @@ Enum.prototype.toJSON = function toJSON(toJSONOptions) {
  * @param {string} name Value name
  * @param {number} id Value id
  * @param {string} [comment] Comment, if any
+ * @param {Object.<string, *>|undefined} [options] Options, if any
  * @returns {Enum} `this`
  * @throws {TypeError} If arguments are invalid
  * @throws {Error} If there is already a value with this name or id
  */
-Enum.prototype.add = function add(name, id, comment) {
+Enum.prototype.add = function add(name, id, comment, options) {
     // utilized by the parser but not by .fromJSON
 
     if (!util.isString(name))
@@ -2175,6 +2192,12 @@ Enum.prototype.add = function add(name, id, comment) {
     } else
         this.valuesById[this.values[name] = id] = name;
 
+    if (options) {
+        if (this.valuesOptions === undefined)
+            this.valuesOptions = {};
+        this.valuesOptions[name] = options || null;
+    }
+
     this.comments[name] = comment || null;
     return this;
 };
@@ -2198,6 +2221,8 @@ Enum.prototype.remove = function remove(name) {
     delete this.valuesById[val];
     delete this.values[name];
     delete this.comments[name];
+    if (this.valuesOptions)
+        delete this.valuesOptions[name];
 
     return this;
 };
@@ -3196,7 +3221,8 @@ var ReflectionObject = require(24);
 ((Namespace.prototype = Object.create(ReflectionObject.prototype)).constructor = Namespace).className = "Namespace";
 
 var Field    = require(16),
-    util     = require(37);
+    util     = require(37),
+    OneOf    = require(25);
 
 var Type,    // cyclic
     Service,
@@ -3332,9 +3358,8 @@ Object.defineProperty(Namespace.prototype, "nestedArray", {
 /**
  * Any nested object descriptor.
  * @typedef AnyNestedObject
- * @type {IEnum|IType|IService|AnyExtensionField|INamespace}
+ * @type {IEnum|IType|IService|AnyExtensionField|INamespace|IOneOf}
  */
-// ^ BEWARE: VSCode hangs forever when using more than 5 types (that's why AnyExtensionField exists in the first place)
 
 /**
  * Converts this namespace to a namespace descriptor.
@@ -3407,7 +3432,7 @@ Namespace.prototype.getEnum = function getEnum(name) {
  */
 Namespace.prototype.add = function add(object) {
 
-    if (!(object instanceof Field && object.extend !== undefined || object instanceof Type || object instanceof Enum || object instanceof Service || object instanceof Namespace))
+    if (!(object instanceof Field && object.extend !== undefined || object instanceof Type  || object instanceof OneOf || object instanceof Enum || object instanceof Service || object instanceof Namespace))
         throw TypeError("object must be a valid nested object");
 
     if (!this.nested)
@@ -3622,7 +3647,7 @@ Namespace._configure = function(Type_, Service_, Enum_) {
     Enum    = Enum_;
 };
 
-},{"16":16,"24":24,"37":37}],24:[function(require,module,exports){
+},{"16":16,"24":24,"25":25,"37":37}],24:[function(require,module,exports){
 "use strict";
 module.exports = ReflectionObject;
 
@@ -4518,6 +4543,14 @@ function parse(source, root, options) {
                     }
                     break;
 
+                case "message":
+                    parseType(type, token);
+                    break;
+
+                case "enum":
+                    parseEnum(type, token);
+                    break;
+
                 /* istanbul ignore next */
                 default:
                     throw illegal(token); // there are no groups with proto3 semantics
@@ -4618,7 +4651,14 @@ function parse(source, root, options) {
 
         skip("=");
         var value = parseId(next(), true),
-            dummy = {};
+            dummy = {
+                options: undefined
+            };
+        dummy.setOption = function(name, value) {
+            if (this.options === undefined)
+                this.options = {};
+            this.options[name] = value;
+        };
         ifBlock(dummy, function parseEnumValue_block(token) {
 
             /* istanbul ignore else */
@@ -4631,7 +4671,7 @@ function parse(source, root, options) {
         }, function parseEnumValue_line() {
             parseInlineOptions(dummy); // skip
         });
-        parent.add(token, value, dummy.comment);
+        parent.add(token, value, dummy.comment, dummy.options);
     }
 
     function parseOption(parent, token) {

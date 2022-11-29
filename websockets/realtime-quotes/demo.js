@@ -27,13 +27,13 @@
         "isRecentDataReceived": false
     };
     const listSubscription = {
-        "referenceId": "MyPriceListEvent",
+        "referenceId": "",  // This comes from the input
         "isActive": false,
         "activityMonitor": null,
         "isRecentDataReceived": false
     };
     const orderTicketSubscriptions = [];
-    const orderTicketSubscriptionReferenceIdPrefix = "MyPriceEvent";
+    const orderTicketSubscriptionReferenceIdPrefix = "MyPricesEvent";
     let connection = null;  // The websocket connection object
     let orderTicketSubscriptionsActivityMonitor = null;
     let primarySessionRequestCount = 0;
@@ -49,6 +49,27 @@
             Boolean(window.Uint8Array) &&
             Boolean(window.TextDecoder)
         );
+    }
+
+    /**
+     * Get the input data and convert it to an object to be sent as request body.
+     * @param {string} textAreaId Identifies which textarea element to use.
+     * @return {Object} The object from the input field - null if invalid.
+     */
+    function getObjectFromTextArea(textAreaId) {
+        let object = null;
+        try {
+            object = JSON.parse(document.getElementById(textAreaId).value);
+            if (object.hasOwnProperty("Arguments")) {
+                if (object.Arguments.hasOwnProperty("AccountKey")) {
+                    object.Arguments.AccountKey = demo.user.accountKey;
+                }
+            }
+            document.getElementById(textAreaId).value = JSON.stringify(object, null, 4);
+        } catch (e) {
+            console.error(e);
+        }
+        return object;
     }
 
     /**
@@ -82,20 +103,25 @@
     }
 
     /**
+     * Get the ContextId from the ENS post body.
+     * @return {string} The ContextId which was entered in the TextArea.
+     */
+    function getContextId() {
+        const data = getObjectFromTextArea("idInfoPricesRequestObject");
+        return data.ContextId;
+    }
+
+    /**
      * This is an example of constructing the websocket connection.
      * @return {void}
      */
     function createConnection() {
         const accessToken = document.getElementById("idBearerToken").value;
-        const contextId = encodeURIComponent(document.getElementById("idContextId").value);
+        const contextId = encodeURIComponent(getContextId());
         const streamerUrl = demo.streamerUrl + "?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
         if (!isWebSocketsSupportedByBrowser()) {
             console.error("This browser doesn't support WebSockets.");
             throw "This browser doesn't support WebSockets.";
-        }
-        if (contextId !== document.getElementById("idContextId").value) {
-            console.error("Invalid characters in Context ID.");
-            throw "Invalid characters in Context ID.";
         }
         try {
             connection = new window.WebSocket(streamerUrl);
@@ -129,18 +155,7 @@
      * @return {void}
      */
     function subscribeList() {
-        const data = {
-            "ContextId": document.getElementById("idContextId").value,
-            "ReferenceId": listSubscription.referenceId,
-            "Arguments": {
-                "AccountKey": demo.user.accountKey,
-                "Uics": document.getElementById("idUics").value,
-                "AssetType": document.getElementById("idCbxAssetType").value,
-                // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                // MarketDepth gives the order book, when available.
-                "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
-            }
-        };
+        const data = getObjectFromTextArea("idInfoPricesRequestObject");
         if (listSubscription.isActive) {
             // The reference id of a subscription for which the new subscription is a replacement.
             // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
@@ -149,6 +164,7 @@
             // If no such subscription exists, the ReplaceReferenceId is ignored.
             data.ReplaceReferenceId = listSubscription.referenceId;
         }
+        listSubscription.referenceId = data.ReferenceId;
         fetch(
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
             // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
@@ -188,38 +204,6 @@
     }
 
     /**
-     * Convert a price subscription request to a text block to be used in a batch request.
-     * @param {Object} postData Subscription data to post, containing instrument and quality of the events
-     * @param {number} requestId Number of the request - this can be used to correlate responses
-     * @return {string} Part of the batch request data
-     */
-    function addSubscriptionRequestToBatchRequest(postData, requestId) {
-        const host = "https://gateway.saxobank.com";
-        let fullPath = demo.apiUrl + "/trade/v1/prices/subscriptions";
-        fullPath = fullPath.substring(host.length);
-        return "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nPOST " + fullPath + " HTTP/1.1\r\nX-Request-Id:" + requestId + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n" + JSON.stringify(postData) + "\r\n";
-    }
-
-    /**
-     * Convert an unsubscribe request for an individual price subscription to a text block to be used in a batch request.
-     * Delete requests should be done before adding new subscriptions, to prevent reaching an unnecessary subscription limit.
-     * @param {number} newLength The new number of price subscriptions
-     * @return {string} Part of the batch request data
-     */
-    function addDeleteSubscriptionRequestsToBatchRequest(newLength) {
-        const host = "https://gateway.saxobank.com";
-        let fullPathPrefix = demo.apiUrl + "/trade/v1/prices/subscriptions/" + document.getElementById("idContextId").value + "/";
-        let request = "";
-        let i;
-        fullPathPrefix = fullPathPrefix.substring(host.length);
-        for (i = newLength; i < orderTicketSubscriptions.length; i += 1) {
-            console.log("Deleting subscription with reference " + orderTicketSubscriptions[i].referenceId);
-            request += "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nDELETE " + fullPathPrefix + orderTicketSubscriptions[i].referenceId + " HTTP/1.1\r\nX-Request-Id:DEL" + i + "\r\nAccept-Language:en\r\nContent-Type:application/json; charset=utf-8\r\nHost:gateway.saxobank.com\r\n\r\n\r\n";
-        }
-        return request;
-    }
-
-    /**
      * Lookup the subscription in the list, to get Uic and AssetType.
      * @param {Array<Object>} subscriptions The list
      * @param {string} referenceId The reference id to lookup
@@ -236,105 +220,42 @@
      * @return {void}
      */
     function subscribeOrderTicket() {
-        const uicList = document.getElementById("idUics").value.split(",");
-        const orderTicketSubscriptionsRequested = [];
-        let postDataBatchRequest = "";
-        let requestId = 0;
-        // Create a batch request to create multiple subscriptions in one request.
-        // More info on batch requests: https://saxobank.github.io/openapi-samples-js/batch-request/
-        uicList.forEach(function (uic, i) {
-            const assetType = document.getElementById("idCbxAssetType").value;
-            const referenceId = orderTicketSubscriptionReferenceIdPrefix + "_" + i;
-            const data = {
-                "ContextId": document.getElementById("idContextId").value,
-                "ReferenceId": referenceId,
-                "Arguments": {
-                    "AccountKey": demo.user.accountKey,
-                    "Uic": uic,
-                    "AssetType": assetType,
-                    "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
-                    // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
-                    // MarketDepth gives the order book, when available.
-                    "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
-                }
-            };
-            orderTicketSubscriptionsRequested.push({
-                "referenceId": referenceId,
-                "uic": uic,
-                "assetType": assetType
-            });
-            if (orderTicketSubscriptions.length > i) {
-                // The reference id of a subscription for which the new subscription is a replacement.
-                // Subscription replacement can be used to improve performance when one subscription must be replaced with another. The primary use-case is for handling the _resetsubscriptions control message.
-                // Without replacement and the alternative DELETE request, throttling issues might occur with too many subscriptions.
-                // If a subscription with the reference id indicated by ReplaceReferenceId exists, it is removed and the subscription throttling counts are updated before the new subscription is created.
-                // If no such subscription exists, the ReplaceReferenceId is ignored.
-                data.ReplaceReferenceId = referenceId;
-            }
-            requestId += 1;
-            postDataBatchRequest += addSubscriptionRequestToBatchRequest(data, requestId);
-        });
-        // There is a possibility that the new list is smaller than the current list. Then subscriptions must be deleted, instead of replaced.
-        // Maybe this is too complex and far beyond an example, but replacing subscriptions is an important topic.
-        if (orderTicketSubscriptions.length > orderTicketSubscriptionsRequested.length) {
-            // The DELETE requests are added to the batch, BEFORE setting up the new subscriptions, to prevent reaching a subscription limit:
-            postDataBatchRequest = addDeleteSubscriptionRequestsToBatchRequest(orderTicketSubscriptionsRequested.length) + postDataBatchRequest;
-        }
-        postDataBatchRequest += "--+--\r\n";  // Add the end tag
+        const data = getObjectFromTextArea("idPricesRequestObject");
+        data.ReferenceId += "_" + orderTicketSubscriptions.length;
         fetch(
-            demo.apiUrl + "/trade/batch",  // Grouping is done per service group, so "/ref" for example, must be in a different batch.
+            // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
+            // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
+            // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
+            demo.apiUrl + "/trade/v1/prices/subscriptions",
             {
                 "method": "POST",
                 "headers": {
-                    "Content-Type": "multipart/mixed; boundary=\"+\"",
-                    "Accept": "*/*",
-                    "Accept-Language": "en, *;q=0.5",
                     "Authorization": "Bearer " + document.getElementById("idBearerToken").value,
-                    "Cache-Control": "no-cache"
+                    "Content-Type": "application/json; charset=utf-8"
                 },
-                "body": postDataBatchRequest
+                "body": JSON.stringify(data)
             }
         ).then(function (response) {
             if (response.ok) {
-                response.text().then(function (responseText) {
-                    const responseArray = responseText.split("\n");
-                    let responseJson;
-                    let requestedSubscription;
-                    let smallestInactivityTimeout = Number.MAX_VALUE;
-                    orderTicketSubscriptions.length = 0;
-                    responseArray.forEach(function (line) {
-                        line = line.trim();
-                        if (line.charAt(0) === "{") {
-                            try {
-                                responseJson = JSON.parse(line);
-                                if (responseJson.hasOwnProperty("ErrorCode")) {
-                                    // This can be something like "IllegalInstrumentId" - but this never happens in your app :-)
-                                    console.error(responseJson.Message);
-                                } else {
-                                    smallestInactivityTimeout = Math.min(smallestInactivityTimeout, responseJson.InactivityTimeout);
-                                    requestedSubscription = getSubscriptionByReference(orderTicketSubscriptionsRequested, responseJson.ReferenceId);
-                                    orderTicketSubscriptions.push({
-                                        "referenceId": responseJson.ReferenceId,
-                                        "uic": requestedSubscription.uic,
-                                        "assetType": requestedSubscription.assetType,
-                                        "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
-                                        "isActive": true
-                                    });
-                                    console.log("Subscription created with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
-                                }
-                            } catch (error) {
-                                console.error(error);
-                            }
-                        }
+                response.json().then(function (responseJson) {
+                    orderTicketSubscriptions.push({
+                        "referenceId": data.ReferenceId,
+                        "uic": data.Arguments.Uic,
+                        "assetType": data.Arguments.AssetType,
+                        "isRecentDataReceived": true,  // Start positive, will be set to 'false' after the next monitor health check.
+                        "isActive": true
                     });
                     // Monitor connection every "InactivityTimeout" seconds.
                     if (orderTicketSubscriptionsActivityMonitor === null) {
                         orderTicketSubscriptionsActivityMonitor = window.setInterval(function () {
-                            orderTicketSubscriptions.forEach(function (orderTicketSubscription) {
-                                monitorActivity(orderTicketSubscription);
-                            });
-                        }, smallestInactivityTimeout * 1000);
+                            orderTicketSubscriptions.forEach(monitorActivity);
+                        }, responseJson.InactivityTimeout * 1000);
                     }
+                    console.log("Subscription created " + (
+                        connection === null
+                        ? ""
+                        : "(readyState " + connection.readyState + ") "
+                    ) + "with RefreshRate " + responseJson.RefreshRate + ". Snapshot:\n" + JSON.stringify(responseJson, null, 4));
                 });
             } else {
                 demo.processError(response);
@@ -388,7 +309,7 @@
             }
         }
 
-        const contextId = document.getElementById("idContextId").value;
+        const contextId = getContextId();
         const urlPathInfoPrices = "/trade/v1/infoprices/subscriptions/" + encodeURIComponent(contextId);
         const urlPathPrices = "/trade/v1/prices/subscriptions/" + encodeURIComponent(contextId);
         // Make sure this is done sequentially, to prevent throttling issues when new subscriptions are created.
@@ -644,7 +565,7 @@
                 payloadFormat = message.getUint8(index);
                 index += 1;
                 /* Payload size 'Spayload' (4 bytes)
-                 * 64-bit little-endian unsigned integer indicating the size of the message payload.
+                 * 32-bit unsigned integer indicating the size of the message payload.
                  */
                 payloadSize = message.getUint32(index, true);
                 index += 4;
@@ -751,7 +672,7 @@
         // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
         const token = document.getElementById("idBearerToken").value;
         fetch(
-            demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+            demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(getContextId()),
             {
                 "method": "PUT",
                 "headers": {
@@ -841,7 +762,7 @@
      * @return {void}
      */
     function subscribeToTradeLevelChanges() {
-        const contextId = encodeURIComponent(document.getElementById("idContextId").value);
+        const contextId = encodeURIComponent(getContextId());
         const data = {
             "ContextId": contextId,
             "ReferenceId": tradeLevelSubscription.referenceId
@@ -931,11 +852,31 @@
     function findInstrumentsForAssetType() {
 
         /**
-         * Find futures by FutureSpaceId.
-         * @param {number} futureSpaceId ID from the search.
+         * Convert the modified objects to a string and display in the text area.
+         * @param {Array<number>} uics The list of Uics to add to the request objects.
+         * @param {string} Asset type to add to the request objects.
+         * @param {Object} infoPricesRequestData The request object for InfoPrices.
+         * @param {Object} pricesRequestData The request object for Prices.
          * @return {void}
          */
-        function findFutureContracts(futureSpaceId) {
+        function addUicsToRequestObjects(uics, assetType, infoPricesRequestData, pricesRequestData) {
+            infoPricesRequestData.Arguments.Uics = uics.join();
+            infoPricesRequestData.Arguments.AssetType = assetType;
+            document.getElementById("idInfoPricesRequestObject").value = JSON.stringify(infoPricesRequestData, null, 4);
+            pricesRequestData.Arguments.Uic = uics[0];
+            pricesRequestData.Arguments.AssetType = assetType;
+            document.getElementById("idPricesRequestObject").value = JSON.stringify(pricesRequestData, null, 4);
+        }
+
+        /**
+         * Find futures by FutureSpaceId.
+         * @param {number} futureSpaceId ID from the search.
+         * @param {string} Asset type to add to the request objects.
+         * @param {Object} infoPricesRequestData The request object for InfoPrices.
+         * @param {Object} pricesRequestData The request object for Prices.
+         * @return {void}
+         */
+        function findFutureContracts(futureSpaceId, assetType, infoPricesRequestData, pricesRequestData) {
             fetch(
                 demo.apiUrl + "/ref/v1/instruments/futuresspaces/" + futureSpaceId,
                 {
@@ -954,7 +895,7 @@
                                 uics.push(futureContract.Uic);
                             }
                         });
-                        document.getElementById("idUics").value = uics.join();
+                        addUicsToRequestObjects(uics, assetType, infoPricesRequestData, pricesRequestData);
                     });
                 } else {
                     demo.processError(response);
@@ -967,9 +908,12 @@
         /**
          * For options, the identifier is an OptionRoot. Convert this to a Uic.
          * @param {number} optionRootId The identifier from the instrument response
+         * @param {string} Asset type to add to the request objects.
+         * @param {Object} infoPricesRequestData The request object for InfoPrices.
+         * @param {Object} pricesRequestData The request object for Prices.
          * @return {void}
          */
-        function findOptionContracts(optionRootId) {
+        function findOptionContracts(optionRootId, assetType, infoPricesRequestData, pricesRequestData) {
             fetch(
                 demo.apiUrl + "/ref/v1/instruments/contractoptionspaces/" + optionRootId,
                 {
@@ -988,7 +932,7 @@
                                 uics.push(specificOption.Uic);
                             }
                         });
-                        document.getElementById("idUics").value = uics.join();
+                        addUicsToRequestObjects(uics, assetType, infoPricesRequestData, pricesRequestData);
                     });
                 } else {
                     demo.processError(response);
@@ -998,6 +942,8 @@
             });
         }
 
+        const infoPricesRequestData = getObjectFromTextArea("idInfoPricesRequestObject");
+        const pricesRequestData = getObjectFromTextArea("idPricesRequestObject");
         const assetType = document.getElementById("idCbxAssetType").value;
         const includeNonTradable = (
             assetType === "StockIndex"
@@ -1023,16 +969,16 @@
                         instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
                         if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
                             // We found an future root - get the series
-                            findFutureContracts(instrument.Identifier);
+                            findFutureContracts(instrument.Identifier, assetType, infoPricesRequestData, pricesRequestData);
                         } else if (instrument.SummaryType === "ContractOptionRoot") {
                             // We found an option root - get the series
-                            findOptionContracts(instrument.Identifier);
+                            findOptionContracts(instrument.Identifier, assetType, infoPricesRequestData, pricesRequestData);
                         } else {
                             responseJson.Data.forEach(function (instrument) {
                                 identifiers.push(instrument.Identifier);
                             });
-                            document.getElementById("idUics").value = identifiers.join();
                         }
+                        addUicsToRequestObjects(identifiers, assetType, infoPricesRequestData, pricesRequestData);
                         console.log("Changed object to asset of type " + assetType + ".");
                     }
                 });
@@ -1044,8 +990,22 @@
         });
     }
 
-    document.getElementById("idContextId").value = "MyApp_" + Date.now();  // Some unique value
+    /**
+     * Sync data of js config with the edits in the HTML.
+     * @return {void}
+     */
+    function populateTextAreas() {
+        const defaultContextId = "MyApp_" + Date.now();  // Some unique value
+        let data = getObjectFromTextArea("idInfoPricesRequestObject");
+        data.ContextId = defaultContextId;
+        document.getElementById("idInfoPricesRequestObject").value = JSON.stringify(data, null, 4);
+        data = getObjectFromTextArea("idPricesRequestObject");
+        data.ContextId = defaultContextId;
+        document.getElementById("idPricesRequestObject").value = JSON.stringify(data, null, 4);
+    }
+
     demo.setupEvents([
+        {"evt": "demoDataLoaded", "elmId": "", "func": populateTextAreas, "funcsToDisplay": [populateTextAreas]},
         {"evt": "change", "elmId": "idCbxAssetType", "func": findInstrumentsForAssetType, "funcsToDisplay": [findInstrumentsForAssetType]},
         {"evt": "click", "elmId": "idBtnCreateConnection", "func": createConnection, "funcsToDisplay": [createConnection]},
         {"evt": "click", "elmId": "idBtnStartListener", "func": startListener, "funcsToDisplay": [startListener]},

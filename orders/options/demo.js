@@ -12,7 +12,7 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    const fictivePrice = 70;  // SIM doesn't allow calls to price endpoint for most instruments
+    const fictivePrice = 1;  // SIM doesn't allow calls to price endpoint for most instruments
     let lastOrderId = "0";
 
     /**
@@ -47,7 +47,7 @@
      * Modify the order object so the elements comply to the order type.
      * @return {void}
      */
-    function selectOrderType() {
+    function changeOrderType() {
         const newOrderObject = getOrderObjectFromJson();
         newOrderObject.OrderType = document.getElementById("idCbxOrderType").value;
         delete newOrderObject.OrderPrice;
@@ -57,7 +57,7 @@
         switch (newOrderObject.OrderType) {
         case "Limit":  // A buy order will be executed when the price falls below the provided price point; a sell order when the price increases beyond the provided price point.
             fetch(
-                demo.apiUrl + "/trade/v1/infoprices?AssetType=" + newOrderObject.AssetType + "&uic=" + newOrderObject.Uic,
+                demo.apiUrl + "/trade/v1/infoprices?AssetType=" + newOrderObject.AssetType + "&uic=" + newOrderObject.Uic + "&FieldGroups=" + encodeURIComponent("DisplayAndFormat,Quote"),
                 {
                     "method": "GET",
                     "headers": {
@@ -67,9 +67,14 @@
             ).then(function (response) {
                 if (response.ok) {
                     response.json().then(function (responseJson) {
-                        newOrderObject.OrderPrice = fictivePrice;  // SIM doesn't allow calls to price endpoint, otherwise responseJson.Quote.Bid
+                        if (responseJson.Quote.PriceTypeBid === "NoAccess") {
+                            newOrderObject.OrderPrice = fictivePrice;  // SIM doesn't supply prices for most instruments (only FxSpot)
+                            console.error("Price not available, so using fictive price (only for testing).");
+                        } else {
+                            newOrderObject.OrderPrice = responseJson.Quote.Bid;
+                        }
                         document.getElementById("idNewOrderObject").value = JSON.stringify(newOrderObject, null, 4);
-                        console.log(JSON.stringify(responseJson));
+                        console.log("Result of price request due to switch to 'Limit':\n" + JSON.stringify(responseJson, null, 4));
                     });
                 } else {
                     demo.processError(response);
@@ -109,13 +114,14 @@
         default:
             console.error("Unsupported order type " + newOrderObject.OrderType);
         }
+        populateSupportedOrderDurations(newOrderObject.OrderDuration.DurationType);
     }
 
     /**
      * Adjust the order object in the textarea so the related properties comply with the chosen order duration.
      * @return {void}
      */
-    function selectOrderDuration() {
+    function changeOrderDuration() {
 
         /**
          * Prefix number with zero, if it has one digit.
@@ -134,7 +140,10 @@
         let now;
         newOrderObject.OrderDuration.DurationType = document.getElementById("idCbxOrderDuration").value;
         switch (newOrderObject.OrderDuration.DurationType) {
+        case "AtTheClose":
+        case "AtTheOpening":
         case "DayOrder":
+        case "GoodForPeriod":
         case "GoodTillCancel":
         case "FillOrKill":
         case "ImmediateOrCancel":  // The order is working for a very short duration and when the time is up, the order is canceled. What ever fills happened in the short time, is what constitute a position. Primarily used for Fx and CFDs.
@@ -155,32 +164,67 @@
     }
 
     /**
-     * Add the order types which are allowed for this account to the combo box. Pre-select the type which was selected before.
-     * @param {Array} orderTypes The order types to be added.
+     * Add the order durations available for the selected order type to the combo box. Pre-select the type which was selected before, when available.
+     * @param {string} selectedOrderDuration The order duration to be selected.
+     * @return {void}
+     */
+    function populateSupportedOrderDurations(selectedOrderDuration) {
+        const cbxOrderType = document.getElementById("idCbxOrderType");
+        const cbxOrderDuration = document.getElementById("idCbxOrderDuration");
+        // The durations were stored, when parsing the instrument details. The can differ per OrderType.
+        const supportedDurations = cbxOrderType.options[cbxOrderType.selectedIndex].dataset.durations.split("|");
+        let isSelectedDurationSupported = false;
+        let option;
+        let i;
+        // Make the list empty first..
+        for (i = cbxOrderDuration.options.length - 1; i >= 0; i -= 1) {
+            cbxOrderDuration.remove(i);
+        }
+        supportedDurations.forEach(function (orderDuration) {
+            option = document.createElement("option");
+            option.text = orderDuration;
+            option.value = orderDuration;
+            if (orderDuration === selectedOrderDuration) {
+                option.setAttribute("selected", true);  // Make the selected type the default one
+                isSelectedDurationSupported = true;
+            }
+            cbxOrderDuration.add(option);
+        });
+        if (!isSelectedDurationSupported) {
+            // Update the duration in the order object, because it is not supported.
+            changeOrderDuration();
+        }
+    }
+
+    /**
+     * Add the order types available for this instrument (and account) to the combo box. Pre-select the type which was selected before, when available.
+     * @param {Array} orderTypeSettings The order types to be added.
      * @param {string} selectedOrderType The order type to be selected.
      * @return {void}
      */
-    function populateSupportedOrderTypes(orderTypes, selectedOrderType) {
+    function populateSupportedOrderTypes(orderTypeSettings, selectedOrderType) {
         const cbxOrderType = document.getElementById("idCbxOrderType");
         let option;
-        let isSelectedOrderTypeAllowed = false;
+        let isSelectedOrderTypeSupported = false;
         let i;
+        // Make the list empty first..
         for (i = cbxOrderType.options.length - 1; i >= 0; i -= 1) {
             cbxOrderType.remove(i);
         }
-        orderTypes.sort();
-        orderTypes.forEach(function (orderType) {
+        orderTypeSettings.forEach(function (orderTypeSetting) {
             option = document.createElement("option");
-            option.text = orderType;
-            option.value = orderType;
-            if (orderType === selectedOrderType) {
+            option.text = orderTypeSetting.OrderType;
+            option.value = orderTypeSetting.OrderType;
+            // Store the supported durations for this OrderType:
+            option.dataset.durations = orderTypeSetting.DurationTypes.join("|");
+            if (orderTypeSetting.OrderType === selectedOrderType) {
                 option.setAttribute("selected", true);  // Make the selected type the default one
-                isSelectedOrderTypeAllowed = true;
+                isSelectedOrderTypeSupported = true;
             }
             cbxOrderType.add(option);
         });
-        if (!isSelectedOrderTypeAllowed) {
-            selectOrderType();  // The current order type is not supported. Change to a different one
+        if (!isSelectedOrderTypeSupported) {
+            changeOrderType();  // The current order type is not supported. Change to a different one
         }
     }
 
@@ -203,8 +247,6 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    // Test for SupportedOrderTypes, ContractSize, Decimals and TickSizeScheme. An example can be found in the function getConditions()
-                    populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
                     if (responseJson.hasOwnProperty("OptionSpace")) {
                         newOrderObject.Uic = responseJson.OptionSpace[0].SpecificOptions[0].Uic;
                         newOrderObject.AssetType = responseJson.AssetType;  // Can differ (FuturesOption, StockOption, StockIndexOption)
@@ -267,18 +309,6 @@
                     statusDescription += "Status: " + detailsObject.TradingStatus;
                 }
                 window.alert(statusDescription);
-            }
-        }
-
-        /**
-         * Verify if the selected OrderType is supported for the instrument.
-         * @param {Object} orderObject The object used to POST the new order.
-         * @param {Array<string>} orderTypes Array with supported order types (Market, Limit, etc).
-         * @return {void}
-         */
-        function checkSupportedOrderTypes(orderObject, orderTypes) {
-            if (orderTypes.indexOf(orderObject.OrderType) === -1) {
-                window.alert("The order type " + orderObject.OrderType + " is not supported for this instrument.");
             }
         }
 
@@ -355,8 +385,10 @@
         }
 
         const newOrderObject = getOrderObjectFromJson();
+        // This requests gets the order settings of the selected instrument.
+        // By adding the AccountKey, specific account settings are considered as well.
         fetch(
-            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&FieldGroups=OrderSetting",
+            demo.apiUrl + "/ref/v1/instruments/details/" + newOrderObject.Uic + "/" + newOrderObject.AssetType + "?AccountKey=" + encodeURIComponent(demo.user.accountKey) + "&FieldGroups=SupportedOrderTypeSettings",
             {
                 "method": "GET",
                 "headers": {
@@ -366,14 +398,14 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    populateSupportedOrderTypes(responseJson.SupportedOrderTypes, newOrderObject.OrderType);
+                    populateSupportedOrderTypes(responseJson.SupportedOrderTypeSettings, newOrderObject.OrderType);
+                    populateSupportedOrderDurations(newOrderObject.OrderDuration.DurationType);
                     console.log(JSON.stringify(responseJson, null, 4));
                     if (responseJson.IsTradable === false) {
                         window.alert("This instrument is not tradable!");
-                        // For demonstration purposes, the validation continues, but an order ticket shouldn't be shown!
+                        // For demonstration purposes the validation continues, but an order ticket shouldn't be shown!
                     }
                     checkTradingStatus(responseJson);
-                    checkSupportedOrderTypes(newOrderObject, responseJson.SupportedOrderTypes);
                     if (newOrderObject.OrderType !== "Market" && newOrderObject.OrderType !== "TraspasoIn") {
                         if (responseJson.hasOwnProperty("TickSizeScheme")) {
                             checkTickSizes(newOrderObject, responseJson.TickSizeScheme);
@@ -577,8 +609,8 @@
     }
 
     demo.setupEvents([
-        {"evt": "change", "elmId": "idCbxOrderType", "func": selectOrderType, "funcsToDisplay": [selectOrderType]},
-        {"evt": "change", "elmId": "idCbxOrderDuration", "func": selectOrderDuration, "funcsToDisplay": [selectOrderDuration]},
+        {"evt": "change", "elmId": "idCbxOrderType", "func": changeOrderType, "funcsToDisplay": [changeOrderType, populateSupportedOrderDurations, changeOrderDuration]},
+        {"evt": "change", "elmId": "idCbxOrderDuration", "func": changeOrderDuration, "funcsToDisplay": [changeOrderDuration]},
         {"evt": "click", "elmId": "idBtnGetSeries", "func": getSeries, "funcsToDisplay": [getSeries]},
         {"evt": "click", "elmId": "idBtnGetConditions", "func": getConditions, "funcsToDisplay": [getConditions]},
         {"evt": "click", "elmId": "idBtnPreCheckOrder", "func": preCheckNewOrder, "funcsToDisplay": [preCheckNewOrder]},

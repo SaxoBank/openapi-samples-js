@@ -29,7 +29,7 @@
 </label>
 </div>
 <h1>Find instruments</h1>
-This example shows how to search for instruments. See the <a href="https://www.developer.saxo/openapi/learn/reference-data" target="_blank">Developer Portal</a> for more details on reference data.
+This example shows how to find instruments. Developer Portal has <a href="https://www.developer.saxo/openapi/learn/reference-data" target="_blank">reference data documentation</a>.
 <br />
 <br />
 <label>Instrument name/ISIN: <input type="text" class="text-field" id="idInstrumentName" value="Danone" placeholder="Enter instrument name.." /></label><br />
@@ -44,13 +44,15 @@ This example shows how to search for instruments. See the <a href="https://www.d
 <br />
 <label><input type="checkbox" id="idChkTradable" checked value="Tradable"> Limit result to tradable instruments (don't check for futures, or indices!)</label>
 <br />
-<br />
 <label><input type="checkbox" id="idChkMultiLeg" value="MultiLeg"> Limit result to options applicable for multi-leg strategy orders</label>
-<br />
 <br />
 <input type="button" class="action-button" value="Get exchanges" id="idBtnGetExchanges" />
 <input type="button" class="action-button" value="Find" id="idBtnFind" />
-<input type="button" class="action-button" value="Get details" id="idBtnGetDetails" />
+<br />
+<br />
+<label>Uic: <input type="text" class="text-field" id="idUic" value="" placeholder="Enter Uic.." /></label><br />
+<input type="button" class="action-button" value="Get instrument details" id="idBtnGetDetails" />
+<br />
 <br />
 Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
 <br />

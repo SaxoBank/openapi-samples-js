@@ -8,14 +8,14 @@
     <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
     <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
     <script type="text/javascript" src="demo.js" defer></script>
-    <title>Order Demo for Stocks</title>
+    <title>Extended Trading Hours (ETH)</title>
 </head>
 <body>
 <section class="page-header">
-<h1 class="project-name">Stock Orders</h1>
-<h2 class="project-tagline">Example on Stock Orders</h2>
+<h1 class="project-name">Extended Trading Hours (ETH)</h1>
+<h2 class="project-tagline">Place orders outside regular AutomatedTrading session</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/stocks" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/pre-market-and-after-hours/" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
@@ -28,55 +28,41 @@
     </select>
 </label>
 </div>
-<h1>Buy stocks</h1>
-This example shows how place an order for Stocks. Find one using <a href="../../instruments/instrument-search/" target="_blank">the search example</a>.
+<h1>Execute orders in the Pre Market and After Hours trading sessions</h1>
+This example shows how place an order for the extended trading hours. This is done by adding the <strong>ExecuteAtTradingSession</strong> enum set to <i>"All"</i>. If the exchange supports this and <i>AutomatedTrading</i> session is not running, the order is moved to either pre-, or post trading session.
 <br />
-Since buying Bonds, or SRD is quite similar, you can use this sample to test those instrument types as well.<br />
-When you sell a position, you can add a PositionId and after execution, both will be netted out.<br />
+The default value is <i>"Regular"</i>.
 <br />
-Order tickets must warn before trading a complex product, provide a KID download and the cost breakdown. See <a href="../regulatory-requirements/">the sample</a>.
+ETH trading is not available for all accounts. It must be enabled for an account. More info on <a href="https://www.help.saxo/hc/en-sg/articles/7574076258589" target="_blank">help.saxo</a>.
 <br />
-More info on handling error responses: <a href="https://www.developer.saxo/openapi/learn/order-placement-return-codes" target="_blank">https://www.developer.saxo/openapi/learn/order-placement-return-codes</a>
-<br />
-<br />
-<label>
-    Asset type: <select class="selector" id="idCbxAssetType">
-        <option value="-">Click "Validate" to populate</option>
-    </select>
-</label>
-<label>
-    Order type: <select class="selector" id="idCbxOrderType">
-        <option value="-" selected>Press "Check conditions" to populate</option>
-    </select>
-</label>
-<label>
-    Order duration: <select class="selector" id="idCbxOrderDuration">
-        <option value="-" selected>Press "Check conditions" to populate</option>
-    </select>
-</label>
-<br />
-<br />
-<label><input type="checkbox" id="idChkRequestIdHeader" value="RequestIdHeader"> Add ExternalReference as X-Request-ID header (<a href="https://www.developer.saxo/openapi/learn/rate-limiting" target="_blank">info</a>)</label>
 <br />
 POST body containing order parameters:<br />
 <textarea class="json-input" id="idNewOrderObject" rows="13">
 {
     "AccountKey": "(added on first request)",
-    "Uic": 112809,
-    "OrderType": "Market",
+    "OrderType": "Limit",
+    "OrderPrice": 36,
+    "Uic": 721,
     "AssetType": "Stock",
+    "ExecuteAtTradingSession": "All",
     "BuySell": "Buy",
-    "Amount": 100,
-    "ExternalReference": "MyStockOrderCorrelationId",
+    "Amount": 10,
+    "ExternalReference": "MyEthOrderCorrelationId",
     "ManualOrder": true,
     "OrderDuration": {
         "DurationType": "DayOrder"
     }
 }
 </textarea><br />
-<input type="button" class="action-button" value="Check rights" id="idBtnGetAccessRights" />
-<input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
-<input type="button" class="action-button" value="Check trading schedule" id="idBtnGetTradingSchedule" />
+<input type="button" class="action-button" value="Client enabled for ETH orders?" id="idBtnCheckClientSupport" />
+<input type="button" class="action-button" value="Find supported Exchanges" id="idBtnGetSupportedExchanges" />
+<br />
+<input type="button" class="action-button" value="Instrument enabled for ETH orders?" id="idBtnCheckInstrumentSupport" />
+<br />
+<input type="button" class="action-button" value="Trading sessions from schedule" id="idBtnGetSessionsFromTradingSchedule" />
+<input type="button" class="action-button" value="Trading schedule from instrument" id="idBtnGetSessionsFromInstrument" />
+<br />
+<input type="button" class="action-button" value="Get ETH prices" id="idBtnGetEthPrices" />
 <br />
 <input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
 <input type="button" class="action-button" value="Place order" id="idBtnPlaceNewOrder" />

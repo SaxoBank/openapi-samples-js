@@ -67,11 +67,11 @@
     }
 
     /**
-     * It is a good practice to remove the token from the URL, to prevent people sharing the link and the app looks better without token.
+     * It is a good practice to remove the token from the URL, to prevent (1) js can steal the token (2) people sharing the link and (3) the app looks better without.
      * @return {void}
      */
     function hideTokenFromUrl() {
-        history.pushState(
+        window.history.replaceState(
             {},  // state
             "",  // unused
             window.location.pathname  // url

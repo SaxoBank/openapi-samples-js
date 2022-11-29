@@ -14,8 +14,7 @@
         "selectedAssetType": "-",  // Is required when assetTypesList is available
         "footerElm": document.getElementById("idFooter")
     });
-    let instrumentId;
-    let instrumentIdType;
+    let instrumentIdType = "uic";
 
     /**
      * This is an example of getting all exchanges.
@@ -128,20 +127,16 @@
                     if (responseJson.Data.length > 0) {
                         instrument = responseJson.Data[0];  // Just take the first instrument - it's a demo
                         // Remember the first Uic for the details request
-                        if (instrument.hasOwnProperty("PrimaryListing") && assetType === "Stock") {
-                            // Stocks might have a primary listing on another market - take that one
-                            instrumentId = instrument.PrimaryListing;
-                        } else {
-                            // This is not called "Uic", because it can identify an OptionRoot or FuturesSpace as well
-                            instrumentId = instrument.Identifier;
-                        }
+                        // Stocks might have a primary listing on another market!
+                        // This is not called "Uic", because it can identify an OptionRoot or FuturesSpace as well
+                        document.getElementById("idUic").value = instrument.Identifier;
                         switch (instrument.SummaryType) {
                         case "ContractOptionRoot":
                             instrumentIdType = "optionRoot";
                             result = "Click [Get details] for the contract option space of option root " + instrument.Description + ", which is the first search result.";
                             break;
                         case "Instrument":
-                            if (assetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
+                            if (instrument.AssetType === "ContractFutures" && instrument.hasOwnProperty("DisplayHint") && instrument.DisplayHint === "Continuous") {
                                 instrumentIdType = "futuresSpace";
                                 result = "Click [Get details] for the future space of future " + instrument.Description + ", which is the first search result.";
                             } else {
@@ -153,6 +148,7 @@
                             console.error("Unknown SummaryType: " + instrument.SummaryType);
                         }
                         result = getGroupedDisplayList(responseJson.Data) + "\n\n" + result;
+                        document.getElementById("idCbxAssetType").value = instrument.AssetType;
                     } else {
                         result = "No instruments found.";
                     }
@@ -172,17 +168,16 @@
      * @return {void}
      */
     function getDetails() {
-        const assetType = document.getElementById("idCbxAssetType").value;
         let urlPath;
         switch (instrumentIdType) {
         case "optionRoot":  // This identifier is not a Uic, but an option root. Contracts can be retrieved.
-            urlPath = "/ref/v1/instruments/contractoptionspaces/" + instrumentId;
+            urlPath = "/ref/v1/instruments/contractoptionspaces/" + document.getElementById("idUic").value;
             break;
         case "futuresSpace":  // This identifier is not a Uic, but a futures space.
-            urlPath = "/ref/v1/instruments/futuresspaces/" + instrumentId;
+            urlPath = "/ref/v1/instruments/futuresspaces/" + document.getElementById("idUic").value;
             break;
         default:
-            urlPath = "/ref/v1/instruments/details/" + instrumentId + "/" + assetType;
+            urlPath = "/ref/v1/instruments/details/" + document.getElementById("idUic").value + "/" + document.getElementById("idCbxAssetType").value;
         }
         fetch(
             demo.apiUrl + urlPath,
@@ -197,14 +192,14 @@
                 response.json().then(function (responseJson) {
                     switch (instrumentIdType) {
                     case "optionRoot":
-                        instrumentId = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
+                        document.getElementById("idUic").value = responseJson.OptionSpace[0].SpecificOptions[0].Uic;  // Select first contract
                         instrumentIdType = "uic";
-                        console.log("The search result contained an option root (# " + instrumentId + ").\nThese are the contracts with their Uics (request details again for first contract):\n\n" + JSON.stringify(responseJson, null, 4));
+                        console.log("The search result contained an option root (# " + responseJson.OptionSpace[0].SpecificOptions[0].Uic + ").\nThese are the contracts with their Uics (request details again for first contract):\n\n" + JSON.stringify(responseJson, null, 4));
                         break;
                     case "futuresSpace":
-                        instrumentId = responseJson.Elements[0].Uic;  // Select first future
+                        document.getElementById("idUic").value = responseJson.Elements[0].Uic;  // Select first future
                         instrumentIdType = "uic";
-                        console.log("The search result contained a futures space (# " + instrumentId + ").\nThese are the futures in this space, with their Uics (request details again for first future):\n\n" + JSON.stringify(responseJson, null, 4));
+                        console.log("The search result contained a futures space (# " + responseJson.Elements[0].Uic + ").\nThese are the futures in this space, with their Uics (request details again for first future):\n\n" + JSON.stringify(responseJson, null, 4));
                         break;
                     default:
                         console.log("These are the details of this instrument:\n\n" + JSON.stringify(responseJson, null, 4));

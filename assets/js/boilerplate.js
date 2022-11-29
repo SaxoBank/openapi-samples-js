@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.30
+ * boilerplate v1.32
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -405,6 +405,30 @@ function demonstrationHelper(settings) {
         }
 
         /**
+         * Extract the UserKey and clientKey from the token. These keys are required for subsequent requests.
+         * @return {void}
+         */
+        function getKeysFromToken() {
+            const tokenArray = String(settings.accessTokenElm.value).split(".");
+            let payload;
+            if (tokenArray.length !== 3) {
+                console.error("Token must have an header, payload and checksum.");  // Header, payload and checksum must be available, separated by dots. If not, token is invalid.
+                return;
+            }
+            try {
+                // The JWT contains an header, payload and checksum
+                // Payload is a base64 encoded JSON string
+                payload = JSON.parse(window.atob(tokenArray[1]));
+                // An example on getting the different claims can be found here: https://saxobank.github.io/openapi-samples-js/authentication/token-explained/
+                user.userKey = payload.uid;
+                user.clientKey = payload.cid;
+            } catch (error) {
+                console.error("Error getting userKey and clientKey of token.");
+                console.error(error);
+            }
+        }
+
+        /**
          * Request the basic data from the Api using a batch request.
          * @return {void}
          */
@@ -458,11 +482,10 @@ function demonstrationHelper(settings) {
                         try {
                             responseJson = JSON.parse(line);
                             switch (requestId) {
-                            case "1":  // Response of GET /users/me
+                            case "1":  // Response of GET /users/{UserKey}
                                 user.culture = responseJson.Culture;
                                 user.language = responseJson.Language;  // Sometimes this can be culture (fr-BE) as well. See GET /ref/v1/languages for all languages.
                                 user.name = responseJson.Name;
-                                user.userKey = responseJson.UserKey;
                                 userId = responseJson.UserId;
                                 showWelcomeMessage(responseJson);
                                 if (!responseJson.MarketDataViaOpenApiTermsAccepted) {
@@ -470,12 +493,11 @@ function demonstrationHelper(settings) {
                                     console.error("User didn't accept the terms for market data via the OpenApi. This is required for instrument prices on Live.");
                                 }
                                 break;
-                            case "2":  // Response of GET /clients/me
+                            case "2":  // Response of GET /clients/{ClientKey}
                                 user.accountKey = responseJson.DefaultAccountKey;  // Select the default account
-                                user.clientKey = responseJson.ClientKey;
                                 clientId = responseJson.ClientId;
                                 break;
-                            case "3":  // Response of GET /accounts/me
+                            case "3":  // Response of GET /accounts?ClientKey={ClientKey}
                                 populateAccountSelection(responseJson.Data);
                                 break;
                             }
@@ -490,8 +512,11 @@ function demonstrationHelper(settings) {
             }
 
             const config = getConfig();
-            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint}/me HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
-            const request = requestTemplate.replace("{endpoint}", "users").replace("{id}", "1") + requestTemplate.replace("{endpoint}", "clients").replace("{id}", "2") + requestTemplate.replace("{endpoint}", "accounts").replace("{id}", "3") + "--+--\r\n";
+            const requestTemplate = "--+\r\nContent-Type:application/http; msgtype=request\r\n\r\nGET " + config.apiPath + "/port/v1/{endpoint} HTTP/1.1\r\nX-Request-Id:{id}\r\nAccept-Language:en\r\nHost:" + config.apiHost + "\r\n\r\n\r\n";
+            let request = requestTemplate.replace("{endpoint}", "users/" + encodeURIComponent(user.userKey)).replace("{id}", "1");
+            request += requestTemplate.replace("{endpoint}", "clients/" + encodeURIComponent(user.clientKey)).replace("{id}", "2");
+            request += requestTemplate.replace("{endpoint}", "accounts?IncludeSubAccounts=true&ClientKey=" + encodeURIComponent(user.clientKey)).replace("{id}", "3");
+            request += "--+--\r\n";
             // This function uses a batch request to do three requests in one. See the example for more details: https://saxobank.github.io/openapi-samples-js/batch-request/
             fetch(
                 "https://" + config.apiHost + config.apiPath + "/port/batch",  // Grouping is done per service group, so "/ref" for example, goes in a different batch.
@@ -535,6 +560,7 @@ function demonstrationHelper(settings) {
                 if (user.hasOwnProperty("accountKey")) {
                     functionToRun();
                 } else {
+                    getKeysFromToken();
                     // Not initialized yet. Request customer data in a batch.
                     getDataFromApi();
                 }
@@ -575,6 +601,9 @@ function demonstrationHelper(settings) {
                 ? document
                 : document.getElementById(eventToSetup.elmId)
             );
+            if (elm === null) {
+                throw "Element " + eventToSetup.elmId + " not found in the HTML document.";
+            }
             elm.addEventListener(eventToSetup.evt, function () {
                 run(eventToSetup.func);
                 displaySourceCode(eventToSetup.funcsToDisplay);

@@ -3,6 +3,5 @@
 .vscode/
 /Folder.DotSettings.user
 node_modules/
-*.min.js
 *.bak
 /authentication/oauth2-certificate-flow/example_nodejs/private-key-with-cert.pem
