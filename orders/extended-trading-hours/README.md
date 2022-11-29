@@ -2,9 +2,9 @@
 
 This is a demonstration on how to place a stock order outside the AutomatedTradingSessions.
 
-Saxo is introducing trading in the pre- and post market session.
+More info: <https://www.help.saxo/hc/en-sg/articles/7574076258589>.
 
-This has impact on trading (a new field indicating the allowed sessions for the execution), on prices and margin calculations.
+ETH trading has impact on trading (a new field indicating the allowed sessions for the execution), on prices and margin calculations.
 
 The functionality won't be external yet, but the ambition is to have it available in the OpenAPI.
 
