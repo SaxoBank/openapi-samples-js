@@ -8,6 +8,7 @@ Examples on
 - [Option Strategies](option-strategies)
 - [Futures](futures)
 - [Regulatory Requirements](regulatory-requirements)
+- [Extended Trading Hours](extended-trading-hours)
 - [Conditional Orders](conditional-orders)
 - [Algo Orders](algo-orders)
 - [OCO Orders](oco-orders)
