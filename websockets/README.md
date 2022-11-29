@@ -1,4 +1,4 @@
-# <a name="documentation"></a>Client-side Samples for realtime feeds
+# <a name="documentation"></a>Client-side Samples for Websocket feeds
 
 This document describes how a client application can subscribe to Saxo Bank's Event Notification Service (ENS).
 
@@ -47,10 +47,10 @@ The WebSocket API can be used in JavaScript by any modern browser.
 The following code creates and starts a connection:
 
 ```javascript
-    var accessToken = // paste access token here
-    var contextId = encodeURIComponent("MyApp" + Date.now());
-    var streamerUrl = "wss://streaming.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
-    var connection = new WebSocket(streamerUrl);
+    const accessToken = " // paste access token here
+    const contextId = encodeURIComponent("MyApp" + Date.now());
+    const streamerUrl = "wss://streaming.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+    const connection = new WebSocket(streamerUrl);
     console.log("Connection created. Status: " + connection.readyState);
 ```
 
@@ -91,15 +91,19 @@ The following code configures the events:
 An 'empty' streaming websocket connection is now configured. In order to subscribe to events to be sent on this connection, you need to create a subscription with a POST request to Saxo's OpenAPI. This is an example to subscribe to order events:
 
 ```javascript
-    var data = {
+    const data = {
         "ContextId": contextId,
         "ReferenceId": "orders",
         "Arguments": {
-            "ClientKey": clientKey,
             "AccountKey": accountKey,
             "Activities": [
+                "AccountDepreciation",
                 "AccountFundings",
-                "Orders"
+                "CorporateActions",
+                "MarginCalls",
+                "Orders",
+                "PositionDepreciation",
+                "Positions"
             ],
             "FieldGroups": [
                 "DisplayAndFormat",
@@ -138,9 +142,9 @@ As described above, events are received in the onmessage handler:
 
 ```javascript
     /**
-         * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
-         * @param {Object} data The received stream message
-         * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
+     * Parse the incoming messages. Documentation on message format: https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages
+     * @param {Object} data The received stream message
+     * @returns {Array.<Object>} Returns an array with all incoming messages of the frame
      */
     function parseMessageFrame(data) {
         const message = new DataView(data);
@@ -331,7 +335,7 @@ Next, we need to create a netpositions subscripition, which will provide us with
 The below code is very similar to the code in step 3. This new subscription will be streaming updates on the **same** websocket connection. Note that the `AccountKey` field is optional: if it is *not* provided, netpositions for ALL of the client accounts will be streamed (this is likely what you want if you are looking to provide a 'complete overview' in your UI).
 
 ```javascript
-    var data = {
+    const data = {
         "ContextId": contextId,
         "ReferenceId": "netpositions",
         "Arguments": {
