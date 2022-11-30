@@ -139,6 +139,12 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
+                    if (responseJson.IsExtendedTradingHoursEnabled) {
+                        console.log("The selected instrument supports ETH trading sessions. You can combine the AccountCheck and this InstrumentCheck by providing an AccountKey in this tequest.");
+                    } else {
+                        console.error("The selected instrument only supports the regular trading sessions.");
+                    }
+                    /*
                     switch (responseJson.SupportedTradingSessions) {
                     case "Regular":
                         console.error("The selected instrument only supports the regular trading sessions.");
@@ -149,6 +155,7 @@
                     default:
                         console.error("Unrecognized SupportedTradingSessions value found: " + responseJson.AllowedTradingSessions);
                     }
+                    */
                 });
             } else {
                 demo.processError(response);
