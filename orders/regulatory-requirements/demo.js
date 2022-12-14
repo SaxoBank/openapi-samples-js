@@ -102,6 +102,14 @@
                 );
             }
 
+            /*
+              Translations can be found on the website (for example TC_ExchangeFee):
+              https://www.saxotrader.com/api/localization/v2/all?locale=nl
+              https://www.saxotrader.com/api/localization/v2/all?locale=fr
+              https://www.saxotrader.com/api/localization/v2/all?locale=nl-be
+              https://www.saxotrader.com/api/localization/v2/all?locale=fr-be
+              etc.
+            */
             let result = "";
             if (costs.hasOwnProperty("TradingCost")) {
                 result += "\n\nTransaction costs:";
@@ -119,42 +127,47 @@
                     });
                 }
                 result += getCostComponent("ServiceFee", "Service fee", costs.TradingCost);  // Service fee per year for holding cash positions
+                // "TC_ServiceFee":{"p":"Frais de service (achat)"}
                 result += getCostComponent("TicketFee", "Ticket fee", costs.TradingCost);  // Ticket fees are for FX (both spot and options) and applied if below the TicketFeeThreshold
-                // <Text LanguageCode="fr">Frais de ticket</Text>
+                // "TC_TicketFee":{"p":"Frais de ticket"}
                 result += getCostComponent("ExchangeFee", "Exchange fee", costs.TradingCost);  // Futures - Exchange fee if applied separately
-                // <Text LanguageCode="fr">Frais de bourse</Text>
+                // "TC_ExchangeFee":{"p":"Frais de Bourse"}
                 result += getCostComponent("Spread", "Spread", costs.TradingCost);  // The spread used for FX forwards is indicative and depends on how far in the future the value date of the forward is - the different time horizon is called tenors and this collection shows a current snapshot of the spreads for the different tenors
-                // <Text LanguageCode="fr">Écart</Text>
+                // "TC_Spread":{"p":"Écart"}
                 result += getCostComponent("ConversionCost", "Currency conversions", costs.TradingCost);  // Currency Conversion Cost
-                // <Text LanguageCode="fr">Conversions de devise</Text>
+                // "TC_ConversionCosts_x2":{"p":"Coûts de conversion (x2)"}
                 result += getCostComponent("CustodyFee", "Custody fee", costs.TradingCost);  // Custody fee per year for holding cash positions
-                // <Text LanguageCode="fr">Droits de garde</Text>
+                // "TC_CustodyFee":{"p":"Droits de garde"}
             }
             if (costs.hasOwnProperty("FundCost")) {  // Fund cost are cost charged by a fund, but not booked by Saxo
                 result += "\n\nFinancial instrument costs:";
                 result += getCostComponent("OnGoingCost", "Ongoing charges", costs.FundCost);  // Fee paid for holding a position in a fund
-                // <Text LanguageCode="fr">Coûts récurrents</Text>
+                // "TC_OngoingCharges":{"p":"Frais courants"}
                 result += getCostComponent("SwitchCommission", "Switch commission", costs.FundCost);  // Commission paid for a switch trade between two mutual funds
-                // <Text LanguageCode="fr">Commission de transfert</Text>
+                // "TC_SwitchCommission":{"p":"Commission de transfert"}
                 result += getCostComponent("EntryCost", "Entry commission", costs.FundCost);  // Commission paid for buying a fund
+                // "TC_EntryFee":{"p":"Frais d'entrée"}
                 result += getCostComponent("ExitCost", "Exit commission", costs.FundCost);  // Commission paid for selling a fund
+                // "TC_ExitFee":{"p":"Frais de sortie"}
             }
             if (costs.hasOwnProperty("HoldingCost")) {
                 result += "\n\nOngoing charges:";
                 result += getCostComponent("OvernightFinancing", "Overnight financing fee", costs.HoldingCost);  // Financing charge markup
-                // <Text LanguageCode="fr">Frais de financement au jour le jour</Text>
+                // "TC_OvernightFinancing":{"p":"Frais de financement au jour le jour"}
                 result += getCostComponent("BorrowingCost", "Borrowing cost", costs.HoldingCost);  // The borrowing costs is a percentage per year for holding short positions in single-stock CFDs
-                // <Text LanguageCode="fr">Coût d'emprunt</Text>
+                // "TC_BorrowingCost":{"p":"Coûts d’emprunt"}
                 result += getCostComponent("CarryingCost", "Carrying cost", costs.HoldingCost);  // For instruments where carrying costs are applied (futures, exchange traded options), the percentage markup on the interbank interest rate applied for holding the position
-                // <Text LanguageCode="fr">Coût de portage</Text>
+                // "TC_CarryingCost":{"p":"Coût de portage"}
                 result += getCostComponent("HoldingFee", "Holding fee", costs.HoldingCost);  // Holding fee if applied
-                // <Text LanguageCode="fr">Frais de détention</Text>
+                // "TC_HoldingFee":{"p":"Frais d’attente (long)"}
                 result += getCostComponent("LoanInterestCost", "Loan interest cost", costs.HoldingCost);
+                // "TC_LoanInterestCost":{"p":"Intérêts"}
                 result += getCostComponent("SwapPoints", "SwapPoints", costs.HoldingCost);  // Swap interest markup
+                // "TC_SwapPointShort":{"p":"Points de swap par jour (court)"}
                 result += getCostComponent("InterestFee", "Interest/day", costs.HoldingCost);  // Interest per day for for SRDs
-                // <Text LanguageCode="fr">Intérêts/jour</Text>
+                // "TC_InterestLong":{"p":"Intérêts/jour (long)"}
                 result += getCostComponent("RolloverFee", "Roll-over of positions", costs.HoldingCost);  // Rollover fee for SRDs - Charged if position is rolled over
-                // <Text LanguageCode="fr">Renouvellement de positions</Text>
+                // "TC_RolloverFee":{"p":"Frais de report"}
                 if (costs.HoldingCost.hasOwnProperty("Tax")) {
                     costs.HoldingCost.Tax.forEach(function (item) {
                         result += "\n" + item.Rule.Description + ": " + item.Value + " (" + item.Pct + "%)";
@@ -162,7 +175,7 @@
                 }
             }
             result += getCostComponent("TrailingCommission", "Trailing Commission", costs);  // Commission paid from the fund to Saxo
-            // <Text LanguageCode="fr">Commission de suivi</Text>
+            // "TrailingCommision":{"p":"Commission de suivi"}
             result += "\n\nTotal costs for open and close after " + holdingPeriodInDays + " days: " + costs.Currency + " " + costs.TotalCost + (
                 costs.hasOwnProperty("TotalCostPct")
                 ? " (" + costs.TotalCostPct + "%)"
@@ -177,57 +190,68 @@
          * @return {string} The assumptions.
          */
         function getAssumptions(assumptions) {
+            /*
+              Translations can be found on the website (for example TC_DefaultCallOption):
+              https://www.saxotrader.com/api/localization/v2/all?locale=nl
+              https://www.saxotrader.com/api/localization/v2/all?locale=fr
+              https://www.saxotrader.com/api/localization/v2/all?locale=nl-be
+              https://www.saxotrader.com/api/localization/v2/all?locale=fr-be
+              etc.
+            */
             let result = "Assumption(s):";
             assumptions.forEach(function (assumption) {
                 switch (assumption) {
                 case "IncludesOpenAndCloseCost":
                     result += "\n* Includes both open and close costs.";
-                    // <Text LanguageCode="fr">Inclut les coûts à l'ouverture et à la clôture.</Text>
+                    // "TC_IncludesOpenAndCloseCost":{"p":"Inclut les coûts à l'ouverture et à la clôture."}
                     break;
                 case "EquivalentOpenAndClosePrice":
                     result += "\n* Open and close price are the same (P/L=0).";
-                    // <Text LanguageCode="fr">Le cours à l'ouverture et le cours à la clôture sont identiques (B/P = 0).</Text>
+                    // "TC_EquivalentOpenAndClosePrice":{"p":"Le cours à l'ouverture et le cours à la clôture sont identiques (B/P = 0)."}
                     break;
                 case "BasisOnLastClosePrice":
                     result += "\n* Based on last close price.";  // Only applicable when Price is not supplied
-                    // <Text LanguageCode="fr">Basé sur le dernier cours de clôture.</Text>
+                    // "TC_BasisOnLastClosePrice":{"p":"Basé sur le dernier cours de clôture."}
                     break;
                 case "BasisOnMidPrice":
                     result += "\n* Based on mid-price.";  // Only applicable when Price is not supplied
-                    // <Text LanguageCode="fr">Basé sur le cours moyen.</Text>
+                    // "TC_BasisOnMidPrice":{"p":"Basé sur le cours moyen."}
                     break;
                 case "InterbankChargesExcluded":
                     result += "\n* Interbank charges are excluded.";
-                    // <Text LanguageCode="fr">Les frais interbancaires ne sont pas inclus.</Text>
+                    // "TC_InterbankChargesExcluded":{"p":"Les frais interbancaires ne sont pas inclus."}
                     break;
                 case "DefaultCallOption":
                     result += "\n* Default call option.";
-                    // <Text LanguageCode="fr">Option d'achat par défaut.</Text>
+                    // "TC_DefaultCallOption":{"p":"Option d'achat par défaut."}
                     break;
                 case "AtmStrikePrice":
                     result += "\n* Strike price is assumed to be at the money.";
-                    // <Text LanguageCode="fr">Le prix d'exercice est supposé être à la monnaie.</Text>
+                    // "TC_AtmStrikePrice":{"p":"Le prix d'exercice est supposé être à la monnaie."}
                     break;
                 case "ConversionCostNotIncluded":
                     result += "\n* Conversion costs are excluded.";
-                    // <Text LanguageCode="fr">Les coûts de conversion ne sont pas inclus.</Text>
+                    // "TC_ConversionCostExcluded":{"p":"Les coûts de conversion ne sont pas inclus."}
                     break;
                 case "NearDateSpotFarDateAsSpecified":
                     result += "\n* Near date is spot, far date is as specified.";
-                    // <Text LanguageCode="fr">La date proche est le spot. La date éloignée est celle indiquée.</Text>
+                    // "TC_NearDateSpot":{"p":"La date proche est le spot. La date éloignée est celle indiquée."}
                     break;
                 case "CarryingCostBasedOnMarginOtmDiscount":
                     result += "\n* Margin excl. OTM discount.";
-                    // <Text LanguageCode="fr">Marge hors remise OTM.</Text>
+                    // "TC_Margin_ex_OTM_discount":{"p":"Marge hors remise OTM."}
                     break;
                 case "ImplicitCostsNotChargedOnAccount":
                     result += "\n* The implicit costs not charged on account.";
+                    // "TC_ImplicitCost_Assumption":{"p":"*Coût implicite qui est inclus dans le prix de l’instrument et qui n’est pas prélevé sur votre compte."}
                     break;
                 case "InterestEstimationCalculatedOnValueDate":
                     result += "\n* Interest estimation is calculated from the value date of trade date + 2 days.";
+                    // "TC_InterestEstimationCalculated_ValueDate_Assumption":{"p":"L’estimation des intérêts est calculée à partir de la date de valeur de la date d’opération + 2 jours."}
                     break;
                 case "MarginLoanEstimationOnCashAvailable":
                     result += "\n* The margin loan is estimated based on a snapshot based on your current Cash available to partially or fully cover the value of position.";
+                    // "TC_MarginLoanEstimation_CashAvailable_Assumption":{"p":"Le prêt sur marge est estimé sur la base d’un aperçu qui repose sur vos liquidités disponibles actuelles ({0}) pour couvrir tout ou partie de la valeur de la position."}
                     break;
                 default:
                     console.error("Unsupported assumption code: " + assumption);
