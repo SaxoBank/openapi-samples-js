@@ -4,7 +4,7 @@ Within [SaxoTraderGo on SIM](https://www.saxotrader.com/sim/account/) (or [Live]
 
 This is the message you see after generation:
 > The certificate with serial number 6B000007CA3413AA65FEA7F1230002000007CA has been created and saved on your computer.\
-> The certificate is valid until: 08-May-2022\
+> The certificate is valid until: 08-December-2024\
 > The certificate password is GdhqABCD
 
 The password is required when generating the PKCS private key, using the command:

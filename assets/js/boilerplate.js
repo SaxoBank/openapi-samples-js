@@ -92,7 +92,11 @@ function demonstrationHelper(settings) {
      * @return {string} The message to add to the error text.
      */
     function processErrorInfo(errorInfo) {
-        // Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
+        /*
+         * Be aware that the errorObject.Message might contain line breaks, escaped like "\r\n"!
+         *
+         * The ErrorCode is documented in the Reference Docs (Response Codes). Use this code to create your own translations, instead of showing the Message.
+         */
         let result = "\n" + (
             errorInfo.hasOwnProperty("ErrorCode")
             ? errorInfo.ErrorCode + ": "
