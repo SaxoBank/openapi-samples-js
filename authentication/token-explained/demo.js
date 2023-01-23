@@ -1,4 +1,4 @@
-/*jslint this: true, browser: true, for: true, long: true */
+/*jslint this: true, browser: true, for: true, long: true, unordered: true */
 /*global window console demonstrationHelper */
 
 (function () {
@@ -20,18 +20,28 @@
      */
     function getHeader() {
         let description;
-        let jwt;
+        let jwt = document.getElementById("idBearerToken").value.split(".");
+        let headerString;
         let header;
+        if (jwt.length !== 3) {
+            console.error("Invalid token. There must be three parts, separated by a dot.");
+            return;
+        }
         try {
-            jwt = document.getElementById("idBearerToken").value.split(".");
-            header = JSON.parse(window.atob(jwt[0]));
+            headerString = window.atob(jwt[0]);
+        } catch (e) {
+            console.error("Header is not a valid Base64 encoded string.\n" + jwt[0] + "\n" + e);
+            return;
+        }
+        try {
+            header = JSON.parse(headerString);
             alg = header.alg;
             description = JSON.stringify(header, null, 4);
             description += "\n\nAlgorithm used for signature: " + alg;
             description += "\nX.509 Certificate Thumbprint: " + header.x5t;
             console.log(description);
         } catch (e) {
-            console.error(e);
+            console.error("Probably the JSON is invalid.\n" + headerString + "\n" + e);
         }
     }
 
@@ -47,13 +57,23 @@
         }
 
         let description;
-        let jwt;
+        let jwt = document.getElementById("idBearerToken").value.split(".");
+        let payloadString;
         let payload;
         let time;
         let secondsUntilExp;
+        if (jwt.length !== 3) {
+            console.error("Invalid token. There must be three parts, separated by a dot.");
+            return;
+        }
         try {
-            jwt = document.getElementById("idBearerToken").value.split(".");
-            payload = JSON.parse(window.atob(jwt[1]));
+            payloadString = window.atob(jwt[1]);
+        } catch (e) {
+            console.error("Body is not a valid Base64 encoded string.\n" + jwt[1] + "\n" + e);
+            return;
+        }
+        try {
+            payload = JSON.parse(payloadString);
             description = JSON.stringify(payload, null, 4);
             description += "\n\nClaims:\nOpenApi Access: " + payload.oaa;
             description += "\nIssuer: " + payload.iss;
@@ -73,7 +93,7 @@
             ) + ")";
             console.log(description);
         } catch (e) {
-            console.error(e);
+            console.error("Probably the JSON is invalid.\n" + payloadString + "\n" + e);
         }
     }
 
@@ -82,15 +102,14 @@
      * @return {void}
      */
     function verify() {
-        let jwt;
+        let jwt = document.getElementById("idBearerToken").value.split(".");
         let description;
-        try {
-            jwt = document.getElementById("idBearerToken").value.split(".");
-            description = "Verification of the claims is done in the backend. The signature is used to verify the message wasn't changed along the way, and it can also verify that the sender of the JWT is who it says it is.\n\nThe signature is compared with the hash of both header and payload.\n\nECDSASHA256(" + jwt[0] + "." + jwt[1] + ", publicKey, privateKey)\n==\n" + jwt[2];
-            console.log(description);
-        } catch (e) {
-            console.error(e);
+        if (jwt.length !== 3) {
+            console.error("Invalid token. There must be three parts, separated by a dot.");
+            return;
         }
+        description = "Verification of the claims is done in the backend. The signature is used to verify the message wasn't changed along the way, and it can also verify that the sender of the JWT is who it says it is.\n\nThe signature is compared with the hash of both header and payload.\n\nECDSASHA256(" + jwt[0] + "." + jwt[1] + ", publicKey, privateKey)\n==\n" + jwt[2];
+        console.log(description);
     }
 
     demo.setupEvents([
