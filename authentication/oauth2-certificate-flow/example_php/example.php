@@ -10,7 +10,7 @@
 $userId = '1234';  // This is the user who has created the certificate (in Chrome!)
 $appKey = 'Your app key';  // The appKey of the app which is entitled to authenticate via a certificate
 $appSecret = 'Your app secret';
-$serviceProviderUrl = 'Your unique identifier';  // This is the unique identifier of the app, not per se an URL
+$serviceProviderUrl = 'Your unique identifier';  // This is the unique identifier of the app, not per se a URL
 // The certificate thumbprint (aka fingerprint) can be found in the 'Manage Computer Certificates' app, under Personal/Certificates/Saxo Bank Client Certificate: details
 //  (after installing the p12 certificate, which is not required for this example).
 $certThumbPrint = 'Fingerprint of your certificate';

@@ -8,7 +8,7 @@
 const userId = "1234";  // This is the user who has created the certificate (in Chrome!)
 const appKey = "";  // Enter the appKey of the app which is entitled to authenticate via a certificate
 const appSecret = "";  // Enter your app secret
-const serviceProviderUrl = "Your unique identifier";  // This is the unique identifier of the app, not per se an URL
+const serviceProviderUrl = "Your unique identifier";  // This is the unique identifier of the app, not per se a URL
 // The certificate thumbprint (aka fingerprint) can be found in the "Manage Computer Certificates" app, under Personal/Certificates/Saxo Bank Client Certificate: details
 //  (after installing the p12 certificate, which is not required for this example).
 const certThumbPrint = "Fingerprint of your certificate";
