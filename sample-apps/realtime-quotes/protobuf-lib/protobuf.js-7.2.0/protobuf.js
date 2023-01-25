@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.1.2 (c) 2016, daniel wirtz
- * compiled fri, 23 sep 2022 18:22:41 utc
+ * protobuf.js v7.2.0 (c) 2016, daniel wirtz
+ * compiled wed, 25 jan 2023 08:15:29 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -5525,10 +5525,10 @@ Root.prototype.load = function load(filename, options, callback) {
         /* istanbul ignore if */
         if (!callback)
             return;
-        var cb = callback;
-        callback = null;
         if (sync)
             throw err;
+        var cb = callback;
+        callback = null;
         cb(err, root);
     }
 
