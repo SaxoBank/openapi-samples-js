@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.40
+ * boilerplate v1.32
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -29,7 +29,6 @@ function demonstrationHelper(settings) {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
         "env": "sim",  // The SaxoTraderGO app for Simulation can be found here: https://www.saxotrader.com/sim/ (Developer Portal https://www.developer.saxo/openapi/ and https://developer.saxobank.com/openapi/ from China)
         "authUrl": "https://sim.logonvalidation.net/authorize",
-        "logoutUrl": "https://sim.logonvalidation.net/oidclogout",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
@@ -44,7 +43,6 @@ function demonstrationHelper(settings) {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
         "env": "live",  // The SaxoTraderGO app for Live can be found here: https://www.saxotrader.com/
         "authUrl": "https://live.logonvalidation.net/authorize",
-        "logoutUrl": "https://live.logonvalidation.net/oidclogout",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
@@ -56,7 +54,6 @@ function demonstrationHelper(settings) {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
         "env": "dte231",  // The SaxoTraderGO app for this DTE environment can be found here: https://stgo-tst231.cf.saxo/ (Developer Portal https://developerportal-tst231.cf.saxo/openapi/)
         "authUrl": "https://sso-tst231.cf.saxo/authorize",
-        "logoutUrl": "https://sso-tst231.cf.saxo/oidclogout",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "stgo-tst231.cf.saxo",
         "apiPath": "/openapi",
@@ -69,7 +66,6 @@ function demonstrationHelper(settings) {
         "grantType": "token",  // Implicit Flow. With some changes the Authorization Code Flow (grantType code) can be used
         "env": "dte211",  // The SaxoTraderGO app for this DTE environment can be found here: https://stgo-tst211.cf.saxo/ (Developer Portal https://developerportal-tst211.cf.saxo/openapi/)
         "authUrl": "https://sso-tst211.cf.saxo/authorize",
-        "logoutUrl": "https://sso-tst211.cf.saxo/oidclogout",
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "stgo-tst211.cf.saxo",
         "apiPath": "/openapi",
@@ -932,7 +928,6 @@ function demonstrationHelper(settings) {
         const apiUrl = "https://" + config.apiHost + config.apiPath;
         const streamerUrl = config.streamerUrl;
         const authUrl = config.authUrl;
-        const logoutUrl = config.logoutUrl;
         mirrorConsoleLog();
         mirrorConsoleError();
         if (tokenInputFieldExists() && Boolean(window.URLSearchParams)) {
@@ -953,7 +948,6 @@ function demonstrationHelper(settings) {
         return Object.freeze({
             apiUrl,
             authUrl,
-            logoutUrl,
             streamerUrl,
             user,
             displayVersion,
