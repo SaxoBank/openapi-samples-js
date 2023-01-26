@@ -49,13 +49,14 @@
             "csrfToken": csrfToken,
             "state": document.getElementById("idEdtState").value
         }));
+        const culture = document.getElementById("idCbxCulture").value;
         let url = demo.authUrl +
             "?client_id=" + encodeURIComponent(document.getElementById("idEdtAppKey").value) +
             "&response_type=token" +
             "&state=" + encodeURIComponent(stateString) +
             "&redirect_uri=" + encodeURIComponent(document.getElementById("idEdtRedirectUrl").value);
-        if (document.getElementById("idCbxCulture").value !== "-") {
-            url += "&lang=" + encodeURIComponent(document.getElementById("idCbxCulture").value);
+        if (culture !== "-") {
+            url += "&lang=" + encodeURIComponent(culture);
         }
         document.getElementById("idResponse").innerHTML = "<h2>Follow this link to continue with step 2:</h2><a href=\"" + url + "\">" + url + "</a>";
     }
