@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.2.0 (c) 2016, daniel wirtz
- * compiled wed, 25 jan 2023 08:15:29 utc
+ * protobuf.js v7.2.1 (c) 2016, daniel wirtz
+ * compiled thu, 02 feb 2023 21:27:33 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -5525,10 +5525,10 @@ Root.prototype.load = function load(filename, options, callback) {
         /* istanbul ignore if */
         if (!callback)
             return;
-        if (sync)
-            throw err;
         var cb = callback;
         callback = null;
+        if (sync)
+            throw err;
         cb(err, root);
     }
 
@@ -5572,6 +5572,7 @@ Root.prototype.load = function load(filename, options, callback) {
 
     // Fetches a single file
     function fetch(filename, weak) {
+        filename = getBundledFileName(filename) || filename;
 
         // Skip if already loaded / attempted
         if (self.files.indexOf(filename) > -1)
@@ -8076,7 +8077,7 @@ function newError(name) {
             configurable: true,
         },
         name: {
-            get() { return name; },
+            get: function get() { return name; },
             set: undefined,
             enumerable: false,
             // configurable: false would accurately preserve the behavior of
@@ -8086,7 +8087,7 @@ function newError(name) {
             configurable: true,
         },
         toString: {
-            value() { return this.name + ": " + this.message; },
+            value: function value() { return this.name + ": " + this.message; },
             writable: true,
             enumerable: false,
             configurable: true,
