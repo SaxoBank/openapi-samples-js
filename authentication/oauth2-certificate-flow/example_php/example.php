@@ -98,8 +98,8 @@ function requestToken($assertion) {
         'ssl' => [
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Tue Apr 26 03:12:05 2022 GMT.
-            'cafile' => 'cacert-2022-04-26.pem',
+            // This bundle was generated at Tue Jan 10 04:12:06 2023 GMT.
+            'cafile' => 'cacert-2023-01-10.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         ]
@@ -157,8 +157,8 @@ function requestTokenRefresh($refreshToken) {
         'ssl' => [
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Tue Apr 26 03:12:05 2022 GMT.
-            'cafile' => 'cacert-2022-04-26.pem',
+            // This bundle was generated at Tue Jan 10 04:12:06 2023 GMT.
+            'cafile' => 'cacert-2023-01-10.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         ]
@@ -202,8 +202,8 @@ function requestApiData($token) {
         'ssl' => [
             // This Mozilla CA certificate store is downloaded from:
             // https://curl.haxx.se/docs/caextract.html
-            // This bundle was generated at Tue Apr 26 03:12:05 2022 GMT.
-            'cafile' => 'cacert-2022-04-26.pem',
+            // This bundle was generated at Tue Jan 10 04:12:06 2023 GMT.
+            'cafile' => 'cacert-2023-01-10.pem',
             'verify_peer' => true,
             'verify_peer_name' => true
         ]
