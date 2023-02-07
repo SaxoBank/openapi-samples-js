@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.2.1 (c) 2016, daniel wirtz
- * compiled thu, 02 feb 2023 21:27:33 utc
+ * protobuf.js v7.2.2 (c) 2016, daniel wirtz
+ * compiled tue, 07 feb 2023 20:46:12 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -5701,6 +5701,10 @@ function tryHandleExtension(root, field) {
     var extendedType = field.parent.lookup(field.extend);
     if (extendedType) {
         var sisterField = new Field(field.fullName, field.id, field.type, field.rule, undefined, field.options);
+        //do not allow to extend same field twice to prevent the error
+        if (extendedType.get(sisterField.name)) {
+            return true;
+        }
         sisterField.declaringField = field;
         field.extensionField = sisterField;
         extendedType.add(sisterField);
