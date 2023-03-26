@@ -12,7 +12,6 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let alg;
 
     /**
      * Get and unpack the JWT header.
@@ -35,9 +34,8 @@
         }
         try {
             header = JSON.parse(headerString);
-            alg = header.alg;
             description = JSON.stringify(header, null, 4);
-            description += "\n\nAlgorithm used for signature: " + alg;
+            description += "\n\nAlgorithm used for signature: " + header.alg;
             description += "\nX.509 Certificate Thumbprint: " + header.x5t;
             console.log(description);
         } catch (e) {
