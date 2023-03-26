@@ -17,12 +17,18 @@
      * This function is taken from php-Akita_OpenIDConnect
      * https://github.com/ritou/php-Akita_OpenIDConnect/blob/master/src/Akita/OpenIDConnect/Util/Base64.php
      * @param {string} str The string to encode
+     * @return {string} The base64Encoded string
      */
     function base64UrlEncode(str) {
         const enc = window.btoa(str);
         return enc.replaceAll("=", "").replaceAll("+", "-").replaceAll("/", "_");
     }
 
+    /**
+     * This function converts the alg claim in the token header to a hash algorithm.
+     * @param {string} accessToken The token containing the header
+     * @return {string} The hash algorithm
+     */
     function getAlgorithmFromToken(accessToken) {
         const header = getHeader(accessToken);
         const hashBits = parseInt(header.alg.substring(2));
@@ -38,23 +44,21 @@
      * This function extracts the hash algo and does the hashing.
      * Source: https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest
      * @param {string} message The text to hash
-     * @param {Object} header The header object extracted from the jwt.
+     * @param {Object} header The header object extracted from the jwt
+     * @return {string} The hash
      */
     async function digestMessage(algorithm, message) {
-        const msgUint8 = new TextEncoder().encode(message); // encode as (utf-8) Uint8Array
-        const hashBuffer = await window.crypto.subtle.digest(algorithm, msgUint8); // hash the message
-        const hashArray = Array.from(new Uint8Array(hashBuffer)); // convert buffer to byte array
-        const hashArrayHalf = hashArray.slice(0, hashArray.length / 2);
-        const hash = hashArrayHalf.map(function (b) {
-            return String.fromCharCode(b);  // Convert bytes to chars
-        }).join("");
+        const msgUint8 = new TextEncoder().encode(message);  // Encode as (utf-8) Uint8Array
+        const hashBuffer = await window.crypto.subtle.digest(algorithm, msgUint8);  // Hash the message
+        const firstHalfOfHashBuffer = new window.Uint8Array(hashBuffer, 0, hashBuffer.byteLength / 2);  // First half into byte array
+        const hash = String.fromCharCode.apply(String, firstHalfOfHashBuffer);  // Convert bytes to string
         return base64UrlEncode(hash);
     }
 
     /**
      * Get and unpack the JWT header.
-     * @param {string} accessToken The accessToken from the authenticate response.
-     * @return {Object}
+     * @param {string} accessToken The accessToken from the authenticate response
+     * @return {Object} Header object
      */
     function getHeader(accessToken) {
         let jwt = accessToken.split(".");
@@ -81,7 +85,7 @@
     /**
      * Get and unpack the JWT payload.
      * @param {string} accessToken The accessToken from the authenticate response.
-     * @return {Object}
+     * @return {Object} Payload object
      */
     function getPayload(accessToken) {
         let jwt = accessToken.split(".");
@@ -121,8 +125,7 @@
             return Math.floor((exp * 1000 - now.getTime()) / 1000);
         }
 
-        //const accessToken = document.getElementById("idBearerToken").value;
-        const accessToken = "eyJ0eXAiOiJKV1QiLCJraWQiOiJnVVRBa3hiL3pVRTg2OVMxcTdDOGxXUytyUms9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoidlBEMUhhY3hXeVJHZEZQYzRwU1lDUSIsInN1YiI6Iih1c3IheHdvdWZ1c2VyMykiLCJpaWQiOiJQdmtDcllHa2RQNncwN058YXNSU3F1VlRkS3gtUDhsbTlwY0xIU1JjTm5kT3AxY1Z3b1dxS3I4LVhGOWVxb1pZIiwiYXVkaXRUcmFja2luZ0lkIjoiMWVlM2NkY2ItMmU0ZS00YThmLThjMzItNTFkY2VjMjdmMGFlLTMyMjM5NCIsImlzcyI6Imh0dHBzOi8vYXV0aC1leHQuc3NvY3BvYy5vbmUuZXU0MWQuaW5mLmlpdGVjaC5kazo0NDMvYW0vb2F1dGgyL2RjYSIsInRva2VuTmFtZSI6ImlkX3Rva2VuIiwic2lkIjoiNWM1ZDQwYjU2MjAwNGZlOGJlYjZhNDAzYWViZTEwNjQiLCJhY3IiOiIwIiwidWlkIjoiclIwTUd3d21ybnFjWVBTZkZCYm8zZz09IiwiYXpwIjoiU1RHT0FwcCIsImF1dGhfdGltZSI6MTY3OTY0NDQzNSwib2FsIjoiMkYiLCJleHAiOjE2Nzk2NDgwNTEsImlhdCI6MTY3OTY0NDQ1MSwiZXJyIjoiIiwidHJkIjoiLTEiLCJzdWJuYW1lIjoieHdvdWZ1c2VyMyIsInVuaWlkIjoiRDg3RUM2QzItOUU0Ny00MTYyLTEwOEItMDhEOENDM0Q4NDFEIiwibXVpZCI6IjIxNDczNDMzMzMiLCJhdWQiOiJTVEdPQXBwIiwiY19oYXNoIjoiMVN1c3k0Vkh1S3Vua3NCSnBEcWJuUSIsIm9yZy5mb3JnZXJvY2sub3BlbmlkY29ubmVjdC5vcHMiOiJfRWo2cEhpajZVTU9zcjZKajIyang3WHVKNU0iLCJzX2hhc2giOiJkVGFTN0RhdHRNZVV5WE9VWHJLcG5BIiwibmFtZSI6Ik4vQSIsInJlYWxtIjoiL2RjYSIsInRva2VuVHlwZSI6IkpXVFRva2VuIiwiYWlkIjoiNyIsImZhbWlseV9uYW1lIjoiTi9BIiwiY2lkIjoidXxseXQ5NFBrT0F4cERNME50QnFndz09In0.kBOc_t1Zxkohqk-oi1ZmEZVL1wGd_jkA04d6xJbkqs7FOOHZTQubNhgKFspsTXkF6qiFwjMzUyYUQWWsl_dWNNxnbpzj250iSZb1O7aW8kkFNdVoV52p036JaVnWLdnSg8u1xVI4eurs3vzBba4igUN1OkMHdSvbiBlmgHee1fsxIJ96Aa-8uuf4RCsBS1zkYT_VhCCgS0QUzVFoxcpQSDvD0X0woWBUdYOXD8pEFWW4xttvqe5GhBOK1XSVcaxjjqU14IqISDUNnTUjmjpC9DJPibDlZZ40ZLBGKCZRy5jjHYl5BDZuQjw96jGqoYlky2E04Bm7HN-HZiysQSyGoA";
+        const accessToken = document.getElementById("idBearerToken").value;
         const idToken = document.getElementById("idEdtIdToken").value;
         const payload = getPayload(accessToken);
         const secondsUntilExp = getSecondsUntilExpiration(payload.exp);
@@ -136,7 +139,7 @@
             return;
         }
         digestMessage(getAlgorithmFromToken(accessToken), idToken).then(function (hash) {
-            description += "at_hash claim: " + payload.at_hash + "\n";
+            description += "Claim at_hash: " + payload.at_hash + "\n";
             description += "Hashed id_token: " + hash + "\n";
             if (payload.at_hash === hash) {
                 console.log(description + "The at_hash claim matches with the hashed id_token. Token is valid!");
@@ -156,8 +159,7 @@
      * this is REQUIRED; otherwise, its inclusion is OPTIONAL.
      */
     function validateCode() {
-        //const accessToken = document.getElementById("idBearerToken").value;
-        const accessToken = "eyJ0eXAiOiJKV1QiLCJraWQiOiJnVVRBa3hiL3pVRTg2OVMxcTdDOGxXUytyUms9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoidlBEMUhhY3hXeVJHZEZQYzRwU1lDUSIsInN1YiI6Iih1c3IheHdvdWZ1c2VyMykiLCJpaWQiOiJQdmtDcllHa2RQNncwN058YXNSU3F1VlRkS3gtUDhsbTlwY0xIU1JjTm5kT3AxY1Z3b1dxS3I4LVhGOWVxb1pZIiwiYXVkaXRUcmFja2luZ0lkIjoiMWVlM2NkY2ItMmU0ZS00YThmLThjMzItNTFkY2VjMjdmMGFlLTMyMjM5NCIsImlzcyI6Imh0dHBzOi8vYXV0aC1leHQuc3NvY3BvYy5vbmUuZXU0MWQuaW5mLmlpdGVjaC5kazo0NDMvYW0vb2F1dGgyL2RjYSIsInRva2VuTmFtZSI6ImlkX3Rva2VuIiwic2lkIjoiNWM1ZDQwYjU2MjAwNGZlOGJlYjZhNDAzYWViZTEwNjQiLCJhY3IiOiIwIiwidWlkIjoiclIwTUd3d21ybnFjWVBTZkZCYm8zZz09IiwiYXpwIjoiU1RHT0FwcCIsImF1dGhfdGltZSI6MTY3OTY0NDQzNSwib2FsIjoiMkYiLCJleHAiOjE2Nzk2NDgwNTEsImlhdCI6MTY3OTY0NDQ1MSwiZXJyIjoiIiwidHJkIjoiLTEiLCJzdWJuYW1lIjoieHdvdWZ1c2VyMyIsInVuaWlkIjoiRDg3RUM2QzItOUU0Ny00MTYyLTEwOEItMDhEOENDM0Q4NDFEIiwibXVpZCI6IjIxNDczNDMzMzMiLCJhdWQiOiJTVEdPQXBwIiwiY19oYXNoIjoiMVN1c3k0Vkh1S3Vua3NCSnBEcWJuUSIsIm9yZy5mb3JnZXJvY2sub3BlbmlkY29ubmVjdC5vcHMiOiJfRWo2cEhpajZVTU9zcjZKajIyang3WHVKNU0iLCJzX2hhc2giOiJkVGFTN0RhdHRNZVV5WE9VWHJLcG5BIiwibmFtZSI6Ik4vQSIsInJlYWxtIjoiL2RjYSIsInRva2VuVHlwZSI6IkpXVFRva2VuIiwiYWlkIjoiNyIsImZhbWlseV9uYW1lIjoiTi9BIiwiY2lkIjoidXxseXQ5NFBrT0F4cERNME50QnFndz09In0.kBOc_t1Zxkohqk-oi1ZmEZVL1wGd_jkA04d6xJbkqs7FOOHZTQubNhgKFspsTXkF6qiFwjMzUyYUQWWsl_dWNNxnbpzj250iSZb1O7aW8kkFNdVoV52p036JaVnWLdnSg8u1xVI4eurs3vzBba4igUN1OkMHdSvbiBlmgHee1fsxIJ96Aa-8uuf4RCsBS1zkYT_VhCCgS0QUzVFoxcpQSDvD0X0woWBUdYOXD8pEFWW4xttvqe5GhBOK1XSVcaxjjqU14IqISDUNnTUjmjpC9DJPibDlZZ40ZLBGKCZRy5jjHYl5BDZuQjw96jGqoYlky2E04Bm7HN-HZiysQSyGoA";
+        const accessToken = document.getElementById("idBearerToken").value;
         const code = document.getElementById("idEdtCode").value;
         const payload = getPayload(accessToken);
         let description = "";
@@ -166,12 +168,12 @@
             return;
         }
         digestMessage(getAlgorithmFromToken(accessToken), code).then(function (hash) {
-            description += "c_hash claim: " + payload.c_hash + "\n";
+            description += "Claim c_hash: " + payload.c_hash + "\n";
             description += "Hashed code: " + hash + "\n";
             if (payload.c_hash === hash) {
                 console.log(description + "The c_hash claim matches with the hashed code. Valid!");
             } else {
-                console.error(description + "There is an issue with this token. Don't trust it!");
+                console.error(description + "There is a mismatch between code and token. Don't trust it!");
             }
         });
     }
@@ -184,8 +186,7 @@
      * The s_hash value is a case sensitive string.
      */
     function validateState() {
-        //const accessToken = document.getElementById("idBearerToken").value;
-        const accessToken = "eyJ0eXAiOiJKV1QiLCJraWQiOiJnVVRBa3hiL3pVRTg2OVMxcTdDOGxXUytyUms9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoidlBEMUhhY3hXeVJHZEZQYzRwU1lDUSIsInN1YiI6Iih1c3IheHdvdWZ1c2VyMykiLCJpaWQiOiJQdmtDcllHa2RQNncwN058YXNSU3F1VlRkS3gtUDhsbTlwY0xIU1JjTm5kT3AxY1Z3b1dxS3I4LVhGOWVxb1pZIiwiYXVkaXRUcmFja2luZ0lkIjoiMWVlM2NkY2ItMmU0ZS00YThmLThjMzItNTFkY2VjMjdmMGFlLTMyMjM5NCIsImlzcyI6Imh0dHBzOi8vYXV0aC1leHQuc3NvY3BvYy5vbmUuZXU0MWQuaW5mLmlpdGVjaC5kazo0NDMvYW0vb2F1dGgyL2RjYSIsInRva2VuTmFtZSI6ImlkX3Rva2VuIiwic2lkIjoiNWM1ZDQwYjU2MjAwNGZlOGJlYjZhNDAzYWViZTEwNjQiLCJhY3IiOiIwIiwidWlkIjoiclIwTUd3d21ybnFjWVBTZkZCYm8zZz09IiwiYXpwIjoiU1RHT0FwcCIsImF1dGhfdGltZSI6MTY3OTY0NDQzNSwib2FsIjoiMkYiLCJleHAiOjE2Nzk2NDgwNTEsImlhdCI6MTY3OTY0NDQ1MSwiZXJyIjoiIiwidHJkIjoiLTEiLCJzdWJuYW1lIjoieHdvdWZ1c2VyMyIsInVuaWlkIjoiRDg3RUM2QzItOUU0Ny00MTYyLTEwOEItMDhEOENDM0Q4NDFEIiwibXVpZCI6IjIxNDczNDMzMzMiLCJhdWQiOiJTVEdPQXBwIiwiY19oYXNoIjoiMVN1c3k0Vkh1S3Vua3NCSnBEcWJuUSIsIm9yZy5mb3JnZXJvY2sub3BlbmlkY29ubmVjdC5vcHMiOiJfRWo2cEhpajZVTU9zcjZKajIyang3WHVKNU0iLCJzX2hhc2giOiJkVGFTN0RhdHRNZVV5WE9VWHJLcG5BIiwibmFtZSI6Ik4vQSIsInJlYWxtIjoiL2RjYSIsInRva2VuVHlwZSI6IkpXVFRva2VuIiwiYWlkIjoiNyIsImZhbWlseV9uYW1lIjoiTi9BIiwiY2lkIjoidXxseXQ5NFBrT0F4cERNME50QnFndz09In0.kBOc_t1Zxkohqk-oi1ZmEZVL1wGd_jkA04d6xJbkqs7FOOHZTQubNhgKFspsTXkF6qiFwjMzUyYUQWWsl_dWNNxnbpzj250iSZb1O7aW8kkFNdVoV52p036JaVnWLdnSg8u1xVI4eurs3vzBba4igUN1OkMHdSvbiBlmgHee1fsxIJ96Aa-8uuf4RCsBS1zkYT_VhCCgS0QUzVFoxcpQSDvD0X0woWBUdYOXD8pEFWW4xttvqe5GhBOK1XSVcaxjjqU14IqISDUNnTUjmjpC9DJPibDlZZ40ZLBGKCZRy5jjHYl5BDZuQjw96jGqoYlky2E04Bm7HN-HZiysQSyGoA";
+        const accessToken = document.getElementById("idBearerToken").value;
         const state = document.getElementById("idEdtState").value;
         const payload = getPayload(accessToken);
         let description = "";
@@ -194,12 +195,12 @@
             return;
         }
         digestMessage(getAlgorithmFromToken(accessToken), state).then(function (hash) {
-            description += "s_hash claim: " + payload.s_hash + "\n";
+            description += "Claim s_hash: " + payload.s_hash + "\n";
             description += "Hashed state: " + hash + "\n";
             if (payload.s_hash === hash) {
                 console.log(description + "The s_hash claim matches with the hashed state. Valid!");
             } else {
-                console.error(description + "There is an issue with this token. Don't trust it!");
+                console.error(description + "There is a mismatch between state and token. Don't trust it!");
             }
         });
     }
