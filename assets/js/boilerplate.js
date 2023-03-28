@@ -2,7 +2,7 @@
 /*global console */
 
 /*
- * boilerplate v1.32
+ * boilerplate v1.33
  *
  * This script contains a set of helper functions for validating the token and populating the account selection.
  * Logging to the console is mirrored to the output in the examples.
@@ -502,7 +502,9 @@ function demonstrationHelper(settings) {
                                 clientId = responseJson.ClientId;
                                 break;
                             case "3":  // Response of GET /accounts?ClientKey={ClientKey}
-                                populateAccountSelection(responseJson.Data);
+                                if (settings.hasOwnProperty("accountsList")) {
+                                    populateAccountSelection(responseJson.Data);
+                                }
                                 break;
                             }
                         } catch (error) {

@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.2.2 (c) 2016, daniel wirtz
- * compiled tue, 07 feb 2023 20:46:12 utc
+ * protobuf.js v7.2.3 (c) 2016, daniel wirtz
+ * compiled mon, 27 mar 2023 18:08:22 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -4459,6 +4459,16 @@ function parse(source, root, options) {
         if (type === "group") {
             parseGroup(parent, rule);
             return;
+        }
+        // Type names can consume multiple tokens, in multiple variants:
+        //    package.subpackage   field       tokens: "package.subpackage" [TYPE NAME ENDS HERE] "field"
+        //    package . subpackage field       tokens: "package" "." "subpackage" [TYPE NAME ENDS HERE] "field"
+        //    package.  subpackage field       tokens: "package." "subpackage" [TYPE NAME ENDS HERE] "field"
+        //    package  .subpackage field       tokens: "package" ".subpackage" [TYPE NAME ENDS HERE] "field"
+        // Keep reading tokens until we get a type name with no period at the end,
+        // and the next token does not start with a period.
+        while (type.endsWith(".") || peek().startsWith(".")) {
+            type += next();
         }
 
         /* istanbul ignore if */
