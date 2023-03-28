@@ -9,7 +9,6 @@
         "accessTokenElm": document.getElementById("idBearerToken"),
         "retrieveTokenHref": document.getElementById("idHrefRetrieveToken"),
         "tokenValidateButton": document.getElementById("idBtnValidate"),
-        "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
 
@@ -139,7 +138,7 @@
             return;
         }
         digestMessage(getAlgorithmFromToken(accessToken), idToken).then(function (hash) {
-            description += "Claim at_hash: " + payload.at_hash + "\n";
+            description += "Claim at_hash:   " + payload.at_hash + "\n";
             description += "Hashed id_token: " + hash + "\n";
             if (payload.at_hash === hash) {
                 console.log(description + "The at_hash claim matches with the hashed id_token. Token is valid!");
@@ -169,7 +168,7 @@
         }
         digestMessage(getAlgorithmFromToken(accessToken), code).then(function (hash) {
             description += "Claim c_hash: " + payload.c_hash + "\n";
-            description += "Hashed code: " + hash + "\n";
+            description += "Hashed code:  " + hash + "\n";
             if (payload.c_hash === hash) {
                 console.log(description + "The c_hash claim matches with the hashed code. Valid!");
             } else {

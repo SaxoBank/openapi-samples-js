@@ -4,7 +4,7 @@ OIDC tokens contain hashes, which can be used to validate the token, the code an
 Validating them mitigates the Authorization response parameter injection attack.
 <https://openid.net/specs/openid-financial-api-part-2-1_0.html#authorization-response-parameter-injection-attack>
 
-This sample shows how to do this using PHP.
+This sample shows how to do this using JavaScript.
 
 ## Code hash value (claim c_hash)
 Its value is the base64url encoding of the left-most half of the hash of the octets of the ASCII representation of the code value, where the hash algorithm used is the hash algorithm used in the alg Header Parameter of the ID Token's JOSE Header.

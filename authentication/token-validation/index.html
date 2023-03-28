@@ -15,18 +15,13 @@
 <h1 class="project-name">JSON Web Token Validation</h1>
 <h2 class="project-tagline">Validate the Bearer Token (JWT)</h2>
 <a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
-<a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/token-explained" class="btn">View on GitHub</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/master/authentication/token-validation" class="btn">View on GitHub</a>
 </section>
 <section class="main-content">
 <div class="highlight">
 <label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
 <input type="text" class="token-field" id="idBearerToken" value="eyJ0eXAiOiJKV1QiLCJraWQiOiJnVVRBa3hiL3pVRTg2OVMxcTdDOGxXUytyUms9IiwiYWxnIjoiUlMyNTYifQ.eyJhdF9oYXNoIjoidlBEMUhhY3hXeVJHZEZQYzRwU1lDUSIsInN1YiI6Iih1c3IheHdvdWZ1c2VyMykiLCJpaWQiOiJQdmtDcllHa2RQNncwN058YXNSU3F1VlRkS3gtUDhsbTlwY0xIU1JjTm5kT3AxY1Z3b1dxS3I4LVhGOWVxb1pZIiwiYXVkaXRUcmFja2luZ0lkIjoiMWVlM2NkY2ItMmU0ZS00YThmLThjMzItNTFkY2VjMjdmMGFlLTMyMjM5NCIsImlzcyI6Imh0dHBzOi8vYXV0aC1leHQuc3NvY3BvYy5vbmUuZXU0MWQuaW5mLmlpdGVjaC5kazo0NDMvYW0vb2F1dGgyL2RjYSIsInRva2VuTmFtZSI6ImlkX3Rva2VuIiwic2lkIjoiNWM1ZDQwYjU2MjAwNGZlOGJlYjZhNDAzYWViZTEwNjQiLCJhY3IiOiIwIiwidWlkIjoiclIwTUd3d21ybnFjWVBTZkZCYm8zZz09IiwiYXpwIjoiU1RHT0FwcCIsImF1dGhfdGltZSI6MTY3OTY0NDQzNSwib2FsIjoiMkYiLCJleHAiOjE2Nzk2NDgwNTEsImlhdCI6MTY3OTY0NDQ1MSwiZXJyIjoiIiwidHJkIjoiLTEiLCJzdWJuYW1lIjoieHdvdWZ1c2VyMyIsInVuaWlkIjoiRDg3RUM2QzItOUU0Ny00MTYyLTEwOEItMDhEOENDM0Q4NDFEIiwibXVpZCI6IjIxNDczNDMzMzMiLCJhdWQiOiJTVEdPQXBwIiwiY19oYXNoIjoiMVN1c3k0Vkh1S3Vua3NCSnBEcWJuUSIsIm9yZy5mb3JnZXJvY2sub3BlbmlkY29ubmVjdC5vcHMiOiJfRWo2cEhpajZVTU9zcjZKajIyang3WHVKNU0iLCJzX2hhc2giOiJkVGFTN0RhdHRNZVV5WE9VWHJLcG5BIiwibmFtZSI6Ik4vQSIsInJlYWxtIjoiL2RjYSIsInRva2VuVHlwZSI6IkpXVFRva2VuIiwiYWlkIjoiNyIsImZhbWlseV9uYW1lIjoiTi9BIiwiY2lkIjoidXxseXQ5NFBrT0F4cERNME50QnFndz09In0.kBOc_t1Zxkohqk-oi1ZmEZVL1wGd_jkA04d6xJbkqs7FOOHZTQubNhgKFspsTXkF6qiFwjMzUyYUQWWsl_dWNNxnbpzj250iSZb1O7aW8kkFNdVoV52p036JaVnWLdnSg8u1xVI4eurs3vzBba4igUN1OkMHdSvbiBlmgHee1fsxIJ96Aa-8uuf4RCsBS1zkYT_VhCCgS0QUzVFoxcpQSDvD0X0woWBUdYOXD8pEFWW4xttvqe5GhBOK1XSVcaxjjqU14IqISDUNnTUjmjpC9DJPibDlZZ40ZLBGKCZRy5jjHYl5BDZuQjw96jGqoYlky2E04Bm7HN-HZiysQSyGoA" placeholder="Paste token here.." autofocus /></label>
 <input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
-<label>
-    Account: <select class="selector" id="idCbxAccount">
-        <option value="-">Click Validate to populate</option>
-    </select>
-</label>
 </div>
 <h1>Validate token, state and code after a redirect</h1>
 This example shows how to verify the redirect parameters are not being tampered with, to mitigate the Authorization response parameter injection attack.<br />
