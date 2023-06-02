@@ -231,9 +231,9 @@ function demonstrationHelper(settings) {
         accounts.sort(function (x, y) {
 
             /**
-             * Convert the account object to a string so it can alphabetically sorted on importancy.
+             * Convert the account object to a string so it can alphabetically sorted on how important they are.
              * @param {Object} account The account.
-             * @return {string} The sortable string representaion of the account.
+             * @return {string} The sortable string representation of the account.
              */
             function getAccountGroupDisplayNameForSorting(account) {
                 let result = (
@@ -766,7 +766,7 @@ function demonstrationHelper(settings) {
         }
 
         /**
-         * After a redirect with successfull authentication, there is a code supplied which can be used to trade for a token.
+         * After a redirect with successful authentication, there is a code supplied which can be used to trade for a token.
          * @param {string} page The page to be requested.
          * @param {Object} body The body object to post to the page.
          * @return {void}
@@ -817,7 +817,7 @@ function demonstrationHelper(settings) {
          */
         function getTokenViaCodeFlow(appServerUrl, code) {
             let newAccessToken;
-            // First, maybe there is a code in the URL, supplied when being redirected after authententication using Implicit Flow?
+            // First, maybe there is a code in the URL, supplied when being redirected after authentication using Implicit Flow?
             if (code === null) {
                 // Second, maybe the token is stored before a refresh, or in a different sample?
                 newAccessToken = loadAccessTokenFromLocalStorage();
@@ -868,7 +868,7 @@ function demonstrationHelper(settings) {
     }
 
     /**
-     * Create link with preconfigured redirect (run from https://saxobank.github.io or http://localhost) and store Csrf token.
+     * Create link with pre-configured redirect (run from https://saxobank.github.io or http://localhost) and store Csrf token.
      * @return {void}
      */
     function prepareLoginLink() {

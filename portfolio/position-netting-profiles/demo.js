@@ -12,13 +12,21 @@
         "accountsList": document.getElementById("idCbxAccount"),
         "footerElm": document.getElementById("idFooter")
     });
-    let positionNettingMode = "?";
+
+    const ChangePositionNettingProfileButton = document.getElementById("idBtnChangePositionNettingProfile");
+    const GetOpenNetPositionsButton = document.getElementById("idBtnGetOpenNetPositions");
+    const GetOpenPositionsButton = document.getElementById("idBtnGetOpenPositions");
+    const GetClosedPositionsButton = document.getElementById("idBtnGetClosedPositions");
+    const GetOrdersButton = document.getElementById("idBtnGetOrders");
+    const GetEnsEventsButton = document.getElementById("idBtnHistoricalEnsEvents");
+    let PositionNettingProfiles = {};
+    let PositionNettingProfile = "?";
 
     /**
-     * Example of NettingMode retrieval. This mode tells weather to show RealTime netted orders, or EndOfDay.
+     * Example of PositionNettingProfile retrieval.
      * @return {void}
      */
-    function getNettingMode() {
+    function getPositionNettingProfiles() {
         fetch(
             demo.apiUrl + "/port/v1/clients/me",
             {
@@ -30,9 +38,27 @@
         ).then(function (response) {
             if (response.ok) {
                 response.json().then(function (responseJson) {
-                    let description = "Netting mode is set to " + responseJson.PositionNettingMode + ".";
-                    positionNettingMode = responseJson.PositionNettingMode;
+                    let description = "Position netting profile is set to: " + responseJson.PositionNettingProfile + ".";
+
+                    PositionNettingProfiles = responseJson.AllowedNettingProfiles;
+
+                    if(PositionNettingProfiles.length > 0) {
+                        description += "\n\nAllowed position netting profiles:"
+                        
+                        for(i = 0; i < PositionNettingProfiles.length; i++){
+                            description += "\n   " + PositionNettingProfiles[i];
+                        }
+                    }
+
+                    PositionNettingProfile = responseJson.PositionNettingProfile;
+
                     console.log(description + "\n\nResponse:\n" + JSON.stringify(responseJson, null, 4));
+                    ChangePositionNettingProfileButton.style.display = "inline-block";
+                    GetOpenNetPositionsButton.style.display = "inline-block";
+                    GetOpenPositionsButton.style.display = "inline-block";
+                    GetClosedPositionsButton.style.display = "inline-block";
+                    GetOrdersButton.style.display = "inline-block";
+                    GetEnsEventsButton.style.display = "inline-block";
                 });
             } else {
                 demo.processError(response);
@@ -43,15 +69,23 @@
     }
 
     /**
-     * Example of NettingMode retrieval. This mode tells weather to show RealTime netted orders, or EndOfDay.
+     * Example of changing position netting profile.
      * @return {void}
      */
-    function updateNettingMode() {
-        if (positionNettingMode === "Intraday") {
-            positionNettingMode = "EndOfDay";
-        } else {
-            positionNettingMode = "Intraday";
+    function changePositionNettingProfile() {
+        if(PositionNettingProfiles.length === 0) {
+            console.log("It seems like the client configuration is incorrect, given that it has no available position netting profiles.")
+            return;
         }
+
+        if(PositionNettingProfiles.length === 1) {
+            console.log("The client only has one position netting profile available: " + PositionNettingProfiles[0] + ".\nIt is therefore not possible to change position netting profile.");
+            return;
+        }
+
+        let position = PositionNettingProfiles.indexOf(PositionNettingProfile);
+        let newPositionNettingProfile = PositionNettingProfiles[(position + 1) % PositionNettingProfiles.length];
+        
         fetch(
             demo.apiUrl + "/port/v1/clients/me",
             {
@@ -61,12 +95,13 @@
                     "Content-Type": "application/json; charset=utf-8"
                 },
                 "body": JSON.stringify({
-                    "NewPositionNettingMode": positionNettingMode
+                    "NewPositionNettingProfile": newPositionNettingProfile
                 })
             }
         ).then(function (response) {
             if (response.ok) {
-                console.log("Netting mode set to " + positionNettingMode + ".");
+                PositionNettingProfile = newPositionNettingProfile;
+                console.log("position netting profile set to " + newPositionNettingProfile + ".");
             } else {
                 demo.processError(response);
             }
@@ -217,7 +252,7 @@
                     responseJson.Data.forEach(function (position) {
                         list += position.NetPositionBase.Amount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.AverageOpenPrice) + "\n";
                     });
-                    console.log("All (netted) positions for client '" + demo.user.clientKey + "' using netting mode " + positionNettingMode + ".\n\n" + (
+                    console.log("All (netted) positions for client '" + demo.user.clientKey + "' using position netting profile " + PositionNettingProfile + ".\n\n" + (
                         list === ""
                         ? "No positions found."
                         : list
@@ -251,7 +286,7 @@
                     responseJson.Data.forEach(function (position) {
                         list += position.PositionBase.Amount + "x " + position.PositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.PositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.PositionView.AverageOpenPrice) + "\n";
                     });
-                    console.log("All positions for client '" + demo.user.clientKey + "' using netting mode " + positionNettingMode + ".\n\n" + (
+                    console.log("All positions for client '" + demo.user.clientKey + "' using position netting profile " + PositionNettingProfile + ".\n\n" + (
                         list === ""
                         ? "No positions found."
                         : list
@@ -287,7 +322,7 @@
                             list += position.ClosedPosition.Amount + "x " + position.ClosedPosition.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.ClosingMarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.OpenPrice) + "\n";
                         });
                     }
-                    console.log("All closed positions for client '" + demo.user.clientKey + "' using netting mode " + positionNettingMode + ".\n\n" + (
+                    console.log("All closed positions for client '" + demo.user.clientKey + "' using position netting profile " + PositionNettingProfile + ".\n\n" + (
                         list === ""
                         ? "No positions found."
                         : list
@@ -385,12 +420,12 @@
     }
 
     demo.setupEvents([
-        {"evt": "click", "elmId": "idBtnGetNettingMode", "func": getNettingMode, "funcsToDisplay": [getNettingMode]},
+        {"evt": "click", "elmId": "idBtnGetAllowedPositionNettingProfiles", "func": getPositionNettingProfiles, "funcsToDisplay": [getPositionNettingProfiles]},
         {"evt": "click", "elmId": "idBtnGetOpenNetPositions", "func": getOpenNetPositions, "funcsToDisplay": [getOpenNetPositions, displayAndFormatValue]},
         {"evt": "click", "elmId": "idBtnGetOpenPositions", "func": getOpenPositions, "funcsToDisplay": [getOpenPositions, displayAndFormatValue]},
         {"evt": "click", "elmId": "idBtnGetClosedPositions", "func": getClosedPositions, "funcsToDisplay": [getClosedPositions, displayAndFormatValue]},
         {"evt": "click", "elmId": "idBtnGetOrders", "func": getOrders, "funcsToDisplay": [getOrders, displayAndFormatValue]},
-        {"evt": "click", "elmId": "idBtnUpdateNettingMode", "func": updateNettingMode, "funcsToDisplay": [updateNettingMode]},
+        {"evt": "click", "elmId": "idBtnChangePositionNettingProfile", "func": changePositionNettingProfile, "funcsToDisplay": [changePositionNettingProfile]},
         {"evt": "click", "elmId": "idBtnHistoricalEnsEvents", "func": getHistoricalEnsEvents, "funcsToDisplay": [getHistoricalEnsEvents]}
     ]);
     demo.displayVersion("port");
