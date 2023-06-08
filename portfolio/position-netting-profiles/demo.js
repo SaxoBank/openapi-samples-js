@@ -13,14 +13,14 @@
         "footerElm": document.getElementById("idFooter")
     });
 
-    const ChangePositionNettingProfileButton = document.getElementById("idBtnChangePositionNettingProfile");
-    const GetOpenNetPositionsButton = document.getElementById("idBtnGetOpenNetPositions");
-    const GetOpenPositionsButton = document.getElementById("idBtnGetOpenPositions");
-    const GetClosedPositionsButton = document.getElementById("idBtnGetClosedPositions");
-    const GetOrdersButton = document.getElementById("idBtnGetOrders");
-    const GetEnsEventsButton = document.getElementById("idBtnHistoricalEnsEvents");
-    let PositionNettingProfiles = {};
-    let PositionNettingProfile = "?";
+    const changePositionNettingProfileButton = document.getElementById("idBtnChangePositionNettingProfile");
+    const getOpenNetPositionsButton = document.getElementById("idBtnGetOpenNetPositions");
+    const getOpenPositionsButton = document.getElementById("idBtnGetOpenPositions");
+    const getClosedPositionsButton = document.getElementById("idBtnGetClosedPositions");
+    const getOrdersButton = document.getElementById("idBtnGetOrders");
+    const getEnsEventsButton = document.getElementById("idBtnHistoricalEnsEvents");
+    let positionNettingProfiles = {};
+    let positionNettingProfile = "?";
 
     /**
      * Example of PositionNettingProfile retrieval.
@@ -40,25 +40,25 @@
                 response.json().then(function (responseJson) {
                     let description = "Position netting profile is set to: " + responseJson.PositionNettingProfile + ".";
 
-                    PositionNettingProfiles = responseJson.AllowedNettingProfiles;
+                    positionNettingProfiles = responseJson.AllowedNettingProfiles;
 
-                    if(PositionNettingProfiles.length > 0) {
+                    if(positionNettingProfiles.length > 0) {
                         description += "\n\nAllowed position netting profiles:"
                         
-                        for(i = 0; i < PositionNettingProfiles.length; i++){
-                            description += "\n   " + PositionNettingProfiles[i];
+                        for(i = 0; i < positionNettingProfiles.length; i++){
+                            description += "\n   " + positionNettingProfiles[i];
                         }
                     }
 
-                    PositionNettingProfile = responseJson.PositionNettingProfile;
+                    positionNettingProfile = responseJson.PositionNettingProfile;
 
                     console.log(description + "\n\nResponse:\n" + JSON.stringify(responseJson, null, 4));
-                    ChangePositionNettingProfileButton.style.display = "inline-block";
-                    GetOpenNetPositionsButton.style.display = "inline-block";
-                    GetOpenPositionsButton.style.display = "inline-block";
-                    GetClosedPositionsButton.style.display = "inline-block";
-                    GetOrdersButton.style.display = "inline-block";
-                    GetEnsEventsButton.style.display = "inline-block";
+                    changePositionNettingProfileButton.style.display = "inline-block";
+                    getOpenNetPositionsButton.style.display = "inline-block";
+                    getOpenPositionsButton.style.display = "inline-block";
+                    getClosedPositionsButton.style.display = "inline-block";
+                    getOrdersButton.style.display = "inline-block";
+                    getEnsEventsButton.style.display = "inline-block";
                 });
             } else {
                 demo.processError(response);
@@ -73,18 +73,18 @@
      * @return {void}
      */
     function changePositionNettingProfile() {
-        if(PositionNettingProfiles.length === 0) {
+        if(positionNettingProfiles.length === 0) {
             console.log("It seems like the client configuration is incorrect, given that it has no available position netting profiles.")
             return;
         }
 
-        if(PositionNettingProfiles.length === 1) {
-            console.log("The client only has one position netting profile available: " + PositionNettingProfiles[0] + ".\nIt is therefore not possible to change position netting profile.");
+        if(positionNettingProfiles.length === 1) {
+            console.log("The client only has one position netting profile available: " + positionNettingProfiles[0] + ".\nIt is therefore not possible to change position netting profile.");
             return;
         }
 
-        let position = PositionNettingProfiles.indexOf(PositionNettingProfile);
-        let newPositionNettingProfile = PositionNettingProfiles[(position + 1) % PositionNettingProfiles.length];
+        let position = positionNettingProfiles.indexOf(positionNettingProfile);
+        let newPositionNettingProfile = positionNettingProfiles[(position + 1) % positionNettingProfiles.length];
         
         fetch(
             demo.apiUrl + "/port/v1/clients/me",
@@ -100,7 +100,7 @@
             }
         ).then(function (response) {
             if (response.ok) {
-                PositionNettingProfile = newPositionNettingProfile;
+                positionNettingProfile = newPositionNettingProfile;
                 console.log("position netting profile set to " + newPositionNettingProfile + ".");
             } else {
                 demo.processError(response);
@@ -252,7 +252,7 @@
                     responseJson.Data.forEach(function (position) {
                         list += position.NetPositionBase.Amount + "x " + position.NetPositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.NetPositionView.AverageOpenPrice) + "\n";
                     });
-                    console.log("All (netted) positions for client '" + demo.user.clientKey + "' using position netting profile " + PositionNettingProfile + ".\n\n" + (
+                    console.log("All (netted) positions for client '" + demo.user.clientKey + "' using position netting profile " + positionNettingProfile + ".\n\n" + (
                         list === ""
                         ? "No positions found."
                         : list
@@ -286,7 +286,7 @@
                     responseJson.Data.forEach(function (position) {
                         list += position.PositionBase.Amount + "x " + position.PositionBase.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.PositionView.MarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.PositionView.AverageOpenPrice) + "\n";
                     });
-                    console.log("All positions for client '" + demo.user.clientKey + "' using position netting profile " + PositionNettingProfile + ".\n\n" + (
+                    console.log("All positions for client '" + demo.user.clientKey + "' using position netting profile " + positionNettingProfile + ".\n\n" + (
                         list === ""
                         ? "No positions found."
                         : list
@@ -322,7 +322,7 @@
                             list += position.ClosedPosition.Amount + "x " + position.ClosedPosition.AssetType + " " + position.DisplayAndFormat.Description + " total price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.ClosingMarketValue) + " - open price " + displayAndFormatValue(position.DisplayAndFormat, position.ClosedPosition.OpenPrice) + "\n";
                         });
                     }
-                    console.log("All closed positions for client '" + demo.user.clientKey + "' using position netting profile " + PositionNettingProfile + ".\n\n" + (
+                    console.log("All closed positions for client '" + demo.user.clientKey + "' using position netting profile " + positionNettingProfile + ".\n\n" + (
                         list === ""
                         ? "No positions found."
                         : list
