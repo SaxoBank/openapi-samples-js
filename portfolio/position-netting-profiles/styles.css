@@ -1,0 +1,7 @@
+.buttons-container {
+    margin-top: 1em;
+}
+
+.buttons-container > * {
+    margin: 8px 0;
+}

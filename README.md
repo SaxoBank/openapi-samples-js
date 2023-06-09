@@ -38,7 +38,7 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [Regulatory Requirements](orders/regulatory-requirements/)
 5. Portfolio
    - [Display positions and orders](portfolio/positions-orders/)
-   - [Netting mode](portfolio/netting/)
+   - [Position netting profiles](portfolio/postion-netting-profiles/)
    - [Available Margin](portfolio/margin/)
    - [Downloading Reports](portfolio/download-reports/)
 6. Account History
