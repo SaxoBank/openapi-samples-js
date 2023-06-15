@@ -167,7 +167,6 @@
         listSubscription.referenceId = data.ReferenceId;
         fetch(
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
-            // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
             // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
             demo.apiUrl + "/trade/v1/infoprices/subscriptions",
             {
@@ -224,7 +223,6 @@
         data.ReferenceId += "_" + orderTicketSubscriptions.length;
         fetch(
             // Refresh rate is minimal 1000 ms; this endpoint is meant to show an overview.
-            // For more frequent updates, the endpoint "POST /trade/v1/prices/subscriptions" can be used, with "RequireTradableQuote" set to "true".
             // This is intended for only one instrument, but you can request multiple parallel subscriptions, up to 200 (this is the app default).
             demo.apiUrl + "/trade/v1/prices/subscriptions",
             {

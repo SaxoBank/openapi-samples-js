@@ -155,7 +155,6 @@
                 "AccountKey": demo.user.accountKey,
                 "Uic": document.getElementById("idUic").value,
                 "AssetType": assetType,
-                "RequireTradableQuote": true,  // This field lets the server know the prices are used to base trading decisions on
                 // DisplayAndFormat gives you the name of the instrument in the snapshot in the response.
                 // MarketDepth gives the order book, when available.
                 "FieldGroups": ["Quote", /*"MarketDepth",*/ "DisplayAndFormat", "PriceInfoDetails"]
