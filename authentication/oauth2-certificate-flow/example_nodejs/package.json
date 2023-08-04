@@ -13,7 +13,7 @@
         "name": "various"
     },
     "dependencies": {
-        "jsonwebtoken": "^9.0.0",
+        "jsonwebtoken": "^9.0.1",
         "node-fetch": "^3.3.2"
     }
 }
