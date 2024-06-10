@@ -1,6 +1,6 @@
 /*!
- * protobuf.js v7.2.3 (c) 2016, daniel wirtz
- * compiled mon, 27 mar 2023 18:08:22 utc
+ * protobuf.js v7.3.1 (c) 2016, daniel wirtz
+ * compiled mon, 10 jun 2024 17:27:50 utc
  * licensed under the bsd-3-clause license
  * see: https://github.com/dcodeio/protobuf.js for details
  */
@@ -1574,7 +1574,7 @@ function genValuePartial_fromObject(gen, field, fieldIndex, prop) {
                 break;
             case "uint64":
                 isUnsigned = true;
-                // eslint-disable-line no-fallthrough
+                // eslint-disable-next-line no-fallthrough
             case "int64":
             case "sint64":
             case "fixed64":
@@ -1688,7 +1688,7 @@ function genValuePartial_toObject(gen, field, fieldIndex, prop) {
                 break;
             case "uint64":
                 isUnsigned = true;
-                // eslint-disable-line no-fallthrough
+                // eslint-disable-next-line no-fallthrough
             case "int64":
             case "sint64":
             case "fixed64":
@@ -4244,7 +4244,24 @@ function parse(source, root, options) {
             else
                 target.push([ start = parseId(next()), skip("to", true) ? parseId(next()) : start ]);
         } while (skip(",", true));
-        skip(";");
+        var dummy = {options: undefined};
+        dummy.setOption = function(name, value) {
+          if (this.options === undefined) this.options = {};
+          this.options[name] = value;
+        };
+        ifBlock(
+            dummy,
+            function parseRange_block(token) {
+              /* istanbul ignore else */
+              if (token === "option") {
+                parseOption(dummy, token);  // skip
+                skip(";");
+              } else
+                throw illegal(token);
+            },
+            function parseRange_line() {
+              parseInlineOptions(dummy);  // skip
+            });
     }
 
     function parseNumber(token, insideTryCatch) {
@@ -4327,7 +4344,7 @@ function parse(source, root, options) {
                 break;
             case "public":
                 next();
-                // eslint-disable-line no-fallthrough
+                // eslint-disable-next-line no-fallthrough
             default:
                 whichImports = imports || (imports = []);
                 break;
@@ -4720,6 +4737,9 @@ function parse(source, root, options) {
                 /* istanbul ignore if */
                 if (!nameRe.test(token = next())) {
                     throw illegal(token, "name");
+                }
+                if (token === null) {
+                  throw illegal(token, "end of input");
                 }
 
                 var value;
@@ -5283,9 +5303,14 @@ Reader.prototype.bytes = function read_bytes() {
     this.pos += length;
     if (Array.isArray(this.buf)) // plain array
         return this.buf.slice(start, end);
-    return start === end // fix for IE 10/Win8 and others' subarray returning array of size 1
-        ? new this.buf.constructor(0)
-        : this._slice.call(this.buf, start, end);
+
+    if (start === end) { // fix for IE 10/Win8 and others' subarray returning array of size 1
+        var nativeBuffer = util.Buffer;
+        return nativeBuffer
+            ? nativeBuffer.alloc(0)
+            : new this.buf.constructor(0);
+    }
+    return this._slice.call(this.buf, start, end);
 };
 
 /**
@@ -5535,10 +5560,10 @@ Root.prototype.load = function load(filename, options, callback) {
         /* istanbul ignore if */
         if (!callback)
             return;
-        var cb = callback;
-        callback = null;
         if (sync)
             throw err;
+        var cb = callback;
+        callback = null;
         cb(err, root);
     }
 
@@ -6375,9 +6400,7 @@ function tokenize(source, alternateCommentMode) {
 
         // see if remaining line matches comment pattern
         var lineText = source.substring(startOffset, endOffset);
-        // look for 1 or 2 slashes since startOffset would already point past
-        // the first slash that started the comment.
-        var isComment = /^\s*\/{1,2}/.test(lineText);
+        var isComment = /^\s*\/\//.test(lineText);
         return isComment;
     }
 
@@ -6446,7 +6469,7 @@ function tokenize(source, alternateCommentMode) {
                         // check for double-slash comments, consolidating consecutive lines
                         start = offset;
                         isDoc = false;
-                        if (isDoubleSlashCommentLine(offset)) {
+                        if (isDoubleSlashCommentLine(offset - 1)) {
                             isDoc = true;
                             do {
                                 offset = findEndOfLine(offset);
@@ -6822,7 +6845,7 @@ function clearCache(type) {
  * @property {Object.<string,IOneOf>} [oneofs] Oneof descriptors
  * @property {Object.<string,IField>} fields Field descriptors
  * @property {number[][]} [extensions] Extension ranges
- * @property {number[][]} [reserved] Reserved ranges
+ * @property {Array.<number[]|string>} [reserved] Reserved ranges
  * @property {boolean} [group=false] Whether a legacy group or not
  */
 
@@ -7563,7 +7586,7 @@ util.decorateEnum = function decorateEnum(object) {
 util.setProperty = function setProperty(dst, path, value) {
     function setProp(dst, path, value) {
         var part = path.shift();
-        if (part === "__proto__") {
+        if (part === "__proto__" || part === "prototype") {
           return dst;
         }
         if (path.length > 0) {

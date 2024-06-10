@@ -15,7 +15,7 @@ Production:
 <script src="//unpkg.com/protobufjs@7.X.X/dist/protobuf.min.js"></script>
 ```
 
-**NOTE:** Remember to replace the version tag with the exact [release](https://github.com/dcodeIO/protobuf.js/tags) your project depends upon.
+**NOTE:** Remember to replace the version tag with the exact [release](https://github.com/protobufjs/protobuf.js/tags) your project depends upon.
 
 Frontend usage
 --------------
