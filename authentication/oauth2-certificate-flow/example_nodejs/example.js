@@ -4,7 +4,6 @@
  * https://www.developer.saxo/openapi/learn/managing-certificates-in-myaccount
  */
 
-
 const apiUrl = "https://gateway.saxobank.com/sim/openapi"; // On production, this is "https://gateway.saxobank.com/openapi"
 
 import "dotenv/config";
@@ -60,10 +59,9 @@ function createJwtAssertion() {
 /**
  * Request a token using the JWT.
  * @param {string} assertion The signed JWT.
- * @param {Function} successCallback Do something with the token.
- * @return {void}
+ * @return {Promise}
  */
-function requestToken(assertion, successCallback) {
+async function requestToken(assertion) {
   // If you run into a 401 NotAuthenticated, this might be caused by not accepting the terms and conditions.
   // To fix this, you must use this app once with the Authorization Code Flow for your userId and accept the Disclaimer after signing in.
   // You can use this URL, replacing the appKey with yours (add a new redirect URL http://127.0.0.1/):
@@ -75,34 +73,25 @@ function requestToken(assertion, successCallback) {
   // The client_id and client_secret can be submitted as postData (see below), but this example uses the Authorization header:
   //postData.append("client_id", process.env.AppKey);
   //postData.append("client_secret", process.env.AppSecret);
-  fetch(process.env.TokenUrl, {
+  const response = await fetch(process.env.TokenUrl, {
     headers: getRequestHeaders(),
     method: "POST",
     body: postData,
-  })
-    .then(function (response) {
-      if (response.ok) {
-        response.json().then(function (responseJson) {
-          console.log(
-            "Token received:\n" + JSON.stringify(responseJson, null, 4)
-          );
-          successCallback(responseJson);
-        });
-      } else {
-        console.log(response);
-        console.log("Response headers:");
-        console.log(response.headers.raw());
-        console.log(
-          "Error getting token: " + response.status + " " + response.statusText
-        );
-        response.text().then(function (responseText) {
-          console.log(responseText);
-        });
-      }
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+  });
+
+  if (response.ok) {
+    const responseJson = await response.json();
+    return responseJson;
+  } else {
+    console.log(response);
+    console.log("Response headers:");
+    console.log(response.headers.raw());
+    console.log(
+      "Error getting token: " + response.status + " " + response.statusText
+    );
+    const responseText = await response.text();
+    console.log(responseText);
+  }
 }
 
 /**
@@ -112,9 +101,9 @@ function requestToken(assertion, successCallback) {
  * And if you refresh the token, the session is extended, keeping up the streaming session.
  * So it is recommended to refresh the token.
  * @param {Object} tokenObject The Bearer token object.
- * @return {void}
+ * @return {Promise}
  */
-function requestTokenRefresh(tokenObject) {
+async function requestTokenRefresh(tokenObject) {
   const postData = new URLSearchParams();
   postData.append("refresh_token", tokenObject.refresh_token);
   postData.append("grant_type", "refresh_token");
@@ -122,29 +111,22 @@ function requestTokenRefresh(tokenObject) {
   // The client_id and client_secret can be submitted as postData (see below), but this example uses the Authorization header:
   //postData.append("client_id", process.env.AppKey);
   //postData.append("client_secret", process.env.AppSecret);
-  fetch(process.env.TokenUrl, {
+  const response = await fetch(process.env.TokenUrl, {
     headers: getRequestHeaders(),
     method: "POST",
     body: postData,
-  })
-    .then(function (response) {
-      if (response.ok) {
-        response.json().then(function (responseJson) {
-          console.log(
-            "New token received:\n" + JSON.stringify(responseJson, null, 4)
-          );
-          // Now you might want to refresh the websocket connections with the new token...
-        });
-      } else {
-        response.text().then(function (responseText) {
-          console.log("Error refreshing token.\n\n" + responseText);
-          console.log(response);
-        });
-      }
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+  });
+  if (response.ok) {
+    const responseJson = await response.json();
+    console.log(
+      "New token received:\n" + JSON.stringify(responseJson, null, 4)
+    );
+    // Now you might want to refresh the websocket connections with the new token...
+  } else {
+    const responseText = await response.text();
+    console.log("Error refreshing token.\n\n" + responseText);
+    console.log(response);
+  }
 }
 
 function getRequestHeaders() {
@@ -158,10 +140,10 @@ function getRequestHeaders() {
 /**
  * Request something from the API, to prove the received token is valid.
  * @param {Object} tokenObject The Bearer token object.
- * @return {void}
+ * @return {Promise}
  */
-function requestApiData(tokenObject) {
-  fetch(
+async function requestExchanges(tokenObject) {
+  const response = await fetch(
     // The examples on Github (https://saxobank.github.io/openapi-samples-js/) are intended for individual logins.
     // This flow is intended for maintaining multiple customers, so it is recommended to explicitly specify clientKeys, accountKeys, etc.
     // Get all users: apiUrl + "/port/v1/users?ClientKey={ClientKey}&IncludeSubUsers=true",
@@ -172,31 +154,33 @@ function requestApiData(tokenObject) {
       },
       method: "GET",
     }
-  )
-    .then(function (response) {
-      if (response.ok) {
-        response.json().then(function (responseJson) {
-          console.log(
-            "Response from API received (" +
-              responseJson.Data.length +
-              " exchanges)"
-          );
-          // For demonstration purposes, we'll refresh the token..
-          requestTokenRefresh(tokenObject);
-        });
-      } else {
-        response.text().then(function (responseText) {
-          console.log("Error getting response.\n\n" + responseText);
-          console.log(response);
-        });
-      }
-    })
-    .catch(function (error) {
-      console.log(error);
-    });
+  );
+
+  if (response.ok) {
+    const responseJson = await response.json();
+    return responseJson;
+  } else {
+    const responseText = response.text();
+    console.log("Error getting response.\n\n" + responseText);
+    console.log(response);
+  }
 }
 
 // Create the JWT token:
 const jwtAssertion = createJwtAssertion();
-// Request the Bearer token and if successful, use it to call the API:
-requestToken(jwtAssertion, requestApiData);
+
+// Request the Bearer token
+const cbaResponse = await requestToken(jwtAssertion);
+console.log("Token received:\n" + JSON.stringify(cbaResponse, null, 2));
+
+// If successful, use the token to call the API
+if (cbaResponse) {
+
+  const exchanges = await requestExchanges(cbaResponse);
+  console.log(exchanges)
+
+  // For demonstration purposes, we'll refresh the token immediately after use.
+  // In production, you should only refresh the token shortly before it expires.
+  const refreshResponse =  await requestTokenRefresh(tokenObject);
+  console.log("Refresh of token:\n" + JSON.stringify(refreshResponse, null, 2));
+}
