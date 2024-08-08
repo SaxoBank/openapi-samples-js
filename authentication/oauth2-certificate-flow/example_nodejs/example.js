@@ -166,21 +166,26 @@ async function requestExchanges(tokenObject) {
   }
 }
 
-// Create the JWT token:
-const jwtAssertion = createJwtAssertion();
+async function main() {
+  // Create the JWT token:
+  const jwtAssertion = createJwtAssertion();
 
-// Request the Bearer token
-const cbaResponse = await requestToken(jwtAssertion);
-console.log("Token received:\n" + JSON.stringify(cbaResponse, null, 2));
+  // Request the Bearer token
+  const cbaResponse = await requestToken(jwtAssertion);
+  console.log("Token received:\n" + JSON.stringify(cbaResponse, null, 2));
 
-// If successful, use the token to call the API
-if (cbaResponse) {
+  // If successful, use the token to call the API
+  if (cbaResponse) {
+    const exchanges = await requestExchanges(cbaResponse);
+    console.log("Accessed Exchanges: " + exchanges);
 
-  const exchanges = await requestExchanges(cbaResponse);
-  console.log(exchanges)
-
-  // For demonstration purposes, we'll refresh the token immediately after use.
-  // In production, you should only refresh the token shortly before it expires.
-  const refreshResponse =  await requestTokenRefresh(tokenObject);
-  console.log("Refresh of token:\n" + JSON.stringify(refreshResponse, null, 2));
+    // For demonstration purposes, we'll refresh the token immediately after use.
+    // In production, you should only refresh the token shortly before it expires.
+    const refreshResponse = await requestTokenRefresh(tokenObject);
+    console.log(
+      "Refresh of token:\n" + JSON.stringify(refreshResponse, null, 2)
+    );
+  }
 }
+
+main();
