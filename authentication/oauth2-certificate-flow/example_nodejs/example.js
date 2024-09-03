@@ -16,12 +16,12 @@ const { readFileSync } = require('fs');
 const { sign } = require('jsonwebtoken');
 require("dotenv").config();
 
-// Change your .env file so it has your information
+// Create or change your .env file so it has your information. Further details can be found in our learn articles.
 const appKey = process.env.AppKey;
 const appSecret = process.env.AppSecret;
 const tokenUrl = process.env.TokenUrl;
 const userId = process.env.UserId;
-const serviceProviderUrl = process.env.ServiceProviderUrl; // On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL.
+const serviceProviderUrl = process.env.ServiceProviderUrl;
 const certificatePath = process.env.CertificatePath;
 const thumbprint = process.env.Thumbprint; // Thumbprint of X509 certificate used for signing JWT.
 const algorithm = "RS256"; // Algorithm used to sign JWT. We only support RS256 at the moment.
@@ -29,9 +29,9 @@ const algorithm = "RS256"; // Algorithm used to sign JWT. We only support RS256 
 let unpackedResponse = {};
 
 /**
- * Create and sign the assertion.
- * @return {string} The assertion.
- */
+* Create and sign the assertion.
+* @return {string} The assertion.
+*/
 const getAssertion = () => {
     console.log("Creating Assertion...")
 
@@ -41,7 +41,7 @@ const getAssertion = () => {
 
     const options = {
         header: {
-        x5t: thumbprint
+            x5t: thumbprint
         },
         algorithm: algorithm,
         issuer: appKey,
@@ -63,10 +63,10 @@ const getAssertion = () => {
 }
 
 /**
- * Get tokens with retry logic
- * @param {number} retries - Number of retry attempts
- * @return {object}
- */
+* Get tokens with retry logic
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
 const getTokens = async (retries = 3) => {
     const assertion = getAssertion();
     const requestBody = new URLSearchParams({
@@ -78,10 +78,10 @@ const getTokens = async (retries = 3) => {
 };
 
 /**
- * Renew tokens with retry logic
- * @param {number} retries - Number of retry attempts
- * @return {object}
- */
+* Renew tokens with retry logic
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
 const renewTokens = async (retries = 3) => {
     const requestBody = new URLSearchParams({
         grant_type: "refresh_token",
@@ -92,10 +92,10 @@ const renewTokens = async (retries = 3) => {
 };
 
 /**
- * Request tokens
- * @param {URLSearchParams} requestBody
- * @return {object}
- */
+* Request tokens
+* @param {URLSearchParams} requestBody
+* @return {object}
+*/
 const tokenRequest = async (requestBody) => {
     const basicToken = btoa(appKey + ":" + appSecret);
 
@@ -117,11 +117,11 @@ const tokenRequest = async (requestBody) => {
 };
 
 /**
- * Retry logic with exponential back-off for requests
- * @param {Function} functionToRetry
- * @param {number} retries - Number of retry attempts
- * @return {object}
- */
+* Retry logic with exponential back-off for requests
+* @param {Function} functionToRetry
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
 const retryRequest = async (functionToRetry, retries) => {
     let attempt = 0;
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -141,10 +141,10 @@ const retryRequest = async (functionToRetry, retries) => {
 };
 
 /**
- * Determine if the request should be retried based on the error
- * @param {Error} error - The error thrown
- * @return {boolean}
- */
+* Determine if the request should be retried based on the error
+* @param {Error} error - The error thrown
+* @return {boolean}
+*/
 const shouldRetry = (error) => {
     // Retry on network errors (status 5xx) but not on client errors (status 4xx)
     if (error.message.includes('HTTP error! status:')) {
@@ -157,10 +157,10 @@ const shouldRetry = (error) => {
 const apiUrl = "https://gateway.saxobank.com/sim/openapi"; // On production, this is "https://gateway.saxobank.com/openapi"
 
 /**
- * Request something from the API, to prove the received token is valid.
- * @param {string} endpoint The endpoint to call
- * @return {object}
- */
+* Request something from the API, to prove the received token is valid.
+* @param {string} endpoint The endpoint to call
+* @return {object}
+*/
 async function SendGetRequest(endpoint) {
     const response = await fetch (
         apiUrl + endpoint,
