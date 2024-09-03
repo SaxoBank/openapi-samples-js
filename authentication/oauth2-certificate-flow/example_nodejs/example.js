@@ -4,189 +4,206 @@
  * https://www.developer.saxo/openapi/learn/managing-certificates-in-myaccount
 */
 
-// Change the configuration so all 5 constants contain your data:
-const userId = "1234";  // This is the user who has created the certificate (in Chrome!)
-const appKey = "";  // Enter the appKey of the app which is entitled to authenticate via a certificate
-const appSecret = "";  // Enter your app secret
-const serviceProviderUrl = "Your unique identifier";  // This is the unique identifier of the app, not per se a URL
-// The certificate thumbprint (aka fingerprint) can be found in the "Manage Computer Certificates" app, under Personal/Certificates/Saxo Bank Client Certificate: details
-//  (after installing the p12 certificate, which is not required for this example).
-const certThumbPrint = "Fingerprint of your certificate";
-
-const authProviderUrl = "https://sim.logonvalidation.net/token";  // On production, this will be "https://live.logonvalidation.net/token"
-const apiUrl = "https://gateway.saxobank.com/sim/openapi";  // On production, this is "https://gateway.saxobank.com/openapi"
-
-import {readFileSync} from "fs";  // Used to load the certificate file
-import jsonwebtoken from "jsonwebtoken";  // A library used for signing the token
-import fetch from "node-fetch";  // Used to request the token and call the API
-
 /**
  * The PEM file is created using OpenSSL:
  * openssl pkcs12 -in DOWNLOADED-CERTIFICATE.p12 -out private-key-with-cert.pem -clcerts -nodes -passin pass:CERTIFICATE-PASSWORD-RECEIVED-WHEN-DOWNLOADING
  *
- * Make sure this file cannot be downloaded via internet!
- * Store it in a folder not accessible from outside, or include the contents in your javascript.
+ * Make sure this file cannot be downloaded via the internet!
+ * Don't store it in a folder accessible from outside, or include the contents in your code.
  */
-const privateKeyFile = "private-key-with-cert.pem";
+
+const { readFileSync } = require('fs');
+const { sign } = require('jsonwebtoken');
+require("dotenv").config();
+
+// Create or change your .env file so it has your information. Further details can be found in our learn articles.
+const appKey = process.env.AppKey;
+const appSecret = process.env.AppSecret;
+const tokenUrl = process.env.TokenUrl;
+const userId = process.env.UserId;
+const serviceProviderUrl = process.env.ServiceProviderUrl;
+const certificatePath = process.env.CertificatePath;
+const thumbprint = process.env.Thumbprint; // Thumbprint of X509 certificate used for signing JWT.
+const algorithm = "RS256"; // Algorithm used to sign JWT. We only support RS256 at the moment.
+
+let unpackedResponse = {};
 
 /**
- * Create and sign the assertion.
- * @return {string} The signed JWT.
- */
-function createJwtAssertion() {
+* Create and sign the assertion.
+* @return {string} The assertion.
+*/
+const getAssertion = () => {
+    console.log("Creating Assertion...")
+
     const payload = {
-        "spurl": serviceProviderUrl  // On https://www.developer.saxo/openapi/appmanagement this can be found under the application redirect URL.
+        spurl: serviceProviderUrl
     };
-    const privateKey = readFileSync(privateKeyFile);
+
     const options = {
-        "header": {
-            "x5t": certThumbPrint  // Thumbprint of X509 certificate used for signing JWT.
+        header: {
+            x5t: thumbprint
         },
-        "algorithm": "RS256",  // Algorithm used to sign JWT. We only support RS256 at the moment.
-        "issuer": appKey,  // Value should be AppKey of client application.
-        "expiresIn": "3 seconds",  // Lifetime of assertion - keep this short, the token is generated directly afterwards.
-        "subject": userId,  // UserId - Value should be the user id for which token is needed.
-        "audience": authProviderUrl  // Audience - Value should be the AuthenticationUrl.
+        algorithm: algorithm,
+        issuer: appKey,
+        expiresIn: '3 seconds', // Lifetime of assertion - keep this short, the token is generated directly afterwards.
+        subject: userId,
+        audience: tokenUrl
     };
+
     // The generated assertion/jwt can be validated using https://jwt.io
     // More info about using jsonwebtoken: https://github.com/auth0/node-jsonwebtoken
-    const assertion = jsonwebtoken.sign(payload, privateKey, options);
-    console.log("userId: " + userId);
-    console.log("appKey: " + appKey);
-    console.log("serviceProviderUrl: " + serviceProviderUrl);
-    console.log("certThumbPrint: " + certThumbPrint);
-    console.log("Assertion has been created:\n" + assertion);
+    const privateKey = readFileSync(certificatePath);
+    const assertion = sign(payload, privateKey, options);
+    console.log("UserId: " + userId);
+    console.log("AppKey: " + appKey);
+    console.log("ServiceProviderUrl: " + serviceProviderUrl);
+    console.log("ThumbPrint: " + thumbprint);
+    console.log("\nAssertion created:\n" + assertion);
     return assertion;
 }
 
 /**
- * Request a token using the JWT.
- * @param {string} assertion The signed JWT.
- * @param {Function} successCallback Do something with the token.
- * @return {void}
- */
-function requestToken(assertion, successCallback) {
-    // If you run into a 401 NotAuthenticated, this might be caused by not accepting the terms and conditions.
-    // To fix this, you must use this app once with the Authorization Code Flow for your userId and accept the Disclaimer after signing in.
-    // You can use this URL, replacing the appKey with yours (add a new redirect URL http://127.0.0.1/):
-    // https://sim.logonvalidation.net/authorize?client_id= + appKey + &response_type=code&redirect_uri=http%3A%2F%2F127.0.0.1%2F
-    const postData = new URLSearchParams();
-    postData.append("assertion", assertion);
-    postData.append("grant_type", "urn:saxobank:oauth:grant-type:personal-jwt");
-
-    // The client_id and client_secret can be submitted as postData (see below), but this example uses the Authorization header:
-    //postData.append("client_id", appKey);
-    //postData.append("client_secret", appSecret);
-    fetch(
-        authProviderUrl,
-        {
-            "headers": {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Authorization": "Basic " + Buffer.from(appKey + ":" + appSecret).toString("base64")  // In plain JavaScript: "Basic " + btoa(appKey + ":" + appSecret)
-            },
-            "method": "POST",
-            "body": postData
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                console.log("Token received:\n" + JSON.stringify(responseJson, null, 4));
-                successCallback(responseJson);
-            });
-        } else {
-            console.log(response);
-            console.log("Response headers:");
-            console.log(response.headers.raw());
-            console.log("Error getting token: " + response.status + " " + response.statusText);
-            response.text().then(function (responseText) {
-                console.log(responseText);
-            });
-        }
-    }).catch(function (error) {
-        console.log(error);
+* Get tokens with retry logic
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
+const getTokens = async (retries = 3) => {
+    const assertion = getAssertion();
+    const requestBody = new URLSearchParams({
+        grant_type: "urn:saxobank:oauth:grant-type:personal-jwt",
+        assertion: assertion,
     });
-}
+
+    return await retryRequest(() => tokenRequest(requestBody), retries);
+};
 
 /**
- * Refresh the token.
- * Should you refresh the token, or just generate a new one?
- * Well, if you generate a new token, you create a new session and the streaming session must be recreated.
- * And if you refresh the token, the session is extended, keeping up the streaming session.
- * So it is recommended to refresh the token.
- * @param {Object} tokenObject The Bearer token object.
- * @return {void}
- */
-function requestTokenRefresh(tokenObject) {
-    const postData = new URLSearchParams();
-    postData.append("refresh_token", tokenObject.refresh_token);
-    postData.append("grant_type", "refresh_token");
-
-    // The client_id and client_secret can be submitted as postData (see below), but this example uses the Authorization header:
-    //postData.append("client_id", appKey);
-    //postData.append("client_secret", appSecret);
-    fetch(
-        authProviderUrl,
-        {
-            "headers": {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "Authorization": "Basic " + Buffer.from(appKey + ":" + appSecret).toString("base64")  // In plain JavaScript: "Basic " + btoa(appKey + ":" + appSecret)
-            },
-            "method": "POST",
-            "body": postData
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                console.log("New token received:\n" + JSON.stringify(responseJson, null, 4));
-                // Now you might want to refresh the websocket connections with the new token...
-            });
-        } else {
-            response.text().then(function (responseText) {
-                console.log("Error refreshing token.\n\n" + responseText);
-                console.log(response);
-            });
-        }
-    }).catch(function (error) {
-        console.log(error);
+* Renew tokens with retry logic
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
+const renewTokens = async (retries = 3) => {
+    const requestBody = new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: unpackedResponse.refresh_token,
     });
-}
+
+    return await retryRequest(() => tokenRequest(requestBody), retries);
+};
 
 /**
- * Request something from the API, to prove the received token is valid.
- * @param {Object} tokenObject The Bearer token object.
- * @return {void}
- */
-function requestApiData(tokenObject) {
-    fetch(
-        // The examples on Github (https://saxobank.github.io/openapi-samples-js/) are intended for individual logins.
-        // This flow is intended for maintaining multiple customers, so it is recommended to explicitly specify clientKeys, accountKeys, etc.
-        // Get all users: apiUrl + "/port/v1/users?ClientKey={ClientKey}&IncludeSubUsers=true",
-        apiUrl + "/ref/v1/exchanges",
-        {
-            "headers": {
-                "Authorization": "Bearer " + tokenObject.access_token
-            },
-            "method": "GET"
-        }
-    ).then(function (response) {
-        if (response.ok) {
-            response.json().then(function (responseJson) {
-                console.log("Response from API received (" + responseJson.Data.length + " exchanges)");
-                // For demonstration purposes, we'll refresh the token..
-                requestTokenRefresh(tokenObject);
-            });
-        } else {
-            response.text().then(function (responseText) {
-                console.log("Error getting response.\n\n" + responseText);
-                console.log(response);
-            });
-        }
-    }).catch(function (error) {
-        console.log(error);
+* Request tokens
+* @param {URLSearchParams} requestBody
+* @return {object}
+*/
+const tokenRequest = async (requestBody) => {
+    const basicToken = btoa(appKey + ":" + appSecret);
+
+    const response = await fetch(tokenUrl, {
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${basicToken}`,
+        },
+        method: "POST",
+        body: requestBody,
     });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data;
+};
+
+/**
+* Retry logic with exponential back-off for requests
+* @param {Function} functionToRetry
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
+const retryRequest = async (functionToRetry, retries) => {
+    let attempt = 0;
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    while (attempt < retries) {
+        try {
+            return await functionToRetry();
+        } catch (error) {
+            attempt++;
+            if (attempt >= retries || !shouldRetry(error)) {
+                throw new Error(`Failed after ${retries} attempts: ${error.message}`);
+            }
+            const backoffTime = Math.pow(2, attempt) * 100; // Exponential back-off
+            await delay(backoffTime);
+        }
+    }
+};
+
+/**
+* Determine if the request should be retried based on the error
+* @param {Error} error - The error thrown
+* @return {boolean}
+*/
+const shouldRetry = (error) => {
+    // Retry on network errors (status 5xx) but not on client errors (status 4xx)
+    if (error.message.includes('HTTP error! status:')) {
+        const statusCode = parseInt(error.message.split(': ')[1], 10);
+        return statusCode >= 500 && statusCode < 600;
+    }
+    return false;
+};
+
+const apiUrl = "https://gateway.saxobank.com/sim/openapi"; // On production, this is "https://gateway.saxobank.com/openapi"
+
+/**
+* Request something from the API, to prove the received token is valid.
+* @param {string} endpoint The endpoint to call
+* @return {object}
+*/
+async function SendGetRequest(endpoint) {
+    const response = await fetch (
+        apiUrl + endpoint,
+        {
+            headers: {
+                Authorization: "Bearer " + unpackedResponse.access_token,
+            },
+            method: "GET",
+        }
+    );
+
+    if (response.ok) {
+        const responseJson = await response.json();
+        return responseJson;
+    } else {
+        const responseText = await response.text();
+        console.log("Error getting response.\n\n" + responseText);
+        console.log(response);
+    }
 }
 
-// Create the JWT token:
-const jwtAssertion = createJwtAssertion();
-// Request the Bearer token and if successful, use it to call the API:
-requestToken(jwtAssertion, requestApiData);
+async function run() {
+    console.log("Requesting tokens...");
+    unpackedResponse = await getTokens();
+    console.log("\nResponse:");
+    console.log(unpackedResponse);
+    
+    console.log("\nRequesting exchanges...");
+    const exchanges = await SendGetRequest("/ref/v1/exchanges");
+    exchanges.Data = exchanges.Data.slice(0,3);
+    console.log("Response - showing first 3:");
+    console.log(exchanges);
+    
+    console.log("\nRenewing tokens...");
+    unpackedResponse = await renewTokens();
+    console.log("Response:");
+    console.log(unpackedResponse);
+    
+    console.log("\nRequesting currencies...");
+    const Currencies = (await SendGetRequest("/ref/v1/currencies"));
+    Currencies.Data = Currencies.Data.slice(0,3);
+    console.log("Response - showing first 3:");
+    console.log(Currencies);
+}
+  
+run().catch(console.error);

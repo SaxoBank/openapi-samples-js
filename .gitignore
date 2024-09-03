@@ -4,4 +4,5 @@
 /Folder.DotSettings.user
 node_modules/
 *.bak
-/authentication/oauth2-certificate-flow/example_nodejs/private-key-with-cert.pem
+*.pem
+*.env
