@@ -12,6 +12,7 @@
         "name": "various"
     },
     "dependencies": {
+        "dotenv": "^16.4.5",
         "jsonwebtoken": "^9.0.2",
         "node-fetch": "^3.3.2"
     }
