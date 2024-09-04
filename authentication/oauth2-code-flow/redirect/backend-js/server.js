@@ -22,7 +22,7 @@ const server = createServer(async (req, res) => {
       res.writeHead(302, { Location: fullAuthorizationUrl }).end();
     } else if (path === `/${redirectUrl.split('/').pop()}`) {
         try {
-            console.log("Requesting tokens...");
+            console.log("\nRequesting tokens...");
             unpackedResponse = await getTokens(req);
             console.log("Response:");
             console.log(unpackedResponse);
