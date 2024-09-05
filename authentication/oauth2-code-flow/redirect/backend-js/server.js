@@ -1,103 +1,179 @@
-import express from "express";
-import morgan from "morgan";
-import {fileURLToPath} from "node:url";
-import path from "node:path";
-import fetch from "node-fetch";
+const { createServer } = require("http");
+const { parse } = require("url");
+require("dotenv").config();
 
-const port = process.env.PORT || 1337;
+// Create or change your .env file so it has your information. Further details can be found in our learn articles.
+const appKey = process.env.AppKey;
+const appSecret = process.env.AppSecret;
+const redirectUrl = process.env.RedirectUrl;
+const authorizationUrl = process.env.AuthorizationUrl;
+const tokenUrl = process.env.TokenUrl;
 
-/*
- * appKey: The client identification of your app, supplied by Saxo (Client ID)
- * clientSecret: The secret which gives access to the API (Client Secret)
- * tokenEndpoint: The URL of the authentication provider (https://www.developer.saxo/openapi/learn/environments)
- *
- * IMPORTANT NOTICE:
- * The following credentials give access to SIM, if the redirect URL is http://localhost:1337/ (NodeJs example) and
- * http://localhost/openapi-samples-js/authentication/oauth2-code-flow/redirect/ (PHP example).
- * If you want to use your own redirect URL, you must create your own Code Flow application:
- * https://www.developer.saxo/openapi/appmanagement.
- * And needless to say, when you have an app for Live, be sure you don't publish the credentials on Github!
- *
- */
-const configurationObject = {
-    "appKey": "faf2acbb48754413a043676b9c2c2bd5",
-    "appSecret": "c074e19278f74700b21d66287a30c14e",
-    "tokenEndpoint": "https://sim.logonvalidation.net/token"
+const fullAuthorizationUrl = `${authorizationUrl}?response_type=code&client_id=${appKey}&redirect_uri=${redirectUrl}`;
+
+let unpackedResponse = {};
+
+const server = createServer(async (req, res) => {
+    const path = parse(req.url, true).pathname;
+  
+    if (path === "/") {
+      console.log(`\nRedirecting to authorization endpoint (${fullAuthorizationUrl}):`);
+      console.log(unpackedResponse);
+      res.writeHead(302, { Location: fullAuthorizationUrl }).end();
+    } else if (path === `/${redirectUrl.split('/').pop()}`) {
+        try {
+            console.log("\nRequesting tokens...");
+            unpackedResponse = await getTokens(req);
+            console.log("Response:");
+            console.log(unpackedResponse);
+            
+            console.log("\nRequesting exchanges...");
+            const exchanges = await SendGetRequest("/ref/v1/exchanges");
+            exchanges.Data = exchanges.Data.slice(0,3);
+            console.log("Response - showing first 3:");
+            console.log(exchanges);
+            
+            console.log("\nRenewing tokens...");
+            unpackedResponse = await renewTokens();
+            console.log("Response:");
+            console.log(unpackedResponse);
+            
+            console.log("\nRequesting currencies...");
+            const Currencies = (await SendGetRequest("/ref/v1/currencies"));
+            Currencies.Data = Currencies.Data.slice(0,3);
+            console.log("Response - showing first 3:");
+            console.log(Currencies);
+        } catch (error) {
+            console.log(error);
+        }
+    }
+});
+
+const port = 3000;
+server.listen(port, () => {
+  console.log("Server is running on port " + port);
+});
+
+const apiUrl = "https://gateway.saxobank.com/sim/openapi"; // On production, this is "https://gateway.saxobank.com/openapi"
+
+/**
+* Get tokens with retry logic
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
+const getTokens = async (req, retries = 3) => {
+    const query = parse(req.url, true).query;
+  
+    const requestBody = new URLSearchParams({
+      grant_type: "authorization_code",
+      code: query.code,
+      redirect_uri: redirectUrl,
+    });
+  
+    return await retryRequest(() => tokenRequest(requestBody), retries);
 };
 
-function apiHandler(request, response) {
-    const query = request.body;
+/**
+* Renew tokens with retry logic
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
+const renewTokens = async (retries = 3) => {
+    let requestBody = new URLSearchParams({
+      grant_type: "refresh_token",
+      refresh_token: unpackedResponse.refresh_token,
+      redirect_uri: redirectUrl,
+    });
+  
+    return await retryRequest(() => tokenRequest(requestBody), retries);
+};
 
-    function sendResponse(httpStatusCode, responseObject) {
-        const responseBody = JSON.stringify(responseObject);
-        // Tempting, but don't log outgoing data, because this is sensitive information!
-        response.writeHead(httpStatusCode, {"Content-Type": "application/json"});
-        response.end(responseBody);
+/**
+* Request tokens
+* @param {URLSearchParams} requestBody
+* @return {object}
+*/
+const tokenRequest = async (requestBody) => {
+    const basicToken = btoa(appKey + ":" + appSecret);
+
+    const response = await fetch(tokenUrl, {
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            Authorization: `Basic ${basicToken}`,
+        },
+        method: "POST",
+        body: requestBody,
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    function returnError(httpStatusCode, errorCode, errorMessage) {
-        const responseObject = {
-            "Message": errorMessage,
-            "ErrorCode": errorCode
-        };
-        console.error(errorMessage);
-        sendResponse(httpStatusCode, responseObject);
-    }
+    const data = await response.json();
+    return data;
+};
 
-    function requestToken() {
-        const data = new URLSearchParams();
-        // Tempting, but don't log incoming data, because this is sensitive information!
-        data.append("client_id", configurationObject.appKey);
-        data.append("client_secret", configurationObject.appSecret);
-        if (query.code) {
-            data.append("grant_type", "authorization_code");
-            data.append("code", query.code);
-        } else if (query.refresh_token) {
-            data.append("grant_type", "refresh_token");
-            data.append("refresh_token", query.refresh_token);
-        } else {
-            returnError(400, "BadRequest", "Invalid query parameters");
-            return;
+
+/**
+* Retry logic with exponential back-off for requests
+* @param {Function} functionToRetry
+* @param {number} retries - Number of retry attempts
+* @return {object}
+*/
+const retryRequest = async (functionToRetry, retries) => {
+    let attempt = 0;
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    while (attempt < retries) {
+        try {
+            return await functionToRetry();
+        } catch (error) {
+            attempt++;
+            if (attempt >= retries || !shouldRetry(error)) {
+                throw new Error(`Failed after ${retries} attempts: ${error.message}`);
+            }
+            const backoffTime = Math.pow(2, attempt) * 100; // Exponential back-off
+            await delay(backoffTime);
         }
-        fetch(
-            configurationObject.tokenEndpoint,
-            {
-                "method": "POST",
-                "body": data
-            }
-        ).then(function (tokenResponse) {
-            if (tokenResponse.ok) {
-                tokenResponse.json().then(function (tokenResponseJson) {
-                    sendResponse(200, tokenResponseJson);
-                });
-            } else {
-                returnError(tokenResponse.status, "Unauthorized", tokenResponse.statusText);
-            }
-        }).catch(function (error) {
-            returnError(401, "Unauthorized", error);
-        });
     }
+};
 
-    requestToken();
+/**
+* Determine if the request should be retried based on the error
+* @param {Error} error - The error thrown
+* @return {boolean}
+*/
+const shouldRetry = (error) => {
+    // Retry on network errors (status 5xx) but not on client errors (status 4xx)
+    if (error.message.includes('HTTP error! status:')) {
+        const statusCode = parseInt(error.message.split(': ')[1], 10);
+        return statusCode >= 500 && statusCode < 600;
+    }
+    return false;
+};
+
+/**
+* Request something from the API, to prove the received token is valid.
+* @param {string} endpoint The endpoint to call
+* @return {object}
+*/
+async function SendGetRequest(endpoint) {
+    const response = await fetch (
+        apiUrl + endpoint,
+        {
+            headers: {
+                Authorization: "Bearer " + unpackedResponse.access_token,
+            },
+            method: "GET",
+        }
+    );
+
+    if (response.ok) {
+        const responseJson = await response.json();
+        return responseJson;
+    } else {
+        const responseText = await response.text();
+        console.log("Error getting response.\n\n" + responseText);
+        console.log(response);
+    }
 }
-
-// Start Express server
-const server = express();
-server.use(morgan("combined"));  // The request logger
-server.use(express.json());
-// The redirect web page runs on http://localhost:1337/index.html
-const staticPage = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-server.use(express.static(staticPage));
-// The backend is available for POST on http://localhost:1337/server
-server.post("/server", apiHandler);
-server.listen(port);
-
-console.log("Server listening on port %j", port);
-
-// Handle stop signals
-function handleExit() {
-    process.exit(0);
-}
-
-process.on("SIGINT", handleExit);
-process.on("SIGTERM", handleExit);
