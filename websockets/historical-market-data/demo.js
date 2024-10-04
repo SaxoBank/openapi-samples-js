@@ -296,7 +296,7 @@
             }
         };
         fetch(
-            demo.apiUrl + "/chart/v1/charts/subscriptions",
+            demo.apiUrl + "/chart/v3/charts/subscriptions",
             {
                 "method": "POST",
                 "headers": {
@@ -351,7 +351,7 @@
      */
     function unsubscribe() {
         fetch(
-            demo.apiUrl + "/chart/v1/charts/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value),  // Add referenceId for more granular unsubscribe
+            demo.apiUrl + "/chart/v3/charts/subscriptions/" + encodeURIComponent(document.getElementById("idContextId").value),  // Add referenceId for more granular unsubscribe
             {
                 "method": "DELETE",
                 "headers": {
