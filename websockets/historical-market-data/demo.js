@@ -44,7 +44,7 @@
         const uic = document.getElementById("idInstrumentId").value;
         const assetType = document.getElementById("idCbxAssetType").value;
         const horizon = document.getElementById("idCbxHorizon").value;
-        let url = demo.apiUrl + "/chart/v1/charts?Uic=" + uic + "&AssetType=" + assetType + "&FieldGroups=BlockInfo,ChartInfo,Data,DisplayAndFormat&Horizon=" + horizon;
+        let url = demo.apiUrl + "/chart/v3/charts?Uic=" + uic + "&AssetType=" + assetType + "&FieldGroups=BlockInfo,ChartInfo,Data,DisplayAndFormat&Horizon=" + horizon;
         if (upToTime !== undefined && upToTime !== null) {
             url += "&Mode=UpTo&Time=" + oldestSampleTime.toISOString();
         }
