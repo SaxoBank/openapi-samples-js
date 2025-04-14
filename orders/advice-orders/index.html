@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="ROBOTS" content="INDEX, FOLLOW" />
+    <meta name="VIEWPORT" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="https://saxobank.github.io/openapi-samples-js/assets/css/style.css">
+    <link rel="shortcut icon" type="image/x-icon" href="https://saxobank.github.io/openapi-samples-js/favicon.ico">
+    <script type="text/javascript" src="../../assets/js/boilerplate.js" defer></script>
+    <script type="text/javascript" src="demo.js" defer></script>
+    <title>Demo for Advice Orders</title>
+<style type="text/css" media="screen">
+div.input-field {
+  width: 48%;
+  display: inline-block; 
+}
+</style>
+</head>
+<body>
+<section class="page-header">
+<h1 class="project-name">Advice Orders</h1>
+<h2 class="project-tagline">Example on Order Advices</h2>
+<a href="https://saxobank.github.io/openapi-samples-js" class="btn">← Back to main page</a>
+<a href="https://github.com/SaxoBank/openapi-samples-js/tree/main/orders/advice-orders" class="btn">View on GitHub</a>
+</section>
+<section class="main-content">
+<div class="highlight">
+<label><span>Add token <a href="https://www.developer.saxo/openapi/token" target="_blank" id="idHrefRetrieveToken">from here</a> to the box below:</span><br />
+<input type="text" class="token-field" id="idBearerToken" value="" placeholder="Paste token here.." autofocus /></label>
+<input type="button" class="action-button" value="Validate" id="idBtnValidate" /><br />
+<label>
+    Account: <select class="selector" id="idCbxAccount">
+        <option value="-">Click Validate to populate</option>
+    </select>
+</label>
+</div>
+<h1>Give advice on orders</h1>
+<p class="note">The order advice flow is only for advisors. The example here is not an advice, but shows how to integrate the flow in your apps. To get a SIM-account configured for order advices, contact your Saxo Bank account manager.</p>
+See other samples for <a href="../../instruments/instrument-search/">finding instruments</a>, trading in <a href="../options/">complex instruments</a> and <a href="../regulatory-requirements/">compliance requirements</a>.
+<br />
+<br />
+<label>
+<input type="button" class="action-button" value="Get managed accounts" id="idBtnGetAccountKeys" />
+  End client accounts: <select class="selector" id="idCbxManagedAccountKey">
+    <option value="-">-</option>
+  </select>
+</label>
+<label>
+<input type="button" class="action-button" value="Get parked orders" id="idBtnGetOrders" />
+  Orders for end client account: <select class="selector" id="idCbxOrderId">
+    <option value="-">-</option>
+  </select>
+</label>
+<br />
+<br />
+<div>
+<div class="input-field">New order advice:<br />
+<textarea class="json-input" id="idNewOrderObject" rows="13" wrap="off">
+{
+    "WaitForApproval": true,
+    "AdviceReference": "CorrelationToExternalAdvice",
+    "ExternalReference": "CorrelationToExternalOrder",
+    "AccountKey": "(added on first request)",
+    "BuySell": "Buy",
+    "Amount": 100,
+    "AssetType": "Stock",
+    "Uic": 112809,
+    "OrderType": "Market",
+    "OrderDuration": {
+        "DurationType": "DayOrder"
+    },
+    "ManualOrder": true
+}
+</textarea>
+<input type="button" class="action-button" value="Check rights" id="idBtnGetAccessRights" />
+<input type="button" class="action-button" value="Check conditions" id="idBtnGetConditions" />
+<br />
+<input type="button" class="action-button" value="Precheck order" id="idBtnPreCheckOrder" />
+<input type="button" class="action-button" value="Create order advice" id="idBtnPlaceNewOrder" />
+</div>
+<div class="input-field">Update order advice:<br />
+<label>
+  AdviceModifyAction: <select class="selector" id="idCbxAdviceModifyAction">
+    <!-- Advice the customer to place the order (done by advisor). This can be done when the advice had an Initial state. The order keept the 'Parked' state. -->
+    <option value="RequestApproval" selected>RequestApproval</option>
+    <!-- Place the advised order (done by end client, or by advisor on behalf of the client). The order gets an 'Active' state, like a regular order. -->
+    <option value="Approve">Approve</option>
+  </select>
+</label>
+<textarea class="json-input" id="idChangeAdviceObject" rows="13" wrap="off" wrap="off">
+{
+    "AdviceAction": "RequestApproval",
+    "AccountKey": "(added on first request)",
+    "RelatedOrderIds": []
+}
+</textarea>
+<input type="button" class="action-button" value="Get order details" id="idBtnGetOrderDetails" />
+<br />
+<input type="button" class="action-button" value="Update order advice" id="idBtnUpdateAdvice" />
+</div>
+</div>
+<br />
+<label>
+  AdviceDeleteAction: <select class="selector" id="idCbxAdviceDeleteAction">
+    <!-- Cancel the advice (done by advisor). -->
+    <option value="RevokeAdvice">RevokeAdvice</option>
+    <!-- End customer doesn't want to follow the advice. Can be done by advisor as well, on behalf of the client. -->
+    <option value="RejectAdvice">RejectAdvice</option>
+  </select>
+<input type="button" class="action-button" value="Cancel order advice" id="idBtnCancelOrderAdvice" />
+</label>
+<br />
+<br />
+<input type="button" class="action-button" value="Get ENS order events" id="idBtnHistoricalEnsEvents" />
+<br />
+Response: <pre class="highlight" id="idResponse">Click button to launch function.</pre>
+<br />
+JS code: <pre class="code-block" id="idJavaScript">Click button to show code.</pre>
+<footer class="site-footer"><span class="site-footer-credits" id="idFooter"></span></footer>
+</section>
+</body>
+</html>

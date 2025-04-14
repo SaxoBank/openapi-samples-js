@@ -14,5 +14,6 @@ Examples on
 - [OCO Orders](oco-orders)
 - [FX Options](fx-options)
 - [Block Orders](block-orders)
+- [Advice Orders](advice-orders)
 
 More on order placement: <https://www.developer.saxo/openapi/learn/order-placement/>
