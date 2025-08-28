@@ -53,8 +53,8 @@ The following code creates and starts a connection:
 ```javascript
     const accessToken = " // paste access token here
     const contextId = encodeURIComponent("MyApp" + Date.now());
-    const streamerUrl = "wss://sim-streaming.saxobank.com/sim/oapi/streaming/ws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
-    const connection = new WebSocket(streamerUrl);
+    const websocketConnectUrl = "wss://sim-streaming.saxobank.com/sim/oapi/streaming/ws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+    const connection = new WebSocket(websocketConnectUrl);
     console.log("Connection created. Status: " + connection.readyState);
 ```
 
