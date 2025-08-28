@@ -49,13 +49,13 @@ function priceSubscriptionHelper(demo) {
      * @return {void}
      */
     function createConnection() {
-        const streamerUrl = demo.streamerUrl + "?authorization=Bearer " + encodeURIComponent(bearerToken) + "&contextId=" + encodeURIComponent(contextId);
+        const websocketConnectUrl = demo.websocketConnectUrl + "?authorization=Bearer " + encodeURIComponent(bearerToken) + "&contextId=" + encodeURIComponent(contextId);
         if (!isWebSocketsSupportedByBrowser()) {
             console.error("This browser doesn't support WebSockets.");
             throw "This browser doesn't support WebSockets.";
         }
         try {
-            connection = new window.WebSocket(streamerUrl);
+            connection = new window.WebSocket(websocketConnectUrl);
             connection.binaryType = "arraybuffer";
             console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
             // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
@@ -675,7 +675,7 @@ function priceSubscriptionHelper(demo) {
     function extendSubscription(accessToken) {
         bearerToken = accessToken;
         if (connection !== null) {
-            fetch(demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(contextId), getFetchBody("PUT")).then(function (response) {
+            fetch(demo.apiUrl + "/streaming/ws/authorize?contextid=" + encodeURIComponent(contextId), getFetchBody("PUT")).then(function (response) {
                 if (response.ok) {
                     console.log("Websocket subscription extended.");
                 } else {
