@@ -32,7 +32,7 @@ function demonstrationHelper(settings) {
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/sim/openapi",  // SIM - Change to "/openapi" when using a Live token
-        "streamerUrl": "wss://streaming.saxobank.com/sim/openapi/streamingws/connect",
+        "streamerUrl": "wss://sim-streaming.saxobank.com/sim/oapi/streaming/ws/connect",
         // App management: https://www.developer.saxo/openapi/appmanagement#/
         "appKey": "1a6eb56ced7c4e04b1467e7e9be9bff7"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
         // "appKey": "7194692c30db42efb2c675c6c0fb2a67"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
@@ -46,7 +46,7 @@ function demonstrationHelper(settings) {
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "gateway.saxobank.com",
         "apiPath": "/openapi",
-        "streamerUrl": "wss://streaming.saxobank.com/openapi/streamingws/connect",
+        "streamerUrl": "wss://streaming.saxobank.com/oapi/streaming/ws/connect",
         "appKey": "4995383fd4b344e588eb784a7c666835"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
         // "appKey": "ae84ff08844e40d9a7e546bb1c4bdeb7"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
     };
@@ -57,7 +57,7 @@ function demonstrationHelper(settings) {
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "stgo-tst231.cf.saxo",
         "apiPath": "/openapi",
-        "streamerUrl": "wss://stgo-tst231.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
+        "streamerUrl": "wss://stgo-tst231.cf.saxo/oapi/streaming/ws/connect",  // On staging this is wss://blue.openapi.sys.dom/oapi/streaming/ws/connect
         "appKey": "9f07eb9eaf5447469509a03260830990"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
         // "appKey": "91250b8fdceb4713b0bb54b0f0eeae56"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         // "appKey": "8ef6e513003e46618d501eec0e213221"  // This app has no trading rights - use this to test how it behaves when ordering
@@ -69,7 +69,7 @@ function demonstrationHelper(settings) {
         "redirectUrl": window.location.protocol + "//" + window.location.host + "/openapi-samples-js/assets/html/redirect.html",
         "apiHost": "stgo-tst211.cf.saxo",
         "apiPath": "/openapi",
-        "streamerUrl": "wss://stgo-tst211.cf.saxo/openapi/streamingws/connect",  // On staging this is wss://blue.openapi.sys.dom/openapi/streamingws/connect
+        "streamerUrl": "wss://stgo-tst211.cf.saxo/oapi/streaming/ws/connect",  // On staging this is wss://blue.openapi.sys.dom/oapi/streaming/ws/connect
         "appKey": "31eba2b4020c4185a93372a434373cb7"  // This is the OAuth2 client_id - no need to create your own app, unless you want to use a different redirect URL
         // "appKey": "1c66f4c529ec49cab9303371636fe3d8"  // This app is on Legacy AssetTypes, the default before November 2021 - more info: https://saxobank.github.io/openapi-samples-js/instruments/extended-assettypes/
         // "appKey": "2c6e16c31a5b404190bc2c90b3bc75bc"  // This app has no trading rights - use this to test how it behaves when ordering
