@@ -1,6 +1,7 @@
 # <a name="documentation"></a>Client-side Samples for Websocket feeds
 
-This document describes how a client application can subscribe to Saxo Bank's Event Notification Service (ENS).
+This document describes how a client application can subscribe to Saxo Bank's Event Notification
+Service (ENS).
 
 Examples on
 - [Order Events Monitoring (ENS)](order-events-monitoring)
@@ -36,9 +37,12 @@ Native (plain) web sockets are used. Examples in JavaScript.
 
 Prerequisites:
 
-- An access token retrieved using the OAuth2 Authentication flow, as described in the [Saxo documentation](https://www.developer.saxo/openapi/learn/security).
+- An access token retrieved using the OAuth2 Authentication flow, as described in the 
+[Saxo documentation](https://www.developer.saxo/openapi/learn/security).
 
-For this example we use the simulation (sandbox/SIM) environment, with predefined test users and passwords. A user can be created on [Saxo's Developer Portal](https://www.developer.saxo/accounts/sim/signup) for testing.
+For this example we use the simulation (sandbox/SIM) environment, with predefined test users and
+passwords. A user can be created on 
+[Saxo's Developer Portal](https://www.developer.saxo/accounts/sim/signup) for testing.
 
 ### <a name="realtime1"></a>Step 1: Connect to the feed
 
@@ -49,16 +53,20 @@ The following code creates and starts a connection:
 ```javascript
     const accessToken = " // paste access token here
     const contextId = encodeURIComponent("MyApp" + Date.now());
-    const streamerUrl = "wss://streaming.saxobank.com/sim/openapi/streamingws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
-    const connection = new WebSocket(streamerUrl);
+    const websocketConnectUrl = "wss://sim-streaming.saxobank.com/sim/oapi/streaming/ws/connect?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+    const connection = new WebSocket(websocketConnectUrl);
     console.log("Connection created. Status: " + connection.readyState);
 ```
 
 **accessToken** –  The bearer token, also known as the access token, as provided by the Saxo SSO.
 
-**contextId** - A client-generated unique identifier for the connection. May be up to 50 characters allowing (a-z, A-Z, -, and _). A client application might have multiple connections, identified by different contextIds, but, as you will learn later in this document, one is usually enough per user, as multiple subscriptions can target the same connection.
+**contextId** - A client-generated unique identifier for the connection. May be up to 50 characters
+allowing (a-z, A-Z, -, and _). A client application might have multiple connections, identified by
+different contextIds, but, as you will learn later in this document, one is usually enough per user,
+as multiple subscriptions can target the same connection.
 
-More info about the setup at Saxo: <https://www.developer.saxo/openapi/learn/plain-websocket-streaming>.
+More info about the setup at Saxo:
+<https://www.developer.saxo/openapi/learn/plain-websocket-streaming>.
 
 ### <a name="realtime2"></a>Step 2: Handle connection events
 
@@ -88,7 +96,9 @@ The following code configures the events:
 
 ### <a name="realtime3"></a>Step 3: Subscribe to updates
 
-An 'empty' streaming websocket connection is now configured. In order to subscribe to events to be sent on this connection, you need to create a subscription with a POST request to Saxo's OpenAPI. This is an example to subscribe to order events:
+An 'empty' streaming websocket connection is now configured. In order to subscribe to events to be
+sent on this connection, you need to create a subscription with a POST request to Saxo's OpenAPI.
+This is an example to subscribe to order events:
 
 ```javascript
     const data = {
@@ -122,21 +132,28 @@ An 'empty' streaming websocket connection is now configured. In order to subscri
     });
 ```
 
-**contextId** – The client-generated unique identifier for the connection (so the server can determine the target connection)\
-**referenceId** – The client-generated unique reference for the subscription; can be used to identify incoming messages as every event has a referenceId; can be used to do further actions on the subscription, ie. delete it - system event referenceIds are prefixed by an underscore, so better not start with an underscore \
+**contextId** – The client-generated unique identifier for the connection (so the server can
+determine the target connection)\
+**referenceId** – The client-generated unique reference for the subscription; can be used to
+identify incoming messages as every event has a referenceId; can be used to do further actions on
+the subscription, ie. delete it - system event referenceIds are prefixed by an underscore, so better
+not start with an underscore \
 **clientKey** – The key identifying the customer\
 **accountKey** – The key identifying the account\
 **accessToken** – The Bearer token
 
 That’s it. The application is now ready to receive order update messages.
 
-More info about this endpoint: <https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=ens&service=client%20activities>. There you'll read about setting up a refresh rate and how to get (older) snapshot data.
+More info about this endpoint:
+<https://www.developer.saxo/openapi/referencedocs/service?apiVersion=v1&serviceGroup=ens&service=client%20activities>.
+There you'll read about setting up a refresh rate and how to get (older) snapshot data.
 
 ### <a name="realtime4"></a>Step 4: Handling events
 
 #### Receiving order events
 
-The order events are published when there is a change in portfolio positions, orders or cash balances.
+The order events are published when there is a change in portfolio positions, orders or cash
+balances.
 
 As described above, events are received in the onmessage handler:
 
@@ -259,16 +276,21 @@ As described above, events are received in the onmessage handler:
     };
 ```
 
-The message format is described here: <https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages>.
+The message format is described here:
+<https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Receivingmessages>
+.
 
 ### <a name="realtime5"></a>Step 5: Extend the subscription before the token expires
 
-The streaming connection will stop when the client disconnects or at the end of the token's expiry. When the client application has refreshed the token using Saxo's standard OAuth refresh flow, any existing streaming connections should be updated with the same token to prevent interruption of the service.
+The streaming connection will stop when the client disconnects or at the end of the token's expiry.
+When the client application has refreshed the token using Saxo's standard OAuth refresh flow, any
+existing streaming connections should be updated with the same token to prevent interruption of the
+service.
 
 Extend the subscription using this code:
 
 ```javascript
-    fetch("https://gateway.saxobank.com/sim/openapi/streamingws/authorize?contextid=" + contextId, {
+    fetch("https://sim-streaming.saxobank.com/sim/oapi/streaming/ws/authorize?contextid=" + contextId, {
         "method": "PUT",
         "headers": {
             "Content-Type": "application/json",
@@ -277,14 +299,18 @@ Extend the subscription using this code:
     });
 ```
 
-**contextId** – The identifyer of the connection (so the server can determine the target connection)\
+**contextId** – The identifyer of the connection (so the server can determine the target
+connection)\
 **accessToken** – The (new) Bearer token
 
 ### <a name="realtime6"></a>Step 6: Description of the data
 
-Besides the order events the server sends the following control messages: heartbeats (referenceId: \_heartbeat), disconnect events (\_disconnect) and data-clear-events (\_resetsubscriptions).
+Besides the order events the server sends the following control messages: heartbeats (referenceId:
+\_heartbeat), disconnect events (\_disconnect) and data-clear-events (\_resetsubscriptions).
 
-More info: <https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages>.
+More info:
+<https://www.developer.saxo/openapi/learn/plain-websocket-streaming#PlainWebSocketStreaming-Controlmessages>
+.
 
 #### Order-object
 
@@ -329,10 +355,15 @@ An order object is structured as following:
 ### <a name="realtime7"></a>Adding a netpositions subscription
 
 Next, we need to create a netpositions subscripition, which will provide us with:
-1. A snapshot of the client's current positions, which includes *all* data for each netposition. This is similar to sending a GET request to the `/netpositions/me` endpoint.
-2. Delta updates whenever individual datapoints for each position change (think: current P&L, conversion rate for instruments in currencies different from the client's account currency, etc).
+1. A snapshot of the client's current positions, which includes *all* data for each netposition.
+This is similar to sending a GET request to the `/netpositions/me` endpoint.
+2. Delta updates whenever individual datapoints for each position change (think: current P&L,
+conversion rate for instruments in currencies different from the client's account currency, etc).
 
-The below code is very similar to the code in step 3. This new subscription will be streaming updates on the **same** websocket connection. Note that the `AccountKey` field is optional: if it is *not* provided, netpositions for ALL of the client accounts will be streamed (this is likely what you want if you are looking to provide a 'complete overview' in your UI).
+The below code is very similar to the code in step 3. This new subscription will be streaming
+updates on the **same** websocket connection. Note that the `AccountKey` field is optional: if it is
+*not* provided, netpositions for ALL of the client accounts will be streamed (this is likely what
+you want if you are looking to provide a 'complete overview' in your UI).
 
 ```javascript
     const data = {
@@ -354,7 +385,10 @@ The below code is very similar to the code in step 3. This new subscription will
     });
 ```
 
-The response of the POST request includes the snapshot, with "full" details on the current state of the client's netpositions (not shown here to keep this short). Delta messages only include fields that actually change, which means a real-time representation of the client's portfolio can be created by combining these:
+The response of the POST request includes the snapshot, with "full" details on the current state of
+the client's netpositions (not shown here to keep this short). Delta messages only include fields
+that actually change, which means a real-time representation of the client's portfolio can be
+created by combining these:
 
 ```javascript
     "Data": [{
@@ -374,7 +408,8 @@ The response of the POST request includes the snapshot, with "full" details on t
     }]
 ```
 
-Note the `ConversionRateCurrent` field, which can be used to convert instrument P&L to client account currency P&L (in this case for a JPY-denominated FX position on a USD account).
+Note the `ConversionRateCurrent` field, which can be used to convert instrument P&L to client
+account currency P&L (in this case for a JPY-denominated FX position on a USD account).
 
 ### <a name="realtime8"></a>Whats next: things to keep in mind
 

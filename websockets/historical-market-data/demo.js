@@ -104,7 +104,7 @@
     function createConnection() {
         const accessToken = document.getElementById("idBearerToken").value;
         const contextId = encodeURIComponent(document.getElementById("idContextId").value);
-        const streamerUrl = demo.streamerUrl + "?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
+        const websocketConnectUrl = demo.websocketConnectUrl + "?authorization=" + encodeURIComponent("BEARER " + accessToken) + "&contextId=" + contextId;
         if (!isWebSocketsSupportedByBrowser()) {
             console.error("This browser doesn't support WebSockets.");
             throw "This browser doesn't support WebSockets.";
@@ -114,7 +114,7 @@
             throw "Invalid characters in Context ID.";
         }
         try {
-            connection = new window.WebSocket(streamerUrl);
+            connection = new window.WebSocket(websocketConnectUrl);
             connection.binaryType = "arraybuffer";
             console.log("Connection created with binaryType '" + connection.binaryType + "'. ReadyState: " + connection.readyState + ".");
             // Documentation on readyState: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
@@ -325,7 +325,7 @@
         // Example: https://saxobank.github.io/openapi-samples-js/authentication/oauth2-implicit-flow/
         const token = document.getElementById("idBearerToken").value;
         fetch(
-            demo.apiUrl + "/streamingws/authorize?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
+            demo.websocketReauthUrl + "?contextid=" + encodeURIComponent(document.getElementById("idContextId").value),
             {
                 "method": "PUT",
                 "headers": {
