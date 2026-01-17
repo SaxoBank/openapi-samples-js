@@ -33,7 +33,8 @@ Samples run against Saxo's simulation environment and require an **access token*
    - [OCO Orders](orders/oco-orders/)
    - [Algorithmic Orders](orders/algo-orders/)
    - [Conditional or Sleeping Orders](orders/conditional-orders/)
-   - [Block Orders](orders/block-orders/)
+   - [Block Orders (for partners)](orders/block-orders/)
+   - [Advise Orders (for partners)](orders/advice-orders/)
    - [Regulatory Requirements](orders/regulatory-requirements/)
 5. Portfolio
    - [Display positions and orders](portfolio/positions-orders/)
